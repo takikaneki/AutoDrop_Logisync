@@ -6,7 +6,7 @@ Parcel Validation and Communication Management System.
 
 - Node.js
 - Express.js
-- MySQL
+- PostgreSQL / Neon
 - bcryptjs
 - JSON Web Token (JWT)
 - Multer
@@ -15,145 +15,75 @@ Parcel Validation and Communication Management System.
 ## Requirements
 
 - Node.js 18+
-- MySQL Server
+- PostgreSQL Server or Neon PostgreSQL (Cloud)
 - Existing React + Tailwind frontend
 
 ## 1. Install
 
 ```bash
+cd Logisync/Backend
 npm install
 ```
 
-## 2. Create the database
+## 2. Configure Environment
 
-Open MySQL Workbench or another MySQL client and run:
+Copy `.env.example` to `.env`:
 
-```sql
-SOURCE database/schema.sql;
-```
-
-Then seed the demo data:
-
-```sql
-SOURCE database/seed.sql;
-```
-
-If your MySQL client does not support SOURCE, open and run the SQL files manually.
-
-## 3. Environment
-
-Copy `.env.example` to `.env` and update your MySQL password:
-
-```text
+```env
 PORT=5000
+
+# Para sa Neon / Cloud PostgreSQL:
+# Kunin sa Neon Console -> Connection details -> Connection string
+DATABASE_URL=postgresql://user:password@ep-xyz.region.aws.neon.tech/neondb?sslmode=require
+
+# Kung local PostgreSQL ang gagamitin:
 DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
 DB_NAME=synclink_db
+
 JWT_SECRET=change_this_to_a_long_random_secret
 UPLOAD_DIR=uploads/videos
 MAX_VIDEO_SIZE_MB=50
 ```
 
-## 4. Start
+## 3. Database Migration / Setup
 
-Development:
+Patakbuhin ang migration script upang awtomatikong magawa ang mga tables, triggers, at seed demo accounts:
+
+```bash
+npm run migrate
+```
+
+O kaya, maaari ring i-paste ang nilalaman ng `database/schema.sql` at `database/seed.sql` sa Neon SQL Editor.
+
+## 4. Start the Server
+
+Development mode:
 
 ```bash
 npm run dev
 ```
 
-Normal:
+Production / Normal mode:
 
 ```bash
 npm start
 ```
 
-Health check in a browser:
-
-```text
-http://localhost:5000/api/health
+Health check:
 ```
-
-Expected:
-
-```json
-{
-  "success": true,
-  "message": "SyncLink backend is running"
-}
+http://localhost:5000/api/health
 ```
 
 ## Demo accounts
 
-All seeded demo accounts use:
-
-```text
+Lahat ng seeded accounts ay may password na:
+```
 password123
 ```
 
-Seller:
-```text
-seller@example.com
-```
-
-Coordinator:
-```text
-coordinator@example.com
-```
-
-Rider:
-```text
-rider@example.com
-```
-
-## Main API routes
-
-Authentication:
-- POST `/api/auth/register`
-- POST `/api/auth/login`
-- GET `/api/auth/me`
-
-Parcel:
-- GET `/api/parcels/:parcelId`
-- GET `/api/parcels/seller/:parcelId`
-- POST `/api/parcels/seller/:parcelId/video`
-- GET `/api/parcels/coordinator/:parcelId`
-- POST `/api/parcels/coordinator/:parcelId/verify`
-- POST `/api/parcels/coordinator/:parcelId/reject`
-- POST `/api/parcels/coordinator/:parcelId/request-reupload`
-- GET `/api/parcels/videos/:videoId`
-
-Communication:
-- GET `/api/messages`
-- POST `/api/messages`
-- PATCH `/api/messages/:messageId/read`
-
-## Video upload
-
-The seller sends a `multipart/form-data` request with:
-
-```text
-video = <video file>
-```
-
-Videos are stored locally in:
-
-```text
-uploads/videos/
-```
-
-## Authentication
-
-Protected routes require:
-
-```text
-Authorization: Bearer <JWT_TOKEN>
-```
-
-The backend enforces role restrictions. Rider responses do not expose seller video proof or coordinator verification records.
-
-## Important
-
-This project is designed for local development and defense. No cloud database or deployment is required at this stage.
+- Seller: `seller@example.com`
+- Coordinator: `coordinator@example.com`
+- Rider: `rider@example.com`

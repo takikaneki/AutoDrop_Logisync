@@ -169,7 +169,7 @@ async function markRead(req, res) {
 
     const [result] = await pool.query(
       `UPDATE communication_messages
-       SET is_read = 1
+       SET is_read = TRUE
        WHERE message_id = ? AND receiver_id = ?`,
       [messageId, req.user.user_id]
     );
