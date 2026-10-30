@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-[#f7f7f8] text-ink font-sans;
+}
+
+body.dark {
+  @apply bg-night-bg text-[#f1eeeb];
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
+/* Summary cards: ang bilang ng hanay ay batay sa lapad ng lalagyan, hindi ng buong screen.
+   Kaya hindi naiipit o nagkakapatong ang card kahit may sidebar, naka-collapse ito, o maliit ang screen. */
+.stat-wrap {
+  container-type: inline-size;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1.5rem;
+}
+@container (min-width: 560px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 1160px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .stat-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container (min-width: 820px) {
+  .stat-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Footer: 3 pantay na hanay, naka-center. Sumusunod sa lapad ng lalagyan (hindi ng buong screen),
+   kaya pareho ang itsura kahit may sidebar o naka-collapse ito. */
+.footer-wrap {
+  container-type: inline-size;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 1.5rem;
+}
+@container (min-width: 640px) {
+  .footer-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+  }
+}

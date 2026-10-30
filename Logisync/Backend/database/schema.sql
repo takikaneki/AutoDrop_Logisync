@@ -1,0 +1,79 @@
+CREATE DATABASE IF NOT EXISTS synclink_db;
+USE synclink_db;
+
+CREATE TABLE IF NOT EXISTS users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('seller', 'coordinator', 'rider') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS parcels (
+  parcel_id VARCHAR(50) PRIMARY KEY,
+  seller_id INT NOT NULL,
+  receiver_name VARCHAR(100) NOT NULL,
+  receiver_contact VARCHAR(50),
+  contents VARCHAR(255),
+  status ENUM(
+    'PENDING',
+    'WAITING_FOR_VIDEO',
+    'VIDEO_SUBMITTED',
+    'VERIFIED',
+    'REJECTED',
+    'REUPLOAD_REQUESTED'
+  ) NOT NULL DEFAULT 'PENDING',
+  verification_status ENUM(
+    'PENDING',
+    'VERIFIED',
+    'REJECTED',
+    'REUPLOAD_REQUESTED'
+  ) NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_parcel_seller FOREIGN KEY (seller_id)
+    REFERENCES users(user_id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS video_proofs (
+  video_id INT AUTO_INCREMENT PRIMARY KEY,
+  parcel_id VARCHAR(50) NOT NULL,
+  uploaded_by INT NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_path VARCHAR(500) NOT NULL,
+  file_size BIGINT NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_video_parcel FOREIGN KEY (parcel_id)
+    REFERENCES parcels(parcel_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_video_user FOREIGN KEY (uploaded_by)
+    REFERENCES users(user_id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS verification_records (
+  verification_id INT AUTO_INCREMENT PRIMARY KEY,
+  parcel_id VARCHAR(50) NOT NULL,
+  coordinator_id INT NOT NULL,
+  decision ENUM('VERIFY', 'REJECT', 'REQUEST_REUPLOAD') NOT NULL,
+  remarks TEXT,
+  verified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_verification_parcel FOREIGN KEY (parcel_id)
+    REFERENCES parcels(parcel_id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_verification_coordinator FOREIGN KEY (coordinator_id)
+    REFERENCES users(user_id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS communication_messages (
+  message_id INT AUTO_INCREMENT PRIMARY KEY,
+  sender_id INT NOT NULL,
+  receiver_id INT NOT NULL,
+  message TEXT NOT NULL,
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_message_sender FOREIGN KEY (sender_id)
+    REFERENCES users(user_id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_message_receiver FOREIGN KEY (receiver_id)
+    REFERENCES users(user_id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
