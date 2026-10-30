@@ -56,19 +56,19 @@ export default function TermsModal({ open, alreadyAccepted = false, onAgree, onC
           <p className="border-t border-[#edf0f4] pt-4 text-sm text-[#72839b]">End of Terms of Service.</p>
         </div>
 
-        <div className="border-t border-[#edf0f4] px-7 pb-6 pt-4 max-[600px]:px-5">
+        <div className="border-t border-[#edf0f4] px-5 sm:px-7 pb-5 sm:pb-6 pt-3.5 sm:pt-4">
           {!ready && (
-            <p role="status" className="mb-3 text-sm text-[#d97706]">
+            <p role="status" className="mb-3 text-xs sm:text-sm text-[#d97706]">
               <i className="fa-solid fa-arrow-down mr-1.5" />Scroll down to the end of the Terms to enable the button.
             </p>
           )}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2.5 sm:gap-3">
             {alreadyAccepted ? (
-              <button type="button" onClick={onClose} className="rounded-xl bg-gradient-to-r from-[#ff7900] to-[#ff6500] px-6 py-3 font-bold text-white">Close</button>
+              <button type="button" onClick={onClose} className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#ff7900] to-[#ff6500] px-6 py-2.5 sm:py-3 font-bold text-white text-sm sm:text-base">Close</button>
             ) : (
               <>
-                <button type="button" onClick={onClose} className="rounded-xl border border-[#d7dee8] px-5 py-3 font-semibold text-[#64748b] hover:bg-[#f7f8fa]">Cancel</button>
-                <button type="button" disabled={!ready} onClick={onAgree} className="rounded-xl bg-gradient-to-r from-[#ff7900] to-[#ff6500] px-6 py-3 font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-40">
+                <button type="button" onClick={onClose} className="w-full sm:w-auto rounded-xl border border-[#d7dee8] px-5 py-2.5 sm:py-3 font-semibold text-[#64748b] hover:bg-[#f7f8fa] text-sm sm:text-base">Cancel</button>
+                <button type="button" disabled={!ready} onClick={onAgree} className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#ff7900] to-[#ff6500] px-6 py-2.5 sm:py-3 font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-40 text-sm sm:text-base">
                   I Agree
                 </button>
               </>
