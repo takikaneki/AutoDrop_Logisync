@@ -168,6 +168,7 @@ async function getSellerParcel(req, res) {
 
 async function uploadVideo(req, res) {
   let uploadedAsset = null;
+  let videoRecordSaved = false;
 
   try {
     if (!req.file) {
