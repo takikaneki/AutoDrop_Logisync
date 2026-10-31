@@ -243,6 +243,7 @@ async function uploadVideo(req, res) {
         req.file.mimetype
       ]
     );
+    videoRecordSaved = true;
 
     await pool.query(
       `UPDATE parcels
@@ -253,13 +254,17 @@ async function uploadVideo(req, res) {
       [parcel.parcel_id]
     );
 
-    await logAudit(req.user, {
-      category: "Video",
-      action: "Uploaded video proof",
-      target: parcel.parcel_id,
-      detail: req.file.originalname,
-      sellerId: parcel.seller_id
-    });
+    try {
+  await logAudit(req.user, {
+    category: "Video",
+    action: "Uploaded video proof",
+    target: parcel.parcel_id,
+    detail: req.file.originalname,
+    sellerId: parcel.seller_id
+  });
+} catch (auditError) {
+  console.error("Video audit log failed:", auditError);
+}
 
     return res.status(201).json({
       success: true,
@@ -274,7 +279,7 @@ async function uploadVideo(req, res) {
 
   } catch (error) {
     // Remove uploaded Cloudinary asset if database saving fails
-    if (uploadedAsset?.public_id) {
+    if (uploadedAsset?.public_id && !videoRecordSaved) {
       try {
         await cloudinary.uploader.destroy(
           uploadedAsset.public_id,
