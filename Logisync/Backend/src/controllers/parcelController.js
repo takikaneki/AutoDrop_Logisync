@@ -165,43 +165,90 @@ async function getSellerParcel(req, res) {
   }
 }
 
-async function uploadVideo(req, res) {
-  try {
-    if (!req.file) return res.status(400).json({ success: false, message: "Video file is required." });
 
+async function uploadVideo(req, res) {
+  let uploadedAsset = null;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Video file is required."
+      });
+    }
+
+    // Check parcel and ownership BEFORE uploading to Cloudinary
     const [parcelRows] = await pool.query(
       "SELECT parcel_id, seller_id, status FROM parcels WHERE parcel_id = ?",
       [req.params.parcelId]
     );
 
     if (!parcelRows.length) {
-      fs.unlink(req.file.path, () => {});
-      return res.status(404).json({ success: false, message: "Parcel not found." });
+      return res.status(404).json({
+        success: false,
+        message: "Parcel not found."
+      });
     }
 
     const parcel = parcelRows[0];
 
-    if (parcel.seller_id !== req.user.user_id) {
-      fs.unlink(req.file.path, () => {});
-      return res.status(403).json({ success: false, message: "You can only upload proof for your own parcels." });
+    if (Number(parcel.seller_id) !== Number(req.user.user_id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only upload proof for your own parcels."
+      });
     }
 
+    if (
+      !process.env.CLOUDINARY_CLOUD_NAME ||
+      !process.env.CLOUDINARY_API_KEY ||
+      !process.env.CLOUDINARY_API_SECRET
+    ) {
+      throw new Error("Cloudinary environment variables are missing.");
+    }
+
+    const publicId = `video-${crypto.randomUUID()}`;
+
+    // Upload video buffer to Cloudinary
+    uploadedAsset = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: "video",
+          folder: "logisync/video-proofs",
+          public_id: publicId
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      );
+
+      stream.end(req.file.buffer);
+    });
+
+    // Save Cloudinary URL and public ID
     const [result] = await pool.query(
       `INSERT INTO video_proofs
-       (parcel_id, uploaded_by, file_name, file_path, file_size, mime_type)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+       (parcel_id, uploaded_by, file_name, file_path,
+        cloudinary_public_id, file_size, mime_type)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         parcel.parcel_id,
         req.user.user_id,
         req.file.originalname,
-        req.file.path,
+        uploadedAsset.secure_url,
+        uploadedAsset.public_id,
         req.file.size,
         req.file.mimetype
       ]
     );
 
     await pool.query(
-      "UPDATE parcels SET status = 'VIDEO_SUBMITTED', verification_status = 'PENDING', updated_at = NOW() WHERE parcel_id = ?",
+      `UPDATE parcels
+       SET status = 'VIDEO_SUBMITTED',
+           verification_status = 'PENDING',
+           updated_at = NOW()
+       WHERE parcel_id = ?`,
       [parcel.parcel_id]
     );
 
@@ -213,17 +260,39 @@ async function uploadVideo(req, res) {
       sellerId: parcel.seller_id
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Video proof uploaded successfully.",
-      video: { video_id: result.insertId, file_name: req.file.originalname, file_size: req.file.size, mime_type: req.file.mimetype }
+      video: {
+        video_id: result.insertId,
+        file_name: req.file.originalname,
+        file_size: req.file.size,
+        mime_type: req.file.mimetype
+      }
     });
+
   } catch (error) {
-    if (req.file?.path) fs.unlink(req.file.path, () => {});
-    console.error(error);
-    res.status(500).json({ success: false, message: "Video upload failed." });
+    // Remove uploaded Cloudinary asset if database saving fails
+    if (uploadedAsset?.public_id) {
+      try {
+        await cloudinary.uploader.destroy(
+          uploadedAsset.public_id,
+          { resource_type: "video" }
+        );
+      } catch (cleanupError) {
+        console.error("Cloudinary cleanup failed:", cleanupError);
+      }
+    }
+
+    console.error("Video upload error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Video upload failed."
+    });
   }
 }
+
 
 async function getCoordinatorParcel(req, res) {
   try {
