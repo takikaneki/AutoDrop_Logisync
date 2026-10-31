@@ -414,30 +414,59 @@ async function saveDecision(req, res, decision) {
   }
 }
 
+
 async function streamVideo(req, res) {
   try {
     const [rows] = await pool.query(
-      "SELECT file_path, file_name, mime_type FROM video_proofs WHERE video_id = ?",
+      `SELECT file_path, file_name, mime_type
+       FROM video_proofs
+       WHERE video_id = ?`,
       [req.params.videoId]
     );
 
-    if (!rows.length) return res.status(404).json({ success: false, message: "Video not found." });
-
-    const video = rows[0];
-    const filePath = path.resolve(video.file_path);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, message: "Video file is missing from storage." });
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found."
+      });
     }
 
-    res.setHeader("Content-Type", video.mime_type);
-    res.setHeader("Content-Disposition", `inline; filename="${path.basename(video.file_name)}"`);
-    fs.createReadStream(filePath).pipe(res);
+    const video = rows[0];
+
+    // Only allow redirects to Cloudinary HTTPS URLs
+    let videoUrl;
+
+    try {
+      videoUrl = new URL(video.file_path);
+    } catch (_) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid video storage URL."
+      });
+    }
+
+    if (
+      videoUrl.protocol !== "https:" ||
+      videoUrl.hostname !== "res.cloudinary.com"
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: "Video storage URL is invalid."
+      });
+    }
+
+    return res.redirect(302, videoUrl.toString());
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to load video." });
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load video."
+    });
   }
 }
+
 
 // GET /api/parcels  -> seller: sariling parcels lang | coordinator: lahat
 async function listParcels(req, res) {
