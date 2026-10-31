@@ -1,6 +1,7 @@
 // Isang lugar para sa lahat ng usapan sa Express backend.
 // Ang /api ay naka-proxy ng Vite papunta sa http://127.0.0.1:5000 (tingnan ang vite.config.js).
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
@@ -59,7 +60,7 @@ export async function api(path, { method = "GET", body, headers } = {}) {
 
   let res;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers: {
         ...(body ? { "Content-Type": "application/json" } : {}),
@@ -97,7 +98,7 @@ export function apiUpload(path, formData, onProgress) {
   const token = getToken();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `/api${path}`);
+    xhr.open("POST", `${API_BASE_URL}${path}`);
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
     xhr.upload.onprogress = (e) => {
@@ -129,7 +130,7 @@ export async function apiBlobUrl(path) {
   const token = getToken();
   let res;
   try {
-    res = await fetch(`/api${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    res = await fetch(`${API_BASE_URL}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   } catch {
     throw new Error(SERVER_DOWN);
   }
