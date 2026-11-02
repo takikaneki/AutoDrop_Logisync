@@ -3,17 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { api, saveSession, homePathForRole } from "../api.js";
 import TermsModal from "../components/TermsModal.jsx";
 import WelcomeIntro from "../components/auth/WelcomeIntro.jsx";
+import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 import { COPYRIGHT_OWNER, clearTermsRecord, getTermsRecord, saveTermsRecord } from "../data/terms.js";
 
-// Totoong larawan (photographs) ng logistics para sa background ng Sign-In. Credits: public/images/CREDITS.txt
+// Real SPX Express photographs for the Sign-In background.
 const BACKGROUNDS = [
-  "/images/warehouse-racks.jpg",
-  "/images/truck-highway.jpg",
-  "/images/parcel-loading.jpg",
-  "/images/container-terminal.jpg",
+  "/images/spx-trucks-fleet.jpg",
+  "/images/spx-warehouse-hub.jpg",
+  "/images/spx-truck-road.jpg",
+  "/images/spx-fleet-yard.jpg",
+  "/images/spx-riders-moto.jpg",
+  "/images/spx-rider-delivery.jpg",
+  "/images/spx-fleet-lineup.jpg",
+  ,
 ];
 
-// Full-screen photo background na dahan-dahang nagpapalit-palit, may dark overlay para malinaw ang puting form.
+// Full-screen expanded photo background with a subtle blur so the enlarged sign-in card stands out cleanly.
 function PhotoBackground() {
   const [active, setActive] = useState(0);
 
@@ -23,20 +28,19 @@ function PhotoBackground() {
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-slate-800" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-slate-900" aria-hidden="true">
       {BACKGROUNDS.map((src, i) => (
         <img
           key={src}
           src={src}
           alt=""
           draggable={false}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-[1600ms] ease-in-out ${
-            i === active ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 h-full w-full scale-[1.02] object-cover object-center blur-[3px] transition-opacity duration-[1400ms] ease-in-out ${i === active ? "opacity-100" : "opacity-0"
+            }`}
         />
       ))}
-      {/* Overlay: pinapadilim ang larawan para mabasa ang form */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/55 via-slate-900/45 to-slate-900/65" />
+      {/* Balanced dark overlay so the centered white sign-in form remains crisp and readable */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/55 via-slate-950/45 to-slate-950/65" />
     </div>
   );
 }
@@ -108,11 +112,23 @@ export default function Login() {
     <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-x-hidden p-4 sm:p-6">
       <PhotoBackground />
 
-      {/* Puting Sign-In form, naka-center */}
-      <main className="relative z-10 my-auto w-full max-w-[420px] animate-popup">
-        <div className="rounded-3xl bg-white px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-8 sm:py-9">
-          {/* Logo + title */}
-          <div className="mb-6 text-center">
+      {/* Horizontally Extended White Sign-In Form, Centered */}
+      <main className="relative z-10 my-auto w-full max-w-[540px] animate-popup sm:max-w-[600px]">
+        <div className="rounded-3xl bg-white px-6 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:px-11 sm:py-8">
+          {/* Top-left subtle back link to public website */}
+          <div className="mb-1 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowIntro(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-brand"
+            >
+              <i className="fa-solid fa-arrow-left text-[10px]" />
+              <span>Back to Home</span>
+            </button>
+          </div>
+
+          {/* Logo + title (restored to original size) */}
+          <div className="mb-5 text-center">
             <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-xl text-white">
               <i className="fa-solid fa-box" />
             </span>
@@ -137,7 +153,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@gmail.com"
-                  className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                 />
               </div>
             </div>
@@ -157,7 +173,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="min-w-0 flex-1 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                 />
                 <button
                   type="button"
@@ -242,12 +258,26 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Coordinator notice + Footer */}
+          {/* Coordinator notice + Restored SPX Express Branding + Footer */}
           <div className="mt-6 border-t border-slate-100 pt-4">
             <p className="mb-3 flex items-start gap-2 text-xs leading-snug text-slate-500">
               <i className="fa-solid fa-circle-info mt-0.5 shrink-0 text-sm text-brand" />
               <span>Seller and Rider accounts are created by the Coordinator. Ask them for access.</span>
             </p>
+
+            {/* Restored "Developed for: SPX Express" branding below the sign-in form */}
+            <div className="mb-3 flex items-center justify-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/90 px-4 py-2">
+              <span className="text-xs font-semibold tracking-wide text-slate-500">
+                Developed for:
+              </span>
+              <img
+                src={SPX_LOGO_DATA_URL}
+                alt="SPX Express"
+                draggable={false}
+                className="h-7 w-auto rounded-md object-contain shadow-sm"
+              />
+            </div>
+
             <footer className="text-center text-[11px] font-medium text-slate-400">
               © 2026 {COPYRIGHT_OWNER}. All rights reserved.
             </footer>
