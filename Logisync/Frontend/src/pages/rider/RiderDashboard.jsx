@@ -37,14 +37,15 @@ export default function RiderDashboard() {
         <StatCard label="Failed Delivery" value={stats.failed} icon="fa-triangle-exclamation" tone="red" to="/rider/deliveries?tab=failed" />
       </StatGrid>
 
-      <section className={`${panel} mb-7 overflow-hidden p-[30px] max-[600px]:p-5`}>
+      <section className={`${panel} mb-7 overflow-hidden p-[30px] max-[600px]:p-4`}>
         <PanelTitle icon="fa-box-open">Assigned Parcels</PanelTitle>
         <p className="-mt-3 mb-4 text-[13px] text-[#999]">Parcels the coordinator assigned to you. Scan each parcel's QR code to start its delivery.</p>
         {assigned.length === 0 ? (
           <EmptyState icon="fa-box-open" title="No assigned parcels" text="New parcels from the coordinator will show up here." />
         ) : (
           <>
-            <div className="overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            {/* Desktop & Tablet Table */}
+            <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
               <table className="w-full min-w-[720px] border-collapse">
                 <thead className="bg-[#fafafa] dark:bg-night-head">
                   <tr>{["Parcel", "Receiver", "Address", "Seller", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr>
@@ -69,6 +70,32 @@ export default function RiderDashboard() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile Card List */}
+            <div className="min-[701px]:hidden space-y-3">
+              {rows.map((p) => (
+                <article key={p.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{p.parcel_id}</strong>
+                      <span className="block text-[12px] text-[#888]">{p.contents}</span>
+                    </div>
+                    <Link
+                      to={`/rider/scan?expect=${encodeURIComponent(p.parcel_id)}`}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12.5px] font-bold text-white"
+                    >
+                      <i className="fa-solid fa-qrcode" /> Scan QR
+                    </Link>
+                  </div>
+                  <div className="mt-3 space-y-1 text-[13px] text-[#555] dark:text-[#d1c9c2]">
+                    <p><i className="fa-regular fa-user mr-1.5 text-[#999]" /><strong className="text-[#333] dark:text-[#f1eeeb]">{p.receiver}</strong></p>
+                    <p className="flex items-start gap-1.5 text-[12.5px]"><i className="fa-solid fa-location-dot mt-0.5 text-brand" /><span>{p.address}</span></p>
+                    <p className="text-[12px] text-[#999]">Seller: {p.seller}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+
             <Pagination page={safePage} pageSize={PAGE_SIZE} total={assigned.length} onPage={setPage} />
           </>
         )}

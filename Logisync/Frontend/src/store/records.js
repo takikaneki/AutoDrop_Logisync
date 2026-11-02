@@ -6,6 +6,10 @@ export const useParcels = parcelStore.use;
 export const getParcels = parcelStore.get;
 export const assignRider = (id, rider) =>
   parcelStore.set((l) => l.map((p) => (p.id === id ? { ...p, rider } : p)));
+export const updateParcelRecord = (idOrTxn, patch) =>
+  parcelStore.set((l) =>
+    l.map((p) => (String(p.id) === String(idOrTxn) ? { ...p, ...(typeof patch === "function" ? patch(p) : patch) } : p))
+  );
 
 const sellerStore = createStore(sellers);
 export const useSellers = sellerStore.use;

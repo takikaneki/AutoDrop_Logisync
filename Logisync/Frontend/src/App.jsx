@@ -4,7 +4,6 @@ import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Parcels from "./pages/Parcels.jsx";
 import ParcelDetails from "./pages/ParcelDetails.jsx";
-import Reports from "./pages/Reports.jsx";
 import Verification from "./pages/Verification.jsx";
 import Riders from "./pages/Riders.jsx";
 import Sellers from "./pages/Sellers.jsx";
@@ -25,7 +24,6 @@ import CreateParcel from "./pages/seller/CreateParcel.jsx";
 import RiderDashboard from "./pages/rider/RiderDashboard.jsx";
 import RiderScan from "./pages/rider/RiderScan.jsx";
 import RiderDeliveries from "./pages/rider/RiderDeliveries.jsx";
-import RiderReports from "./pages/rider/RiderReports.jsx";
 import RiderParcels from "./pages/rider/RiderParcels.jsx";
 import PortalNotifications from "./pages/shared/PortalNotifications.jsx";
 import PortalComplaints from "./pages/shared/PortalComplaints.jsx";
@@ -72,6 +70,7 @@ export default function App() {
         <Route path="/seller" element={<DashboardLayout role="seller" />}>
           <Route index element={<SellerDashboard />} />
           <Route path="parcels" element={<ParcelRecords />} />
+          <Route path="reports" element={<Navigate to="/seller/parcels?report=1" replace />} />
           <Route path="create" element={<CreateParcel />} />
           <Route path="scan" element={<ScanUpload />} />
           <Route path="activity" element={<ActivityPage />} />
@@ -96,7 +95,7 @@ export default function App() {
           <Route path="pending" element={<Navigate to="/rider/deliveries" replace />} />
           <Route path="delivered" element={<Navigate to="/rider/deliveries?tab=delivered" replace />} />
           <Route path="failed" element={<Navigate to="/rider/deliveries?tab=failed" replace />} />
-          <Route path="reports" element={<RiderReports />} />
+          <Route path="reports" element={<Navigate to="/rider/parcels?report=1" replace />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="announcements" element={<Navigate to="/rider/notifications" replace />} />
           <Route path="messages" element={<MessagesPage />} />
@@ -114,7 +113,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/parcels" element={<Parcels />} />
           <Route path="/parcels/:id" element={<ParcelDetails />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports" element={<Navigate to="/parcels?report=1" replace />} />
           <Route path="/verification" element={<Verification />} />
           <Route path="/riders" element={<Riders />} />
           <Route path="/sellers" element={<Sellers />} />

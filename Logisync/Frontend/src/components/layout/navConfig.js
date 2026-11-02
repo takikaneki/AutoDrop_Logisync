@@ -40,7 +40,6 @@ export const NAV = {
         { path: "scan", label: "Scan QR Code", icon: "fa-qrcode" },
         { path: "parcels", label: "My Parcels", icon: "fa-boxes-stacked" },
         { path: "deliveries", label: "Deliveries", icon: "fa-truck-fast" },
-        { path: "reports", label: "My Reports", icon: "fa-file-lines" },
       ],
     },
     {

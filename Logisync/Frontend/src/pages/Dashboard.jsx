@@ -11,6 +11,8 @@ import { inputCls } from "../components/styles.js";
 import { listParcels } from "../services/parcelService.js";
 import { parcelStats } from "../utils/stats.js";
 import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
+import { getParcelStatus } from "../utils/parcelStatus.js";
+import { formatDate } from "../utils/format.js";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-5";
 const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Flagged: "#d94747" };
@@ -18,9 +20,7 @@ const PERIODS = [["day", "By Day"], ["week", "By Week"], ["month", "By Month"]];
 const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", month: "Parcels per month" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
 
-// Pagkakasunod: 1) Summary cards  2) Verification + Recent Parcels  3) Analytics  4) Recent activity (nasa pinakababa)
 export default function Dashboard() {
-  // ---- 1. Summary cards: totoong bilang mula sa backend (GET /api/parcels = lahat ng parcel)
   const [real, setReal] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   useEffect(() => {
@@ -30,30 +30,44 @@ export default function Dashboard() {
   const v = (n) => (loadingStats ? "…" : n);
   const countStatus = (s) => real.filter((p) => p.status === s).length;
 
-  // ---- 2. Analytics: totoong parcels din (parehong data ng summary cards)
   const [period, setPeriod] = useState("day");
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = linggong ito (para sa By Day)
+  const [weekOffset, setWeekOffset] = useState(0);
   const changePeriod = (p) => { setPeriod(p); setWeekOffset(0); };
 
   const series = useMemo(() => buildParcelSeries(real, period, weekOffset), [real, period, weekOffset]);
   const pie = useMemo(() => statusTotals(real), [real]);
 
+  const recentRows = useMemo(() => {
+    if (real.length > 0) {
+      return real.slice(0, 6).map((p) => ({
+        id: p.transaction_number || p.parcel_id,
+        parcelId: p.parcel_id,
+        seller: p.seller_name || p.seller || "Seller",
+        status: p.returnToHub ? "Return to Hub" : p.rescheduled ? "Rescheduled" : getParcelStatus(p),
+        verification:
+          p.verification_status ||
+          (p.status === "REJECTED" ? "Flagged" : ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB"].includes(p.status) ? "Verified" : "Pending"),
+        date: formatDate(p.created_at),
+      }));
+    }
+    return recentParcels.slice(0, 6);
+  }, [real]);
+
   return (
     <>
       <Topbar title="Dashboard" />
 
-      {/* 1. SUMMARY CARDS (shortcuts sa itaas-kanan) */}
+      {/* 1. SUMMARY CARDS */}
       <DashboardShortcuts role="coordinator" />
       <StatGrid>
         <StatCard label="Total Parcels" value={v(stats.total)} icon="fa-box" tone="orange" to="/parcels" />
         <StatCard label="Needs Verification" value={v(stats.flagged)} icon="fa-hourglass-half" tone="blue" to="/verification?status=VIDEO_SUBMITTED" />
         <StatCard label="Verified Parcels" value={v(stats.pending)} icon="fa-circle-check" tone="green" to="/verification?status=VERIFIED" />
-        <StatCard label="Failed Deliveries" value={v(stats.delivered)} icon="fa-triangle-exclamation" tone="red" to="/parcels?status=Failed%20Delivery" />
+        <StatCard label="Failed / Return to Hub" value={v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length || stats.delivered)} icon="fa-warehouse" tone="red" to="/parcels?status=Failed%20Delivery" />
       </StatGrid>
 
       {/* 2. VERIFICATION + RECENT PARCELS */}
       <section className="mb-7 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[1200px]:grid-cols-1">
-        {/* VERIFICATION NEEDED (totoong bilang mula sa backend) */}
         <div className={`${panel} flex flex-col`}>
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-[19px] font-bold"><i className="fa-regular fa-bell mr-2 text-orange-500" />Verification Needed</h2>
@@ -70,7 +84,7 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-1 flex-col">
             {[
-              ["fa-triangle-exclamation", "Flagged for Review", stats.flagged],
+              ["fa-triangle-exclamation", "Flagged / Return to Hub", stats.flagged],
               ["fa-circle-play", "Awaiting Seller Video", countStatus("WAITING_FOR_VIDEO")],
             ].map(([icon, label, n]) => (
               <div key={label} className="flex flex-1 items-center justify-between border-b border-[#edf0f4] py-4 text-[16px] text-[#52627a] last:border-b-0 dark:border-night-line dark:text-[#d1c9c2]">
@@ -97,11 +111,13 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentParcels.slice(0, 6).map((p) => {
+                {recentRows.map((p) => {
                   const cell = "px-5 py-4 border-b border-[#edf0f4] dark:border-night-line";
                   return (
                     <tr key={p.id} className="text-sm text-[#52627a] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                      <td className={`${cell} whitespace-nowrap font-semibold text-[#27364f] dark:text-[#f1eeeb]`}>{p.id}</td>
+                      <td className={`${cell} whitespace-nowrap font-semibold text-[#27364f] dark:text-[#f1eeeb]`}>
+                        {p.parcelId ? <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="text-brand hover:underline">{p.id}</Link> : p.id}
+                      </td>
                       <td className={`${cell} whitespace-nowrap`}>{p.seller}</td>
                       <td className={cell}><StatusBadge status={p.status} /></td>
                       <td className={cell}><StatusBadge status={p.verification} /></td>
@@ -172,7 +188,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* 4. RECENT ACTIVITY (pinakababa) */}
+      {/* 4. RECENT ACTIVITY */}
       <div className="mt-6"><RecentActivity to="/audit" /></div>
     </>
   );

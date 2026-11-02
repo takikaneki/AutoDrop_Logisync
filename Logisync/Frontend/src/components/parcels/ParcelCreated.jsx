@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import StatusBadge from "../StatusBadge.jsx";
 import { DetailList, Notice } from "../portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
+import { getParcelAddress } from "../../store/customers.js";
 
 // Ipinapakita pagkatapos matagumpay na ma-register ang parcel.
-// Lahat ng laman ay galing sa sagot ng backend.
+// Lahat ng laman ay galing sa sagot ng backend (+ saved address).
 export default function ParcelCreated({ parcel, onReset }) {
   const [copied, setCopied] = useState(false);
+  const address = getParcelAddress(parcel);
 
   const copyId = async () => {
     try {
@@ -37,6 +39,7 @@ export default function ParcelCreated({ parcel, onReset }) {
         rows={[
           ["Transaction number", parcel.transaction_number],
           ["Receiver", parcel.receiver_name],
+          ["Address", address],
           ["Contact", parcel.receiver_contact],
           ["Contents", parcel.contents],
         ]}

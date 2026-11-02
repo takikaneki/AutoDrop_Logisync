@@ -19,7 +19,6 @@ const groups = [
     title: "Operations",
     links: [
       { to: "/parcels", icon: "fa-box-open", label: "Parcel Records" },
-      { to: "/reports", icon: "fa-file-lines", label: "Reports" },
       { to: "/verification", icon: "fa-circle-check", label: "Verification" },
       { to: "/riders", icon: "fa-motorcycle", label: "Riders" },
       { to: "/sellers", icon: "fa-store", label: "Sellers" },
@@ -36,7 +35,13 @@ const groups = [
   },
 ];
 
-export default function Sidebar({ collapsed }) {
+const infoLinks = [
+  { to: "/about", icon: "fa-circle-info", label: "About Us" },
+  { to: "/contact", icon: "fa-envelope", label: "Contact" },
+  { to: "/help", icon: "fa-circle-question", label: "Help" },
+];
+
+export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
   const t = useT();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [unreadConversations, setUnreadConversations] = useState(0);
@@ -48,7 +53,6 @@ export default function Sidebar({ collapsed }) {
       try {
         const messages = await listMessages();
         if (!mounted) return;
-        // Count each conversation once if it contains unread incoming messages.
         const senders = new Set(
           messages
             .filter((m) => Number(m.receiver_id) === currentUserId && !m.is_read)
@@ -70,7 +74,7 @@ export default function Sidebar({ collapsed }) {
 
   const navClass = ({ isActive }) =>
     `relative flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] transition ${
-      collapsed ? "justify-center px-0" : "px-3.5"
+      collapsed ? "min-[801px]:justify-center min-[801px]:px-0 max-[800px]:px-3.5" : "px-3.5"
     } ${
       isActive
         ? "bg-brand-soft text-brand font-semibold dark:bg-night-line"
@@ -79,29 +83,52 @@ export default function Sidebar({ collapsed }) {
 
   return (
     <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 top-16 z-30 bg-black/40 backdrop-blur-[1px] min-[801px]:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
       <aside
-        className={`fixed left-0 top-16 h-[calc(100vh-64px)] flex flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width] duration-200 print:hidden dark:bg-night-panel dark:border-night-line ${
-          collapsed ? "w-[78px] px-2.5" : "w-[250px] px-[18px]"
-        }`}
+        className={`fixed left-0 top-16 h-[calc(100vh-64px)] max-[800px]:h-[calc(100vh-128px)] flex flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line max-[800px]:w-[270px] max-[800px]:px-[18px] max-[800px]:shadow-2xl ${
+          collapsed ? "min-[801px]:w-[78px] min-[801px]:px-2.5" : "min-[801px]:w-[250px] min-[801px]:px-[18px]"
+        } ${mobileOpen ? "max-[800px]:translate-x-0" : "max-[800px]:-translate-x-full"}`}
       >
+        <div className="mb-3 flex items-center justify-between border-b border-[#f1f1f1] px-2 pb-3 min-[801px]:hidden dark:border-night-line">
+          <span className="text-[12px] font-bold uppercase tracking-wider text-brand">Coordinator Menu</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
+          >
+            <i className="fa-solid fa-xmark text-xs" />
+          </button>
+        </div>
+
         <nav className="flex flex-col gap-0.5">
           {groups.map((g) => (
             <div key={g.title} className="mb-2">
               {collapsed ? (
-                <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line first:hidden" />
+                <>
+                  <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line first:hidden max-[800px]:hidden" />
+                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[801px]:hidden">{t(g.title)}</p>
+                </>
               ) : (
                 <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">{t(g.title)}</p>
               )}
               {g.links.map((l) => {
                 const count = l.badge ? badges[l.badge] : l.to === "/messages" ? unreadConversations : 0;
                 return (
-                  <NavLink key={l.to} to={l.to} className={navClass} title={t(l.label)}>
+                  <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
                     <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                    {!collapsed && <span className="flex-1">{t(l.label)}</span>}
+                    <span className={`flex-1 ${collapsed ? "min-[801px]:hidden" : ""}`}>{t(l.label)}</span>
                     {count > 0 && (
                       <span
                         className={`min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[11px] font-bold flex items-center justify-center ${
-                          collapsed ? "absolute top-1 right-2" : ""
+                          collapsed ? "min-[801px]:absolute min-[801px]:top-1 min-[801px]:right-2" : ""
                         }`}
                       >
                         {count}
@@ -112,23 +139,39 @@ export default function Sidebar({ collapsed }) {
               })}
             </div>
           ))}
+
+          {/* Mobile-only Info Links (hidden from top header on small screens) */}
+          <div className="mb-2 min-[901px]:hidden">
+            <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
+              {t("Quick Links")}
+            </p>
+            {infoLinks.map((l) => (
+              <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
+                <i className={`fa-solid ${l.icon} w-5 text-center`} />
+                <span className={`flex-1 ${collapsed ? "min-[801px]:hidden" : ""}`}>{t(l.label)}</span>
+              </NavLink>
+            ))}
+          </div>
         </nav>
 
         {/* Pinakababa: Settings at Logout */}
         <div className="mt-auto pt-3 border-t border-[#eee] dark:border-night-line">
-          <NavLink to="/settings" className={navClass} title={t("Settings")}>
+          <NavLink to="/settings" onClick={onClose} className={navClass} title={t("Settings")}>
             <i className="fa-solid fa-gear w-5 text-center" />
-            {!collapsed && <span>{t("Settings")}</span>}
+            <span className={collapsed ? "min-[801px]:hidden" : ""}>{t("Settings")}</span>
           </NavLink>
           <button
-            onClick={() => setLogoutOpen(true)}
+            onClick={() => {
+              onClose?.();
+              setLogoutOpen(true);
+            }}
             title={t("Logout")}
             className={`w-full flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line ${
-              collapsed ? "justify-center px-0" : "px-3.5"
+              collapsed ? "min-[801px]:justify-center min-[801px]:px-0 max-[800px]:px-3.5" : "px-3.5"
             }`}
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            {!collapsed && <span>{t("Logout")}</span>}
+            <span className={collapsed ? "min-[801px]:hidden" : ""}>{t("Logout")}</span>
           </button>
         </div>
       </aside>

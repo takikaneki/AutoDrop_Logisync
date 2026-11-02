@@ -93,7 +93,11 @@ export const markRead = (id) => store.set((l) => l.map((n) => (n.id === id ? { .
 export const markAllRead = () => store.set((l) => l.map((n) => ({ ...n, read: true })));
 
 export function addNotification(n) {
-  store.set((l) => [{ id: `n${Date.now()}`, read: true, ts: Date.now(), ...n }, ...l]);
+  store.set((l) => {
+    const id = n.id || `n${Date.now()}`;
+    if (n.id && l.some((x) => x.id === n.id)) return l;
+    return [{ id, read: false, ts: Date.now(), ...n }, ...l];
+  });
 }
 
 export function timeAgo(ts) {

@@ -6,29 +6,28 @@ import StatusBadge from "../../components/StatusBadge.jsx";
 import { DetailList, Notice, PanelTitle, Steps } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../../components/styles.js";
 import { findParcel, getSellerParcel, uploadVideo } from "../../services/parcelService.js";
-import { formatDate, formatSize } from "../../utils/format.js";
+import { formatDate, formatDay, formatSize } from "../../utils/format.js";
 
-// Dapat tugma sa backend (middleware/upload.js): mp4, webm, quicktime, avi, mpeg at MAX_VIDEO_SIZE_MB (default 50).
 const MAX_MB = 50;
 const ALLOWED = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"];
 const UPLOADABLE = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
 
-// Progress ng parcel, galing lang sa totoong status/petsa na ibinalik ng backend
 function buildSteps({ parcel, videos = [], verification_records: records = [] }) {
   const s = parcel.status;
-  const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "VERIFIED", "REJECTED"].includes(s);
+  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
+  const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
   const decision = records[0];
-  const decided = ["VERIFIED", "REJECTED", "REUPLOAD_REQUESTED"].includes(s);
+  const decided = ["REJECTED", "REUPLOAD_REQUESTED"].includes(s) || isPostVerify;
 
-  const last = decided
-    ? s === "VERIFIED"
+  const verifyStep = decided
+    ? isPostVerify
       ? { label: "Verified", state: "done" }
       : s === "REJECTED"
-        ? { label: "Rejected", state: "fail" }
-        : { label: "Reupload requested", state: "fail" }
+      ? { label: "Rejected", state: "fail" }
+      : { label: "Reupload requested", state: "fail" }
     : { label: "Decision", state: "todo" };
 
-  return [
+  const steps = [
     { label: "Parcel registered", note: formatDate(parcel.created_at), state: "done" },
     {
       label: s === "REUPLOAD_REQUESTED" ? "New video needed" : "Video proof uploaded",
@@ -40,13 +39,35 @@ function buildSteps({ parcel, videos = [], verification_records: records = [] })
       note: s === "VIDEO_SUBMITTED" ? "In progress" : decided ? "Reviewed" : "",
       state: s === "VIDEO_SUBMITTED" ? "current" : decided ? "done" : "todo",
     },
-    { ...last, note: decided && decision ? formatDate(decision.verified_at) : "" },
+    { ...verifyStep, note: decided && decision ? formatDate(decision.verified_at) : "" },
   ];
+
+  if (isPostVerify && s !== "VERIFIED") {
+    if (s === "DELIVERED") {
+      steps.push({ label: "Delivered to customer", note: "Completed", state: "done" });
+    } else if (s === "RETURN_TO_HUB") {
+      steps.push({
+        label: parcel.returnCoordinated ? "Return to Hub · Coordinated to Seller" : "Return to Hub (3-Day Limit Reached)",
+        note: parcel.lastFailure || "Undelivered after 3 rescheduled days",
+        state: "fail",
+      });
+    } else if (s === "RESCHEDULED") {
+      steps.push({
+        label: `Rescheduled (Day ${parcel.rescheduleCount || 1} of ${parcel.maxReschedules || 3})`,
+        note: parcel.scheduledFor ? `Next delivery: ${formatDay(parcel.scheduledFor)}` : "",
+        state: "current",
+      });
+    } else if (s === "OUT_FOR_DELIVERY") {
+      steps.push({ label: "Out for Delivery", note: parcel.scheduledFor ? formatDay(parcel.scheduledFor) : "", state: "current" });
+    }
+  }
+
+  return steps;
 }
 
 export default function ScanUpload() {
   const [params, setParams] = useSearchParams();
-  const [data, setData] = useState(null); // { parcel, videos, verification_records }
+  const [data, setData] = useState(null);
   const [looking, setLooking] = useState(false);
   const [lookupError, setLookupError] = useState("");
 
@@ -64,7 +85,6 @@ export default function ScanUpload() {
     setLookupError("");
     setSuccess("");
     try {
-      // Backend ang nagsisiguro na sa seller mismo ang parcel (404 kung hindi)
       setData(await findParcel(value, "seller"));
     } catch (err) {
       setData(null);
@@ -74,13 +94,11 @@ export default function ScanUpload() {
     }
   };
 
-  // Galing sa Parcel Records / Dashboard: /seller/scan?txn=...
   useEffect(() => {
     const txn = params.get("txn");
     if (txn) lookup(txn);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Linisin ang preview URL
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl]);
 
   const clearFile = () => {
@@ -118,7 +136,7 @@ export default function ScanUpload() {
     try {
       await uploadVideo(data.parcel.parcel_id, file, setProgress);
       clearFile();
-      setData(await getSellerParcel(data.parcel.parcel_id)); // i-refresh ang status mula sa backend
+      setData(await getSellerParcel(data.parcel.parcel_id));
       setSuccess("Video uploaded. Your parcel is now waiting for coordinator verification.");
     } catch (err) {
       setUploadError(err.message);
@@ -175,8 +193,19 @@ export default function ScanUpload() {
                 rows={[
                   ["Transaction number", parcel.transaction_number],
                   ["Receiver", parcel.receiver_name],
+                  ["Address", parcel.receiver_address],
                   ["Contact", parcel.receiver_contact],
                   ["Contents", parcel.contents],
+                  ...(parcel.scheduledFor && !parcel.returnToHub
+                    ? [
+                        [
+                          "Scheduled delivery date",
+                          `${formatDay(parcel.scheduledFor)}${
+                            parcel.rescheduled ? ` (Reschedule Day ${parcel.rescheduleCount || 1} of ${parcel.maxReschedules || 3})` : ""
+                          }`,
+                        ],
+                      ]
+                    : []),
                   ["Created", formatDate(parcel.created_at)],
                   ["Last updated", formatDate(parcel.updated_at)],
                 ]}
@@ -184,6 +213,64 @@ export default function ScanUpload() {
             </section>
 
             {success && <Notice tone="success" icon="fa-circle-check" role="status">{success}</Notice>}
+
+            {parcel.returnToHub && (
+              <Notice tone="error" icon="fa-warehouse">
+                <strong className="block">
+                  Return to Hub — Reached 3-Day Rescheduling Limit
+                </strong>
+                <p className="mt-1">
+                  This parcel remained undelivered after the maximum 3-day rescheduling period ({parcel.lastFailure || "undelivered"}).{" "}
+                  {parcel.returnCoordinated
+                    ? `The coordinator has coordinated returning this parcel to you.${parcel.returnNote ? ` Note: "${parcel.returnNote}"` : ""}`
+                    : "The coordinator has been notified to coordinate its return from the hub to you."}
+                </p>
+              </Notice>
+            )}
+
+            {parcel.rescheduled && !parcel.returnToHub && (
+              <Notice tone="warn" icon="fa-calendar-day">
+                <strong className="block">
+                  Delivery Rescheduled (Day {parcel.rescheduleCount || 1} of {parcel.maxReschedules || 3})
+                </strong>
+                <p className="mt-1">
+                  Latest rescheduled delivery date: <strong>{formatDay(parcel.scheduledFor)}</strong>.{" "}
+                  {parcel.lastFailure ? `Last attempt failed: ${parcel.lastFailure}.` : ""}
+                </p>
+              </Notice>
+            )}
+
+            {Array.isArray(parcel.attempts) && parcel.attempts.length > 0 && (
+              <section className={`${panel} p-[24px] max-[600px]:p-4`}>
+                <PanelTitle icon="fa-clock-rotate-left">Delivery Attempts & Reschedule History</PanelTitle>
+                <ol className="space-y-3 border-l-2 border-[#e5e8ee] pl-4 text-[13px] dark:border-night-line">
+                  {parcel.attempts.map((att, i) => (
+                    <li key={att.id || i}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <strong className="text-[#27364f] dark:text-[#f1eeeb]">
+                          Attempt #{att.attempt || i + 1} · {formatDay(att.scheduledDate)}
+                        </strong>
+                        {att.outcome === "return_to_hub" ? (
+                          <span className="rounded-full bg-[#f2ecff] px-2.5 py-0.5 text-[11px] font-bold text-[#7c3aed]">
+                            Marked Return to Hub
+                          </span>
+                        ) : att.outcome === "delivered" ? (
+                          <span className="rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-bold text-[#29945a]">
+                            Delivered
+                          </span>
+                        ) : att.rescheduledTo ? (
+                          <span className="rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[11px] font-bold text-[#c98200]">
+                            Rescheduled → {formatDay(att.rescheduledTo)} (Day {att.rescheduleDay || 1}/3)
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 font-medium text-[#d94747]">Reason: {att.reason}</p>
+                      {att.note && <p className="mt-0.5 text-[12px] text-[#888]">{att.note}</p>}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
 
             {latestRemark && ["REUPLOAD_REQUESTED", "REJECTED"].includes(parcel.status) && (
               <Notice tone="warn" icon="fa-comment-dots">

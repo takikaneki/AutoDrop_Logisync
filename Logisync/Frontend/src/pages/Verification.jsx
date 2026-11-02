@@ -12,20 +12,16 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { formatDate, formatSize } from "../utils/format.js";
 import { statusInfo } from "../utils/parcelStatus.js";
+import { getParcelAddress } from "../store/customers.js";
 
 const PAGE_SIZE = 8;
 const FILTERS = ["VIDEO_SUBMITTED", "ALL", "VERIFIED", "REUPLOAD_REQUESTED", "REJECTED", "WAITING_FOR_VIDEO"];
 
-// Verification ng coordinator. Lahat ay galing sa totoong backend:
-//   listahan: GET /api/parcels | hanapin: GET /api/parcels/by-transaction/:txn
-//   detalye: GET /api/parcels/coordinator/:id | video: GET /api/parcels/videos/:videoId
-//   desisyon: POST /api/parcels/coordinator/:id/(verify | reject | request-reupload)
 export default function Verification() {
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [params] = useSearchParams();
-  // Galing sa Dashboard card, hal. /verification?status=VERIFIED (kapag mali ang value, default na VIDEO_SUBMITTED)
   const urlStatus = params.get("status");
   const initialFilter = FILTERS.includes(urlStatus) ? urlStatus : "VIDEO_SUBMITTED";
 
@@ -33,12 +29,12 @@ export default function Verification() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const [scanOpen, setScanOpen] = useState(params.get("scan") === "1"); // galing sa Scan Parcel shortcut ng dashboard
+  const [scanOpen, setScanOpen] = useState(params.get("scan") === "1");
   const [looking, setLooking] = useState(false);
   const [lookupError, setLookupError] = useState("");
 
   const [open, setOpen] = useState(false);
-  const [detail, setDetail] = useState(null); // { parcel, videos, verification_records }
+  const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
 
@@ -83,7 +79,6 @@ export default function Verification() {
   useEffect(() => setPage(1), [filter, search]);
   const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // ---- video: kunin bilang blob (may token) at linisin ang lumang URL
   const releaseVideo = () => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     urlRef.current = "";
@@ -189,7 +184,7 @@ export default function Verification() {
       </Topbar>
 
       {scanOpen && (
-        <section className={`${panel} p-6 mb-6`}>
+        <section className={`${panel} p-6 max-[600px]:p-4 mb-6`}>
           <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" inputClass="focus:ring-brand/20" />
           {lookupError && <p role="alert" className="mt-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm text-[#d94a4a]">{lookupError}</p>}
         </section>
@@ -201,23 +196,29 @@ export default function Verification() {
         ))}
       </StatGrid>
 
-      <section className={`${panel} p-6`}>
-        <div className="mb-4 flex flex-wrap gap-3">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parcel ID, transaction no., seller, receiver" aria-label="Search" className={`${inputCls} !w-auto min-w-[260px] flex-1`} />
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Status filter" className={`${inputCls} !w-[210px]`}>
+      <section className={`${panel} p-6 max-[600px]:p-4`}>
+        <div className="mb-4 grid grid-cols-[1fr_210px] gap-3 max-[640px]:grid-cols-1">
+          <div className="relative">
+            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parcel ID, transaction no., seller, receiver..." aria-label="Search" className={`${inputCls} pl-9`} />
+          </div>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Status filter" className={inputCls}>
             {FILTERS.map((f) => <option key={f} value={f}>{f === "ALL" ? "All statuses" : statusInfo(f).label}</option>)}
           </select>
         </div>
 
         {error && <p role="alert" className="mb-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm text-[#d94a4a]">{error} <button onClick={load} className="font-semibold underline">Try again</button></p>}
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead><tr>{["Parcel ID", "Transaction no.", "Seller", "Receiver", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}</tr></thead>
+        {/* Desktop & Tablet Table */}
+        <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+          <table className="w-full min-w-[720px] border-collapse">
+            <thead className="bg-[#fafafa] dark:bg-night-head">
+              <tr>{["Parcel ID", "Transaction no.", "Seller", "Receiver", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+            </thead>
             <tbody>
               {loading && <tr><td colSpan={7} className={`${td} text-center text-[#999]`}>Loading…</td></tr>}
               {!loading && visible.map((r) => (
-                <tr key={r.parcel_id}>
+                <tr key={r.parcel_id} className="hover:bg-[#fffaf7] dark:hover:bg-night-head">
                   <td className={`${td} font-mono text-[13px]`}>{r.parcel_id}</td>
                   <td className={td}>{r.transaction_number || "—"}</td>
                   <td className={td}>{r.seller_name}</td>
@@ -230,6 +231,35 @@ export default function Verification() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Cards */}
+        <div className="min-[701px]:hidden space-y-3">
+          {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
+          {!loading && visible.map((r) => (
+            <article key={r.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="block font-mono text-[11px] text-[#999]">{r.parcel_id}</span>
+                  <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    #{r.transaction_number || r.parcel_id}
+                  </strong>
+                </div>
+                <StatusBadge status={r.status} />
+              </div>
+              <div className="mt-3 space-y-1 text-[13px] text-[#555] dark:text-[#d1c9c2]">
+                <p>Seller: <strong className="text-[#333] dark:text-[#f1eeeb]">{r.seller_name}</strong></p>
+                <p>Receiver: <strong className="text-[#333] dark:text-[#f1eeeb]">{r.receiver_name}</strong></p>
+              </div>
+              <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
+                <span className="text-[#999]">{formatDate(r.updated_at)}</span>
+                <button onClick={() => review(r)} className="rounded-lg bg-brand px-3.5 py-1.5 text-[12.5px] font-bold text-white">
+                  Review
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+
         {!loading && rows.length === 0 && (
           <EmptyState icon="fa-clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
         )}
@@ -237,7 +267,7 @@ export default function Verification() {
       </section>
 
       {/* WORKSPACE */}
-      <Modal open={open} onClose={close} className="w-full max-w-[860px] max-h-[92vh] overflow-y-auto p-7 dark:bg-night-panel">
+      <Modal open={open} onClose={close} className="w-full max-w-[860px] max-h-[92vh] overflow-y-auto p-7 max-[600px]:p-5 dark:bg-night-panel">
         <button onClick={close} aria-label="Close" className="absolute top-[15px] right-[17px] w-8 h-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] text-[21px] leading-none dark:bg-night-head">×</button>
 
         {detailLoading && <p className="py-16 text-center text-[#999]">Loading parcel…</p>}
@@ -255,11 +285,12 @@ export default function Verification() {
                 ["Transaction number", p.transaction_number],
                 ["Seller", `${p.seller_name} (${p.seller_email})`],
                 ["Receiver", p.receiver_name],
+                ["Receiver address", getParcelAddress(p)],
                 ["Receiver contact", p.receiver_contact],
                 ["Contents", p.contents],
                 ["Created", formatDate(p.created_at)],
               ].map(([k, v]) => (
-                <div key={k}><dt className="text-[12px] uppercase text-[#999]">{k}</dt><dd className="break-all font-medium">{v || "—"}</dd></div>
+                <div key={k}><dt className="text-[12px] uppercase text-[#999]">{k}</dt><dd className="break-words font-medium">{v || "—"}</dd></div>
               ))}
             </dl>
 

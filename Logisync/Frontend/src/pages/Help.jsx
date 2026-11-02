@@ -6,7 +6,7 @@ import { panel } from "../components/styles.js";
 const faqs = [
   ["How do I verify a parcel?", "Open Verification, press the scan button on a parcel, review the seller's video and details, then choose Verify, Return to Seller or Flag."],
   ["How do I send an announcement?", "Click the megaphone icon at the top of any page, write the message, choose Riders and/or Sellers, then press Send Alert. Past announcements are listed under Announcements."],
-  ["How do I generate a report?", "Go to Reports, choose the filters (status, seller, rider, dates) and press Generate Report. You can then export a CSV for Excel or save it as a PDF."],
+  ["How do I generate a report?", "Open Parcel Records and click Generate Report in the upper-right corner. You can view the report details immediately, filter by status, seller, rider, or dates, and export as CSV or save as PDF."],
   ["How do I reassign a rider?", "Open a parcel from Parcels. If it is still In Transit, press Reassign, pick another rider and confirm."],
   ["Where can I see who changed what?", "The Audit Log lists verifications, reassignments, approvals, announcements and other actions."],
   ["How do I change my photo or password?", "Open Settings from the menu under your name, then use the Profile or Password tab."],

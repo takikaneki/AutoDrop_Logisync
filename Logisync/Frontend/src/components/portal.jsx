@@ -16,26 +16,41 @@ const tones = {
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).
 export function StatCard({ label, value, icon, tone = "orange", to }) {
   const body = (
-    <div className={`${panel} flex h-full min-h-[132px] items-center gap-4 !px-6 !py-6 transition ${to ? "hover:border-brand/40 hover:shadow-sm" : ""}`}>
-      <div className={`flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full text-[26px] ${tones[tone]}`}>
+    <div
+      className={`${panel} flex h-full min-h-[124px] max-[600px]:min-h-[92px] items-center gap-4 max-[600px]:gap-3 !px-6 !py-5 max-[600px]:!px-3.5 max-[600px]:!py-3.5 transition ${
+        to ? "hover:border-brand/40 hover:shadow-sm active:scale-[0.99]" : ""
+      }`}
+    >
+      <div
+        className={`flex h-[60px] w-[60px] max-[600px]:h-[42px] max-[600px]:w-[42px] shrink-0 items-center justify-center rounded-full text-[24px] max-[600px]:text-[18px] ${tones[tone]}`}
+      >
         <i className={`fa-solid ${icon}`} />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="mb-2.5 break-words text-[16px] leading-tight text-[#56657d] dark:text-[#ddd7d2]">{label}</h3>
-        <h2 className="truncate text-[36px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">{value}</h2>
+        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[15px] max-[600px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
+          {label}
+        </h3>
+        <h2 className="truncate text-[32px] max-[600px]:text-[22px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
+          {value}
+        </h2>
       </div>
     </div>
   );
   return to ? (
-    <Link to={to} aria-label={`${label}: ${value}. View records`} className="block h-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand/50">
+    <Link
+      to={to}
+      aria-label={`${label}: ${value}. View records`}
+      className="block h-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+    >
       {body}
     </Link>
-  ) : body;
+  ) : (
+    body
+  );
 }
 
 // Hanay ng summary cards: pare-pareho ang gap, alignment at breakpoints sa lahat ng page.
-// Ang column ay sumusunod sa lapad ng lalagyan (container query, tingnan ang index.css): 1 -> 2 -> 4 (o 3) na hanay.
-export function StatGrid({ cols = 4, children, className = "mb-7" }) {
+export function StatGrid({ cols = 4, children, className = "mb-7 max-[600px]:mb-5" }) {
   return (
     <div className={`stat-wrap ${className}`}>
       <section className={`stat-grid ${cols === 3 ? "stat-grid-3" : ""}`}>{children}</section>
@@ -46,8 +61,8 @@ export function StatGrid({ cols = 4, children, className = "mb-7" }) {
 // Pamagat ng panel na may icon, at link/aksyon sa kanan
 export function PanelTitle({ icon, children, action }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <h2 className="text-[19px] font-bold">
+    <div className="mb-5 max-[600px]:mb-4 flex items-center justify-between gap-3">
+      <h2 className="text-[19px] max-[600px]:text-[17px] font-bold">
         {icon && <i className={`fa-solid ${icon} mr-2 text-orange-500`} />}
         {children}
       </h2>

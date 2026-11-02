@@ -9,15 +9,16 @@ import { panel, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
 import DashboardShortcuts from "../../components/dashboard/DashboardShortcuts.jsx";
 import { listParcels } from "../../services/parcelService.js";
-import { formatDate } from "../../utils/format.js";
+import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 
-// Lahat ng bilang ay galing sa GET /api/parcels (sariling parcels ng seller). Walang hardcoded.
 const CHART = [
   ["WAITING_FOR_VIDEO", "#e99a00"],
   ["REUPLOAD_REQUESTED", "#f97316"],
   ["VIDEO_SUBMITTED", "#4285c5"],
   ["VERIFIED", "#16a34a"],
+  ["RESCHEDULED", "#d97706"],
+  ["RETURN_TO_HUB", "#7c3aed"],
   ["REJECTED", "#ef4444"],
 ];
 
@@ -34,9 +35,9 @@ export default function SellerDashboard() {
   }, []);
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
-  const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED"].includes(p.status));
+  const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED", "RETURN_TO_HUB"].includes(p.status));
   const chartData = useMemo(
-    () => CHART.map(([s, color]) => ({ name: statusInfo(s).label, value: count(s), color })),
+    () => CHART.map(([s, color]) => ({ name: statusInfo(s).label, value: count(s), color })).filter((d) => d.value > 0 || ["Needs Video", "Under Verification", "Verified", "Return to Hub"].includes(d.name)),
     [parcels] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -49,14 +50,13 @@ export default function SellerDashboard() {
 
       {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
 
-      {/* SUMMARY CARDS (shortcuts sa itaas-kanan) */}
+      {/* SUMMARY CARDS */}
       <DashboardShortcuts role="seller" />
       <StatGrid>
-        {/* Parehong kahulugan at filter ng Parcel Records (NEEDS_VIDEO = waiting for video + reupload requested) */}
         <StatCard label="Total Parcels" value={v(parcels.length)} icon="fa-box" tone="orange" to="/seller/parcels" />
         <StatCard label="Needs Video" value={v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"))} icon="fa-video" tone="yellow" to="/seller/parcels?status=NEEDS_VIDEO" />
         <StatCard label="Under Verification" value={v(count("VIDEO_SUBMITTED"))} icon="fa-hourglass-half" tone="blue" to="/seller/parcels?status=UNDER_VERIFICATION" />
-        <StatCard label="Verified" value={v(count("VERIFIED"))} icon="fa-circle-check" tone="green" to="/seller/parcels?status=VERIFIED" />
+        <StatCard label="Verified / In Delivery" value={v(count("VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"))} icon="fa-circle-check" tone="green" to="/seller/parcels?status=VERIFIED" />
       </StatGrid>
 
       {/* STATUS CHART + ACTION NEEDED */}
@@ -70,7 +70,7 @@ export default function SellerDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: "#dfe5ed" }} fontSize={13} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: "#dfe5ed" }} fontSize={12} />
                   <YAxis tickLine={false} axisLine={false} fontSize={14} allowDecimals={false} />
                   <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} />
                   <Bar dataKey="value" name="Parcels" radius={[7, 7, 0, 0]} maxBarSize={52}>
@@ -92,7 +92,7 @@ export default function SellerDashboard() {
               <h2 className="text-[32px] font-bold leading-tight text-orange-500">
                 {v(needAction.length)} <small className="text-base font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
               </h2>
-              <p className="text-sm text-[#64748b]">need your attention.</p>
+              <p className="text-sm text-[#64748b]">need your attention (reupload, rejected, or Return to Hub).</p>
             </div>
           </div>
 
@@ -133,7 +133,19 @@ export default function SellerDashboard() {
                     <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || p.parcel_id}</td>
                     <td className={td}>{p.receiver_name}</td>
                     <td className={td}>{p.contents || "—"}</td>
-                    <td className={td}><StatusBadge status={p.status} /></td>
+                    <td className={td}>
+                      <StatusBadge status={p.status} />
+                      {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                        <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
+                          Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
+                        </span>
+                      )}
+                      {p.returnToHub && (
+                        <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
+                          {p.returnCoordinated ? "Return to Seller Coordinated" : "3-Day Limit Reached"}
+                        </span>
+                      )}
+                    </td>
                     <td className={`${td} whitespace-nowrap`}>{formatDate(p.updated_at)}</td>
                     <td className={`${td} text-right`}>
                       <Link to={link(p)} className="font-semibold text-brand hover:underline">View</Link>

@@ -4,6 +4,7 @@ import Footer from "../Footer.jsx";
 import Toaster from "../Toaster.jsx";
 import PortalHeader from "./PortalHeader.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
+import MobileBottomNav from "./MobileBottomNav.jsx";
 
 // Iisang layout para sa Seller at Rider, kapareho ng AppLayout ng Coordinator.
 // role = "seller" | "rider". Ang laman ng page ay lumalabas sa <Outlet />.
@@ -28,7 +29,7 @@ export default function DashboardLayout({ role }) {
       <PortalHeader role={role} onToggleSidebar={toggle} />
       <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
       <main
-        className={`flex min-h-screen flex-col pt-[94px] px-[35px] pb-4 transition-[margin] duration-200 max-[800px]:px-5 max-[800px]:ml-0 print:ml-0 print:pt-0 ${
+        className={`flex min-h-screen flex-col pt-[88px] px-[35px] pb-6 transition-[margin] duration-200 max-[800px]:px-4 max-[800px]:pt-[76px] max-[800px]:pb-24 max-[800px]:ml-0 print:ml-0 print:pt-0 ${
           collapsed ? "ml-[78px]" : "ml-[250px]"
         }`}
       >
@@ -37,6 +38,7 @@ export default function DashboardLayout({ role }) {
         </div>
         <Footer />
       </main>
+      <MobileBottomNav role={role} mobileOpen={mobileOpen} onToggleMenu={() => setMobileOpen((v) => !v)} />
       <Toaster />
     </div>
   );

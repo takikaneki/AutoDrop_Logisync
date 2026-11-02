@@ -7,13 +7,27 @@ export const PARCEL_FIELDS = [
     placeholder: "Enter 11-digit transaction number",
     help: "Enter exactly 11 digits. Numbers only; no letters or symbols.",
   },
-  { name: "receiver_name", label: "Receiver name", max: 100, placeholder: "e.g. Juan Dela Cruz" },
+  {
+    name: "receiver_name",
+    label: "Customer / Receiver name",
+    max: 100,
+    placeholder: "e.g. Juan Dela Cruz",
+    help: "Enter an existing customer name to auto-fill their saved address and contact number.",
+  },
+  {
+    name: "receiver_address",
+    label: "Customer / Receiver address",
+    max: 255,
+    placeholder: "e.g. 123 Rizal St., Brgy. San Antonio, Quezon City",
+    help: "Auto-filled for returning customers. You can review and edit before submitting.",
+  },
   {
     name: "receiver_contact",
-    label: "Receiver contact number",
+    label: "Customer / Receiver contact number",
     max: 50,
     placeholder: "e.g. 09123456789",
     type: "tel",
+    help: "Auto-filled for returning customers. You can review and edit before submitting.",
   },
   { name: "contents", label: "Parcel contents", max: 255, placeholder: "e.g. Shoes" },
 ];
@@ -21,6 +35,7 @@ export const PARCEL_FIELDS = [
 export const EMPTY_PARCEL = {
   transaction_number: "",
   receiver_name: "",
+  receiver_address: "",
   receiver_contact: "",
   contents: "",
   discrete_item: false,

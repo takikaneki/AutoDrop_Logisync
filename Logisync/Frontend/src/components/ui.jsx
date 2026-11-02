@@ -25,6 +25,8 @@ const badgeTones = {
   "In Transit": "bg-[#fff0e7] text-[#e9651c]",
   Delivered: "bg-[#eaf8ef] text-[#29945a]",
   "Failed Delivery": "bg-[#fff0f0] text-[#d94747]",
+  Rescheduled: "bg-[#fff4d8] text-[#c98200]",
+  "Return to Hub": "bg-[#f2ecff] text-[#7c3aed]",
   Processing: "bg-[#ede9fe] text-[#7c3aed]",
   Pending: "bg-[#fef3c7] text-[#d97706]",
   Verified: "bg-[#dcfce7] text-[#15803d]",

@@ -4,14 +4,14 @@ import { listMessages } from "../services/messageService.js";
 import { listParcels } from "../services/parcelService.js";
 import { useAnnouncements } from "./announcements.js";
 import { useComplaints } from "./records.js";
-import { useAssignedParcels } from "./riderDeliveries.js";
+import { MAX_RESCHEDULES, STAGE, useAllDeliveries, useAssignedParcels, useMyDeliveries } from "./riderDeliveries.js";
 import { useFailedDeliveries } from "./failedDeliveries.js";
 import { formatDay } from "../utils/format.js";
 import { createStore } from "./createStore.js";
 
 // Kumpletong notifications ng Seller at Rider. Iisang hook para sa bell at sa Notifications page.
-// Pinagmumulan: mensahe (backend), announcements ng coordinator, sagot sa complaints, at (seller) parcels na kailangan ng aksyon.
-// Ang "nabasa na" ay naka-save sa browser kada user.
+// Pinagmumulan: mensahe (backend), announcements ng coordinator, sagot sa complaints,
+// automatic/manual delivery reschedules (max 3 days), at Return to Hub status.
 
 const readStore = createStore({}, "pt-portal-read");
 const uid = () => String(getUser()?.user_id ?? "");
@@ -25,8 +25,11 @@ export function usePortalNotifications(role) {
   const announcements = useAnnouncements();
   const complaints = useComplaints();
   const assigned = useAssignedParcels();
+  const myDeliveries = useMyDeliveries();
+  const allDeliveries = useAllDeliveries();
   const failures = useFailedDeliveries();
   const [remote, setRemote] = useState([]);
+  const [sellerParcelKeys, setSellerParcelKeys] = useState([]);
   const me = Number(getUser()?.user_id);
   const name = getUser()?.name;
 
@@ -51,6 +54,9 @@ export function usePortalNotifications(role) {
         );
       if (role === "seller") {
         const parcels = await listParcels();
+        setSellerParcelKeys(
+          parcels.flatMap((p) => [String(p.parcel_id || "").toLowerCase(), String(p.transaction_number || "").toLowerCase()]).filter(Boolean)
+        );
         parcels
           .filter((p) => ["REUPLOAD_REQUESTED", "REJECTED"].includes(p.status))
           .forEach((p) =>
@@ -105,22 +111,80 @@ export function usePortalNotifications(role) {
         })
       );
 
-    // Desisyon ng coordinator sa failed delivery ng rider na ito (reschedule bukas o hindi)
+    // Notifications para sa Rider kapag may bagong delivery date na in-assign o naging Return to Hub
     if (role === "rider") {
-      failures
-        .filter((f) => f.rider_id === me && (f.status === "confirmed" || f.status === "declined"))
-        .forEach((f) => {
-          const ok = f.status === "confirmed";
+      myDeliveries.forEach((d) => {
+        const txn = d.transaction_number || d.parcel_id;
+        if (d.returnToHub || d.stage === STAGE.RETURN_TO_HUB) {
           list.push({
-            id: `fdr:${f.id}:${f.status}`,
+            id: `rth-rider:${d.parcel_id}:${d.returnCoordinated ? "coord" : "hub"}`,
             kind: "parcel",
-            icon: ok ? "fa-calendar-check" : "fa-calendar-xmark",
-            tone: ok ? "green" : "red",
-            title: ok ? `Delivery rescheduled for ${formatDay(f.scheduledFor)}` : "Reschedule not approved",
-            text: ok ? `${f.transaction_number} is back in To Be Delivered.` : `${f.transaction_number}${f.decisionNote ? ` · ${f.decisionNote}` : ""}`,
-            ts: f.decidedAt || f.failedAt,
-            to: ok ? "/rider/deliveries" : "/rider/deliveries?tab=failed",
+            icon: "fa-warehouse",
+            tone: "red",
+            title: `Return to Hub: ${txn}`,
+            text: d.returnCoordinated
+              ? `Maximum ${MAX_RESCHEDULES}-day rescheduling limit reached. Coordinator is coordinating return to seller (${d.seller || "Seller"}).`
+              : `${txn} (${d.receiver || "Customer"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling period and was removed from your pending deliveries. Please return it to the hub.`,
+            ts: d.returnCoordinatedAt || d.returnToHubAt || d.doneAt || Date.now(),
+            to: "/rider/deliveries?tab=failed",
           });
+        } else if (d.rescheduled && d.stage === STAGE.TO_DELIVER) {
+          const dayNum = Number(d.rescheduleCount || 1);
+          list.push({
+            id: `resched-rider:${d.parcel_id}:${dayNum}:${d.scheduledFor}`,
+            kind: "parcel",
+            icon: "fa-calendar-check",
+            tone: "orange",
+            title: `New delivery date assigned: ${formatDay(d.scheduledFor)} (Day ${dayNum} of ${MAX_RESCHEDULES})`,
+            text: `${txn} · ${d.receiver || "Customer"} — ${d.lastFailure || "Scheduled for next available delivery day"}.`,
+            ts: d.lastRescheduledAt || d.scannedAt || Date.now(),
+            to: "/rider/deliveries",
+          });
+        }
+      });
+    }
+
+    // Notifications para sa Seller kapag na-reschedule o naging Return to Hub ang parcel niya
+    if (role === "seller") {
+      const sellerKeySet = new Set(sellerParcelKeys);
+      const sellerNameLower = String(name || "").trim().toLowerCase();
+      allDeliveries
+        .filter((d) => {
+          const pid = String(d.parcel_id || "").toLowerCase();
+          const txn = String(d.transaction_number || "").toLowerCase();
+          const shop = String(d.seller || "").trim().toLowerCase();
+          return sellerKeySet.has(pid) || sellerKeySet.has(txn) || (sellerNameLower && shop === sellerNameLower);
+        })
+        .forEach((d) => {
+          const txn = d.transaction_number || d.parcel_id;
+          if (d.returnToHub || d.stage === STAGE.RETURN_TO_HUB) {
+            list.push({
+              id: `rth-seller:${d.parcel_id}:${d.returnCoordinated ? "coord" : "hub"}`,
+              kind: "parcel",
+              icon: d.returnCoordinated ? "fa-rotate-left" : "fa-warehouse",
+              tone: d.returnCoordinated ? "blue" : "red",
+              title: d.returnCoordinated
+                ? `Return to Seller Coordinated: ${txn}`
+                : `Parcel Marked Return to Hub: ${txn}`,
+              text: d.returnCoordinated
+                ? `Coordinator is returning ${txn} (${d.receiver || "Customer"}) to you after reaching the ${MAX_RESCHEDULES}-day delivery limit.`
+                : `${txn} (${d.receiver || "Customer"}) remained undelivered after ${MAX_RESCHEDULES} rescheduled days and is being returned to the hub.`,
+              ts: d.returnCoordinatedAt || d.returnToHubAt || d.doneAt || Date.now(),
+              to: `/seller/scan?txn=${encodeURIComponent(txn)}`,
+            });
+          } else if (d.rescheduled && d.stage === STAGE.TO_DELIVER) {
+            const dayNum = Number(d.rescheduleCount || 1);
+            list.push({
+              id: `resched-seller:${d.parcel_id}:${dayNum}:${d.scheduledFor}`,
+              kind: "parcel",
+              icon: "fa-calendar-day",
+              tone: "orange",
+              title: `Delivery Rescheduled (Day ${dayNum}/${MAX_RESCHEDULES}): ${txn}`,
+              text: `${d.receiver || "Customer"} · New delivery date: ${formatDay(d.scheduledFor)} (${d.lastFailure || "Delivery attempt failed"}).`,
+              ts: d.lastRescheduledAt || d.scannedAt || Date.now(),
+              to: `/seller/scan?txn=${encodeURIComponent(txn)}`,
+            });
+          }
         });
     }
 
@@ -138,7 +202,7 @@ export function usePortalNotifications(role) {
     }
 
     return list.map((n) => ({ ...n, read: !!mine[n.id] })).sort((a, b) => b.ts - a.ts);
-  }, [remote, announcements, complaints, assigned, failures, readMap, role, me, name]);
+  }, [remote, announcements, complaints, assigned, myDeliveries, allDeliveries, sellerParcelKeys, failures, readMap, role, me, name]);
 
   // Ang announcements ng Coordinator ay laging nasa pinakaitaas; ang regular na notifications ay nasa ilalim.
   const pinned = useMemo(() => items.filter((n) => n.kind === "announcement"), [items]);
