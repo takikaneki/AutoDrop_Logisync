@@ -1,1 +1,14 @@
-export const SPX_LOGO_DATA_URL = "/images/spx-logo.svg";
+// Official SPX Express logo — transparent background with orange (#EE4D2D) text and speed bars only.
+const SPX_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="38 164 438 182" width="260" height="108" role="img" aria-label="SPX Express">
+  <path fill="#EE4D2D" d="M186 184 L168 206 C156 196 121 194 120 208 C120 220 145 225 162 234 C178 242 182 260 177 278 C171 298 150 310 122 310 C96 310 82 298 75 288 L93 266 C103 278 146 284 149 266 C151 252 122 246 106 238 C92 230 89 212 93 196 C99 176 120 169 146 169 C166 169 178 176 186 184 Z"/>
+  <path fill="#EE4D2D" fill-rule="evenodd" d="M214 170 L272 170 C301 170 315 188 311 215 C307 243 287 261 256 261 L230 261 L223 309 L193 309 Z M240 196 L235 235 L256 235 C269 235 278 227 280 215 C282 203 274 196 261 196 Z"/>
+  <path fill="#EE4D2D" d="M319 170 L356 170 L386 237 L302 341 L268 341 L350 237 Z"/>
+  <path fill="#EE4D2D" d="M402 170 L437 170 L391 227 L378 199 Z"/>
+  <path fill="#EE4D2D" d="M389 244 L422 309 L387 309 L368 270 Z"/>
+  <path fill="#EE4D2D" d="M60 318 L91 318 L73 341 L42 341 Z"/>
+  <path fill="#EE4D2D" d="M99 318 L149 318 L131 341 L81 341 Z"/>
+  <path fill="#EE4D2D" d="M157 318 L276 318 L258 341 L139 341 Z"/>
+  <text x="322" y="341" fill="#EE4D2D" font-family="Inter, 'Arial Black', Impact, sans-serif" font-size="30" font-weight="900" font-style="italic" letter-spacing="1.2">EXPRESS</text>
+</svg>`;
+
+export const SPX_LOGO_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(SPX_SVG)}`;
