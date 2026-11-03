@@ -77,7 +77,10 @@ export async function createParcel({
   receiver_address = "",
   receiver_contact,
   contents,
+  content_category = "",
+  other_category_description = "",
   discrete_item = false,
+  discreet_reason = "",
   updateExistingCustomer = false,
 }) {
   const data = await api("/parcels", {
@@ -88,7 +91,10 @@ export async function createParcel({
       receiver_address,
       receiver_contact,
       contents,
+      content_category,
+      other_category_description,
       discrete_item,
+      discreet_reason,
       updateExistingCustomer,
     },
   });
@@ -153,8 +159,21 @@ export function uploadVideo(parcelId, file, onProgress) {
 }
 
 // Coordinator: action = "verify" | "reject" | "request-reupload"
-export const decideParcel = (parcelId, action, remarks) =>
-  api(`/parcels/coordinator/${enc(parcelId)}/${action}`, { method: "POST", body: { remarks: remarks || "" } });
+export const decideParcel = (parcelId, action, remarks, discreetDecision) =>
+  api(`/parcels/coordinator/${enc(parcelId)}/${action}`, {
+    method: "POST",
+    body: {
+      remarks: remarks || "",
+      ...(discreetDecision ? { discreet_decision: discreetDecision } : {}),
+    },
+  });
+
+// Coordinator: approve or reject seller's discreet handling request
+export const decideDiscreetHandling = (parcelId, decision, remarks = "") =>
+  api(`/parcels/coordinator/${enc(parcelId)}/discreet`, {
+    method: "POST",
+    body: { decision, remarks },
+  });
 
 // GET /api/parcels/videos/:videoId (coordinator lang) -> blob URL
 export const getVideoUrl = (videoId) => apiBlobUrl(`/parcels/videos/${enc(videoId)}`);

@@ -11,6 +11,11 @@ CREATE TABLE IF NOT EXISTS users (
         CHECK (role IN ('seller', 'coordinator', 'rider')),
     verification_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED'
         CHECK (verification_status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    phone VARCHAR(50),
+    shop_name VARCHAR(150),
+    zone VARCHAR(100),
+    vehicle VARCHAR(100),
+    plate_number VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -23,7 +28,16 @@ CREATE TABLE IF NOT EXISTS parcels (
     receiver_contact VARCHAR(50),
     receiver_address VARCHAR(500),
     contents VARCHAR(255),
+    content_category VARCHAR(100),
+    other_category_description VARCHAR(255),
     discrete_item BOOLEAN NOT NULL DEFAULT FALSE,
+    discreet_reason VARCHAR(500),
+    discreet_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED',
+    discreet_review_remarks VARCHAR(500),
+    discreet_reviewed_at TIMESTAMPTZ,
+    discreet_reviewed_by INTEGER,
+    declaration_flagged BOOLEAN NOT NULL DEFAULT FALSE,
+    declaration_flag_reason VARCHAR(500),
     transaction_number VARCHAR(100) UNIQUE,
     status VARCHAR(30) NOT NULL DEFAULT 'PENDING'
         CHECK (status IN (

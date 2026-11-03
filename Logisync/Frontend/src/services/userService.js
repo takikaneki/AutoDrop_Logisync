@@ -1,13 +1,37 @@
 import { api, getToken, getUser } from "../api.js";
 
 // Accounts (coordinator lang). Walang password hash na ibinabalik ng backend.
-export async function listUsers() {
-  return (await api("/users")).users;
+export async function listUsers(role) {
+  const query = role ? `?role=${encodeURIComponent(role)}` : "";
+  const data = await api(`/users${query}`);
+  return Array.isArray(data?.users) ? data.users : [];
 }
 
 // POST /api/users  (role: seller | rider | coordinator)
-export async function createUser({ name, email, password, role }) {
-  return (await api("/users", { method: "POST", body: { name, email, password, role } })).user;
+export async function createUser({
+  name,
+  email,
+  password,
+  role,
+  phone,
+  shop_name,
+  zone,
+  vehicle,
+  plate_number,
+}) {
+  const res = await api("/users", {
+    method: "POST",
+    body: { name, email, password, role, phone, shop_name, zone, vehicle, plate_number },
+  });
+  return res.user;
+}
+
+// PATCH /api/users/:id/verification  (status: "APPROVED" | "REJECTED")
+export async function updateUserVerification(userId, status) {
+  return api(`/users/${encodeURIComponent(userId)}/verification`, {
+    method: "PATCH",
+    body: { status },
+  });
 }
 
 // Change password.

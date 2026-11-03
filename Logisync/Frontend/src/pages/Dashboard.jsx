@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Topbar from "../components/Topbar.jsx";
 import { StatusBadge } from "../components/ui.jsx";
-import { recentParcels } from "../data/mock.js";
 import { StatCard, StatGrid } from "../components/portal.jsx";
 import DashboardShortcuts from "../components/dashboard/DashboardShortcuts.jsx";
 import RecentActivity from "../components/audit/RecentActivity.jsx";
@@ -24,7 +23,10 @@ export default function Dashboard() {
   const [real, setReal] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   useEffect(() => {
-    listParcels().then(setReal).catch(() => {}).finally(() => setLoadingStats(false));
+    listParcels()
+      .then((list) => setReal((Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456")))
+      .catch(() => {})
+      .finally(() => setLoadingStats(false));
   }, []);
   const stats = parcelStats(real);
   const v = (n) => (loadingStats ? "…" : n);
@@ -38,19 +40,16 @@ export default function Dashboard() {
   const pie = useMemo(() => statusTotals(real), [real]);
 
   const recentRows = useMemo(() => {
-    if (real.length > 0) {
-      return real.slice(0, 6).map((p) => ({
-        id: p.transaction_number || p.parcel_id,
-        parcelId: p.parcel_id,
-        seller: p.seller_name || p.seller || "Seller",
-        status: p.returnToHub ? "Return to Hub" : p.rescheduled ? "Rescheduled" : getParcelStatus(p),
-        verification:
-          p.verification_status ||
-          (p.status === "REJECTED" ? "Flagged" : ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB"].includes(p.status) ? "Verified" : "Pending"),
-        date: formatDate(p.created_at),
-      }));
-    }
-    return recentParcels.slice(0, 6);
+    return real.slice(0, 6).map((p) => ({
+      id: p.transaction_number || p.parcel_id,
+      parcelId: p.parcel_id,
+      seller: p.seller_name || p.seller || "Seller",
+      status: p.returnToHub ? "Return to Hub" : p.rescheduled ? "Rescheduled" : getParcelStatus(p),
+      verification:
+        p.verification_status ||
+        (p.status === "REJECTED" ? "Flagged" : ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB"].includes(p.status) ? "Verified" : "Pending"),
+      date: formatDate(p.created_at),
+    }));
   }, [real]);
 
   return (

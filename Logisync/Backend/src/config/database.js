@@ -118,6 +118,11 @@ async function ensureSchema() {
       );
 
       ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS shop_name VARCHAR(150);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS zone VARCHAR(100);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS vehicle VARCHAR(100);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS plate_number VARCHAR(50);
 
       CREATE TABLE IF NOT EXISTS parcels (
         parcel_id VARCHAR(50) PRIMARY KEY,
@@ -126,7 +131,16 @@ async function ensureSchema() {
         receiver_contact VARCHAR(50),
         receiver_address VARCHAR(500),
         contents VARCHAR(255),
+        content_category VARCHAR(100),
+        other_category_description VARCHAR(255),
         discrete_item BOOLEAN NOT NULL DEFAULT FALSE,
+        discreet_reason VARCHAR(500),
+        discreet_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED',
+        discreet_review_remarks VARCHAR(500),
+        discreet_reviewed_at TIMESTAMPTZ,
+        discreet_reviewed_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE,
+        declaration_flagged BOOLEAN NOT NULL DEFAULT FALSE,
+        declaration_flag_reason VARCHAR(500),
         transaction_number VARCHAR(100),
         status VARCHAR(30) NOT NULL DEFAULT 'PENDING'
             CHECK (status IN ('PENDING', 'WAITING_FOR_VIDEO', 'VIDEO_SUBMITTED', 'VERIFIED', 'REJECTED', 'REUPLOAD_REQUESTED')),
@@ -143,7 +157,16 @@ async function ensureSchema() {
 
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS transaction_number VARCHAR(100);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_address VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reason VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED';
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_review_remarks VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_at TIMESTAMPTZ;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flagged BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flag_reason VARCHAR(500);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rider_id INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_status VARCHAR(20);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_note VARCHAR(500);

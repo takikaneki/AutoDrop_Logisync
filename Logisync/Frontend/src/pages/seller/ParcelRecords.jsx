@@ -58,9 +58,15 @@ export default function ParcelRecords() {
         if (bucketOf(p) !== status) return false;
       } else if (filter && !filter.match(p)) return false;
       if (!q) return true;
-      return [p.parcel_id, p.transaction_number, p.receiver_name, p.receiver_contact, getParcelAddress(p), p.contents].some((v) =>
-        String(v || "").toLowerCase().includes(q)
-      );
+      return [
+        p.parcel_id,
+        p.transaction_number,
+        p.receiver_name,
+        p.receiver_contact,
+        getParcelAddress(p),
+        p.contents,
+        p.content_category,
+      ].some((v) => String(v || "").toLowerCase().includes(q));
     });
     return [...list].sort((a, b) => {
       if (sort === "oldest") return new Date(a.created_at) - new Date(b.created_at);
@@ -140,7 +146,7 @@ export default function ParcelRecords() {
         <div className="mb-[18px] grid grid-cols-[1fr_190px_170px] gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative max-[900px]:col-span-2 max-[600px]:col-span-1">
             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ID, transaction no., customer, address, contact or contents..." aria-label="Search" className={`${inputCls} pl-9`} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ID, transaction no., customer, address, contact, category or contents..." aria-label="Search" className={`${inputCls} pl-9`} />
           </div>
           <select value={isBucket ? "ALL" : status} onChange={(e) => setStatus(e.target.value)} aria-label="Status filter" className={inputCls}>
             <option value="ALL">Filter by status</option>
@@ -165,7 +171,7 @@ export default function ParcelRecords() {
           <table className="w-full min-w-[860px] border-collapse">
             <thead className="bg-[#fafafa] dark:bg-night-head">
               <tr>
-                {["Parcel ID", "Transaction no.", "Customer / Receiver", "Address", "Contents", "Status", "Created", ""].map((h) => <th key={h} className={th}>{h}</th>)}
+                {["Parcel ID", "Transaction no.", "Customer / Receiver", "Address", "Category & Contents", "Status", "Created", ""].map((h) => <th key={h} className={th}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -183,7 +189,33 @@ export default function ParcelRecords() {
                     <td className={`${td} max-w-[220px]`}>
                       <span className="line-clamp-2 text-[12.5px]">{addr || "—"}</span>
                     </td>
-                    <td className={td}>{p.contents || "—"}</td>
+                    <td className={td}>
+                      {p.content_category && (
+                        <span className="block text-[12px] font-semibold text-[#27364f] dark:text-[#f1eeeb]">
+                          {p.content_category}
+                        </span>
+                      )}
+                      <span className="block text-[12.5px]">{p.contents || "—"}</span>
+                      {p.discrete_item && (
+                        <span
+                          className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${
+                            p.discreet_status === "APPROVED"
+                              ? "bg-[#eaf8ef] text-[#1f7f4a]"
+                              : p.discreet_status === "REJECTED"
+                              ? "bg-[#fdecec] text-[#c53030]"
+                              : "bg-[#fff4e5] text-[#b45309]"
+                          }`}
+                        >
+                          <i className="fa-solid fa-user-shield text-[9px]" />
+                          Discreet:{" "}
+                          {p.discreet_status === "APPROVED"
+                            ? "Approved"
+                            : p.discreet_status === "REJECTED"
+                            ? "Rejected"
+                            : "Pending"}
+                        </span>
+                      )}
+                    </td>
                     <td className={td}>
                       <StatusBadge status={p.status} />
                       {p.rescheduled && !p.returnToHub && p.scheduledFor && (
@@ -270,8 +302,24 @@ export default function ParcelRecords() {
                     )}
                     <p className="flex items-center gap-2">
                       <i className="fa-solid fa-box-open w-4 text-center text-[#999]" />
-                      <span>{p.contents || "—"}</span>
+                      <span>
+                        {p.content_category ? `${p.content_category}: ` : ""}
+                        {p.contents || "—"}
+                      </span>
                     </p>
+                    {p.discrete_item && (
+                      <p className="flex items-center gap-2 text-[12px] font-semibold text-[#b45309]">
+                        <i className="fa-solid fa-user-shield w-4 text-center text-brand" />
+                        <span>
+                          Discreet:{" "}
+                          {p.discreet_status === "APPROVED"
+                            ? "Approved"
+                            : p.discreet_status === "REJECTED"
+                            ? "Rejected"
+                            : "Pending Review"}
+                        </span>
+                      </p>
+                    )}
                   </div>
                   <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
                     <span className="text-[#999]">{formatDate(p.created_at)}</span>

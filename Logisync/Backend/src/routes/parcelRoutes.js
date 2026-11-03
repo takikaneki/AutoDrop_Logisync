@@ -13,6 +13,7 @@ const {
   getSellerParcel,
   uploadVideo,
   getCoordinatorParcel,
+  reviewDiscreetRequest,
   verifyParcel,
   rejectParcel,
   requestReupload,
@@ -64,6 +65,12 @@ router.get("/coordinator/:parcelId",
   authenticateToken,
   authorizeRoles("coordinator"),
   getCoordinatorParcel
+);
+
+router.post("/coordinator/:parcelId/discreet",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  reviewDiscreetRequest
 );
 
 router.post("/coordinator/:parcelId/verify",

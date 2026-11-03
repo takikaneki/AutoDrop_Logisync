@@ -15,11 +15,18 @@ router.get("/contacts", authenticateToken, listContacts);
 router.get("/", authenticateToken, authorizeRoles("coordinator"), listUsers);
 router.post("/", authenticateToken, authorizeRoles("coordinator"), createUser);
 
-// Coordinator lang: approve o reject ng seller
+// Coordinator lang: approve/activate o reject/suspend ng seller o rider
 router.patch(
   "/:id/verification",
   authenticateToken,
   authorizeRoles("coordinator"),
   reviewSeller
 );
+router.patch(
+  "/:id/status",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  reviewSeller
+);
+
 module.exports = router;

@@ -149,6 +149,20 @@ export default function ScanUpload() {
   const latestRemark = data?.verification_records?.find((r) => r.remarks) || null;
   const canUpload = parcel && UPLOADABLE.includes(parcel.status);
 
+  const categoryDisplay = parcel?.content_category
+    ? parcel.content_category === "Other" && parcel.other_category_description
+      ? `Other (${parcel.other_category_description})`
+      : parcel.content_category
+    : "Unspecified";
+
+  const discreetStatusLabel = parcel?.discrete_item
+    ? parcel.discreet_status === "APPROVED"
+      ? "Yes — Approved by Coordinator"
+      : parcel.discreet_status === "REJECTED"
+      ? "Yes — Rejected by Coordinator (Standard handling applied)"
+      : "Yes — Pending Coordinator Review"
+    : "No (Standard handling)";
+
   return (
     <>
       <Topbar title="Scan QR / Upload Video" subtitle="Scan the QR code on the parcel (or type its transaction number), then upload your video proof.">
@@ -195,7 +209,15 @@ export default function ScanUpload() {
                   ["Receiver", parcel.receiver_name],
                   ["Address", parcel.receiver_address],
                   ["Contact", parcel.receiver_contact],
-                  ["Contents", parcel.contents],
+                  ["Declared category", categoryDisplay],
+                  ["Item description", parcel.contents],
+                  ["Discreet handling requested", discreetStatusLabel],
+                  ...(parcel.discrete_item && parcel.discreet_reason
+                    ? [["Discreet explanation", parcel.discreet_reason]]
+                    : []),
+                  ...(parcel.discreet_review_remarks
+                    ? [["Discreet review note", parcel.discreet_review_remarks]]
+                    : []),
                   ...(parcel.scheduledFor && !parcel.returnToHub
                     ? [
                         [

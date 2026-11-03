@@ -6,6 +6,7 @@ import LogoutModal from "./LogoutModal.jsx";
 import UserAvatar from "./Avatar.jsx";
 import { toggleDark, usePrefs, useT } from "../store/prefs.js";
 import { useProfile } from "../store/profile.js";
+import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 
 const nav = [
   { to: "/dashboard", label: "Home" },
@@ -50,10 +51,14 @@ export default function SiteHeader({ onToggleSidebar }) {
             <i className="fa-solid fa-bars" />
           </button>
 
-          <Link to="/dashboard" className="flex items-center gap-2.5 mr-2">
-            <span className="w-[38px] h-[38px] rounded-[10px] bg-brand text-white flex items-center justify-center text-[17px]">
-              <i className="fa-solid fa-box" />
-            </span>
+          <Link to="/dashboard" className="mr-2 flex items-center gap-3">
+            <img
+              src={SPX_LOGO_DATA_URL}
+              alt="SPX Express"
+              draggable={false}
+              className="h-8 w-auto shrink-0 object-contain sm:h-9"
+            />
+            <span className="h-5 w-px bg-[#e5e5e5] max-[500px]:hidden dark:bg-night-line" aria-hidden="true" />
             <span className="leading-tight max-[500px]:hidden">
               <strong className="block text-[17px]">LogiSync</strong>
               <small className="block text-[10px] text-[#999]">Parcel Verification System</small>

@@ -6,6 +6,7 @@ import { useComplaints } from "../store/records.js";
 import { useT } from "../store/prefs.js";
 import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
+import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 
 const groups = [
   {
@@ -97,7 +98,10 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
         } ${mobileOpen ? "max-[800px]:translate-x-0" : "max-[800px]:-translate-x-full"}`}
       >
         <div className="mb-3 flex items-center justify-between border-b border-[#f1f1f1] px-2 pb-3 min-[801px]:hidden dark:border-night-line">
-          <span className="text-[12px] font-bold uppercase tracking-wider text-brand">Coordinator Menu</span>
+          <div className="flex items-center gap-2">
+            <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-6 w-auto object-contain" />
+            <span className="text-[12px] font-bold uppercase tracking-wider text-brand">Coordinator</span>
+          </div>
           <button
             type="button"
             onClick={onClose}

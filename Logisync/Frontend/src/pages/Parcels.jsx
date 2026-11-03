@@ -21,7 +21,8 @@ import {
 import { api, getUser } from "../api.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDay } from "../utils/format.js";
-import { addReport, useParcels, useReportHistory, useRiders } from "../store/records.js";
+import { addReport, useReportHistory } from "../store/records.js";
+import { listUsers } from "../services/userService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { getParcelAddress, syncCustomersFromParcels } from "../store/customers.js";
@@ -143,9 +144,8 @@ function downloadCsv(name, rows) {
 export default function Parcels() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const fallbackParcels = useParcels();
-  const riders = useRiders();
   const history = useReportHistory();
+  const [dbUsers, setDbUsers] = useState([]);
 
   const urlStatus = searchParams.get("status");
   const initialStatus = STATUS_OPTIONS.includes(urlStatus) ? urlStatus : "All Status";
@@ -197,6 +197,7 @@ export default function Parcels() {
     }
 
     loadParcels();
+    listUsers().then(setDbUsers).catch(() => {});
 
     return () => {
       active = false;
@@ -208,10 +209,7 @@ export default function Parcels() {
     setPage(1);
   }, [initialStatus]);
 
-  const reportSource = useMemo(
-    () => (parcels.length > 0 ? parcels : fallbackParcels.map(mapParcel)),
-    [parcels, fallbackParcels]
-  );
+  const reportSource = parcels;
 
   useEffect(() => {
     if (!reportOpen) return;
@@ -277,17 +275,20 @@ export default function Parcels() {
     setReportPage(1);
   };
 
-  const sellersList = useMemo(
-    () => [...new Set(reportSource.map((p) => p.seller).filter(Boolean))],
-    [reportSource]
-  );
+  const sellersList = useMemo(() => {
+    const names = new Set([
+      ...dbUsers.filter((u) => u.role === "seller").map((u) => u.name),
+      ...reportSource.map((p) => p.seller).filter(Boolean),
+    ]);
+    return [...names].filter(Boolean);
+  }, [dbUsers, reportSource]);
   const ridersList = useMemo(() => {
     const names = new Set([
-      ...riders.map((r) => r.name),
+      ...dbUsers.filter((u) => u.role === "rider").map((u) => u.name),
       ...reportSource.map((p) => p.rider).filter((r) => r && r !== "Unassigned"),
     ]);
-    return [...names];
-  }, [riders, reportSource]);
+    return [...names].filter(Boolean);
+  }, [dbUsers, reportSource]);
 
   const reportSummary = useMemo(() => {
     if (!reportResult) return null;

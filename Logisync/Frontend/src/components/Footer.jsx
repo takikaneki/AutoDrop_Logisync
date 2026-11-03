@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Modal } from "./ui.jsx";
 import { useT } from "../store/prefs.js";
 import useBase from "../hooks/useBase.js";
+import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 
 // Quick links ng bawat role (Coordinator = walang base)
 const QUICK = {
@@ -27,8 +28,14 @@ export default function Footer() {
     <footer className="mt-10 w-full shrink-0 border-t border-[#e9e9e9] pt-6 print:hidden dark:border-night-line">
       <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-5">
         <div className="max-w-[300px]">
-          <div className="mb-2 flex items-center gap-2.5">
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-brand text-white"><i className="fa-solid fa-box text-[13px]" /></span>
+          <div className="mb-2 flex items-center gap-3">
+            <img
+              src={SPX_LOGO_DATA_URL}
+              alt="SPX Express"
+              draggable={false}
+              className="h-7 w-auto shrink-0 object-contain"
+            />
+            <span className="h-4 w-px bg-[#e5e5e5] dark:bg-night-line" aria-hidden="true" />
             <strong className="text-[15px]">LogiSync</strong>
           </div>
           <p className="text-[12.5px] leading-relaxed text-[#888]">Parcel verification and delivery monitoring.</p>

@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState, StatusBadge } from "../components/ui.jsx";
-import { btnGhost, btnPrimary, panel } from "../components/styles.js";
-import { getCoordinatorParcel, getByTransaction } from "../services/parcelService.js";
+import { btnGhost, btnPrimary, inputCls, panel } from "../components/styles.js";
+import {
+  decideDiscreetHandling,
+  getByTransaction,
+  getCoordinatorParcel,
+} from "../services/parcelService.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDay } from "../utils/format.js";
 import { coordinateReturn } from "../store/failedDeliveries.js";
+import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 
 const value = (v) => (v === null || v === undefined || v === "" ? "—" : v);
@@ -16,11 +21,43 @@ const dateValue = (v) => {
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" });
 };
 
+function DiscreetBadge({ discreteItem, discreetStatus }) {
+  if (!discreteItem && (!discreetStatus || discreetStatus === "NOT_REQUESTED")) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#f3f4f6] px-2.5 py-0.5 text-xs font-semibold text-[#6b7280] dark:bg-night-head dark:text-[#b8b0a8]">
+        No (Standard Handling)
+      </span>
+    );
+  }
+  const status = discreetStatus || (discreteItem ? "PENDING_REVIEW" : "NOT_REQUESTED");
+  if (status === "APPROVED") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#eaf8ef] px-3 py-0.5 text-xs font-bold text-[#1f7f4a]">
+        <i className="fa-solid fa-user-shield text-[10px]" /> Approved by Coordinator
+      </span>
+    );
+  }
+  if (status === "REJECTED") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-[#fdecec] px-3 py-0.5 text-xs font-bold text-[#c53030]">
+        <i className="fa-solid fa-ban text-[10px]" /> Rejected by Coordinator
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4e5] px-3 py-0.5 text-xs font-bold text-[#b45309]">
+      <i className="fa-solid fa-clock text-[10px]" /> Pending Coordinator Review
+    </span>
+  );
+}
+
 export default function ParcelDetails() {
   const { id = "" } = useParams();
   const [parcel, setParcel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [discreetRemarks, setDiscreetRemarks] = useState("");
+  const [discreetBusy, setDiscreetBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -36,7 +73,12 @@ export default function ParcelDetails() {
       if (!record || !(record.parcel_id || record.id || record.transaction_number)) {
         throw new Error("The server did not return parcel details.");
       }
-      setParcel({ ...record, _verificationRecords: result?.verification_records || [] });
+      setParcel({
+        ...record,
+        _verificationRecords: result?.verification_records || [],
+        _declarationHistory: result?.declaration_history || [],
+      });
+      setDiscreetRemarks(record.discreet_review_remarks || "");
     } catch (e) {
       setError(e.message || "Unable to load parcel details.");
     } finally {
@@ -57,8 +99,42 @@ export default function ParcelDetails() {
     load();
   };
 
+  const handleDiscreetDecision = async (decision) => {
+    if (!parcel?.parcel_id) return;
+    if (decision === "REJECT" && !discreetRemarks.trim()) {
+      toast("Please provide a short note explaining why the discreet request is rejected.", "error");
+      return;
+    }
+    setDiscreetBusy(true);
+    try {
+      await decideDiscreetHandling(parcel.parcel_id, decision, discreetRemarks.trim());
+      logAction({
+        category: "Discreet Verification",
+        action: decision === "APPROVE" ? "Approved discreet handling" : "Rejected discreet handling",
+        target: parcel.parcel_id,
+        detail: discreetRemarks.trim(),
+      });
+      toast(
+        decision === "APPROVE"
+          ? `Discreet handling approved for ${parcel.parcel_id}`
+          : `Discreet handling rejected for ${parcel.parcel_id}`
+      );
+      await load();
+    } catch (e) {
+      toast(e.message, "error");
+    } finally {
+      setDiscreetBusy(false);
+    }
+  };
+
   const verification = parcel?.verification_status || parcel?.verification || parcel?.status;
   const delivery = getParcelStatus(parcel || {});
+  const categoryDisplay = parcel?.content_category
+    ? parcel.content_category === "Other" && parcel.other_category_description
+      ? `Other (${parcel.other_category_description})`
+      : parcel.content_category
+    : "Unspecified";
+
   const fields = [
     ["Parcel ID", parcel?.parcel_id || parcel?.id],
     ["Transaction Number", parcel?.transaction_number],
@@ -82,7 +158,7 @@ export default function ParcelDetails() {
     <>
       <Topbar
         title={loading ? "Parcel Details" : `Parcel ${parcel?.parcel_id || parcel?.transaction_number || "Details"}`}
-        subtitle="Parcel record, verification status, rescheduling history, and Return-to-Hub coordination."
+        subtitle="Parcel record, declared content category, discreet handling verification, and delivery history."
       >
         <Link to="/parcels" className={btnGhost}>
           <i className="fa-solid fa-arrow-left" /> Back to Parcels
@@ -102,6 +178,22 @@ export default function ParcelDetails() {
         </section>
       ) : (
         <div className="space-y-5">
+          {parcel?.declaration_flagged && (
+            <section
+              role="alert"
+              className="rounded-2xl border border-[#f5bcbc] bg-[#fff5f5] p-5 text-[#9b2c2c] dark:border-[#d94a4a]/40 dark:bg-[#d94a4a]/10 dark:text-[#f5a3a3]"
+            >
+              <h2 className="flex items-center gap-2 text-[16px] font-bold">
+                <i className="fa-solid fa-triangle-exclamation text-[#d94a4a]" />
+                Flagged Declaration — Requires Coordinator Verification
+              </h2>
+              <p className="mt-1 text-[13.5px] leading-relaxed">
+                {parcel.declaration_flag_reason ||
+                  "This parcel declaration was flagged for potential inconsistency or non-standard discreet handling. Please inspect the seller's packing video carefully before approving."}
+              </p>
+            </section>
+          )}
+
           {parcel?.returnToHub && (
             <section className="rounded-2xl border border-[#d8b4fe] bg-[#faf7ff] p-5 dark:border-[#5b21b6] dark:bg-[#221933]">
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -144,7 +236,7 @@ export default function ParcelDetails() {
             </section>
 
             <section className={`${panel} p-6`}>
-              <h2 className="mb-4 text-lg font-bold">Additional Details</h2>
+              <h2 className="mb-4 text-lg font-bold">Recipient &amp; Delivery Details</h2>
               <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
                 <span className="text-sm text-[#999]">Recipient</span>
                 <span className="text-right text-sm font-semibold">
@@ -162,7 +254,11 @@ export default function ParcelDetails() {
                 <span className="text-right text-sm font-semibold">{value(parcel.receiver_contact)}</span>
               </div>
               <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
-                <span className="text-sm text-[#999]">Contents</span>
+                <span className="text-sm text-[#999]">Declared Category</span>
+                <span className="text-right text-sm font-semibold">{categoryDisplay}</span>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
+                <span className="text-sm text-[#999]">Item Description</span>
                 <span className="text-right text-sm font-semibold">{value(parcel.contents || parcel.item)}</span>
               </div>
               <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
@@ -184,6 +280,141 @@ export default function ParcelDetails() {
               </div>
             </section>
           </div>
+
+          {/* Content Declaration & Discreet Handling Review Panel */}
+          <section className={`${panel} p-6`}>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[#f1f1f1] pb-3.5 dark:border-night-line">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-bold">
+                  <i className="fa-solid fa-clipboard-check text-brand" />
+                  Declared Content Category &amp; Discreet Handling Verification
+                </h2>
+                <p className="mt-0.5 text-xs text-[#888]">
+                  Review the seller&apos;s declared item category and discreet-handling request. Discreet requests never bypass video verification.
+                </p>
+              </div>
+              <DiscreetBadge
+                discreteItem={parcel.discrete_item}
+                discreetStatus={parcel.discreet_status}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm max-[700px]:grid-cols-1">
+              <div className="rounded-xl border border-[#f0e6df] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+                <span className="block text-xs font-semibold uppercase text-[#888]">
+                  Declared Item Category
+                </span>
+                <strong className="mt-1 block text-[15px] text-[#27364f] dark:text-[#f1eeeb]">
+                  {categoryDisplay}
+                </strong>
+              </div>
+              <div className="rounded-xl border border-[#f0e6df] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+                <span className="block text-xs font-semibold uppercase text-[#888]">
+                  Item Description, if applicable
+                </span>
+                <strong className="mt-1 block text-[15px] text-[#27364f] dark:text-[#f1eeeb]">
+                  {value(parcel.contents || parcel.item)}
+                </strong>
+              </div>
+              <div className="rounded-xl border border-[#f0e6df] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+                <span className="block text-xs font-semibold uppercase text-[#888]">
+                  Discreet Handling Requested
+                </span>
+                <strong className="mt-1 block text-[15px] text-[#27364f] dark:text-[#f1eeeb]">
+                  {parcel.discrete_item ? "Yes" : "No"}
+                </strong>
+              </div>
+              <div className="rounded-xl border border-[#f0e6df] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+                <span className="block text-xs font-semibold uppercase text-[#888]">
+                  Verification Status
+                </span>
+                <strong className="mt-1 block text-[15px] text-[#27364f] dark:text-[#f1eeeb]">
+                  Parcel: {value(verification)} · Discreet:{" "}
+                  {parcel.discrete_item
+                    ? (parcel.discreet_status || "PENDING_REVIEW").replace("_", " ")
+                    : "Not Requested"}
+                </strong>
+              </div>
+            </div>
+
+            {parcel.discrete_item && (
+              <div className="mt-4 space-y-4 rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+                <div>
+                  <span className="block text-xs font-semibold uppercase text-[#888]">
+                    Seller&apos;s Explanation for Discreet Handling
+                  </span>
+                  <p className="mt-1 rounded-lg border border-[#e7dcd4] bg-white p-3 text-sm text-[#333] dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]">
+                    {parcel.discreet_reason || "No explanation provided."}
+                  </p>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <label
+                      htmlFor="parcel-details-discreet-remarks"
+                      className="text-xs font-semibold text-[#555] dark:text-[#d1c9c2]"
+                    >
+                      Coordinator Review Remarks (required when rejecting discreet request)
+                    </label>
+                    {parcel.discreet_reviewed_at && (
+                      <span className="text-xs text-[#888]">
+                        Reviewed {dateValue(parcel.discreet_reviewed_at)}
+                        {parcel.discreet_reviewer_name ? ` by ${parcel.discreet_reviewer_name}` : ""}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    id="parcel-details-discreet-remarks"
+                    type="text"
+                    value={discreetRemarks}
+                    onChange={(e) => setDiscreetRemarks(e.target.value)}
+                    placeholder="Add review note for the discreet handling request..."
+                    className={`${inputCls} mb-3 bg-white dark:bg-night-panel`}
+                  />
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      type="button"
+                      disabled={discreetBusy}
+                      onClick={() => handleDiscreetDecision("APPROVE")}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#29945a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#217a49] disabled:opacity-50"
+                    >
+                      <i className="fa-solid fa-user-check" /> Approve Discreet Handling
+                    </button>
+                    <button
+                      type="button"
+                      disabled={discreetBusy}
+                      onClick={() => handleDiscreetDecision("REJECT")}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#d94747] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#b83737] disabled:opacity-50"
+                    >
+                      <i className="fa-solid fa-ban" /> Reject Discreet Handling
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(parcel._declarationHistory) && parcel._declarationHistory.length > 0 && (
+              <div className="mt-5 border-t border-[#f1f1f1] pt-4 dark:border-night-line">
+                <h3 className="mb-2.5 text-sm font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                  <i className="fa-solid fa-clock-rotate-left mr-1.5 text-brand" />
+                  Declaration &amp; Discreet Audit History
+                </h3>
+                <ul className="space-y-2 text-xs">
+                  {parcel._declarationHistory.map((h) => (
+                    <li key={h.log_id} className="rounded-lg bg-[#f9fafb] p-3 dark:bg-night-head">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <strong className="text-[#27364f] dark:text-[#f1eeeb]">{h.action}</strong>
+                        <span className="text-[#888]">
+                          {h.actor_name} ({h.actor_role}) · {dateValue(h.created_at)}
+                        </span>
+                      </div>
+                      {h.detail && <p className="mt-1 text-[#666] dark:text-[#d1c9c2]">{h.detail}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
 
           {Array.isArray(parcel?.attempts) && parcel.attempts.length > 0 && (
             <section className={`${panel} p-6`}>

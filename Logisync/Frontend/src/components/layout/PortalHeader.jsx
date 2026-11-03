@@ -7,6 +7,7 @@ import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
 import { TOP_LINKS, ROLE_LABEL, toPath } from "./navConfig.js";
 import NotificationMenu from "./NotificationMenu.jsx";
+import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 
 const iconBtn =
   "w-[40px] h-[40px] rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
@@ -31,10 +32,14 @@ export default function PortalHeader({ role, onToggleSidebar }) {
             <i className="fa-solid fa-bars" />
           </button>
 
-          <Link to={toPath(role, "")} className="flex items-center gap-2.5 mr-2">
-            <span className="w-[38px] h-[38px] rounded-[10px] bg-brand text-white flex items-center justify-center text-[17px]">
-              <i className="fa-solid fa-box" />
-            </span>
+          <Link to={toPath(role, "")} className="mr-2 flex items-center gap-3">
+            <img
+              src={SPX_LOGO_DATA_URL}
+              alt="SPX Express"
+              draggable={false}
+              className="h-8 w-auto shrink-0 object-contain sm:h-9"
+            />
+            <span className="h-5 w-px bg-[#e5e5e5] max-[500px]:hidden dark:bg-night-line" aria-hidden="true" />
             <span className="leading-tight max-[500px]:hidden">
               <strong className="block text-[17px]">LogiSync</strong>
               <small className="block text-[10px] text-[#999]">{ROLE_LABEL[role]}</small>
