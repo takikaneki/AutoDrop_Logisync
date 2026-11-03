@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Footer from "../Footer.jsx";
 import Toaster from "../Toaster.jsx";
 import PortalHeader from "./PortalHeader.jsx";
+import GlobalBanner from "./GlobalBanner.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
 
@@ -26,18 +27,17 @@ export default function DashboardLayout({ role }) {
 
   return (
     <div className="min-h-screen">
+      <GlobalBanner role={role} />
       <PortalHeader role={role} onToggleSidebar={toggle} />
-      <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <main
-        className={`flex min-h-screen flex-col pt-[88px] px-[35px] pb-6 transition-[margin] duration-200 max-[800px]:px-4 max-[800px]:pt-[76px] max-[800px]:pb-24 max-[800px]:ml-0 print:ml-0 print:pt-0 ${
-          collapsed ? "ml-[78px]" : "ml-[250px]"
-        }`}
-      >
-        <div className="flex-1">
-          <Outlet />
-        </div>
-        <Footer />
-      </main>
+      <div className="flex items-start">
+        <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+        <main className="flex min-h-[calc(100vh-56px)] min-w-0 flex-1 flex-col px-[35px] pt-6 pb-6 max-[800px]:px-4 max-[800px]:pt-5 max-[800px]:pb-24 print:p-0">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <Footer />
+        </main>
+      </div>
       <MobileBottomNav role={role} mobileOpen={mobileOpen} onToggleMenu={() => setMobileOpen((v) => !v)} />
       <Toaster />
     </div>

@@ -76,6 +76,11 @@ async function ensureCustomerSchema() {
   if (customerSchemaReady) return;
   await rawPool.query(`
     ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_address VARCHAR(500);
+    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100);
+    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150);
+    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150);
+    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150);
+    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150);
     ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
     ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
     ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
@@ -94,10 +99,21 @@ async function ensureCustomerSchema() {
       receiver_name VARCHAR(150) NOT NULL,
       receiver_contact VARCHAR(50) NOT NULL DEFAULT '',
       receiver_address VARCHAR(500) NOT NULL DEFAULT '',
+      receiver_house_number VARCHAR(100) NOT NULL DEFAULT '',
+      receiver_street VARCHAR(150) NOT NULL DEFAULT '',
+      receiver_barangay VARCHAR(150) NOT NULL DEFAULT '',
+      receiver_city VARCHAR(150) NOT NULL DEFAULT '',
+      receiver_province VARCHAR(150) NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT uq_seller_customer_name UNIQUE (seller_id, normalized_name)
     );
+
+    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150) NOT NULL DEFAULT '';
+    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150) NOT NULL DEFAULT '';
+    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150) NOT NULL DEFAULT '';
+    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
 
     CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
   `);
@@ -183,18 +199,43 @@ function normalizeCustomerName(name) {
     .toLowerCase();
 }
 
-async function upsertSellerCustomer(sellerId, { name, contact, address, updateExisting = false }) {
+async function upsertSellerCustomer(
+  sellerId,
+  {
+    name,
+    contact,
+    address,
+    house_number = "",
+    street = "",
+    barangay = "",
+    city = "",
+    province = "",
+    updateExisting = false
+  }
+) {
   const cleanName = String(name || "").trim().replace(/\s+/g, " ");
   const normalizedName = normalizeCustomerName(cleanName);
   if (!normalizedName || !sellerId) return null;
 
   const cleanContact = String(contact || "").trim();
-  const cleanAddress = String(address || "").trim();
+  const cleanHouseNumber = String(house_number || "").trim();
+  const cleanStreet = String(street || "").trim();
+  const cleanBarangay = String(barangay || "").trim();
+  const cleanCity = String(city || "").trim();
+  const cleanProvince = String(province || "").trim();
+
+  let cleanAddress = String(address || "").trim();
+  if (!cleanAddress && (cleanStreet || cleanBarangay || cleanCity)) {
+    cleanAddress = [cleanHouseNumber, cleanStreet, cleanBarangay, cleanCity, cleanProvince]
+      .filter(Boolean)
+      .join(", ");
+  }
 
   await ensureCustomerSchema();
 
   const [existingRows] = await pool.query(
-    `SELECT customer_id, receiver_name, receiver_contact, receiver_address
+    `SELECT customer_id, receiver_name, receiver_contact, receiver_address,
+            receiver_house_number, receiver_street, receiver_barangay, receiver_city, receiver_province
      FROM seller_customers
      WHERE seller_id = ? AND normalized_name = ?`,
     [sellerId, normalizedName]
@@ -203,9 +244,21 @@ async function upsertSellerCustomer(sellerId, { name, contact, address, updateEx
   if (!existingRows.length) {
     const [inserted] = await pool.query(
       `INSERT INTO seller_customers
-       (seller_id, normalized_name, receiver_name, receiver_contact, receiver_address)
-       VALUES (?, ?, ?, ?, ?)`,
-      [sellerId, normalizedName, cleanName, cleanContact, cleanAddress]
+       (seller_id, normalized_name, receiver_name, receiver_contact, receiver_address,
+        receiver_house_number, receiver_street, receiver_barangay, receiver_city, receiver_province)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        sellerId,
+        normalizedName,
+        cleanName,
+        cleanContact,
+        cleanAddress,
+        cleanHouseNumber,
+        cleanStreet,
+        cleanBarangay,
+        cleanCity,
+        cleanProvince
+      ]
     );
     return inserted[0] || null;
   }
@@ -217,6 +270,21 @@ async function upsertSellerCustomer(sellerId, { name, contact, address, updateEx
   const nextAddress = updateExisting
     ? cleanAddress || cur.receiver_address || ""
     : cur.receiver_address || cleanAddress || "";
+  const nextHouse = updateExisting
+    ? cleanHouseNumber || cur.receiver_house_number || ""
+    : cur.receiver_house_number || cleanHouseNumber || "";
+  const nextStreet = updateExisting
+    ? cleanStreet || cur.receiver_street || ""
+    : cur.receiver_street || cleanStreet || "";
+  const nextBarangay = updateExisting
+    ? cleanBarangay || cur.receiver_barangay || ""
+    : cur.receiver_barangay || cleanBarangay || "";
+  const nextCity = updateExisting
+    ? cleanCity || cur.receiver_city || ""
+    : cur.receiver_city || cleanCity || "";
+  const nextProvince = updateExisting
+    ? cleanProvince || cur.receiver_province || ""
+    : cur.receiver_province || cleanProvince || "";
   const nextName = updateExisting ? cleanName : cur.receiver_name || cleanName;
 
   await pool.query(
@@ -224,16 +292,37 @@ async function upsertSellerCustomer(sellerId, { name, contact, address, updateEx
      SET receiver_name = ?,
          receiver_contact = ?,
          receiver_address = ?,
+         receiver_house_number = ?,
+         receiver_street = ?,
+         receiver_barangay = ?,
+         receiver_city = ?,
+         receiver_province = ?,
          updated_at = NOW()
      WHERE customer_id = ? AND seller_id = ?`,
-    [nextName, nextContact, nextAddress, cur.customer_id, sellerId]
+    [
+      nextName,
+      nextContact,
+      nextAddress,
+      nextHouse,
+      nextStreet,
+      nextBarangay,
+      nextCity,
+      nextProvince,
+      cur.customer_id,
+      sellerId
+    ]
   );
 
   return {
     customer_id: cur.customer_id,
     receiver_name: nextName,
     receiver_contact: nextContact,
-    receiver_address: nextAddress
+    receiver_address: nextAddress,
+    receiver_house_number: nextHouse,
+    receiver_street: nextStreet,
+    receiver_barangay: nextBarangay,
+    receiver_city: nextCity,
+    receiver_province: nextProvince
   };
 }
 
@@ -280,6 +369,11 @@ async function listSellerCustomers(req, res) {
               receiver_name AS name,
               COALESCE(receiver_contact, '') AS contact,
               COALESCE(receiver_address, '') AS address,
+              COALESCE(receiver_house_number, '') AS house_number,
+              COALESCE(receiver_street, '') AS street,
+              COALESCE(receiver_barangay, '') AS barangay,
+              COALESCE(receiver_city, '') AS city,
+              COALESCE(receiver_province, '') AS province,
               updated_at
        FROM seller_customers
        WHERE seller_id = ?
@@ -303,6 +397,11 @@ async function createParcel(req, res) {
       receiver_name,
       receiver_contact,
       receiver_address = "",
+      receiver_house_number = "",
+      receiver_street = "",
+      receiver_barangay = "",
+      receiver_city = "",
+      receiver_province = "",
       contents,
       content_category = "",
       other_category_description = "",
@@ -355,7 +454,18 @@ async function createParcel(req, res) {
     const transactionNumber = transaction_number.trim();
     const cleanReceiverName = receiver_name.trim().replace(/\s+/g, " ");
     const cleanReceiverContact = receiver_contact.trim();
-    const cleanReceiverAddress = String(receiver_address || "").trim();
+    const cleanHouseNumber = String(receiver_house_number || "").trim();
+    const cleanStreet = String(receiver_street || "").trim();
+    const cleanBarangay = String(receiver_barangay || "").trim();
+    const cleanCity = String(receiver_city || "").trim();
+    const cleanProvince = String(receiver_province || "").trim();
+
+    let cleanReceiverAddress = String(receiver_address || "").trim();
+    if (!cleanReceiverAddress && (cleanStreet || cleanBarangay || cleanCity)) {
+      cleanReceiverAddress = [cleanHouseNumber, cleanStreet, cleanBarangay, cleanCity, cleanProvince]
+        .filter(Boolean)
+        .join(", ");
+    }
     const cleanContents = contents.trim();
 
     // Discreet requests always start as PENDING_REVIEW so they never auto-approve a parcel
@@ -386,12 +496,13 @@ async function createParcel(req, res) {
     await pool.query(
       `INSERT INTO parcels
        (parcel_id, transaction_number, seller_id, receiver_name,
-        receiver_contact, receiver_address, contents,
-        content_category, other_category_description,
+        receiver_contact, receiver_address,
+        receiver_house_number, receiver_street, receiver_barangay, receiver_city, receiver_province,
+        contents, content_category, other_category_description,
         discrete_item, discreet_reason, discreet_status,
         declaration_flagged, declaration_flag_reason,
         status, verification_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
       [
         parcelId,
         transactionNumber,
@@ -399,6 +510,11 @@ async function createParcel(req, res) {
         cleanReceiverName,
         cleanReceiverContact,
         cleanReceiverAddress,
+        cleanHouseNumber,
+        cleanStreet,
+        cleanBarangay,
+        cleanCity,
+        cleanProvince,
         cleanContents,
         cleanCategory,
         cleanOtherCategoryDescription || null,
@@ -415,6 +531,11 @@ async function createParcel(req, res) {
       name: cleanReceiverName,
       contact: cleanReceiverContact,
       address: cleanReceiverAddress,
+      house_number: cleanHouseNumber,
+      street: cleanStreet,
+      barangay: cleanBarangay,
+      city: cleanCity,
+      province: cleanProvince,
       updateExisting: Boolean(updateExistingCustomer)
     });
 
@@ -455,6 +576,11 @@ async function createParcel(req, res) {
         receiver_name: cleanReceiverName,
         receiver_contact: cleanReceiverContact,
         receiver_address: cleanReceiverAddress,
+        receiver_house_number: cleanHouseNumber,
+        receiver_street: cleanStreet,
+        receiver_barangay: cleanBarangay,
+        receiver_city: cleanCity,
+        receiver_province: cleanProvince,
         contents: cleanContents,
         content_category: cleanCategory,
         other_category_description: cleanOtherCategoryDescription || null,
@@ -470,7 +596,12 @@ async function createParcel(req, res) {
         ? {
             name: savedCustomer.receiver_name,
             contact: savedCustomer.receiver_contact,
-            address: savedCustomer.receiver_address
+            address: savedCustomer.receiver_address,
+            house_number: savedCustomer.receiver_house_number || "",
+            street: savedCustomer.receiver_street || "",
+            barangay: savedCustomer.receiver_barangay || "",
+            city: savedCustomer.receiver_city || "",
+            province: savedCustomer.receiver_province || ""
           }
         : null
     });
@@ -491,6 +622,7 @@ async function getParcelForRole(req, res) {
 
     const [rows] = await pool.query(
       `SELECT p.parcel_id, p.receiver_name, p.receiver_contact, p.receiver_address,
+              p.receiver_house_number, p.receiver_street, p.receiver_barangay, p.receiver_city, p.receiver_province,
               p.contents, p.content_category, p.other_category_description,
               p.discrete_item, p.discreet_reason, p.discreet_status,
               p.discreet_review_remarks, p.discreet_reviewed_at,
@@ -520,6 +652,11 @@ async function getParcelForRole(req, res) {
           seller: parcel.seller_name,
           receiver: parcel.receiver_name,
           receiver_address: parcel.receiver_address || "",
+          receiver_house_number: parcel.receiver_house_number || "",
+          receiver_street: parcel.receiver_street || "",
+          receiver_barangay: parcel.receiver_barangay || "",
+          receiver_city: parcel.receiver_city || "",
+          receiver_province: parcel.receiver_province || "",
           discrete_item: approvedDiscreet,
           discreet_status: parcel.discreet_status || "NOT_REQUESTED",
           verification_status: parcel.verification_status
@@ -1061,6 +1198,7 @@ async function listParcels(req, res) {
     const [rows] = await pool.query(
       `SELECT p.parcel_id, p.transaction_number, p.seller_id,
               p.receiver_name, p.receiver_contact, p.receiver_address,
+              p.receiver_house_number, p.receiver_street, p.receiver_barangay, p.receiver_city, p.receiver_province,
               p.contents, p.content_category, p.other_category_description,
               p.discrete_item, p.discreet_reason, p.discreet_status,
               p.discreet_review_remarks, p.discreet_reviewed_at,
@@ -1213,8 +1351,9 @@ async function listRiderParcels(req, res) {
   try {
     await ensureCustomerSchema();
     const [rows] = await pool.query(
-      `SELECT parcel_id, transaction_number, receiver_name, receiver_address, contents,
-              content_category, discrete_item, discreet_status, status,
+      `SELECT parcel_id, transaction_number, receiver_name, receiver_address,
+              receiver_house_number, receiver_street, receiver_barangay, receiver_city, receiver_province,
+              contents, content_category, discrete_item, discreet_status, status,
               delivery_status, delivery_note, scanned_at, delivered_at, updated_at
        FROM parcels WHERE rider_id = ? ORDER BY updated_at DESC`,
       [req.user.user_id]

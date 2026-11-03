@@ -1,5 +1,6 @@
 import { createStore } from "./createStore.js";
 import { getRole, getUser } from "../api.js";
+import { parseAddressString } from "../data/phLocations.js";
 
 // Clean up any legacy mock customer cache from localStorage so mock/sample customers never appear
 try {
@@ -72,6 +73,12 @@ export function setCustomersFromDatabase(customers = []) {
 
     const contact = String(c.contact || c.receiver_contact || "").trim();
     const address = String(c.address || c.receiver_address || addresses[`cust:${key}`] || "").trim();
+    const parsed = parseAddressString(address);
+    const house_number = String(c.house_number || c.receiver_house_number || parsed.house_number || "").trim();
+    const street = String(c.street || c.receiver_street || parsed.street || "").trim();
+    const barangay = String(c.barangay || c.receiver_barangay || parsed.barangay || "").trim();
+    const city = String(c.city || c.receiver_city || parsed.city || "").trim();
+    const province = String(c.province || c.receiver_province || parsed.province || "").trim();
     const updatedAt = c.updated_at ? new Date(c.updated_at).getTime() : c.updatedAt || Date.now();
 
     if (!deduped.has(key)) {
@@ -79,6 +86,11 @@ export function setCustomersFromDatabase(customers = []) {
         name: cleanName,
         contact,
         address,
+        house_number,
+        street,
+        barangay,
+        city,
+        province,
         updatedAt,
       });
     } else {
@@ -87,6 +99,11 @@ export function setCustomersFromDatabase(customers = []) {
         ...existing,
         contact: existing.contact || contact,
         address: existing.address || address,
+        house_number: existing.house_number || house_number,
+        street: existing.street || street,
+        barangay: existing.barangay || barangay,
+        city: existing.city || city,
+        province: existing.province || province,
       });
     }
   });
@@ -207,6 +224,11 @@ export function saveCustomerFromParcel({
   name,
   contact,
   address,
+  house_number = "",
+  street = "",
+  barangay = "",
+  city = "",
+  province = "",
   parcelId,
   transactionNumber,
   updateExisting = false,
@@ -215,6 +237,12 @@ export function saveCustomerFromParcel({
   const cleanName = String(name || "").trim().replace(/\s+/g, " ");
   const cleanContact = String(contact || "").trim();
   const cleanAddress = String(address || "").trim();
+  const parsed = parseAddressString(cleanAddress);
+  const cleanHouse = String(house_number || parsed.house_number || "").trim();
+  const cleanStreet = String(street || parsed.street || "").trim();
+  const cleanBarangay = String(barangay || parsed.barangay || "").trim();
+  const cleanCity = String(city || parsed.city || "").trim();
+  const cleanProvince = String(province || parsed.province || "").trim();
   const key = normalizeName(cleanName);
 
   if (cleanAddress && (parcelId || transactionNumber || key)) {
@@ -236,6 +264,11 @@ export function saveCustomerFromParcel({
           name: cleanName,
           contact: cleanContact,
           address: cleanAddress,
+          house_number: cleanHouse,
+          street: cleanStreet,
+          barangay: cleanBarangay,
+          city: cleanCity,
+          province: cleanProvince,
           updatedAt: Date.now(),
         },
         ...list,
@@ -249,16 +282,32 @@ export function saveCustomerFromParcel({
     const nextAddress = updateExisting
       ? cleanAddress || existing.address
       : existing.address || cleanAddress;
-
-    if (nextContact === existing.contact && nextAddress === existing.address) {
-      return list;
-    }
+    const nextHouse = updateExisting
+      ? cleanHouse || existing.house_number
+      : existing.house_number || cleanHouse;
+    const nextStreet = updateExisting
+      ? cleanStreet || existing.street
+      : existing.street || cleanStreet;
+    const nextBarangay = updateExisting
+      ? cleanBarangay || existing.barangay
+      : existing.barangay || cleanBarangay;
+    const nextCity = updateExisting
+      ? cleanCity || existing.city
+      : existing.city || cleanCity;
+    const nextProvince = updateExisting
+      ? cleanProvince || existing.province
+      : existing.province || cleanProvince;
 
     const next = [...list];
     next[idx] = {
       ...existing,
       contact: nextContact,
       address: nextAddress,
+      house_number: nextHouse,
+      street: nextStreet,
+      barangay: nextBarangay,
+      city: nextCity,
+      province: nextProvince,
       updatedAt: Date.now(),
     };
     return next;

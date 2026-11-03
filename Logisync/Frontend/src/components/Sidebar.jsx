@@ -86,14 +86,14 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 top-16 z-30 bg-black/40 backdrop-blur-[1px] min-[801px]:hidden"
+          className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-[1px] min-[801px]:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-16 h-[calc(100vh-64px)] max-[800px]:h-[calc(100vh-128px)] flex flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line max-[800px]:w-[270px] max-[800px]:px-[18px] max-[800px]:shadow-2xl ${
+        className={`flex shrink-0 flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line min-[801px]:sticky min-[801px]:top-14 min-[801px]:h-[calc(100vh-56px)] min-[801px]:self-start max-[800px]:fixed max-[800px]:left-0 max-[800px]:top-0 max-[800px]:z-[60] max-[800px]:h-[calc(100vh-64px)] max-[800px]:w-[270px] max-[800px]:px-[18px] max-[800px]:shadow-2xl ${
           collapsed ? "min-[801px]:w-[78px] min-[801px]:px-2.5" : "min-[801px]:w-[250px] min-[801px]:px-[18px]"
         } ${mobileOpen ? "max-[800px]:translate-x-0" : "max-[800px]:-translate-x-full"}`}
       >

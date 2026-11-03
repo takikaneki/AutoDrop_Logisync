@@ -1,5 +1,48 @@
-// Mga field ng Create Parcel. Ang "max" ay galing sa laki ng column sa database.
-export const PARCEL_FIELDS = [
+// Create Parcel form fields & validation rules.
+// Addresses are tailored for Trece Martires City, Cavite Service Hub:
+// 1. Province (Pre-filled / Read-only: Cavite)
+// 2. Municipality / City (Pre-filled / Read-only: Trece Martires City)
+// 3. Barangay (Autocomplete from 13 Trece Martires City barangays)
+// 4. House / Unit Number and Street Name (Combined input field)
+
+export const ADDRESS_FIELDS = [
+  {
+    name: "receiver_province",
+    label: "Province",
+    max: 150,
+    required: true,
+    readOnly: true,
+    defaultValue: "Cavite",
+    help: "Pre-filled: Service hub covers Cavite.",
+  },
+  {
+    name: "receiver_city",
+    label: "Municipality / City",
+    max: 150,
+    required: true,
+    readOnly: true,
+    defaultValue: "Trece Martires City",
+    help: "Pre-filled: Service hub covers Trece Martires City.",
+  },
+  {
+    name: "receiver_barangay",
+    label: "Barangay",
+    max: 150,
+    required: true,
+    placeholder: "Select or type barangay (e.g. San Agustin, Hugo Perez)",
+    help: "Select or filter from the 13 official barangays of Trece Martires City.",
+  },
+  {
+    name: "receiver_street",
+    label: "House / Unit Number and Street Name",
+    max: 150,
+    required: true,
+    placeholder: "e.g. Blk 5 Lot 10, Mabini Street",
+    help: "Enter complete house or unit number, building, subdivision, and street name.",
+  },
+];
+
+export const PARCEL_BASE_FIELDS = [
   {
     name: "transaction_number",
     label: "Transaction number",
@@ -15,19 +58,12 @@ export const PARCEL_FIELDS = [
     help: "Enter an existing customer name to auto-fill their saved address and contact number.",
   },
   {
-    name: "receiver_address",
-    label: "Customer / Receiver address",
-    max: 255,
-    placeholder: "e.g. 123 Rizal St., Brgy. San Antonio, Quezon City",
-    help: "Auto-filled for returning customers. You can review and edit before submitting.",
-  },
-  {
     name: "receiver_contact",
     label: "Customer / Receiver contact number",
     max: 50,
     placeholder: "e.g. 09123456789",
     type: "tel",
-    help: "Auto-filled for returning customers. You can review and edit before submitting.",
+    help: "Contact number for delivery confirmation and rider coordination.",
   },
   {
     name: "contents",
@@ -93,11 +129,33 @@ export function isCategoryDiscreetEligible(category) {
   return DISCREET_ELIGIBLE_CATEGORIES.has((category || "").trim());
 }
 
+export function formatFullAddress(values = {}) {
+  const street = (values.receiver_street || "").trim();
+  const rawBrgy = (values.receiver_barangay || "").trim();
+  const brgy = rawBrgy
+    ? (/^brgy\.?/i.test(rawBrgy) ? rawBrgy : `Brgy. ${rawBrgy}`)
+    : "";
+  const city = (values.receiver_city || "Trece Martires City").trim();
+  const prov = (values.receiver_province || "Cavite").trim();
+
+  if (!street && !brgy) {
+    return (values.receiver_address || "").trim();
+  }
+
+  const parts = [street, brgy, city, prov].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : (values.receiver_address || "").trim();
+}
+
 export const EMPTY_PARCEL = {
   transaction_number: "",
   receiver_name: "",
-  receiver_address: "",
   receiver_contact: "",
+  receiver_house_number: "",
+  receiver_street: "",
+  receiver_barangay: "",
+  receiver_city: "Trece Martires City",
+  receiver_province: "Cavite",
+  receiver_address: "",
   contents: "",
   content_category: "",
   other_category_description: "",
@@ -106,34 +164,10 @@ export const EMPTY_PARCEL = {
 };
 
 const RESTRICTED_KEYWORDS = [
-  "weapon",
-  "gun",
-  "firearm",
-  "ammo",
-  "ammunition",
-  "explosive",
-  "firework",
-  "flammable",
-  "acid",
-  "poison",
-  "toxic",
-  "narcotic",
-  "marijuana",
-  "weed",
-  "cocaine",
-  "meth",
-  "illegal",
-  "contraband",
-  "counterfeit",
-  "fake id",
-  "cash",
-  "banknote",
-  "live animal",
-  "lighter fluid",
-  "butane",
-  "knife",
-  "blade",
-  "taser",
+  "weapon", "gun", "firearm", "ammo", "ammunition", "explosive", "firework",
+  "flammable", "acid", "poison", "toxic", "narcotic", "marijuana", "weed",
+  "cocaine", "meth", "illegal", "contraband", "counterfeit", "fake id",
+  "cash", "banknote", "live animal", "lighter fluid", "butane", "knife", "blade", "taser"
 ];
 
 export function evaluateDeclarationFlags(values = {}) {
@@ -161,24 +195,47 @@ export function evaluateDeclarationFlags(values = {}) {
   return warnings;
 }
 
-// Ibinabalik ang { fieldName: "error message" }. Walang laman = walang error.
 export function validateParcel(values) {
   const errors = {};
-  for (const f of PARCEL_FIELDS) {
-    const v = (values[f.name] || "").trim();
-    if (!v) errors[f.name] = `${f.label} is required.`;
-    else if (f.name === "transaction_number" && !/^\d{11}$/.test(v)) {
-      errors[f.name] = "Transaction number must contain exactly 11 digits (numbers only).";
-    } else if (f.name !== "transaction_number" && v.length > f.max) {
-      errors[f.name] = `${f.label} must be ${f.max} characters or fewer.`;
-    }
-  }
+
+  // Base fields
+  const tx = (values.transaction_number || "").trim();
+  if (!tx) errors.transaction_number = "Transaction number is required.";
+  else if (!/^\d{11}$/.test(tx)) errors.transaction_number = "Transaction number must contain exactly 11 digits (numbers only).";
+
+  const name = (values.receiver_name || "").trim();
+  if (!name) errors.receiver_name = "Customer / Receiver name is required.";
+  else if (name.length > 100) errors.receiver_name = "Receiver name must be 100 characters or fewer.";
 
   const contact = (values.receiver_contact || "").trim();
-  if (!errors.receiver_contact && !/^[0-9+()\-\s]{7,}$/.test(contact)) {
+  if (!contact) errors.receiver_contact = "Contact number is required.";
+  else if (!/^[0-9+()\-\s]{7,}$/.test(contact)) {
     errors.receiver_contact = "Enter a valid contact number (digits, spaces and + - ( ) only).";
   }
 
+  // Structured Address fields
+  const street = (values.receiver_street || "").trim();
+  if (!street) errors.receiver_street = "House / unit number and street name is required.";
+  else if (street.length > 150) errors.receiver_street = "Street must be 150 characters or fewer.";
+
+  const brgy = (values.receiver_barangay || "").trim();
+  if (!brgy) errors.receiver_barangay = "Barangay is required.";
+  else if (brgy.length > 150) errors.receiver_barangay = "Barangay must be 150 characters or fewer.";
+
+  const city = (values.receiver_city || "").trim();
+  if (!city) errors.receiver_city = "City or municipality is required.";
+  else if (city.length > 150) errors.receiver_city = "City must be 150 characters or fewer.";
+
+  const prov = (values.receiver_province || "").trim();
+  if (!prov) errors.receiver_province = "Province is required.";
+  else if (prov.length > 150) errors.receiver_province = "Province must be 150 characters or fewer.";
+
+  // Contents
+  const contents = (values.contents || "").trim();
+  if (!contents) errors.contents = "Parcel item description / contents is required.";
+  else if (contents.length > 255) errors.contents = "Contents must be 255 characters or fewer.";
+
+  // Category
   const category = (values.content_category || "").trim();
   if (!category || !VALID_CATEGORY_VALUES.includes(category)) {
     errors.content_category = "Please select and declare the parcel's actual content category.";
@@ -195,6 +252,7 @@ export function validateParcel(values) {
     }
   }
 
+  // Discreet handling
   if (Boolean(values.discrete_item) && isCategoryDiscreetEligible(category)) {
     const reason = (values.discreet_reason || "").trim();
     if (!reason) {
@@ -213,8 +271,19 @@ export function validateParcel(values) {
 export function trimParcel(values) {
   const category = (values.content_category || "").trim();
   const isDiscrete = Boolean(values.discrete_item) && isCategoryDiscreetEligible(category);
+  const fullAddress = formatFullAddress(values);
+
   return {
-    ...Object.fromEntries(PARCEL_FIELDS.map((f) => [f.name, (values[f.name] || "").trim()])),
+    transaction_number: (values.transaction_number || "").trim(),
+    receiver_name: (values.receiver_name || "").trim(),
+    receiver_contact: (values.receiver_contact || "").trim(),
+    receiver_house_number: (values.receiver_house_number || "").trim(),
+    receiver_street: (values.receiver_street || "").trim(),
+    receiver_barangay: (values.receiver_barangay || "").trim(),
+    receiver_city: (values.receiver_city || "").trim(),
+    receiver_province: (values.receiver_province || "").trim(),
+    receiver_address: fullAddress,
+    contents: (values.contents || "").trim(),
     content_category: category,
     other_category_description:
       category === "Other" ? (values.other_category_description || "").trim() : "",

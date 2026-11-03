@@ -243,11 +243,32 @@ export default function ParcelDetails() {
                   {value(parcel.receiver_name || parcel.recipient_name)}
                 </span>
               </div>
-              <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
-                <span className="text-sm text-[#999]">Address</span>
-                <span className="text-right text-sm font-semibold">
-                  {value(parcel.receiver_address || parcel.address)}
-                </span>
+              <div className="flex flex-col gap-1.5 border-b border-[#f1f1f1] py-3 dark:border-night-line">
+                <div className="flex justify-between gap-4">
+                  <span className="text-sm text-[#999]">Address</span>
+                  <span className="text-right text-sm font-semibold break-words max-w-[65%]">
+                    {value(parcel.receiver_address || parcel.address)}
+                  </span>
+                </div>
+                {(parcel.receiver_barangay || parcel.receiver_city || parcel.receiver_province) && (
+                  <div className="flex flex-wrap justify-end gap-1.5 pt-0.5">
+                    {parcel.receiver_barangay && (
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-night-head dark:text-slate-300">
+                        Brgy. {parcel.receiver_barangay}
+                      </span>
+                    )}
+                    {parcel.receiver_city && (
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-night-head dark:text-slate-300">
+                        {parcel.receiver_city}
+                      </span>
+                    )}
+                    {parcel.receiver_province && (
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-night-head dark:text-slate-300">
+                        {parcel.receiver_province}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex justify-between gap-4 border-b border-[#f1f1f1] py-3 dark:border-night-line">
                 <span className="text-sm text-[#999]">Contact</span>

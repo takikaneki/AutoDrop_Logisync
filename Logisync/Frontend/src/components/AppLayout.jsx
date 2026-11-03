@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import SiteHeader from "./SiteHeader.jsx";
+import GlobalBanner from "./layout/GlobalBanner.jsx";
 import Footer from "./Footer.jsx";
 import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
@@ -51,18 +52,17 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen">
+      <GlobalBanner role="coordinator" />
       <SiteHeader onToggleSidebar={toggleSidebar} />
-      <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <main
-        className={`flex min-h-screen flex-col pt-[88px] px-[35px] pb-6 transition-[margin] duration-200 max-[800px]:ml-0 max-[800px]:px-4 max-[800px]:pt-[76px] max-[800px]:pb-24 print:ml-0 print:pt-0 ${
-          collapsed ? "ml-[78px]" : "ml-[250px]"
-        }`}
-      >
-        <div className="flex-1">
-          <Outlet />
-        </div>
-        <Footer />
-      </main>
+      <div className="flex items-start">
+        <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+        <main className="flex min-h-[calc(100vh-56px)] min-w-0 flex-1 flex-col px-[35px] pt-6 pb-6 max-[800px]:px-4 max-[800px]:pt-5 max-[800px]:pb-24 print:p-0">
+          <div className="flex-1">
+            <Outlet />
+          </div>
+          <Footer />
+        </main>
+      </div>
       <MobileBottomNav role="coordinator" mobileOpen={mobileOpen} onToggleMenu={() => setMobileOpen((v) => !v)} />
       <Toaster />
     </div>
