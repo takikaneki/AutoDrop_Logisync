@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { Notice, PanelTitle } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, panel } from "../../components/styles.js";
-import { createParcel, listParcels } from "../../services/parcelService.js";
+import { createParcel, fetchSellerCustomers } from "../../services/parcelService.js";
 import { EMPTY_PARCEL, PARCEL_FIELDS, trimParcel, validateParcel } from "../../utils/parcelForm.js";
 import ParcelCreated from "../../components/parcels/ParcelCreated.jsx";
 import QrScanner from "../../components/qr/QrScanner.jsx";
@@ -33,9 +33,9 @@ export default function CreateParcel() {
   const autoFilledRef = useRef({ address: false, contact: false });
   const nameWrapRef = useRef(null);
 
-  // Sync seller's existing parcels from backend on mount so all previous customers are available
+  // Retrieve seller's saved customers from the database on mount
   useEffect(() => {
-    listParcels().catch(() => {});
+    fetchSellerCustomers().catch(() => {});
   }, []);
 
   // Close suggestions dropdown when clicking outside
@@ -164,6 +164,7 @@ export default function CreateParcel() {
     setErrors({});
     setApiError("");
     setCreated(null);
+    fetchSellerCustomers().catch(() => {});
   };
 
   return (

@@ -1,8 +1,13 @@
 import { api, apiBlobUrl, apiUpload } from "../api.js";
-import { getParcelAddress, saveCustomerFromParcel, syncCustomersFromParcels } from "../store/customers.js";
+import {
+  getParcelAddress,
+  saveCustomerFromParcel,
+  setCustomersFromDatabase,
+  syncCustomersFromParcels,
+} from "../store/customers.js";
 import { STAGE, getDeliveryRecordForParcel, syncAutomaticReschedules } from "../store/riderDeliveries.js";
 
-// Lahat ng usapan sa /api/parcels ay dito. Pinapayaman din ng local customer address at live delivery/reschedule status
+// Lahat ng usapan sa /api/parcels ay dito. Pinapayaman din ng database customer address at live delivery/reschedule status
 // para consistent ang status sa Rider, Coordinator, at Seller dashboards.
 const enc = encodeURIComponent;
 
@@ -46,8 +51,26 @@ export const enrichParcel = (p) => {
   return next;
 };
 
+// GET /api/parcels/customers (seller lang)
+// Kinukuha mula sa PostgreSQL database ang mga dating naisave na customer ng kasalukuyang seller.
+export async function fetchSellerCustomers() {
+  try {
+    const data = await api("/parcels/customers");
+    const list = Array.isArray(data?.customers) ? data.customers : [];
+    setCustomersFromDatabase(list);
+    return list;
+  } catch {
+    // Fallback kung hindi pa nare-restart ang backend server: kunin mula sa aktwal na DB parcels ng seller
+    const data = await api("/parcels");
+    const parcels = Array.isArray(data?.parcels) ? data.parcels : [];
+    setCustomersFromDatabase([]);
+    syncCustomersFromParcels(parcels);
+    return parcels;
+  }
+}
+
 // POST /api/parcels  (seller lang)
-// Ang backend ang gumagawa ng parcel_id at nagtatakda ng status na WAITING_FOR_VIDEO.
+// Ang backend ang gumagawa ng parcel_id, nagse-save ng customer sa seller_customers table, at nagtatakda ng status na WAITING_FOR_VIDEO.
 export async function createParcel({
   transaction_number,
   receiver_name,
@@ -66,6 +89,7 @@ export async function createParcel({
       receiver_contact,
       contents,
       discrete_item,
+      updateExistingCustomer,
     },
   });
   const created = {

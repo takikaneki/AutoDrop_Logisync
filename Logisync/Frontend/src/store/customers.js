@@ -1,9 +1,12 @@
 import { createStore } from "./createStore.js";
-import { parcels as mockParcels } from "../data/records.js";
+import { getRole, getUser } from "../api.js";
 
-// Persistent customer directory + parcel address map in localStorage.
-// Preserves backend compatibility while ensuring customer addresses and contact numbers
-// are remembered accurately and never unintentionally overwritten.
+// Clean up any legacy mock customer cache from localStorage so mock/sample customers never appear
+try {
+  localStorage.removeItem("pt-customers");
+} catch {
+  /* ignore storage errors */
+}
 
 const normalizeName = (name) =>
   String(name || "")
@@ -11,45 +14,104 @@ const normalizeName = (name) =>
     .replace(/\s+/g, " ")
     .toLowerCase();
 
-// Seed initial customers from existing system mock records so demo customers also auto-fill
-const initialCustomers = (() => {
-  const map = new Map();
-  mockParcels.forEach((p, idx) => {
-    const key = normalizeName(p.recipient);
-    if (!key || map.has(key)) return;
-    const phoneSuffix = String(1000000 + ((idx * 7919) % 8999999)).slice(0, 7);
-    map.set(key, {
-      name: p.recipient,
-      address: p.address || "",
-      contact: `0917${phoneSuffix}`,
-      updatedAt: p.ts || Date.now(),
-    });
-  });
-  return [...map.values()];
-})();
-
-const customerStore = createStore(initialCustomers, "pt-customers");
+// Database-driven customer store (starts empty; populated strictly from the logged-in seller's DB records)
+const customerStore = createStore([]);
 const parcelAddressStore = createStore({}, "pt-parcel-addresses");
 
-export const useCustomers = customerStore.use;
-export const getCustomers = customerStore.get;
+let loadedSellerKey = null;
+
+function currentSellerKey() {
+  const user = getUser();
+  if (!user) return null;
+  return String(user.user_id ?? user.id ?? user.email ?? "");
+}
+
+function ensureSellerScope() {
+  const key = currentSellerKey();
+  if (key !== loadedSellerKey) {
+    loadedSellerKey = key;
+    customerStore.set([]);
+  }
+}
+
+export const useCustomers = () => {
+  ensureSellerScope();
+  return customerStore.use();
+};
+
+export const getCustomers = () => {
+  ensureSellerScope();
+  return customerStore.get();
+};
+
 export const useParcelAddresses = parcelAddressStore.use;
 
+export function clearCustomersStore() {
+  loadedSellerKey = null;
+  customerStore.set([]);
+}
+
 /**
- * Look up a customer by exact name (case-insensitive, normalized whitespace).
+ * Replace the store with the seller's saved customers retrieved from the backend database.
+ * Deduplicates by normalized customer name.
+ */
+export function setCustomersFromDatabase(customers = []) {
+  ensureSellerScope();
+  if (!Array.isArray(customers)) {
+    customerStore.set([]);
+    return;
+  }
+
+  const addresses = parcelAddressStore.get();
+  const deduped = new Map();
+
+  customers.forEach((c) => {
+    const cleanName = String(c.name || c.receiver_name || "").trim().replace(/\s+/g, " ");
+    const key = normalizeName(cleanName);
+    if (!key) return;
+
+    const contact = String(c.contact || c.receiver_contact || "").trim();
+    const address = String(c.address || c.receiver_address || addresses[`cust:${key}`] || "").trim();
+    const updatedAt = c.updated_at ? new Date(c.updated_at).getTime() : c.updatedAt || Date.now();
+
+    if (!deduped.has(key)) {
+      deduped.set(key, {
+        name: cleanName,
+        contact,
+        address,
+        updatedAt,
+      });
+    } else {
+      const existing = deduped.get(key);
+      deduped.set(key, {
+        ...existing,
+        contact: existing.contact || contact,
+        address: existing.address || address,
+      });
+    }
+  });
+
+  customerStore.set([...deduped.values()]);
+}
+
+/**
+ * Look up a saved customer by exact name (case-insensitive, normalized whitespace).
  */
 export function findCustomerByName(name) {
+  ensureSellerScope();
   const key = normalizeName(name);
   if (!key) return null;
   return customerStore.get().find((c) => normalizeName(c.name) === key) || null;
 }
 
 /**
- * Return matching customers for autocomplete suggestions.
+ * Return matching saved customers for autocomplete suggestions.
  */
 export function searchCustomers(query, limit = 6) {
+  ensureSellerScope();
   const q = normalizeName(query);
   const all = customerStore.get();
+  if (!all.length) return [];
   if (!q) return all.slice(0, limit);
   return all
     .filter(
@@ -67,10 +129,16 @@ export function searchCustomers(query, limit = 6) {
 }
 
 /**
- * Merge customers discovered from backend parcel list without overwriting existing saved details.
+ * Sync customers discovered from the logged-in seller's actual backend parcel list
+ * without overwriting existing saved details.
  */
 export function syncCustomersFromParcels(parcels = []) {
+  ensureSellerScope();
+  if (getRole() !== "seller") return;
   if (!Array.isArray(parcels) || parcels.length === 0) return;
+
+  const user = getUser();
+  const sellerId = user?.user_id ?? user?.id;
   const addresses = parcelAddressStore.get();
 
   customerStore.set((list) => {
@@ -78,13 +146,22 @@ export function syncCustomersFromParcels(parcels = []) {
     const indexByKey = new Map(next.map((c, i) => [normalizeName(c.name), i]));
     let changed = false;
 
+    // Filter only real parcels belonging to the current seller (exclude demo seed PX123456)
+    const sellerParcels = parcels.filter((p) => {
+      if (!p || p.parcel_id === "PX123456") return false;
+      if (sellerId != null && p.seller_id != null && Number(p.seller_id) !== Number(sellerId)) {
+        return false;
+      }
+      return true;
+    });
+
     // Process from oldest to newest so first-saved details establish the baseline
-    const sorted = [...parcels].sort(
+    const sorted = [...sellerParcels].sort(
       (a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0)
     );
 
     sorted.forEach((p) => {
-      const name = String(p.receiver_name || p.recipient || "").trim();
+      const name = String(p.receiver_name || p.recipient || "").trim().replace(/\s+/g, " ");
       const key = normalizeName(name);
       if (!key) return;
 
@@ -94,13 +171,13 @@ export function syncCustomersFromParcels(parcels = []) {
           p.address ||
           addresses[p.parcel_id] ||
           addresses[p.transaction_number] ||
+          addresses[`cust:${key}`] ||
           ""
       ).trim();
 
       if (indexByKey.has(key)) {
         const idx = indexByKey.get(key);
         const cur = next[idx];
-        // Only fill in missing fields; never overwrite existing non-empty customer details
         const mergedContact = cur.contact || contact;
         const mergedAddress = cur.address || address;
         if (mergedContact !== cur.contact || mergedAddress !== cur.address) {
@@ -124,11 +201,7 @@ export function syncCustomersFromParcels(parcels = []) {
 }
 
 /**
- * Save customer info when a parcel is registered.
- * - Always records the parcel's specific address under its parcel_id and transaction_number.
- * - If the customer is new, saves their name, address, and contact number.
- * - If the customer already exists, only fills blank fields unless `updateExisting` is explicitly true,
- *   ensuring existing customer details are never unintentionally overwritten.
+ * Save customer info when a parcel is registered by the seller.
  */
 export function saveCustomerFromParcel({
   name,
@@ -138,19 +211,21 @@ export function saveCustomerFromParcel({
   transactionNumber,
   updateExisting = false,
 }) {
-  const cleanName = String(name || "").trim();
+  ensureSellerScope();
+  const cleanName = String(name || "").trim().replace(/\s+/g, " ");
   const cleanContact = String(contact || "").trim();
   const cleanAddress = String(address || "").trim();
+  const key = normalizeName(cleanName);
 
-  if (cleanAddress && (parcelId || transactionNumber)) {
+  if (cleanAddress && (parcelId || transactionNumber || key)) {
     parcelAddressStore.set((map) => ({
       ...map,
       ...(parcelId ? { [parcelId]: cleanAddress } : {}),
       ...(transactionNumber ? { [transactionNumber]: cleanAddress } : {}),
+      ...(key && (updateExisting || !map[`cust:${key}`]) ? { [`cust:${key}`]: cleanAddress } : {}),
     }));
   }
 
-  const key = normalizeName(cleanName);
   if (!key) return;
 
   customerStore.set((list) => {
@@ -191,7 +266,7 @@ export function saveCustomerFromParcel({
 }
 
 /**
- * Get the saved address for a parcel (from parcel object or local parcel address store or customer record).
+ * Get the saved address for a parcel (from database parcel object or fallback address store).
  */
 export function getParcelAddress(parcel) {
   if (!parcel) return "";
@@ -204,4 +279,3 @@ export function getParcelAddress(parcel) {
   const cust = findCustomerByName(parcel.receiver_name || parcel.recipient);
   return cust?.address || "";
 }
-

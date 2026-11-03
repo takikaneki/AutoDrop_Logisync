@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+  listSellerCustomers,
   riderScanParcel,
   riderDelivered,
   riderFailed,
@@ -22,13 +23,16 @@ const { uploadVideo: uploadVideoMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
 
-// BAGO: listahan ng parcels (seller = sarili lang, coordinator = lahat)
+// Listahan ng parcels (seller = sarili lang, coordinator = lahat)
 router.get("/", authenticateToken, authorizeRoles("seller", "coordinator"), listParcels);
 
-// BAGO: hanapin gamit ang transaction number (ilagay bago ang "/:parcelId")
+// Saved customers mula sa database para sa kasalukuyang naka-login na seller
+router.get("/customers", authenticateToken, authorizeRoles("seller"), listSellerCustomers);
+
+// Hanapin gamit ang transaction number (ilagay bago ang "/:parcelId")
 router.get("/by-transaction/:transactionNumber", authenticateToken, getParcelByTransaction);
 
-// BAGO: delivery ng rider (ilagay bago ang "/:parcelId")
+// Delivery ng rider (ilagay bago ang "/:parcelId")
 router.get("/rider/mine", authenticateToken, authorizeRoles("rider"), listRiderParcels);
 router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), riderScanParcel);
 router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), riderDelivered);
