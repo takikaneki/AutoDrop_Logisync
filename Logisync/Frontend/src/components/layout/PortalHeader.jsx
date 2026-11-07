@@ -5,8 +5,9 @@ import UserAvatar from "../Avatar.jsx";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { TOP_LINKS, toPath } from "./navConfig.js";
+import { ROLE_LABEL, TOP_LINKS, toPath } from "./navConfig.js";
 import NotificationMenu from "./NotificationMenu.jsx";
+import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 
 const iconBtn =
   "flex h-10 w-10 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
@@ -29,8 +30,8 @@ export default function PortalHeader({ role, onToggleSidebar }) {
     <>
       <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-4 sm:px-6 shadow-sm print:hidden max-[800px]:hidden dark:bg-night-panel dark:border-night-line">
         <div className="grid h-full w-full grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center">
-          {/* Left Column: Sidebar Toggle */}
-          <div className="flex items-center justify-start">
+          {/* Left Column: Sidebar Toggle & Brand */}
+          <div className="flex items-center justify-start gap-3">
             <button
               onClick={onToggleSidebar}
               aria-label="Toggle sidebar"
@@ -39,6 +40,21 @@ export default function PortalHeader({ role, onToggleSidebar }) {
             >
               <i className="fa-solid fa-bars text-[15px]" />
             </button>
+            <Link to={toPath(role, "")} className="flex items-center gap-2.5">
+              <img
+                src={SPX_LOGO_DATA_URL}
+                alt="SPX Express"
+                draggable={false}
+                className="h-6 w-auto shrink-0 object-contain"
+              />
+              <span className="h-4 w-[1.5px] bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+              <span className="text-[16px] font-black tracking-tight text-slate-900 dark:text-white">
+                LogiSync
+              </span>
+              <span className="hidden lg:inline-flex items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
+                {ROLE_LABEL[role]}
+              </span>
+            </Link>
           </div>
 
           {/* Center Column: Perfectly Horizontally Centered Navigation Links */}

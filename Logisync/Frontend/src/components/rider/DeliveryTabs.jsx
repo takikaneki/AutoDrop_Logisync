@@ -23,7 +23,7 @@ export default function DeliveryTabs({ value, onChange }) {
     <div
       role="tablist"
       aria-label="Delivery lists"
-      className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-[#eee] bg-white p-1.5 dark:border-night-line dark:bg-night-panel"
+      className="mb-5 grid grid-cols-3 gap-2 rounded-2xl border border-[#eee] bg-white p-1.5 max-[800px]:grid-cols-1 max-[800px]:gap-2 max-[800px]:p-2 dark:border-night-line dark:bg-night-panel"
     >
       {TABS.map(([stage, label]) => {
         const active = value === stage;
@@ -33,14 +33,14 @@ export default function DeliveryTabs({ value, onChange }) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(stage)}
-            className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-[14px] transition max-[520px]:flex-col max-[520px]:gap-0.5 max-[520px]:text-[12px] ${
+            className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-[14px] transition max-[800px]:w-full max-[800px]:justify-between max-[800px]:px-4 max-[800px]:py-3 max-[800px]:text-[14px] ${
               active
                 ? "bg-brand font-bold text-white"
-                : "font-semibold text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line"
+                : "font-semibold text-[#777] hover:bg-[#fff3eb] hover:text-brand max-[800px]:bg-[#fafafa] dark:text-[#d1c9c2] dark:hover:bg-night-line dark:max-[800px]:bg-night-head"
             }`}
           >
             <span className="truncate">{label}</span>
-            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[12px] font-bold">
+            <span className="shrink-0 rounded-full bg-black/10 px-2.5 py-0.5 text-[12px] font-bold">
               {countForStage(mine, stage)}
             </span>
           </button>

@@ -368,20 +368,34 @@ export default function RiderParcels() {
         </section>
       )}
 
-      <div className={`mb-5 flex flex-wrap gap-2 ${reportOpen ? "print:hidden" : ""}`}>
-        {TABS.map(([k, label]) => (
-          <button
-            key={k}
-            onClick={() => pick(k)}
-            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
-              filter === k
-                ? "bg-brand text-white"
-                : "border border-[#eee] bg-white text-[#777] hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
-            }`}
-          >
-            {label} ({count(k)})
-          </button>
-        ))}
+      <div
+        className={`mb-5 flex flex-wrap gap-2 max-[800px]:grid max-[800px]:grid-cols-1 max-[800px]:gap-2 max-[800px]:rounded-2xl max-[800px]:border max-[800px]:border-[#eee] max-[800px]:bg-white max-[800px]:p-2 dark:max-[800px]:border-night-line dark:max-[800px]:bg-night-panel ${
+          reportOpen ? "print:hidden" : ""
+        }`}
+      >
+        {TABS.map(([k, label]) => {
+          const active = filter === k;
+          const total = count(k);
+          return (
+            <button
+              key={k}
+              onClick={() => pick(k)}
+              className={`rounded-full px-4 py-2 text-[13px] font-semibold transition max-[800px]:flex max-[800px]:w-full max-[800px]:items-center max-[800px]:justify-between max-[800px]:rounded-xl max-[800px]:px-4 max-[800px]:py-3 max-[800px]:text-[14px] ${
+                active
+                  ? "bg-brand text-white max-[800px]:font-bold"
+                  : "border border-[#eee] bg-white text-[#777] hover:text-brand max-[800px]:border-transparent max-[800px]:bg-[#fafafa] dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2] dark:max-[800px]:bg-night-head"
+              }`}
+            >
+              <span className="max-[800px]:truncate">
+                {label}
+                <span className="max-[800px]:hidden"> ({total})</span>
+              </span>
+              <span className="hidden shrink-0 rounded-full bg-black/10 px-2.5 py-0.5 text-[12px] font-bold max-[800px]:inline-block">
+                {total}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <section className={`${panel} overflow-hidden p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>

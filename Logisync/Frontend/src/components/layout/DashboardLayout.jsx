@@ -3,7 +3,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import Footer from "../Footer.jsx";
 import Toaster from "../Toaster.jsx";
 import PortalHeader from "./PortalHeader.jsx";
-import GlobalBanner from "./GlobalBanner.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
 
@@ -27,7 +26,6 @@ export default function DashboardLayout({ role }) {
 
   return (
     <div className="min-h-screen">
-      <GlobalBanner role={role} />
       <PortalHeader role={role} onToggleSidebar={toggle} />
       <div className="flex items-start">
         <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />

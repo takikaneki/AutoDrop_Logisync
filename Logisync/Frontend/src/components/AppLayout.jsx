@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import SiteHeader from "./SiteHeader.jsx";
-import GlobalBanner from "./layout/GlobalBanner.jsx";
 import Footer from "./Footer.jsx";
 import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
@@ -52,7 +51,6 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen">
-      <GlobalBanner role="coordinator" />
       <SiteHeader onToggleSidebar={toggleSidebar} />
       <div className="flex items-start">
         <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />

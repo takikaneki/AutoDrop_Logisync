@@ -23,22 +23,23 @@ const CHART = [
 ];
 
 const MOBILE_AXIS_LINES = {
-  "Needs Video": ["Needs", "Video"],
-  "Reupload Requested": ["Reupload", "Req."],
-  "Under Verification": ["Under", "Verify"],
-  Verified: ["Verified", ""],
-  Rescheduled: ["Resched.", ""],
-  "Return to Hub": ["Return", "to Hub"],
-  Rejected: ["Rejected", ""],
+  "waiting for video": ["Waiting", "for Video"],
+  "needs video": ["Needs", "Video"],
+  "reupload requested": ["Reupload", "Req."],
+  "under verification": ["Under", "Verify"],
+  verified: ["Verified", ""],
+  rescheduled: ["Resched.", ""],
+  "return to hub": ["Return", "to Hub"],
+  rejected: ["Rejected", ""],
 };
 
 function MobileStatusTick({ x, y, payload }) {
-  const raw = String(payload?.value || "");
-  const [line1, line2] = MOBILE_AXIS_LINES[raw] || [raw, ""];
+  const raw = String(payload?.value || "").trim();
+  const [line1, line2] = MOBILE_AXIS_LINES[raw.toLowerCase()] || [raw, ""];
   return (
     <g transform={`translate(${x},${y})`}>
-      <text x={0} y={0} dy={12} textAnchor="middle" fill="#64748b" fontSize={10.5} fontWeight={500}>
-        <tspan x={0} dy="0">{line1}</tspan>
+      <text x={0} y={0} textAnchor="middle" fill="#64748b" fontSize={10} fontWeight={600}>
+        <tspan x={0} dy="13">{line1}</tspan>
         {line2 && <tspan x={0} dy="12">{line2}</tspan>}
       </text>
     </g>
@@ -50,12 +51,12 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 600px)").matches : false
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 800px)").matches : false
   );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 600px)");
+    const mq = window.matchMedia("(max-width: 800px)");
     const onChange = (e) => setIsMobile(e.matches);
     setIsMobile(mq.matches);
     if (mq.addEventListener) {
@@ -76,7 +77,12 @@ export default function SellerDashboard() {
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
   const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED", "RETURN_TO_HUB"].includes(p.status));
   const chartData = useMemo(
-    () => CHART.map(([s, color]) => ({ name: statusInfo(s).label, value: count(s), color })).filter((d) => d.value > 0 || ["Needs Video", "Under Verification", "Verified", "Return to Hub"].includes(d.name)),
+    () =>
+      CHART.map(([s, color]) => ({ name: statusInfo(s).label, value: count(s), color })).filter(
+        (d) =>
+          d.value > 0 ||
+          ["Needs Video", "Waiting for video", "Under Verification", "Under verification", "Verified", "Return to Hub"].includes(d.name)
+      ),
     [parcels] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -99,20 +105,20 @@ export default function SellerDashboard() {
       </StatGrid>
 
       {/* STATUS CHART + ACTION NEEDED */}
-      <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
-        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[600px]:p-4`}>
+      <section className="mb-7 max-[800px]:mb-4 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[800px]:gap-4 max-[1200px]:grid-cols-1">
+        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[800px]:p-4`}>
           <PanelTitle icon="fa-chart-column">Parcels by Status</PanelTitle>
           {parcels.length === 0 ? (
             <EmptyState title={loading ? "Loading…" : "No data yet"} text={loading ? "" : "Register a parcel to see your status breakdown."} />
           ) : (
             <>
-              <div className="min-h-[280px] max-[600px]:min-h-0 max-[600px]:h-[240px] w-full flex-1 overflow-hidden">
+              <div className="min-h-[280px] max-[800px]:mt-1 max-[800px]:mx-auto max-[800px]:min-h-0 max-[800px]:h-[235px] w-full flex-1 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
                     margin={
                       isMobile
-                        ? { top: 10, right: 6, left: -24, bottom: 6 }
+                        ? { top: 12, right: 12, left: 0, bottom: 8 }
                         : { top: 10, right: 10, left: -20, bottom: 0 }
                     }
                   >
@@ -123,14 +129,16 @@ export default function SellerDashboard() {
                       axisLine={{ stroke: "#dfe5ed" }}
                       fontSize={12}
                       interval={0}
-                      height={isMobile ? 38 : 30}
+                      height={isMobile ? 42 : 30}
+                      padding={isMobile ? { left: 8, right: 8 } : undefined}
                       tick={isMobile ? <MobileStatusTick /> : undefined}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
                       fontSize={isMobile ? 11 : 14}
-                      width={isMobile ? 42 : 60}
+                      width={isMobile ? 28 : 60}
+                      tickMargin={isMobile ? 4 : 6}
                       allowDecimals={false}
                     />
                     <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} />
@@ -145,7 +153,7 @@ export default function SellerDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 border-t border-[#f1f3f7] pt-2.5 text-[11.5px] text-[#64748b] min-[601px]:hidden dark:border-night-line dark:text-[#d1c9c2]">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-[#f1f3f7] pt-3 text-[12px] text-[#64748b] min-[801px]:hidden dark:border-night-line dark:text-[#d1c9c2]">
                 {chartData.map((d) => (
                   <span key={d.name} className="inline-flex items-center gap-1.5">
                     <span
