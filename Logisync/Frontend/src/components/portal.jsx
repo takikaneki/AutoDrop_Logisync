@@ -17,20 +17,20 @@ const tones = {
 export function StatCard({ label, value, icon, tone = "orange", to }) {
   const body = (
     <div
-      className={`${panel} flex h-full min-h-[124px] max-[600px]:min-h-[86px] items-center gap-4 max-[600px]:gap-2.5 !px-6 !py-5 max-[600px]:!px-3.5 max-[600px]:!py-3 transition ${
+      className={`${panel} flex h-full min-h-[124px] max-[600px]:min-h-[88px] items-center gap-4 max-[600px]:gap-3.5 !px-6 !py-5 max-[600px]:!px-4 max-[600px]:!py-4 transition ${
         to ? "hover:border-brand/40 hover:shadow-sm active:scale-[0.99]" : ""
       }`}
     >
       <div
-        className={`flex h-[60px] w-[60px] max-[600px]:h-[40px] max-[600px]:w-[40px] shrink-0 items-center justify-center rounded-full text-[24px] max-[600px]:text-[17px] ${tones[tone]}`}
+        className={`flex h-[60px] w-[60px] max-[600px]:h-[46px] max-[600px]:w-[46px] shrink-0 items-center justify-center rounded-full text-[24px] max-[600px]:text-[19px] ${tones[tone]}`}
       >
         <i className={`fa-solid ${icon}`} />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="mb-1.5 max-[600px]:mb-0.5 break-words text-[15px] max-[600px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
+        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[15px] max-[600px]:text-[13px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
           {label}
         </h3>
-        <h2 className="truncate text-[32px] max-[600px]:text-[21px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
+        <h2 className="truncate text-[32px] max-[600px]:text-[24px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
           {value}
         </h2>
       </div>
@@ -50,7 +50,7 @@ export function StatCard({ label, value, icon, tone = "orange", to }) {
 }
 
 // Hanay ng summary cards: pare-pareho ang gap, alignment at breakpoints sa lahat ng page.
-export function StatGrid({ cols = 4, children, className = "mb-7 max-[600px]:mb-4" }) {
+export function StatGrid({ cols = 4, children, className = "mb-7 max-[600px]:mb-5" }) {
   return (
     <div className={`stat-wrap ${className}`}>
       <section className={`stat-grid ${cols === 3 ? "stat-grid-3" : ""}`}>{children}</section>

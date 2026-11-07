@@ -532,7 +532,7 @@ export default function Parcels() {
           </div>
 
           {/* Report Summary Cards */}
-          <div className="mb-5 grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-2">
+          <div className="mb-5 grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-1">
             {[
               ["Total parcels", reportSummary.total, "text-[#27364f] dark:text-[#f1eeeb]"],
               ["Delivered", reportSummary.delivered, "text-[#29945a]"],

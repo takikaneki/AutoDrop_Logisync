@@ -116,10 +116,38 @@ function LogisticsGraphicBackground() {
   );
 }
 
+const LOGIN_ROLES = [
+  {
+    key: "coordinator",
+    label: "Coordinator",
+    icon: "fa-building-shield",
+    subtitle: "Sign in to manage and coordinate your parcels",
+    emailPlaceholder: "example@gmail.com",
+    helperText: "Seller and Rider accounts are created by the Coordinator. Ask them for access.",
+  },
+  {
+    key: "seller",
+    label: "Seller",
+    icon: "fa-store",
+    subtitle: "Sign in to register parcels, upload packing videos, and track status",
+    emailPlaceholder: "seller@example.com",
+    helperText: "Seller accounts are created by the Coordinator. Ask your hub coordinator if you need access.",
+  },
+  {
+    key: "rider",
+    label: "Rider",
+    icon: "fa-motorcycle",
+    subtitle: "Sign in to scan assigned parcels and update delivery status",
+    emailPlaceholder: "rider@example.com",
+    helperText: "Rider accounts are created by the Coordinator. Ask your hub coordinator if you need access.",
+  },
+];
+
 export default function Login() {
   const navigate = useNavigate();
   // Welcome screen muna; lalabas lang ang Sign-In pagkatapos pindutin ang "Let's Get Started"
   const [showIntro, setShowIntro] = useState(true);
+  const [selectedRole, setSelectedRole] = useState("coordinator");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -128,6 +156,9 @@ export default function Login() {
   const [agreed, setAgreed] = useState(false);
   const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
+
+  const activeRoleMeta =
+    LOGIN_ROLES.find((r) => r.key === selectedRole) || LOGIN_ROLES[0];
 
   const handleCheckboxChange = (e) => {
     const checked = e.target.checked;
@@ -161,13 +192,18 @@ export default function Login() {
         body: {
           email: email.trim(),
           password,
+          role: selectedRole,
           termsAccepted: true,
           policyVersion: POLICY_VERSION,
         },
       });
 
-      // Ang role ay galing sa backend, hindi pinili ng user
-      const home = homePathForRole(data.user.role);
+      const actualRole = String(data?.user?.role || selectedRole || "").toLowerCase();
+      if (actualRole && actualRole !== selectedRole) {
+        setSelectedRole(actualRole);
+      }
+
+      const home = homePathForRole(actualRole);
       if (!home) {
         setError("Your account role is not supported.");
         return;
@@ -195,21 +231,21 @@ export default function Login() {
 
       {/* Top Navigation Header matching the Welcome Page */}
       <header className="relative z-10 w-full border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
           <button
             type="button"
             onClick={() => setShowIntro(true)}
-            className="flex items-center gap-3 text-left group"
+            className="flex shrink-0 items-center gap-2 text-left group sm:gap-3"
           >
             <img
               src={SPX_LOGO_DATA_URL}
               alt="SPX Express"
               draggable={false}
-              className="h-8 w-auto shrink-0 object-contain transition-transform group-hover:scale-105 sm:h-9"
+              className="h-6 w-auto shrink-0 object-contain transition-transform group-hover:scale-105 sm:h-9"
             />
-            <span className="h-6 w-px bg-slate-200" aria-hidden="true" />
-            <div className="leading-none">
-              <span className="block text-base font-extrabold tracking-tight text-slate-900 sm:text-lg">
+            <span className="h-4 w-px shrink-0 bg-slate-200 sm:h-6" aria-hidden="true" />
+            <div className="shrink-0 leading-none">
+              <span className="block whitespace-nowrap text-[15px] font-extrabold tracking-tight text-slate-900 sm:text-lg">
                 LogiSync
               </span>
               <span className="hidden text-[9px] font-bold uppercase tracking-widest text-brand sm:block">
@@ -218,19 +254,19 @@ export default function Login() {
             </div>
           </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             <button
               type="button"
               onClick={() => setContactOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#f97316]"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#f97316] sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
             >
-              <i className="fa-solid fa-headset text-[#f97316]" />
+              <i className="fa-solid fa-headset text-[11px] text-[#f97316] sm:text-xs" />
               <span>Contact Us</span>
             </button>
             <button
               type="button"
               onClick={() => setShowIntro(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200 sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
             >
               <i className="fa-solid fa-arrow-left text-[10px]" />
               <span>Back to Website</span>
@@ -246,7 +282,7 @@ export default function Login() {
           <div className="h-1.5 w-full bg-gradient-to-r from-[#f97316] via-amber-500 to-[#ea580c]" />
 
           <div className="px-5 py-6 sm:px-10 sm:py-8">
-            {/* Logo + title + role pills */}
+            {/* Logo + title + interactive role selector */}
             <div className="mb-6 text-center">
               <img
                 src={SPX_LOGO_DATA_URL}
@@ -255,24 +291,41 @@ export default function Login() {
                 className="mx-auto mb-3 h-11 w-auto object-contain sm:h-12"
               />
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">LogiSync</h1>
-              <p className="mt-1 text-sm text-slate-500">Sign in to manage and coordinate your parcels</p>
+              <p className="mt-1 text-sm text-slate-500">{activeRoleMeta.subtitle}</p>
 
-              {/* Subtle Logistics Role Indicators */}
-              <div className="mt-3.5 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-[11px] font-bold text-slate-600">
-                <span className="inline-flex items-center gap-1 text-[#ea580c]">
-                  <i className="fa-solid fa-building-shield text-[10px]" />
-                  Coordinator
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <i className="fa-solid fa-store text-[10px] text-slate-400" />
-                  Seller
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="inline-flex items-center gap-1">
-                  <i className="fa-solid fa-motorcycle text-[10px] text-slate-400" />
-                  Rider
-                </span>
+              {/* Interactive Role Selector (Coordinator, Seller, Rider) */}
+              <div
+                role="tablist"
+                aria-label="Select account role"
+                className="mt-4 inline-grid w-full max-w-[340px] grid-cols-3 items-center gap-1 rounded-full border border-slate-200/90 bg-slate-100/80 p-1 text-xs font-bold"
+              >
+                {LOGIN_ROLES.map((roleOption) => {
+                  const isActive = selectedRole === roleOption.key;
+                  return (
+                    <button
+                      key={roleOption.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => {
+                        setSelectedRole(roleOption.key);
+                        setError("");
+                      }}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-bold transition-all ${
+                        isActive
+                          ? "bg-white text-[#ea580c] shadow-sm ring-1 ring-orange-200/90"
+                          : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
+                      }`}
+                    >
+                      <i
+                        className={`fa-solid ${roleOption.icon} text-[10px] ${
+                          isActive ? "text-[#ea580c]" : "text-slate-400"
+                        }`}
+                      />
+                      <span>{roleOption.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -292,7 +345,7 @@ export default function Login() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@gmail.com"
+                    placeholder={activeRoleMeta.emailPlaceholder}
                     className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                   />
                 </div>
@@ -419,7 +472,7 @@ export default function Login() {
             <div className="mt-6 border-t border-slate-100 pt-4">
               <p className="mb-3 flex items-start gap-2 text-xs leading-snug text-slate-500">
                 <i className="fa-solid fa-circle-info mt-0.5 shrink-0 text-sm text-brand" />
-                <span>Seller and Rider accounts are created by the Coordinator. Ask them for access.</span>
+                <span>{activeRoleMeta.helperText}</span>
               </p>
 
               {/* "Developed for: SPX Express" branding below the sign-in form */}

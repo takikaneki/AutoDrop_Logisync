@@ -22,6 +22,23 @@ const tick = { fontSize: 13, fill: "#8a8a8a" };
 export default function Dashboard() {
   const [real, setReal] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 600px)").matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    if (mq.addEventListener) {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
+
   useEffect(() => {
     listParcels()
       .then((list) => setReal((Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456")))
@@ -155,32 +172,81 @@ export default function Dashboard() {
               </>
             )}
           </div>
-          <div className="h-[420px] max-[600px]:h-[250px]">
+          <div className="h-[420px] max-[600px]:h-[260px] w-full overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={series.rows} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+              <BarChart
+                data={series.rows}
+                margin={
+                  isMobile
+                    ? { top: 10, right: 8, left: -22, bottom: 4 }
+                    : { top: 5, right: 10, left: -10, bottom: 0 }
+                }
+              >
                 <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
-                <XAxis dataKey="label" tickLine={false} tick={tick} interval={0} />
-                <YAxis tickLine={false} axisLine={false} tick={tick} allowDecimals={false} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  tick={isMobile ? { fontSize: 11, fill: "#8a8a8a" } : tick}
+                  tickMargin={isMobile ? 6 : 4}
+                  interval={0}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tick={isMobile ? { fontSize: 11, fill: "#8a8a8a" } : tick}
+                  width={isMobile ? 44 : 60}
+                  allowDecimals={false}
+                />
                 <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} labelFormatter={(_, items) => items?.[0]?.payload?.full} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 13 }} />
-                <Bar dataKey="Delivered" stackId="a" fill={COLORS.Delivered} />
-                <Bar dataKey="Pending" stackId="a" fill={COLORS.Pending} />
-                <Bar dataKey="Flagged" stackId="a" fill={COLORS.Flagged} radius={[5, 5, 0, 0]} />
+                <Legend
+                  iconType="circle"
+                  iconSize={isMobile ? 9 : 14}
+                  verticalAlign="bottom"
+                  height={isMobile ? 32 : undefined}
+                  wrapperStyle={
+                    isMobile
+                      ? { fontSize: 12, paddingTop: 10, lineHeight: "18px" }
+                      : { fontSize: 13 }
+                  }
+                />
+                <Bar dataKey="Delivered" stackId="a" fill={COLORS.Delivered} maxBarSize={isMobile ? 28 : undefined} />
+                <Bar dataKey="Pending" stackId="a" fill={COLORS.Pending} maxBarSize={isMobile ? 28 : undefined} />
+                <Bar dataKey="Flagged" stackId="a" fill={COLORS.Flagged} radius={[5, 5, 0, 0]} maxBarSize={isMobile ? 28 : undefined} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className={panel}>
-          <h3 className="mb-5 max-[600px]:mb-3 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
-          <div className="h-[420px] max-[600px]:h-[250px]">
+          <h3 className="mb-5 max-[600px]:mb-2 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
+          <div className="h-[420px] max-[600px]:h-[275px] w-full overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pie} dataKey="value" nameKey="name" innerRadius={78} outerRadius={125} paddingAngle={2}>
+              <PieChart margin={isMobile ? { top: 6, right: 6, left: 6, bottom: 6 } : undefined}>
+                <Pie
+                  data={pie}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy={isMobile ? "44%" : "50%"}
+                  innerRadius={isMobile ? 50 : 78}
+                  outerRadius={isMobile ? 80 : 125}
+                  paddingAngle={2}
+                >
                   {pie.map((s) => <Cell key={s.name} fill={COLORS[s.name]} />)}
                 </Pie>
                 <Tooltip />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: 13 }} />
+                <Legend
+                  iconType="circle"
+                  iconSize={isMobile ? 9 : 14}
+                  verticalAlign="bottom"
+                  align="center"
+                  height={isMobile ? 36 : undefined}
+                  wrapperStyle={
+                    isMobile
+                      ? { fontSize: 12, paddingTop: 12, lineHeight: "18px" }
+                      : { fontSize: 13 }
+                  }
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

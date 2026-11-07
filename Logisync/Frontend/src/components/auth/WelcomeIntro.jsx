@@ -339,25 +339,25 @@ export default function WelcomeIntro({ onComplete }) {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-8 sm:py-3.5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3.5 py-3 sm:px-8 sm:py-3.5">
           {/* Brand Logo */}
           <a
             href="#home"
             onClick={(e) => scrollToSection(e, "#home")}
-            className="flex items-center gap-3 focus:outline-none"
+            className="flex shrink-0 items-center gap-2 sm:gap-3 focus:outline-none"
           >
             <img
               src={SPX_LOGO_DATA_URL}
               alt="SPX Express"
               draggable={false}
-              className="h-8 w-auto shrink-0 object-contain sm:h-9"
+              className="h-7 w-auto shrink-0 object-contain sm:h-9"
             />
-            <span className="h-6 w-px bg-slate-200" aria-hidden="true" />
-            <div className="leading-none">
-              <span className="block text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+            <span className="h-5 w-px shrink-0 bg-slate-200 sm:h-6" aria-hidden="true" />
+            <div className="shrink-0 leading-none">
+              <span className="block whitespace-nowrap text-base font-extrabold tracking-tight text-slate-900 sm:text-xl">
                 LogiSync
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-brand sm:text-[10px]">
+              <span className="block whitespace-nowrap text-[8.5px] font-bold uppercase tracking-widest text-brand sm:text-[10px]">
                 Verify &amp; Deliver
               </span>
             </div>
@@ -1092,8 +1092,8 @@ export default function WelcomeIntro({ onComplete }) {
               </div>
             </div>
 
-            {/* Col 2: Quick Navigation */}
-            <div>
+            {/* Col 2: Quick Navigation (Desktop only) */}
+            <div className="hidden md:block">
               <h3 className="text-xs font-extrabold uppercase tracking-widest text-brand">Quick Links</h3>
               <ul className="mt-4 space-y-2.5 text-sm text-slate-400">
                 {NAV_LINKS.map((link) => (

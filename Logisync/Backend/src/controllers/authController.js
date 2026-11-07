@@ -190,18 +190,14 @@ async function login(req, res) {
         .json({ success: false, message: "Invalid email or password." });
     }
 
-    if (user.role === "seller" && user.verification_status !== "APPROVED") {
-      if (user.verification_status === "REJECTED") {
-        return res.status(403).json({
-          success: false,
-          message:
-            "Your seller registration was not approved. Please contact the Coordinator.",
-        });
-      }
-
+    if (
+      (user.role === "seller" || user.role === "rider") &&
+      String(user.verification_status || "").toUpperCase() === "REJECTED"
+    ) {
       return res.status(403).json({
         success: false,
-        message: "Your seller account is pending Coordinator approval.",
+        message:
+          "Your account has been suspended. Please contact the Coordinator.",
       });
     }
 

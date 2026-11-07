@@ -22,10 +22,49 @@ const CHART = [
   ["REJECTED", "#ef4444"],
 ];
 
+const MOBILE_AXIS_LINES = {
+  "Needs Video": ["Needs", "Video"],
+  "Reupload Requested": ["Reupload", "Req."],
+  "Under Verification": ["Under", "Verify"],
+  Verified: ["Verified", ""],
+  Rescheduled: ["Resched.", ""],
+  "Return to Hub": ["Return", "to Hub"],
+  Rejected: ["Rejected", ""],
+};
+
+function MobileStatusTick({ x, y, payload }) {
+  const raw = String(payload?.value || "");
+  const [line1, line2] = MOBILE_AXIS_LINES[raw] || [raw, ""];
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={12} textAnchor="middle" fill="#64748b" fontSize={10.5} fontWeight={500}>
+        <tspan x={0} dy="0">{line1}</tspan>
+        {line2 && <tspan x={0} dy="12">{line2}</tspan>}
+      </text>
+    </g>
+  );
+}
+
 export default function SellerDashboard() {
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 600px)").matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    if (mq.addEventListener) {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
 
   useEffect(() => {
     listParcels()
@@ -66,19 +105,60 @@ export default function SellerDashboard() {
           {parcels.length === 0 ? (
             <EmptyState title={loading ? "Loading…" : "No data yet"} text={loading ? "" : "Register a parcel to see your status breakdown."} />
           ) : (
-            <div className="min-h-[280px] max-[600px]:min-h-[220px] flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={{ stroke: "#dfe5ed" }} fontSize={12} />
-                  <YAxis tickLine={false} axisLine={false} fontSize={14} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} />
-                  <Bar dataKey="value" name="Parcels" radius={[7, 7, 0, 0]} maxBarSize={52}>
-                    {chartData.map((d) => <Cell key={d.name} fill={d.color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <>
+              <div className="min-h-[280px] max-[600px]:min-h-0 max-[600px]:h-[240px] w-full flex-1 overflow-hidden">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={
+                      isMobile
+                        ? { top: 10, right: 6, left: -24, bottom: 6 }
+                        : { top: 10, right: 10, left: -20, bottom: 0 }
+                    }
+                  >
+                    <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tickLine={false}
+                      axisLine={{ stroke: "#dfe5ed" }}
+                      fontSize={12}
+                      interval={0}
+                      height={isMobile ? 38 : 30}
+                      tick={isMobile ? <MobileStatusTick /> : undefined}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={isMobile ? 11 : 14}
+                      width={isMobile ? 42 : 60}
+                      allowDecimals={false}
+                    />
+                    <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} />
+                    <Bar
+                      dataKey="value"
+                      name="Parcels"
+                      radius={isMobile ? [6, 6, 0, 0] : [7, 7, 0, 0]}
+                      maxBarSize={isMobile ? 32 : 52}
+                    >
+                      {chartData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3.5 gap-y-1.5 border-t border-[#f1f3f7] pt-2.5 text-[11.5px] text-[#64748b] min-[601px]:hidden dark:border-night-line dark:text-[#d1c9c2]">
+                {chartData.map((d) => (
+                  <span key={d.name} className="inline-flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: d.color }}
+                      aria-hidden="true"
+                    />
+                    <span>{d.name}:</span>
+                    <strong className="font-semibold text-[#27364f] dark:text-[#f1eeeb]">{d.value}</strong>
+                  </span>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
