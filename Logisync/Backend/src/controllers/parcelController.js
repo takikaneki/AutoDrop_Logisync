@@ -639,8 +639,14 @@ async function getParcelForRole(req, res) {
     const { parcelId } = req.params;
 
     const [rows] = await pool.query(
-      `SELECT p.parcel_id, p.transaction_number, p.receiver_name, p.receiver_contact, p.receiver_address,
-              p.receiver_house_number, p.receiver_street, p.receiver_barangay, p.receiver_city, p.receiver_province,
+      `SELECT p.parcel_id, p.transaction_number, p.receiver_name,
+              COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
+              COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
+              COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
+              COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
+              COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
+              COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
+              COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
               p.contents, p.content_category, p.other_category_description,
               p.discrete_item, p.discreet_reason, p.discreet_status,
               p.discreet_review_remarks, p.discreet_reviewed_at,
@@ -649,6 +655,9 @@ async function getParcelForRole(req, res) {
               u.name AS seller_name, u.email AS seller_email
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
+       LEFT JOIN seller_customers sc
+         ON sc.seller_id = p.seller_id
+        AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
        WHERE p.parcel_id = ?`,
       [parcelId]
     );
@@ -1234,8 +1243,14 @@ async function listParcels(req, res) {
 
     const [rows] = await pool.query(
       `SELECT p.parcel_id, p.transaction_number, p.seller_id,
-              p.receiver_name, p.receiver_contact, p.receiver_address,
-              p.receiver_house_number, p.receiver_street, p.receiver_barangay, p.receiver_city, p.receiver_province,
+              p.receiver_name,
+              COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
+              COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
+              COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
+              COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
+              COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
+              COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
+              COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
               p.contents, p.content_category, p.other_category_description,
               p.discrete_item, p.discreet_reason, p.discreet_status,
               p.discreet_review_remarks, p.discreet_reviewed_at,
@@ -1252,6 +1267,9 @@ async function listParcels(req, res) {
        JOIN users u ON p.seller_id = u.user_id
        LEFT JOIN users r ON p.rider_id = r.user_id
        LEFT JOIN users dr ON p.discreet_reviewed_by = dr.user_id
+       LEFT JOIN seller_customers sc
+         ON sc.seller_id = p.seller_id
+        AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
        ${where}
        ORDER BY p.created_at DESC`,
       params
@@ -1473,8 +1491,14 @@ async function listRiderParcels(req, res) {
   try {
     await ensureCustomerSchema();
     const [rows] = await pool.query(
-      `SELECT p.parcel_id, p.transaction_number, p.receiver_name, p.receiver_contact, p.receiver_address,
-              p.receiver_house_number, p.receiver_street, p.receiver_barangay, p.receiver_city, p.receiver_province,
+      `SELECT p.parcel_id, p.transaction_number, p.receiver_name,
+              COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
+              COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
+              COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
+              COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
+              COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
+              COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
+              COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
               p.contents, p.content_category, p.discrete_item, p.discreet_status, p.status, p.verification_status,
               p.delivery_status, p.delivery_note, p.delivery_proof,
               p.scheduled_for, p.rescheduled, p.reschedule_count,
@@ -1484,6 +1508,9 @@ async function listRiderParcels(req, res) {
               u.name AS seller_name
        FROM parcels p
        LEFT JOIN users u ON p.seller_id = u.user_id
+       LEFT JOIN seller_customers sc
+         ON sc.seller_id = p.seller_id
+        AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
        WHERE p.rider_id = ? ORDER BY COALESCE(p.scanned_at, p.updated_at) DESC`,
       [req.user.user_id]
     );

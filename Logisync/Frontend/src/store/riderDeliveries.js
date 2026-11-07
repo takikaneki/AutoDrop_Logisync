@@ -463,6 +463,7 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
 
 export const useMyDeliveries = () => {
   const all = store.use();
+  const parcels = useParcels();
   const id = me();
   useEffect(() => {
     if (!id) return;
@@ -482,7 +483,25 @@ export const useMyDeliveries = () => {
       clearInterval(timer);
     };
   }, [id]);
-  return all.filter((d) => d.user_id === id);
+  return all
+    .filter((d) => d.user_id === id)
+    .map((d) => {
+      const addr = resolveParcelAddress(d);
+      const contact = cleanField(d.contact || d.receiver_contact);
+      if (addr && contact) return { ...d, address: addr, contact };
+      const match = Array.isArray(parcels)
+        ? parcels.find(
+            (p) =>
+              String(p.id || p.parcel_id || "").toLowerCase() === String(d.parcel_id || "").toLowerCase() ||
+              String(p.id || p.transaction_number || "").toLowerCase() === String(d.transaction_number || "").toLowerCase()
+          )
+        : null;
+      return {
+        ...d,
+        address: addr || (match ? resolveParcelAddress(match) : ""),
+        contact: contact || (match ? cleanField(match.contact || match.receiver_contact) : ""),
+      };
+    });
 };
 
 // Hanapin ang delivery record ng isang parcel (para sa Coordinator, Seller, at Rider views)
