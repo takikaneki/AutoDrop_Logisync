@@ -421,7 +421,9 @@ export default function RiderParcels() {
                       <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
                         <td className={`${td} whitespace-nowrap`}>
                           <strong className="block text-[#333] dark:text-[#f1eeeb]">{p.transaction_number || p.parcel_id}</strong>
-                          <span className="text-[12px] text-[#aaa]">{p.contents || "—"}</span>
+                          {p.contents && String(p.contents).trim() !== "-" && String(p.contents).trim() !== "—" && (
+                            <span className="text-[12px] text-[#aaa]">{p.contents}</span>
+                          )}
                         </td>
                         <td className={td}>{p.receiver || "—"}</td>
                         <td className={`${td} max-w-[240px]`}>{p.address || "—"}</td>
@@ -449,6 +451,26 @@ export default function RiderParcels() {
               {rows.map((p) => {
                 const [label, cls] = getBadgeForParcel(p);
                 const a = (ACTION[p.stage] || ACTION[STAGE.TO_DELIVER])(p);
+                const validContents =
+                  p.contents && String(p.contents).trim() !== "-" && String(p.contents).trim() !== "—"
+                    ? String(p.contents).trim()
+                    : "";
+                const validContact =
+                  (p.contact || p.receiver_contact) &&
+                  String(p.contact || p.receiver_contact).trim() !== "-" &&
+                  String(p.contact || p.receiver_contact).trim() !== "—"
+                    ? String(p.contact || p.receiver_contact).trim()
+                    : "";
+                const validAddress =
+                  (p.address || p.receiver_address) &&
+                  String(p.address || p.receiver_address).trim() !== "-" &&
+                  String(p.address || p.receiver_address).trim() !== "—"
+                    ? String(p.address || p.receiver_address).trim()
+                    : "";
+                const validSeller =
+                  p.seller && String(p.seller).trim() !== "-" && String(p.seller).trim() !== "—"
+                    ? String(p.seller).trim()
+                    : "";
                 return (
                   <article key={p.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
                     <div className="flex items-start justify-between gap-2">
@@ -456,32 +478,42 @@ export default function RiderParcels() {
                         <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
                           {p.transaction_number || p.parcel_id}
                         </strong>
-                        <span className="block text-[12px] text-[#888]">{p.contents || "—"}</span>
+                        {validContents && <span className="block text-[12px] text-[#888]">{validContents}</span>}
                       </div>
                       <span className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${cls}`}>
                         {label}
                       </span>
                     </div>
                     <div className="mt-3 space-y-1.5 text-[13px] text-[#555] dark:text-[#d1c9c2]">
-                      <p className="flex items-center gap-2">
-                        <i className="fa-regular fa-user w-4 text-center text-[#999]" />
-                        <strong className="text-[#333] dark:text-[#f1eeeb]">{p.receiver || "—"}</strong>
-                      </p>
-                      {p.address && (
-                        <p className="flex items-start gap-2">
-                          <i className="fa-solid fa-location-dot mt-0.5 w-4 text-center text-brand" />
-                          <span className="flex-1 break-words text-[12.5px]">{p.address}</span>
+                      {p.receiver && String(p.receiver).trim() !== "-" && String(p.receiver).trim() !== "—" && (
+                        <p className="flex items-center gap-2">
+                          <i className="fa-regular fa-user w-4 text-center text-[#999]" />
+                          <strong className="text-[#333] dark:text-[#f1eeeb]">{p.receiver}</strong>
                         </p>
                       )}
-                      {p.seller && (
+                      {validContact && (
+                        <p className="flex items-center gap-2">
+                          <i className="fa-solid fa-phone w-4 text-center text-brand" />
+                          <a href={`tel:${validContact}`} className="hover:text-brand hover:underline">
+                            {validContact}
+                          </a>
+                        </p>
+                      )}
+                      {validAddress && (
+                        <p className="flex items-start gap-2">
+                          <i className="fa-solid fa-location-dot mt-0.5 w-4 text-center text-brand" />
+                          <span className="flex-1 break-words text-[12.5px]">{validAddress}</span>
+                        </p>
+                      )}
+                      {validSeller && (
                         <p className="flex items-center gap-2">
                           <i className="fa-solid fa-store w-4 text-center text-[#999]" />
-                          <span>{p.seller}</span>
+                          <span>{validSeller}</span>
                         </p>
                       )}
                     </div>
                     <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
-                      <span className="text-[#999]">{p.at ? formatDate(p.at) : "—"}</span>
+                      <span className="text-[#999]">{p.at ? formatDate(p.at) : ""}</span>
                       {a.primary ? (
                         <Link to={a.to} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12.5px] font-bold text-white">
                           <i className="fa-solid fa-qrcode" /> {a.label}

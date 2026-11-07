@@ -18,6 +18,47 @@ export const enrichParcel = (p) => {
   const d = getDeliveryRecordForParcel(p.parcel_id) || getDeliveryRecordForParcel(p.transaction_number);
   let next = addr && !p.receiver_address ? { ...p, receiver_address: addr } : { ...p };
 
+  let dbAttempts = [];
+  if (Array.isArray(p.attempts)) {
+    dbAttempts = p.attempts;
+  } else if (typeof p.delivery_attempts === "string" && p.delivery_attempts.trim()) {
+    try {
+      const parsed = JSON.parse(p.delivery_attempts);
+      if (Array.isArray(parsed)) dbAttempts = parsed;
+    } catch {
+      dbAttempts = [];
+    }
+  }
+
+  if (p.delivery_status || p.rescheduled || p.return_to_hub) {
+    let status = next.status;
+    if (p.delivery_status === "DELIVERED" || p.delivered_at) {
+      status = "DELIVERED";
+    } else if (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB") {
+      status = "RETURN_TO_HUB";
+    } else if (p.rescheduled && p.delivery_status === "TO_DELIVER") {
+      status = "RESCHEDULED";
+    } else if (p.delivery_status === "TO_DELIVER") {
+      status = "OUT_FOR_DELIVERY";
+    } else if (p.delivery_status === "FAILED") {
+      status = "DELIVERY_FAILED";
+    }
+
+    next = {
+      ...next,
+      status,
+      rescheduled: Boolean(p.rescheduled),
+      scheduledFor: p.scheduled_for || null,
+      rescheduleCount: Number(p.reschedule_count || 0),
+      maxReschedules: 3,
+      attempts: dbAttempts,
+      lastFailure: p.last_failure || p.delivery_note || "",
+      returnToHub: Boolean(p.return_to_hub || p.delivery_status === "RETURN_TO_HUB"),
+      returnCoordinated: Boolean(p.return_coordinated),
+      returnNote: p.return_note || "",
+    };
+  }
+
   if (d) {
     let status = next.status;
     if (d.stage === STAGE.DELIVERED) {
@@ -35,15 +76,15 @@ export const enrichParcel = (p) => {
     next = {
       ...next,
       status,
-      rescheduled: Boolean(d.rescheduled),
-      scheduledFor: d.scheduledFor || null,
-      rescheduleCount: Number(d.rescheduleCount || 0),
+      rescheduled: Boolean(d.rescheduled || next.rescheduled),
+      scheduledFor: d.scheduledFor || next.scheduledFor || null,
+      rescheduleCount: Math.max(Number(d.rescheduleCount || 0), Number(next.rescheduleCount || 0)),
       maxReschedules: Number(d.maxReschedules || 3),
-      attempts: Array.isArray(d.attempts) ? d.attempts : [],
-      lastFailure: d.lastFailure || d.reason || "",
-      returnToHub: Boolean(d.returnToHub || d.stage === STAGE.RETURN_TO_HUB),
-      returnCoordinated: Boolean(d.returnCoordinated),
-      returnNote: d.returnNote || "",
+      attempts: Array.isArray(d.attempts) && d.attempts.length >= dbAttempts.length ? d.attempts : dbAttempts,
+      lastFailure: d.lastFailure || d.reason || next.lastFailure || "",
+      returnToHub: Boolean(d.returnToHub || d.stage === STAGE.RETURN_TO_HUB || next.returnToHub),
+      returnCoordinated: Boolean(d.returnCoordinated || next.returnCoordinated),
+      returnNote: d.returnNote || next.returnNote || "",
       deliveryRecord: d,
     };
   }

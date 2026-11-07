@@ -16,14 +16,54 @@ export function logScan(parcel, scanned) {
   const entry = {
     user_id: Number(getUser()?.user_id),
     parcel_id: parcel.parcel_id,
-    scanned,
-    transaction_number: parcel.transaction_number || scanned,
-    receiver: parcel.receiver,
-    seller: parcel.seller,
-    status: parcel.status,
-    at: new Date().toISOString(),
+    scanned: scanned || parcel.transaction_number || parcel.parcel_id,
+    transaction_number: parcel.transaction_number || scanned || parcel.parcel_id,
+    receiver: parcel.receiver || parcel.receiver_name || "",
+    seller: parcel.seller || parcel.seller_name || "",
+    status: parcel.status || "VERIFIED",
+    at: parcel.scanned_at ? new Date(parcel.scanned_at).toISOString() : new Date().toISOString(),
   };
   store.set((list) => [entry, ...list.filter((s) => !(s.user_id === entry.user_id && s.parcel_id === entry.parcel_id))].slice(0, MAX));
+}
+
+export function syncScansFromServerParcels(riderId, parcels = []) {
+  if (!riderId || !Array.isArray(parcels) || parcels.length === 0) return;
+  store.set((list) => {
+    const existingByParcelId = new Map(
+      list.filter((s) => s.user_id === riderId).map((s) => [String(s.parcel_id), s])
+    );
+    let changed = false;
+    const additions = [];
+
+    parcels.forEach((p) => {
+      if (!p?.parcel_id) return;
+      const key = String(p.parcel_id);
+      if (!existingByParcelId.has(key)) {
+        changed = true;
+        additions.push({
+          user_id: riderId,
+          parcel_id: p.parcel_id,
+          scanned: p.transaction_number || p.parcel_id,
+          transaction_number: p.transaction_number || p.parcel_id,
+          receiver: p.receiver || p.receiver_name || "",
+          seller: p.seller || p.seller_name || "",
+          status: p.status || "VERIFIED",
+          at: p.scanned_at
+            ? new Date(p.scanned_at).toISOString()
+            : p.updated_at
+            ? new Date(p.updated_at).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+    });
+
+    if (!changed) return list;
+    const otherUsers = list.filter((s) => s.user_id !== riderId);
+    const mineMerged = [...list.filter((s) => s.user_id === riderId), ...additions]
+      .sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0))
+      .slice(0, MAX);
+    return [...mineMerged, ...otherUsers];
+  });
 }
 
 export const isToday = (iso) => new Date(iso).toDateString() === new Date().toDateString();

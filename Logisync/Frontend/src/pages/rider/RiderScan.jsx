@@ -102,10 +102,20 @@ export default function RiderScan() {
       {parcel && (
         <section className={`${panel} mb-6 space-y-6 p-[30px] max-[600px]:p-5`}>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Parcel ID</p>
-              <p className="font-mono text-[20px] font-bold">{parcel.parcel_id}</p>
-            </div>
+            {parcel.parcel_id &&
+            String(parcel.parcel_id).trim() !== "-" &&
+            String(parcel.parcel_id).trim() !== "—" &&
+            String(parcel.parcel_id).trim() !== String(parcel.transaction_number || "").trim() ? (
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Parcel ID</p>
+                <p className="font-mono text-[20px] font-bold">{parcel.parcel_id}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Transaction Number</p>
+                <p className="font-mono text-[20px] font-bold">{parcel.transaction_number || parcel.parcel_id}</p>
+              </div>
+            )}
             <StatusBadge status={parcel.status} />
           </div>
 
@@ -117,9 +127,9 @@ export default function RiderScan() {
           <DetailList
             rows={[
               ["Transaction number", parcel.transaction_number],
-              ["Receiver", parcel.receiver],
-              ["Receiver contact", parcel.receiver_contact],
-              ["Address", parcel.address],
+              ["Receiver", parcel.receiver || parcel.receiver_name],
+              ["Receiver contact", parcel.receiver_contact || parcel.contact],
+              ["Address", parcel.address || parcel.receiver_address],
               ["Contents", parcel.contents],
               ["Seller", parcel.seller],
               ["Verification", parcel.verification_status?.replaceAll("_", " ")],

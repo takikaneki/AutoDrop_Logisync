@@ -77,14 +77,33 @@ export const PanelLink = ({ to, children }) => (
   </Link>
 );
 
-// Listahan ng "label: halaga" (detalye ng parcel)
+const hasDetailValue = (v) => {
+  if (v === null || v === undefined) return false;
+  if (typeof v === "string") {
+    const s = v.trim();
+    return Boolean(
+      s &&
+        s !== "-" &&
+        s !== "—" &&
+        s !== "–" &&
+        s.toLowerCase() !== "n/a" &&
+        s.toLowerCase() !== "null" &&
+        s.toLowerCase() !== "undefined"
+    );
+  }
+  return true;
+};
+
+// Listahan ng "label: halaga" (detalye ng parcel) — itinatago ang mga walang laman o "-" lang
 export function DetailList({ rows, cols = 2 }) {
+  const visibleRows = (rows || []).filter(([, v]) => hasDetailValue(v));
+  if (visibleRows.length === 0) return null;
   return (
     <dl className={`grid gap-x-6 gap-y-4 text-[14px] ${cols === 2 ? "sm:grid-cols-2" : ""}`}>
-      {rows.map(([k, v]) => (
+      {visibleRows.map(([k, v]) => (
         <div key={k} className="min-w-0">
           <dt className="mb-0.5 text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">{k}</dt>
-          <dd className="break-words font-semibold text-[#333] dark:text-[#f1eeeb]">{v || "—"}</dd>
+          <dd className="break-words font-semibold text-[#333] dark:text-[#f1eeeb]">{v}</dd>
         </div>
       ))}
     </dl>

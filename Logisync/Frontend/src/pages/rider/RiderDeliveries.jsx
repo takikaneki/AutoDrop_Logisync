@@ -75,11 +75,30 @@ const card =
   "rounded-2xl border border-[#e5e8ee] bg-white p-5 dark:border-night-line dark:bg-night-panel max-[420px]:p-4";
 const bigBtn = "!py-3.5 !text-[15px] w-full";
 
+function hasValue(val) {
+  if (val === null || val === undefined) return false;
+  const s = String(val).trim();
+  return Boolean(
+    s &&
+      s !== "-" &&
+      s !== "—" &&
+      s !== "–" &&
+      s.toLowerCase() !== "n/a" &&
+      s.toLowerCase() !== "null" &&
+      s.toLowerCase() !== "undefined"
+  );
+}
+
+function cleanText(val) {
+  return hasValue(val) ? String(val).trim() : "";
+}
+
 function Navigate({ address }) {
-  if (!SHOW_NAVIGATE || !address) return null;
+  const addr = cleanText(address);
+  if (!SHOW_NAVIGATE || !addr) return null;
   return (
     <a
-      href={mapsUrl(address)}
+      href={mapsUrl(addr)}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline"
@@ -89,28 +108,113 @@ function Navigate({ address }) {
   );
 }
 
-// Pinagsamang ulo ng card: receiver (malaki), address, at maliit na detalye
-function CardHead({ d, badge }) {
+// Pinagsamang ulo ng card: receiver (clickable sa mobile para mag-expand/collapse), address, at detalye
+function CardHead({ d, badge, expanded = false, onToggle }) {
+  const receiver = cleanText(d.receiver || d.receiver_name) || "Receiver";
+  const contact = cleanText(d.contact || d.receiver_contact);
+  const address = cleanText(d.address || d.receiver_address);
+  const txn = cleanText(d.transaction_number);
+  const seller = cleanText(d.seller);
+  const contents = cleanText(d.contents);
+  const parcelId =
+    cleanText(d.parcel_id) && cleanText(d.parcel_id) !== txn ? cleanText(d.parcel_id) : "";
+
+  const desktopMeta = [txn, contents, seller, contact].filter(Boolean).join(" · ");
+  const mobileCollapsedMeta = [txn, seller].filter(Boolean).join(" · ");
+  const mobileDetailRows = [
+    ["Transaction No.", txn],
+    ["Seller", seller],
+    ["Contents", contents],
+    ["Parcel ID", parcelId],
+  ].filter(([, v]) => Boolean(v));
+
   return (
     <>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 break-words text-[18px] font-bold leading-snug text-[#27364f] dark:text-[#f1eeeb]">
-          {d.receiver || "—"}
-        </h3>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          className="group flex min-w-0 flex-1 items-center gap-2 text-left focus:outline-none"
+        >
+          <h3 className="min-w-0 break-words text-[18px] font-bold leading-snug text-[#27364f] transition-colors group-hover:text-brand dark:text-[#f1eeeb]">
+            {receiver}
+          </h3>
+          <span
+            className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f4f6f9] text-[11px] text-[#64748b] transition-transform duration-200 group-hover:bg-brand-soft group-hover:text-brand min-[801px]:hidden dark:bg-night-line dark:text-[#d1c9c2] ${
+              expanded ? "rotate-180 bg-brand-soft text-brand" : ""
+            }`}
+            aria-hidden="true"
+          >
+            <i className="fa-solid fa-chevron-down" />
+          </span>
+        </button>
         {badge}
       </div>
-      {d.address ? (
-        <p className="mt-1.5 flex items-start gap-2 text-[14px] text-[#52627a] dark:text-[#d1c9c2]">
-          <i className="fa-solid fa-location-dot mt-1 text-brand" />{" "}
-          <span className="min-w-0 break-words">{d.address}</span>
-        </p>
+
+      {/* Desktop details (unchanged desktop layout, with empty/"-" fields omitted) */}
+      <div className="max-[800px]:hidden">
+        {address ? (
+          <p className="mt-1.5 flex items-start gap-2 text-[14px] text-[#52627a] dark:text-[#d1c9c2]">
+            <i className="fa-solid fa-location-dot mt-1 text-brand" />{" "}
+            <span className="min-w-0 break-words">{address}</span>
+          </p>
+        ) : null}
+        {desktopMeta ? <p className="mt-2 text-[12.5px] text-[#999]">{desktopMeta}</p> : null}
+      </div>
+
+      {/* Mobile collapsed summary line */}
+      {!expanded && mobileCollapsedMeta ? (
+        <p className="mt-1.5 text-[12.5px] text-[#888] min-[801px]:hidden">{mobileCollapsedMeta}</p>
       ) : null}
-      <p className="mt-2 text-[12.5px] text-[#999]">
-        {d.transaction_number}
-        {d.contents ? ` · ${d.contents}` : ""}
-        {d.seller ? ` · ${d.seller}` : ""}
-        {d.contact ? ` · ${d.contact}` : ""}
-      </p>
+
+      {/* Mobile expanded receiver contact, complete delivery address, and non-empty parcel details */}
+      {expanded && (
+        <div className="mt-3 space-y-2.5 border-t border-[#f0f2f6] pt-3 min-[801px]:hidden dark:border-night-line">
+          {contact ? (
+            <div className="flex items-center gap-2.5 text-[13.5px] text-[#27364f] dark:text-[#f1eeeb]">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand dark:bg-night-line">
+                <i className="fa-solid fa-phone text-[12px]" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <span className="block text-[10.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Contact Number
+                </span>
+                <a href={`tel:${contact}`} className="font-semibold hover:text-brand hover:underline">
+                  {contact}
+                </a>
+              </div>
+            </div>
+          ) : null}
+
+          {address ? (
+            <div className="flex items-start gap-2.5 text-[13.5px] text-[#27364f] dark:text-[#f1eeeb]">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand dark:bg-night-line">
+                <i className="fa-solid fa-location-dot text-[12px]" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <span className="block text-[10.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Delivery Address
+                </span>
+                <span className="block break-words font-medium leading-snug text-[#334155] dark:text-[#d1c9c2]">
+                  {address}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {mobileDetailRows.length > 0 && (
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl bg-[#f8fafc] p-3 text-[12.5px] dark:bg-night-head">
+              {mobileDetailRows.map(([label, val]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-[10.5px] font-bold uppercase tracking-wider text-[#94a3b8]">{label}</dt>
+                  <dd className="mt-0.5 break-words font-semibold text-[#27364f] dark:text-[#f1eeeb]">{val}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )}
     </>
   );
 }
@@ -217,6 +321,11 @@ export default function RiderDeliveries() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [viewer, setViewer] = useState(null);
+  const [expandedCards, setExpandedCards] = useState({});
+
+  const toggleCard = (id) => {
+    setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Tinitiyak na ang mga "Return to Hub" ay HINDI na lumalabas sa "To Be Delivered"
   const mine = useMemo(() => {
@@ -319,14 +428,18 @@ export default function RiderDeliveries() {
 
   // ---- Mga card
   const deliverCard = (d) => {
+    const cardKey = d.parcel_id || d.transaction_number;
+    const expanded = Boolean(expandedCards[cardKey]);
     const reschedCount = Number(d.rescheduleCount || 0);
     const isResched = Boolean(d.rescheduled && reschedCount > 0);
     const remainingDays = Math.max(0, MAX_RESCHEDULES - reschedCount);
 
     return (
-      <article key={d.parcel_id} className={card}>
+      <article key={cardKey} className={card}>
         <CardHead
           d={d}
+          expanded={expanded}
+          onToggle={() => toggleCard(cardKey)}
           badge={
             isResched ? (
               <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
@@ -341,99 +454,151 @@ export default function RiderDeliveries() {
           }
         />
 
-        {isResched && (
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
-            <span>
-              <i className="fa-solid fa-bell mr-1.5" />
-              Latest Rescheduled Date: <strong>{formatDay(d.scheduledFor)}</strong>
-            </span>
-            <span className="font-bold">
-              {remainingDays > 0
-                ? `${remainingDays} reschedule day${remainingDays > 1 ? "s" : ""} remaining`
-                : "Final delivery day before Return to Hub"}
-            </span>
+        <div className={expanded ? "block" : "max-[800px]:hidden"}>
+          {isResched && (
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
+              <span>
+                <i className="fa-solid fa-bell mr-1.5" />
+                Latest Rescheduled Date: <strong>{formatDay(d.scheduledFor)}</strong>
+              </span>
+              <span className="font-bold">
+                {remainingDays > 0
+                  ? `${remainingDays} reschedule day${remainingDays > 1 ? "s" : ""} remaining`
+                  : "Final delivery day before Return to Hub"}
+              </span>
+            </div>
+          )}
+
+          {cleanText(d.lastFailure) && (
+            <p className="mt-2 text-[13px] font-semibold text-[#d94747]">
+              <i className="fa-solid fa-rotate-left mr-1.5" />
+              Last attempt failed: {cleanText(d.lastFailure)}
+            </p>
+          )}
+
+          <AttemptHistory
+            attempts={d.attempts}
+            rescheduleCount={reschedCount}
+            returnToHub={Boolean(d.returnToHub)}
+          />
+
+          <div className="mt-3">
+            <Navigate address={d.address || d.receiver_address} />
           </div>
-        )}
-
-        {d.lastFailure && (
-          <p className="mt-2 text-[13px] font-semibold text-[#d94747]">
-            <i className="fa-solid fa-rotate-left mr-1.5" />
-            Last attempt failed: {d.lastFailure}
-          </p>
-        )}
-
-        <AttemptHistory
-          attempts={d.attempts}
-          rescheduleCount={reschedCount}
-          returnToHub={Boolean(d.returnToHub)}
-        />
-
-        <div className="mt-3">
-          <Navigate address={d.address} />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <button onClick={() => open("delivered", d)} className={`${btnPrimary} ${bigBtn}`}>
-            <i className="fa-solid fa-circle-check" /> Delivered
-          </button>
-          <button onClick={() => open("failed", d)} className={`${btnGhost} ${bigBtn}`}>
-            <i className="fa-solid fa-xmark" /> Failed
-          </button>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <button onClick={() => open("delivered", d)} className={`${btnPrimary} ${bigBtn}`}>
+              <i className="fa-solid fa-circle-check" /> Delivered
+            </button>
+            <button onClick={() => open("failed", d)} className={`${btnGhost} ${bigBtn}`}>
+              <i className="fa-solid fa-xmark" /> Failed
+            </button>
+          </div>
         </div>
       </article>
     );
   };
 
-  const deliveredCard = (d) => (
-    <article key={d.parcel_id} className={`${card} flex flex-col gap-3`}>
-      <div className="flex gap-4">
-        {d.proof ? (
-          <button onClick={() => setViewer(d)} aria-label="View proof of delivery" className="shrink-0">
-            <img
-              src={d.proof}
-              alt="Proof of delivery"
-              className="h-[76px] w-[76px] rounded-xl border border-[#eee] object-cover dark:border-night-line"
-            />
-          </button>
-        ) : (
-          <span className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-xl bg-[#f1f1f1] text-[#bbb] dark:bg-night-line">
-            <i className="fa-regular fa-image text-[22px]" />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 break-words text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-              {d.receiver || "—"}
-            </h3>
-            <span className="shrink-0 text-[13px] font-semibold text-[#29945a]">
-              {new Date(d.doneAt).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
-            </span>
-          </div>
-          <p className="mt-1 text-[12.5px] text-[#999]">
-            {d.transaction_number}
-            {d.seller ? ` · ${d.seller}` : ""}
-          </p>
-          {d.note && <p className="mt-1.5 text-[13px] text-[#666] dark:text-[#d1c9c2]">“{d.note}”</p>}
-          {d.proof && (
-            <button onClick={() => setViewer(d)} className="mt-2 text-[13px] font-semibold text-brand hover:underline">
-              View proof
+  const deliveredCard = (d) => {
+    const cardKey = d.parcel_id || d.transaction_number;
+    const expanded = Boolean(expandedCards[cardKey]);
+    const doneTime = d.doneAt
+      ? new Date(d.doneAt).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })
+      : "Delivered";
+
+    return (
+      <article key={cardKey} className={`${card} flex flex-col gap-3`}>
+        {/* Desktop layout */}
+        <div className="flex gap-4 max-[800px]:hidden">
+          {d.proof ? (
+            <button onClick={() => setViewer(d)} aria-label="View proof of delivery" className="shrink-0">
+              <img
+                src={d.proof}
+                alt="Proof of delivery"
+                className="h-[76px] w-[76px] rounded-xl border border-[#eee] object-cover dark:border-night-line"
+              />
             </button>
+          ) : (
+            <span className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-xl bg-[#f1f1f1] text-[#bbb] dark:bg-night-line">
+              <i className="fa-regular fa-image text-[22px]" />
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="min-w-0 break-words text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                {cleanText(d.receiver || d.receiver_name) || "Receiver"}
+              </h3>
+              <span className="shrink-0 text-[13px] font-semibold text-[#29945a]">{doneTime}</span>
+            </div>
+            {[cleanText(d.transaction_number), cleanText(d.seller)].filter(Boolean).length > 0 && (
+              <p className="mt-1 text-[12.5px] text-[#999]">
+                {[cleanText(d.transaction_number), cleanText(d.seller)].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {cleanText(d.note) && <p className="mt-1.5 text-[13px] text-[#666] dark:text-[#d1c9c2]">“{cleanText(d.note)}”</p>}
+            {d.proof && (
+              <button onClick={() => setViewer(d)} className="mt-2 text-[13px] font-semibold text-brand hover:underline">
+                View proof
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile expandable layout */}
+        <div className="min-[801px]:hidden">
+          <CardHead
+            d={d}
+            expanded={expanded}
+            onToggle={() => toggleCard(cardKey)}
+            badge={
+              <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2.5 py-1 text-[12px] font-bold text-[#29945a]">
+                {doneTime}
+              </span>
+            }
+          />
+          {expanded && (
+            <div className="mt-3 space-y-2.5">
+              {cleanText(d.note) && (
+                <p className="text-[13px] text-[#666] dark:text-[#d1c9c2]">“{cleanText(d.note)}”</p>
+              )}
+              {d.attempts?.length > 1 && (
+                <AttemptHistory attempts={d.attempts} rescheduleCount={d.rescheduleCount} returnToHub={false} />
+              )}
+              {d.proof && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewer(d)}
+                    className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                  >
+                    <i className="fa-regular fa-image" /> View Proof of Delivery
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
-      </div>
-      {d.attempts?.length > 1 && (
-        <AttemptHistory attempts={d.attempts} rescheduleCount={d.rescheduleCount} returnToHub={false} />
-      )}
-    </article>
-  );
+
+        <div className="max-[800px]:hidden">
+          {d.attempts?.length > 1 && (
+            <AttemptHistory attempts={d.attempts} rescheduleCount={d.rescheduleCount} returnToHub={false} />
+          )}
+        </div>
+      </article>
+    );
+  };
 
   const failedCard = (d) => {
+    const cardKey = d.parcel_id || d.transaction_number;
+    const expanded = Boolean(expandedCards[cardKey]);
     const isReturnToHub = Boolean(d.returnToHub || d.stage === STAGE.RETURN_TO_HUB);
     const f = latestFor(failures, d.parcel_id);
 
     return (
-      <article key={d.parcel_id} className={card}>
+      <article key={cardKey} className={card}>
         <CardHead
           d={d}
+          expanded={expanded}
+          onToggle={() => toggleCard(cardKey)}
           badge={
             isReturnToHub ? (
               <span className="shrink-0 rounded-full bg-[#f2ecff] px-3 py-1 text-[12px] font-bold text-[#7c3aed]">
@@ -446,52 +611,54 @@ export default function RiderDeliveries() {
           }
         />
 
-        <div
-          className={`mt-3 rounded-xl px-4 py-3 ${
-            isReturnToHub
-              ? "border border-[#d8b4fe] bg-[#f8f5ff] dark:border-[#5b21b6] dark:bg-[#241b35]"
-              : "bg-[#fff1f1] dark:bg-[#3a2626]"
-          }`}
-        >
-          <strong className={`block text-[14.5px] ${isReturnToHub ? "text-[#6d28d9] dark:text-[#c4b5fd]" : "text-[#d94747]"}`}>
-            {isReturnToHub
-              ? `Undelivered after ${MAX_RESCHEDULES}-day rescheduling limit · Marked as Return to Hub`
-              : d.reason || d.lastFailure || "Delivery attempt failed"}
-          </strong>
-          <span className="mt-1 block text-[13px] text-[#666] dark:text-[#d1c9c2]">
-            Last failure reason: <strong>{d.lastFailure || d.reason || "Missed scheduled delivery date"}</strong>
-          </span>
-          {d.returnCoordinated ? (
-            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[12px] font-bold text-[#29945a]">
-              <i className="fa-solid fa-circle-check" /> Coordinator coordinated return to seller ({d.seller || "Seller"})
+        <div className={expanded ? "block" : "max-[800px]:hidden"}>
+          <div
+            className={`mt-3 rounded-xl px-4 py-3 ${
+              isReturnToHub
+                ? "border border-[#d8b4fe] bg-[#f8f5ff] dark:border-[#5b21b6] dark:bg-[#241b35]"
+                : "bg-[#fff1f1] dark:bg-[#3a2626]"
+            }`}
+          >
+            <strong className={`block text-[14.5px] ${isReturnToHub ? "text-[#6d28d9] dark:text-[#c4b5fd]" : "text-[#d94747]"}`}>
+              {isReturnToHub
+                ? `Undelivered after ${MAX_RESCHEDULES}-day rescheduling limit · Marked as Return to Hub`
+                : cleanText(d.reason || d.lastFailure) || "Delivery attempt failed"}
+            </strong>
+            <span className="mt-1 block text-[13px] text-[#666] dark:text-[#d1c9c2]">
+              Last failure reason: <strong>{cleanText(d.lastFailure || d.reason) || "Missed scheduled delivery date"}</strong>
             </span>
-          ) : isReturnToHub ? (
-            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[12px] font-bold text-[#c98200]">
-              <i className="fa-solid fa-bell" /> Coordinator notified · Return parcel to the hub
-            </span>
-          ) : null}
-        </div>
+            {d.returnCoordinated ? (
+              <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[12px] font-bold text-[#29945a]">
+                <i className="fa-solid fa-circle-check" /> Coordinator coordinated return to seller ({cleanText(d.seller) || "Seller"})
+              </span>
+            ) : isReturnToHub ? (
+              <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[12px] font-bold text-[#c98200]">
+                <i className="fa-solid fa-bell" /> Coordinator notified · Return parcel to the hub
+              </span>
+            ) : null}
+          </div>
 
-        <AttemptHistory
-          attempts={d.attempts}
-          rescheduleCount={d.rescheduleCount || MAX_RESCHEDULES}
-          returnToHub={isReturnToHub}
-        />
+          <AttemptHistory
+            attempts={d.attempts}
+            rescheduleCount={d.rescheduleCount || MAX_RESCHEDULES}
+            returnToHub={isReturnToHub}
+          />
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <Navigate address={d.address} />
-          {isReturnToHub && (
-            <span className="text-[12px] font-semibold text-[#888]">
-              <i className="fa-solid fa-lock mr-1" /> Maximum {MAX_RESCHEDULES}-day limit reached (cannot reschedule again)
-            </span>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <Navigate address={d.address || d.receiver_address} />
+            {isReturnToHub && (
+              <span className="text-[12px] font-semibold text-[#888]">
+                <i className="fa-solid fa-lock mr-1" /> Maximum {MAX_RESCHEDULES}-day limit reached (cannot reschedule again)
+              </span>
+            )}
+          </div>
+
+          {!isReturnToHub && f?.status !== "confirmed" && (
+            <button onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-4`}>
+              <i className="fa-solid fa-rotate-left" /> Try again
+            </button>
           )}
         </div>
-
-        {!isReturnToHub && f?.status !== "confirmed" && (
-          <button onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-4`}>
-            <i className="fa-solid fa-rotate-left" /> Try again
-          </button>
-        )}
       </article>
     );
   };

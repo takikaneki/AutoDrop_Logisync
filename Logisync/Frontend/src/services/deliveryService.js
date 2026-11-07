@@ -3,7 +3,10 @@ import { api } from "../api.js";
 // Delivery ng rider sa backend (POST /api/parcels/rider/:id/...).
 const enc = encodeURIComponent;
 
-export const scanForDelivery = (parcelId) => api(`/parcels/rider/${enc(parcelId)}/scan`, { method: "POST" });
+export const fetchMyRiderParcels = () => api("/parcels/rider/mine");
+
+export const scanForDelivery = (parcelId, body = {}) =>
+  api(`/parcels/rider/${enc(parcelId)}/scan`, { method: "POST", body });
 
 // Siguraduhing "na-scan" na sa backend bago mag-delivered/failed (hindi nagkakaproblema kung na-scan na)
 async function ensureScanned(parcelId) {
@@ -14,13 +17,19 @@ async function ensureScanned(parcelId) {
   }
 }
 
-export async function reportDelivered(parcelId, note) {
+export async function reportDelivered(parcelId, note, extra = {}) {
   await ensureScanned(parcelId);
-  return api(`/parcels/rider/${enc(parcelId)}/delivered`, { method: "POST", body: { note } });
+  return api(`/parcels/rider/${enc(parcelId)}/delivered`, {
+    method: "POST",
+    body: { note, ...extra },
+  });
 }
 
-export async function reportFailed(parcelId, reason, note) {
+export async function reportFailed(parcelId, reason, note, extra = {}) {
   await ensureScanned(parcelId);
   const text = note ? `${reason}: ${note}` : reason;
-  return api(`/parcels/rider/${enc(parcelId)}/failed`, { method: "POST", body: { reason: text } });
+  return api(`/parcels/rider/${enc(parcelId)}/failed`, {
+    method: "POST",
+    body: { reason: reason || text, note: note || text, ...extra },
+  });
 }
