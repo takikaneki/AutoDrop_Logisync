@@ -5,6 +5,12 @@
 // 3. Barangay (Autocomplete from 13 Trece Martires City barangays)
 // 4. House / Unit Number and Street Name (Combined input field)
 
+import {
+  MOBILE_NUMBER_MAX_LENGTH,
+  sanitizeMobileNumber,
+  validateMobileNumber,
+} from "./phone.js";
+
 export const ADDRESS_FIELDS = [
   {
     name: "receiver_province",
@@ -60,10 +66,10 @@ export const PARCEL_BASE_FIELDS = [
   {
     name: "receiver_contact",
     label: "Customer / Receiver contact number",
-    max: 50,
-    placeholder: "e.g. 09123456789",
+    max: MOBILE_NUMBER_MAX_LENGTH,
+    placeholder: "e.g. 09171234567",
     type: "tel",
-    help: "Contact number for delivery confirmation and rider coordination.",
+    help: "Enter an 11-digit mobile number starting with 09 (numbers only).",
   },
   {
     name: "contents",
@@ -207,10 +213,12 @@ export function validateParcel(values) {
   if (!name) errors.receiver_name = "Customer / Receiver name is required.";
   else if (name.length > 100) errors.receiver_name = "Receiver name must be 100 characters or fewer.";
 
-  const contact = (values.receiver_contact || "").trim();
-  if (!contact) errors.receiver_contact = "Contact number is required.";
-  else if (!/^[0-9+()\-\s]{7,}$/.test(contact)) {
-    errors.receiver_contact = "Enter a valid contact number (digits, spaces and + - ( ) only).";
+  const contactError = validateMobileNumber(values.receiver_contact, {
+    required: true,
+    label: "Contact number",
+  });
+  if (contactError) {
+    errors.receiver_contact = contactError;
   }
 
   // Structured Address fields
@@ -276,7 +284,7 @@ export function trimParcel(values) {
   return {
     transaction_number: (values.transaction_number || "").trim(),
     receiver_name: (values.receiver_name || "").trim(),
-    receiver_contact: (values.receiver_contact || "").trim(),
+    receiver_contact: sanitizeMobileNumber(values.receiver_contact),
     receiver_house_number: (values.receiver_house_number || "").trim(),
     receiver_street: (values.receiver_street || "").trim(),
     receiver_barangay: (values.receiver_barangay || "").trim(),

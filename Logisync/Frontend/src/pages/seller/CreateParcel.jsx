@@ -19,6 +19,10 @@ import {
   parseAddressString,
   searchTreceBarangays,
 } from "../../data/phLocations.js";
+import {
+  MOBILE_NUMBER_MAX_LENGTH,
+  sanitizeMobileNumber,
+} from "../../utils/phone.js";
 import ParcelCreated from "../../components/parcels/ParcelCreated.jsx";
 import QrScanner from "../../components/qr/QrScanner.jsx";
 import { parseTransactionNumber } from "../../utils/qr.js";
@@ -136,10 +140,14 @@ export default function CreateParcel() {
       receiver_province: CAVITE_PROVINCE,
     });
 
+    const cleanCustomerContact = customer.contact
+      ? sanitizeMobileNumber(customer.contact)
+      : "";
+
     setValues((v) => ({
       ...v,
       receiver_name: nameValue ?? customer.name,
-      receiver_contact: customer.contact || v.receiver_contact,
+      receiver_contact: cleanCustomerContact || v.receiver_contact,
       receiver_house_number: house,
       receiver_street: combinedStreet,
       receiver_barangay: brgy,
@@ -151,7 +159,7 @@ export default function CreateParcel() {
     setErrors((er) => ({
       ...er,
       receiver_name: undefined,
-      receiver_contact: customer.contact ? undefined : er.receiver_contact,
+      receiver_contact: cleanCustomerContact ? undefined : er.receiver_contact,
       receiver_street: combinedStreet ? undefined : er.receiver_street,
       receiver_barangay: brgy ? undefined : er.receiver_barangay,
       receiver_city: undefined,
@@ -161,7 +169,12 @@ export default function CreateParcel() {
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    const nextValue = name === "transaction_number" ? value.replace(/\D/g, "").slice(0, 11) : value;
+    const nextValue =
+      name === "transaction_number"
+        ? value.replace(/\D/g, "").slice(0, 11)
+        : name === "receiver_contact"
+        ? sanitizeMobileNumber(value)
+        : value;
 
     if (name === "receiver_name") {
       const found = findCustomerByName(nextValue);
@@ -521,15 +534,17 @@ export default function CreateParcel() {
                 id="receiver_contact"
                 name="receiver_contact"
                 type="tel"
+                inputMode="numeric"
+                pattern="09[0-9]{9}"
                 value={values.receiver_contact}
                 onChange={onChange}
                 placeholder="e.g. 09171234567"
-                maxLength={50}
+                maxLength={MOBILE_NUMBER_MAX_LENGTH}
                 aria-invalid={!!errors.receiver_contact}
                 className={`${inputCls} ${errors.receiver_contact ? "!border-[#d94747]" : isContactAutoFilled ? "border-brand/40 bg-[#fffaf7] dark:bg-night-head" : ""}`}
               />
               <p className={`mt-1 min-h-[16px] text-[12px] ${errors.receiver_contact ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.receiver_contact || "Contact number for delivery confirmation and rider coordination."}
+                {errors.receiver_contact || "Enter an 11-digit mobile number starting with 09 (numbers only)."}
               </p>
             </div>
 

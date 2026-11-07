@@ -5,7 +5,12 @@ import TermsModal from "../components/TermsModal.jsx";
 import ContactUsModal from "../components/auth/ContactUsModal.jsx";
 import WelcomeIntro from "../components/auth/WelcomeIntro.jsx";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
-import { COPYRIGHT_OWNER, clearTermsRecord, getTermsRecord, saveTermsRecord } from "../data/terms.js";
+import {
+  COPYRIGHT_OWNER,
+  POLICY_VERSION,
+  clearTermsRecord,
+  saveTermsRecord,
+} from "../data/terms.js";
 
 /**
  * Subtle graphic & icon background inspired by the LogiSync Welcome Page
@@ -120,24 +125,25 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agreed, setAgreed] = useState(() => !!getTermsRecord());
-  const [termsOpen, setTermsOpen] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
 
-  // Ang checkbox ay hindi basta matitiktikan: dadaan muna sa Terms (kailangang i-scroll hanggang dulo)
-  const toggleAgree = () => {
-    if (agreed) {
-      clearTermsRecord();
-      setAgreed(false);
+  const handleCheckboxChange = (e) => {
+    const checked = e.target.checked;
+    setAgreed(checked);
+    if (checked) {
+      saveTermsRecord();
+      setError("");
     } else {
-      setTermsOpen(true);
+      clearTermsRecord();
     }
   };
 
   const confirmAgree = () => {
     saveTermsRecord();
     setAgreed(true);
-    setTermsOpen(false);
+    setLegalDocModal(null);
     setError("");
   };
 
@@ -145,12 +151,20 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!agreed) {
-      setError("Please read and agree to the Terms of Service to continue.");
+      setError("Please agree to our Terms and Conditions and Privacy Policy before signing in.");
       return;
     }
     setLoading(true);
     try {
-      const data = await api("/auth/login", { method: "POST", body: { email: email.trim(), password } });
+      const data = await api("/auth/login", {
+        method: "POST",
+        body: {
+          email: email.trim(),
+          password,
+          termsAccepted: true,
+          policyVersion: POLICY_VERSION,
+        },
+      });
 
       // Ang role ay galing sa backend, hindi pinili ng user
       const home = homePathForRole(data.user.role);
@@ -338,31 +352,48 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Terms of Service agreement checkbox */}
-              <label className="mb-5 flex cursor-pointer select-none items-start gap-2.5 text-xs leading-snug text-slate-600">
+              {/* Terms and Conditions & Privacy Policy agreement checkbox */}
+              <div className="mb-5 flex items-start gap-2.5 text-xs leading-relaxed text-slate-600">
                 <input
+                  id="legal-agreement-checkbox"
                   type="checkbox"
                   checked={agreed}
-                  onChange={toggleAgree}
+                  onChange={handleCheckboxChange}
                   aria-describedby="terms-hint"
-                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand"
+                  className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 accent-brand"
                 />
-                <span id="terms-hint">
-                  I have read and agree to the{" "}
+                <label
+                  htmlFor="legal-agreement-checkbox"
+                  id="terms-hint"
+                  className="cursor-pointer select-none"
+                >
+                  By signing in, you agree to our{" "}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setTermsOpen(true);
+                      setLegalDocModal("terms");
                     }}
                     className="font-bold text-brand underline underline-offset-2 transition-colors hover:text-brand-dark"
                   >
-                    Terms of Service
+                    Terms and Conditions
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLegalDocModal("privacy");
+                    }}
+                    className="font-bold text-brand underline underline-offset-2 transition-colors hover:text-brand-dark"
+                  >
+                    Privacy Policy
                   </button>
                   .
-                </span>
-              </label>
+                </label>
+              </div>
 
               {/* Submit button */}
               <button
@@ -413,7 +444,13 @@ export default function Login() {
       </main>
 
       {/* Modals */}
-      <TermsModal open={termsOpen} alreadyAccepted={agreed} onAgree={confirmAgree} onClose={() => setTermsOpen(false)} />
+      <TermsModal
+        open={Boolean(legalDocModal)}
+        initialTab={legalDocModal || "terms"}
+        alreadyAccepted={agreed}
+        onAgree={confirmAgree}
+        onClose={() => setLegalDocModal(null)}
+      />
       <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </div>
   );

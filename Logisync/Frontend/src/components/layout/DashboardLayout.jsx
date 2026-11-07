@@ -31,7 +31,7 @@ export default function DashboardLayout({ role }) {
       <PortalHeader role={role} onToggleSidebar={toggle} />
       <div className="flex items-start">
         <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-        <main className="flex min-h-[calc(100vh-56px)] min-w-0 flex-1 flex-col px-[35px] pt-6 pb-6 max-[800px]:px-4 max-[800px]:pt-5 max-[800px]:pb-24 print:p-0">
+        <main className="flex min-h-[calc(100vh-56px)] min-w-0 flex-1 flex-col px-[35px] pt-6 pb-6 max-[800px]:min-h-0 max-[800px]:px-3.5 max-[800px]:pt-3.5 max-[800px]:pb-20 print:p-0">
           <div className="flex-1">
             <Outlet />
           </div>

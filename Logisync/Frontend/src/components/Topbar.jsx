@@ -34,12 +34,13 @@ const names = {
 };
 
 // Page header: breadcrumbs, title/subtitle, and action buttons on the upper-right corner.
-export default function Topbar({ title, subtitle, children }) {
+export default function Topbar({ title, subtitle, right, children }) {
   const t = useT();
   const base = useBase(); // "" (Coordinator) | "/seller" | "/rider"
   const { pathname } = useLocation();
   const parts = pathname.split("/").filter(Boolean);
   const label = title ? t(title) : "";
+  const actions = children || right;
 
   useEffect(() => {
     if (label) document.title = `${label} · LogiSync`;
@@ -55,16 +56,16 @@ export default function Topbar({ title, subtitle, children }) {
   });
 
   // Dashboard without extra buttons: show clean page heading on mobile, sr-only on desktop
-  if (crumbs.length === 1 && !children) {
+  if (crumbs.length === 1 && !actions) {
     return (
-      <header className="mb-4 min-[801px]:sr-only print:hidden">
-        <h1 className="text-[20px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{label}</h1>
+      <header className="mb-3 min-[801px]:sr-only print:hidden">
+        <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{label}</h1>
       </header>
     );
   }
 
   return (
-    <header className="mb-6 flex items-start justify-between gap-3 flex-wrap print:hidden max-[600px]:mb-4">
+    <header className="mb-6 flex items-start justify-between gap-3 flex-wrap print:hidden max-[600px]:mb-3.5 max-[600px]:gap-2.5">
       <div className="min-w-0 flex-1">
         {crumbs.length > 1 && (
           <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-1.5 text-[12px] text-[#999]">
@@ -89,9 +90,9 @@ export default function Topbar({ title, subtitle, children }) {
           </p>
         )}
       </div>
-      {children && (
-        <div className="flex items-center justify-end gap-2 flex-wrap shrink-0 max-[520px]:w-full max-[520px]:justify-end">
-          {children}
+      {actions && (
+        <div className="flex items-center justify-end gap-2 flex-wrap shrink-0 max-[520px]:w-full max-[520px]:justify-start">
+          {actions}
         </div>
       )}
     </header>

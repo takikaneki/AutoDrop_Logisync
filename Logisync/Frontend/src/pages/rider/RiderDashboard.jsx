@@ -37,7 +37,7 @@ export default function RiderDashboard() {
         <StatCard label="Failed Delivery" value={stats.failed} icon="fa-triangle-exclamation" tone="red" to="/rider/deliveries?tab=failed" />
       </StatGrid>
 
-      <section className={`${panel} mb-7 overflow-hidden p-[30px] max-[600px]:p-4`}>
+      <section className={`${panel} mb-7 max-[600px]:mb-4 overflow-hidden p-[30px] max-[600px]:p-4`}>
         <PanelTitle icon="fa-box-open">Assigned Parcels</PanelTitle>
         <p className="-mt-3 mb-4 text-[13px] text-[#999]">Parcels the coordinator assigned to you. Scan each parcel's QR code to start its delivery.</p>
         {assigned.length === 0 ? (
@@ -101,7 +101,7 @@ export default function RiderDashboard() {
         )}
       </section>
 
-      <div className="mb-7"><RecentScans scans={scans} action={<PanelLink to="/rider/scan">Scan</PanelLink>} /></div>
+      <div className="mb-7 max-[600px]:mb-4"><RecentScans scans={scans} action={<PanelLink to="/rider/scan">Scan</PanelLink>} /></div>
 
       <RecentActivity to="/rider/activity" />
     </>

@@ -78,7 +78,17 @@ async function createUser(req, res) {
 
     const cleanName = name.trim().slice(0, 100);
     const cleanEmail = email.trim().toLowerCase();
-    const cleanPhone = phone ? String(phone).trim().slice(0, 50) : null;
+    const cleanPhone = phone
+      ? String(phone)
+          .trim()
+          .replace(/^\+639/, "09")
+      : null;
+    if (cleanPhone && !/^09\d{9}$/.test(cleanPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Contact number must be a valid 11-digit mobile number starting with 09 (numbers only)."
+      });
+    }
     const cleanShop = shop_name ? String(shop_name).trim().slice(0, 150) : null;
     const cleanZone = zone ? String(zone).trim().slice(0, 100) : null;
     const cleanVehicle = vehicle ? String(vehicle).trim().slice(0, 100) : null;

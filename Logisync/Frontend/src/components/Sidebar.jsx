@@ -1,9 +1,12 @@
 import { NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
+import AnnouncementModal from "./AnnouncementModal.jsx";
 import LogoutModal from "./LogoutModal.jsx";
+import UserAvatar from "./Avatar.jsx";
 import { useNotifications } from "../store/notifications.js";
 import { useComplaints } from "../store/records.js";
-import { useT } from "../store/prefs.js";
+import { toggleDark, usePrefs, useT } from "../store/prefs.js";
+import { useProfile } from "../store/profile.js";
 import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
@@ -44,6 +47,9 @@ const infoLinks = [
 
 export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
   const t = useT();
+  const { dark } = usePrefs();
+  const profile = useProfile();
+  const [announceOpen, setAnnounceOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [unreadConversations, setUnreadConversations] = useState(0);
   const currentUserId = Number(getUser()?.user_id);
@@ -97,19 +103,55 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
           collapsed ? "min-[801px]:w-[78px] min-[801px]:px-2.5" : "min-[801px]:w-[250px] min-[801px]:px-[18px]"
         } ${mobileOpen ? "max-[800px]:translate-x-0" : "max-[800px]:-translate-x-full"}`}
       >
-        <div className="mb-3 flex items-center justify-between border-b border-[#f1f1f1] px-2 pb-3 min-[801px]:hidden dark:border-night-line">
-          <div className="flex items-center gap-2">
-            <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-6 w-auto object-contain" />
-            <span className="text-[12px] font-bold uppercase tracking-wider text-brand">Coordinator</span>
+        <div className="mb-3 border-b border-[#f1f1f1] px-2 pb-3 min-[801px]:hidden dark:border-night-line">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-6 w-auto object-contain" />
+              <span className="text-[12px] font-bold uppercase tracking-wider text-brand">Coordinator</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={toggleDark}
+                aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                title={dark ? "Switch to light mode" : "Switch to dark mode"}
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
+              >
+                <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose?.();
+                  setAnnounceOpen(true);
+                }}
+                aria-label="Send announcement"
+                title="Send announcement"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-soft text-brand hover:bg-brand hover:text-white dark:bg-night-line"
+              >
+                <i className="fa-solid fa-bullhorn text-xs" />
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close sidebar"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
+              >
+                <i className="fa-solid fa-xmark text-xs" />
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close sidebar"
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
-          >
-            <i className="fa-solid fa-xmark text-xs" />
-          </button>
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-[#fafafa] px-2.5 py-2 dark:bg-night-head">
+            <UserAvatar className="h-8 w-8 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <strong className="block truncate text-[13px] leading-tight text-slate-800 dark:text-white">
+                {profile.name}
+              </strong>
+              <small className="block truncate text-[11px] capitalize text-[#888]">
+                {profile.email || profile.role}
+              </small>
+            </div>
+          </div>
         </div>
 
         <nav className="flex flex-col gap-0.5">
@@ -179,6 +221,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
           </button>
         </div>
       </aside>
+      <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

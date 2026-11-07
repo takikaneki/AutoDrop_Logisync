@@ -60,13 +60,13 @@ export default function SellerDashboard() {
       </StatGrid>
 
       {/* STATUS CHART + ACTION NEEDED */}
-      <section className="mb-7 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[1200px]:grid-cols-1">
-        <div className={`${panel} flex min-w-0 flex-col p-[30px]`}>
+      <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
+        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[600px]:p-4`}>
           <PanelTitle icon="fa-chart-column">Parcels by Status</PanelTitle>
           {parcels.length === 0 ? (
             <EmptyState title={loading ? "Loading…" : "No data yet"} text={loading ? "" : "Register a parcel to see your status breakdown."} />
           ) : (
-            <div className="min-h-[280px] flex-1">
+            <div className="min-h-[280px] max-[600px]:min-h-[220px] flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
@@ -82,22 +82,22 @@ export default function SellerDashboard() {
           )}
         </div>
 
-        <div className={`${panel} flex min-w-0 flex-col p-[30px]`}>
+        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[600px]:p-4`}>
           <PanelTitle icon="fa-bell">Action Needed</PanelTitle>
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 dark:bg-night-head">
-            <div className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] text-orange-500">
+          <div className="mb-4 max-[600px]:mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 max-[600px]:p-4 dark:bg-night-head">
+            <div className="flex h-[56px] w-[56px] max-[600px]:h-[44px] max-[600px]:w-[44px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] max-[600px]:text-[19px] text-orange-500">
               <i className="fa-solid fa-triangle-exclamation" />
             </div>
             <div>
-              <h2 className="text-[32px] font-bold leading-tight text-orange-500">
-                {v(needAction.length)} <small className="text-base font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
+              <h2 className="text-[32px] max-[600px]:text-[24px] font-bold leading-tight text-orange-500">
+                {v(needAction.length)} <small className="text-base max-[600px]:text-sm font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
               </h2>
-              <p className="text-sm text-[#64748b]">need your attention (reupload, rejected, or Return to Hub).</p>
+              <p className="text-sm max-[600px]:text-xs text-[#64748b]">need your attention (reupload, rejected, or Return to Hub).</p>
             </div>
           </div>
 
           {needAction.length === 0 ? (
-            <p className="py-6 text-center text-[14px] text-[#999]">{loading ? "" : "Nothing to fix. You're all set."}</p>
+            <p className="py-6 max-[600px]:py-4 text-center text-[14px] text-[#999]">{loading ? "" : "Nothing to fix. You're all set."}</p>
           ) : (
             <ul className="flex-1">
               {needAction.slice(0, 5).map((p) => (
@@ -112,7 +112,7 @@ export default function SellerDashboard() {
       </section>
 
       {/* RECENT PARCELS */}
-      <section className={`${panel} overflow-hidden p-[30px]`}>
+      <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
         <PanelTitle icon="fa-box" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
 
         {loading ? (
@@ -158,7 +158,7 @@ export default function SellerDashboard() {
         )}
       </section>
 
-      <div className="mt-7"><RecentActivity to="/seller/activity" /></div>
+      <div className="mt-7 max-[600px]:mt-4"><RecentActivity to="/seller/activity" /></div>
     </>
   );
 }

@@ -31,7 +31,7 @@ export default function RecentActivity({ to, limit = 8, title = "Recent Activity
   }, [limit]);
 
   return (
-    <section className={`${panel} p-[30px] max-[600px]:p-5`}>
+    <section className={`${panel} p-[30px] max-[600px]:p-4`}>
       <PanelTitle icon="fa-clock-rotate-left" action={to && <PanelLink to={to}>View all</PanelLink>}>{title}</PanelTitle>
 
       {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}

@@ -7,6 +7,11 @@ import { createUser, listUsers } from "../services/userService.js";
 import { toast } from "../store/toast.js";
 import { ROLE_BADGE } from "../utils/activity.js";
 import { formatDate } from "../utils/format.js";
+import {
+  MOBILE_NUMBER_MAX_LENGTH,
+  sanitizeMobileNumber,
+  validateMobileNumber,
+} from "../utils/phone.js";
 
 const ROLES = [
   ["seller", "Seller", "Registers parcels and uploads video proof."],
@@ -53,7 +58,8 @@ export default function Accounts() {
   useEffect(load, []);
 
   const set = (k) => (e) => {
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+    const val = k === "phone" ? sanitizeMobileNumber(e.target.value) : e.target.value;
+    setForm((f) => ({ ...f, [k]: val }));
     setErrors((er) => ({ ...er, [k]: undefined }));
     setApiError("");
   };
@@ -62,6 +68,11 @@ export default function Accounts() {
     const er = {};
     if (!form.name.trim()) er.name = "Enter the person's full name.";
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = "Enter a valid email address.";
+    const phoneErr = validateMobileNumber(form.phone, {
+      required: false,
+      label: "Contact number",
+    });
+    if (phoneErr) er.phone = phoneErr;
     if (form.password.length < 8) er.password = "Password must be at least 8 characters.";
     setErrors(er);
     return Object.keys(er).length === 0;
@@ -161,10 +172,12 @@ export default function Accounts() {
                 <input
                   id={`acc-${k}`}
                   type={type}
+                  inputMode={k === "phone" ? "numeric" : undefined}
+                  pattern={k === "phone" ? "09[0-9]{9}" : undefined}
                   value={form[k]}
                   onChange={set(k)}
                   placeholder={ph}
-                  maxLength={k === "name" ? 100 : k === "phone" ? 30 : 150}
+                  maxLength={k === "name" ? 100 : k === "phone" ? MOBILE_NUMBER_MAX_LENGTH : 150}
                   autoComplete="off"
                   className={inputCls}
                 />

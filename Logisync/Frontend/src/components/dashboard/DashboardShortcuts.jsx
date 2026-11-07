@@ -13,11 +13,20 @@ const TARGETS = {
 export default function DashboardShortcuts({ role }) {
   const t = TARGETS[role];
   return (
-    <div className="mb-4 flex flex-wrap justify-end gap-2 max-[600px]:grid max-[600px]:grid-cols-2" aria-label="Shortcuts">
-      <Link to={t.scan} className={btnPrimary}>
+    <div
+      className="mb-4 max-[600px]:mb-3.5 flex flex-wrap justify-end gap-2 max-[600px]:grid max-[600px]:grid-cols-2 max-[600px]:gap-2.5"
+      aria-label="Shortcuts"
+    >
+      <Link
+        to={t.scan}
+        className={`${btnPrimary} max-[600px]:w-full max-[600px]:justify-center max-[600px]:!px-3 max-[600px]:!py-2.5 max-[600px]:!text-[13px]`}
+      >
         <i className={`fa-solid ${t.icon || "fa-qrcode"}`} /> {t.label || "Scan Parcel"}
       </Link>
-      <Link to={t.report} className={btnGhost}>
+      <Link
+        to={t.report}
+        className={`${btnGhost} max-[600px]:w-full max-[600px]:justify-center max-[600px]:!px-3 max-[600px]:!py-2.5 max-[600px]:!text-[13px]`}
+      >
         <i className="fa-solid fa-file-lines" /> Generate Report
       </Link>
     </div>

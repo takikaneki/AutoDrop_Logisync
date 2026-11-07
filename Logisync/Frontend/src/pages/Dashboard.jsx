@@ -13,7 +13,7 @@ import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDate } from "../utils/format.js";
 
-const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-5";
+const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
 const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Flagged: "#d94747" };
 const PERIODS = [["day", "By Day"], ["week", "By Week"], ["month", "By Month"]];
 const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", month: "Parcels per month" };
@@ -66,19 +66,19 @@ export default function Dashboard() {
       </StatGrid>
 
       {/* 2. VERIFICATION + RECENT PARCELS */}
-      <section className="mb-7 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[1200px]:grid-cols-1">
+      <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
         <div className={`${panel} flex flex-col`}>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-[19px] font-bold"><i className="fa-regular fa-bell mr-2 text-orange-500" />Verification Needed</h2>
+          <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-regular fa-bell mr-2 text-orange-500" />Verification Needed</h2>
             <Link to="/verification" className="whitespace-nowrap text-sm text-orange-500">View All →</Link>
           </div>
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 dark:bg-[#3b3531]">
-            <div className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] text-orange-500"><i className="fa-solid fa-box" /></div>
+          <div className="mb-4 max-[600px]:mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 max-[600px]:p-4 dark:bg-[#3b3531]">
+            <div className="flex h-[56px] w-[56px] max-[600px]:h-[44px] max-[600px]:w-[44px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] max-[600px]:text-[19px] text-orange-500"><i className="fa-solid fa-box" /></div>
             <div>
-              <h2 className="text-[32px] font-bold leading-tight text-orange-500">
-                {v(countStatus("VIDEO_SUBMITTED"))} <small className="text-base font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
+              <h2 className="text-[32px] max-[600px]:text-[24px] font-bold leading-tight text-orange-500">
+                {v(countStatus("VIDEO_SUBMITTED"))} <small className="text-base max-[600px]:text-sm font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
               </h2>
-              <p className="mt-1 text-sm text-[#64748b]">need verification.</p>
+              <p className="mt-1 max-[600px]:mt-0.5 text-sm max-[600px]:text-xs text-[#64748b]">need verification.</p>
             </div>
           </div>
           <div className="flex flex-1 flex-col">
@@ -86,18 +86,18 @@ export default function Dashboard() {
               ["fa-triangle-exclamation", "Flagged / Return to Hub", stats.flagged],
               ["fa-circle-play", "Awaiting Seller Video", countStatus("WAITING_FOR_VIDEO")],
             ].map(([icon, label, n]) => (
-              <div key={label} className="flex flex-1 items-center justify-between border-b border-[#edf0f4] py-4 text-[16px] text-[#52627a] last:border-b-0 dark:border-night-line dark:text-[#d1c9c2]">
+              <div key={label} className="flex flex-1 items-center justify-between border-b border-[#edf0f4] py-4 max-[600px]:py-3 text-[16px] max-[600px]:text-[14px] text-[#52627a] last:border-b-0 dark:border-night-line dark:text-[#d1c9c2]">
                 <span><i className={`fa-solid ${icon} w-6`} /> {label}</span>
-                <strong className="text-lg text-orange-500">{v(n)}</strong>
+                <strong className="text-lg max-[600px]:text-base text-orange-500">{v(n)}</strong>
               </div>
             ))}
           </div>
         </div>
 
         {/* RECENT PARCELS */}
-        <div className={`${panel} min-h-[420px] overflow-hidden`}>
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-[19px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
+        <div className={`${panel} min-h-[420px] max-[600px]:min-h-0 overflow-hidden`}>
+          <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
             <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
           </div>
           <div className="overflow-x-auto">
@@ -131,12 +131,12 @@ export default function Dashboard() {
       </section>
 
       {/* 3. ANALYTICS */}
-      <h2 className="mb-4 text-[19px] font-bold"><i className="fa-solid fa-chart-line mr-2 text-orange-500" />Analytics</h2>
+      <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-chart-line mr-2 text-orange-500" />Analytics</h2>
 
-      <section className="mb-6 grid grid-cols-[2.2fr_1fr] items-stretch gap-6 max-[1200px]:grid-cols-1">
+      <section className="mb-6 max-[600px]:mb-4 grid grid-cols-[2.2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
         <div className={panel}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-[17px] font-bold">{TITLES[period]}</h3>
+            <h3 className="text-[17px] max-[600px]:text-[15.5px] font-bold">{TITLES[period]}</h3>
             <div className="flex items-center gap-2">
               <select value={period} onChange={(e) => changePeriod(e.target.value)} className={`${inputCls} !w-[130px]`} aria-label="Time period">
                 {PERIODS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
@@ -155,7 +155,7 @@ export default function Dashboard() {
               </>
             )}
           </div>
-          <div className="h-[420px]">
+          <div className="h-[420px] max-[600px]:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={series.rows} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
@@ -172,8 +172,8 @@ export default function Dashboard() {
         </div>
 
         <div className={panel}>
-          <h3 className="mb-5 text-[17px] font-bold">Status breakdown</h3>
-          <div className="h-[420px]">
+          <h3 className="mb-5 max-[600px]:mb-3 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
+          <div className="h-[420px] max-[600px]:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={pie} dataKey="value" nameKey="name" innerRadius={78} outerRadius={125} paddingAngle={2}>
@@ -188,7 +188,7 @@ export default function Dashboard() {
       </section>
 
       {/* 4. RECENT ACTIVITY */}
-      <div className="mt-6"><RecentActivity to="/audit" /></div>
+      <div className="mt-6 max-[600px]:mt-4"><RecentActivity to="/audit" /></div>
     </>
   );
 }

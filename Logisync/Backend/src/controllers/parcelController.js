@@ -453,7 +453,15 @@ async function createParcel(req, res) {
 
     const transactionNumber = transaction_number.trim();
     const cleanReceiverName = receiver_name.trim().replace(/\s+/g, " ");
-    const cleanReceiverContact = receiver_contact.trim();
+    const cleanReceiverContact = String(receiver_contact || "")
+      .trim()
+      .replace(/^\+639/, "09");
+    if (!/^09\d{9}$/.test(cleanReceiverContact)) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver contact number must be a valid 11-digit mobile number starting with 09 (numbers only)."
+      });
+    }
     const cleanHouseNumber = String(receiver_house_number || "").trim();
     const cleanStreet = String(receiver_street || "").trim();
     const cleanBarangay = String(receiver_barangay || "").trim();

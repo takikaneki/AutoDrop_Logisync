@@ -177,7 +177,7 @@ export default function Riders() {
         />
       </StatGrid>
 
-      <section className={`${panel} p-6`}>
+      <section className={`${panel} p-6 max-[600px]:p-4`}>
         <div className="mb-5 grid grid-cols-[1fr_180px_200px] gap-3 max-[900px]:grid-cols-1">
           <div className="relative">
             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />

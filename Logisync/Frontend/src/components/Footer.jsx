@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Modal } from "./ui.jsx";
+import TermsModal from "./TermsModal.jsx";
 import { useT } from "../store/prefs.js";
 import useBase from "../hooks/useBase.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
@@ -12,11 +12,6 @@ const QUICK = {
   "/rider": [["", "Home"], ["/scan", "Scan QR Code"], ["/messages", "Messages"]],
 };
 
-const legal = {
-  Terms: "By using LogiSync you agree to use the system only for legitimate parcel monitoring and verification. Accounts are personal and must not be shared. LogiSync may suspend accounts that misuse the system. (Sample text — replace with your project's official terms.)",
-  Privacy: "LogiSync stores the information needed to verify and deliver parcels, such as names, contact details, addresses and seller videos. This data is used only for delivery operations and is not sold to third parties. (Sample text — replace with your project's official policy.)",
-};
-
 export default function Footer() {
   const t = useT();
   const base = useBase();
@@ -25,7 +20,7 @@ export default function Footer() {
   const col = "text-[13px] text-[#888] hover:text-brand";
 
   return (
-    <footer className="mt-10 w-full shrink-0 border-t border-[#e9e9e9] pt-6 print:hidden dark:border-night-line">
+    <footer className="mt-10 max-[600px]:mt-6 w-full shrink-0 border-t border-[#e9e9e9] pt-6 max-[600px]:pt-4 print:hidden dark:border-night-line">
       <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-5">
         <div className="max-w-[300px]">
           <div className="mb-2 flex items-center gap-3">
@@ -71,17 +66,21 @@ export default function Footer() {
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#eee] py-4 text-[12px] text-[#aaa] dark:border-night-line">
         <span>© 2026 LogiSync. All rights reserved.</span>
         <span className="flex gap-4">
-          {Object.keys(legal).map((k) => (
-            <button key={k} onClick={() => setDoc(k)} className="hover:text-brand">{k}</button>
-          ))}
+          <button type="button" onClick={() => setDoc("terms")} className="hover:text-brand">
+            Terms and Conditions
+          </button>
+          <button type="button" onClick={() => setDoc("privacy")} className="hover:text-brand">
+            Privacy Policy
+          </button>
         </span>
       </div>
 
-      <Modal open={!!doc} onClose={() => setDoc(null)} z="z-[4000]" className="w-full max-w-[460px] p-7 dark:bg-night-panel">
-        <h3 className="text-[17px] font-bold mb-3">{doc}</h3>
-        <p className="text-[14px] leading-relaxed text-[#777] dark:text-[#d1c9c2]">{doc && legal[doc]}</p>
-        <button onClick={() => setDoc(null)} className="mt-5 px-4 py-2.5 rounded-lg bg-brand text-white text-[14px] font-bold">Close</button>
-      </Modal>
+      <TermsModal
+        open={Boolean(doc)}
+        initialTab={doc || "terms"}
+        alreadyAccepted={true}
+        onClose={() => setDoc(null)}
+      />
     </footer>
   );
 }

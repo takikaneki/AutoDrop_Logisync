@@ -8,6 +8,11 @@ import { setProfile, useProfile } from "../store/profile.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import ChangePasswordForm from "../components/ChangePasswordForm.jsx";
+import {
+  MOBILE_NUMBER_MAX_LENGTH,
+  sanitizeMobileNumber,
+  validateMobileNumber,
+} from "../utils/phone.js";
 
 const tabs = [
   ["profile", "Profile", "fa-regular fa-user"],
@@ -63,11 +68,15 @@ function ProfileTab() {
     const err = {};
     if (!name.trim()) err.name = "Please enter your name.";
     if (!/^\S+@\S+\.\S+$/.test(email)) err.email = "Please enter a valid email address.";
-    if (phone && !/^[0-9+\-\s()]{7,}$/.test(phone)) err.phone = "Please enter a valid phone number.";
+    const phoneErr = validateMobileNumber(phone, {
+      required: false,
+      label: "Mobile number",
+    });
+    if (phoneErr) err.phone = phoneErr;
     setErrors(err);
     if (Object.keys(err).length) return;
     // TODO: PATCH /api/auth/me
-    setProfile({ name: name.trim(), email: email.trim(), phone: phone.trim() });
+    setProfile({ name: name.trim(), email: email.trim(), phone: sanitizeMobileNumber(phone) });
     logAction({ category: "Settings", action: "Updated profile", target: name.trim() });
     toast("Profile saved.");
   };
@@ -115,8 +124,21 @@ function ProfileTab() {
           {errors.email && <p className="mt-1 text-[12px] text-[#d94747]">{errors.email}</p>}
         </div>
         <div>
-          <label className={labelCls} htmlFor="p-phone">Phone</label>
-          <input id="p-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0917 000 0000" className={inputCls} />
+          <label className={labelCls} htmlFor="p-phone">Mobile number</label>
+          <input
+            id="p-phone"
+            type="tel"
+            inputMode="numeric"
+            pattern="09[0-9]{9}"
+            maxLength={MOBILE_NUMBER_MAX_LENGTH}
+            value={phone}
+            onChange={(e) => {
+              setPhone(sanitizeMobileNumber(e.target.value));
+              setErrors((er) => ({ ...er, phone: undefined }));
+            }}
+            placeholder="e.g. 09171234567"
+            className={inputCls}
+          />
           {errors.phone && <p className="mt-1 text-[12px] text-[#d94747]">{errors.phone}</p>}
         </div>
       </div>

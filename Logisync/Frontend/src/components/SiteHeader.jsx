@@ -46,7 +46,7 @@ export default function SiteHeader({ onToggleSidebar }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-4 sm:px-6 shadow-sm print:hidden dark:bg-night-panel dark:border-night-line">
+      <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-4 sm:px-6 shadow-sm print:hidden max-[800px]:hidden dark:bg-night-panel dark:border-night-line">
         <div className="grid h-full w-full grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center">
           {/* Left Column: Sidebar toggle */}
           <div className="flex items-center justify-start">

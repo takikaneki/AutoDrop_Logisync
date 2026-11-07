@@ -20,7 +20,7 @@ export default function RecentScans({ scans, limit = 5, action }) {
   const rows = scans.slice(0, limit);
 
   return (
-    <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-5`}>
+    <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
       <PanelTitle icon="fa-clock-rotate-left" action={action}>Recent Scans</PanelTitle>
       {rows.length === 0 ? (
         <EmptyState icon="fa-qrcode" title="No scans yet" text="Parcels you scan will show up here, then move to To Be Delivered." />
