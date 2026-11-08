@@ -6,24 +6,50 @@ import { getUser } from "../api.js";
 const MAX = 30;
 const store = createStore([], "pt-rider-scans");
 
+export const getRiderScans = () => {
+  const all = store.get();
+  const me = Number(getUser()?.user_id);
+  const myName = String(getUser()?.name || "").trim().toLowerCase();
+  return all.filter(
+    (s) =>
+      Number(s.user_id) === me ||
+      (myName && s.rider_name && String(s.rider_name).trim().toLowerCase() === myName)
+  );
+};
+
 export const useRiderScans = () => {
   const all = store.use();
   const me = Number(getUser()?.user_id);
-  return all.filter((s) => s.user_id === me);
+  const myName = String(getUser()?.name || "").trim().toLowerCase();
+  return all.filter(
+    (s) =>
+      Number(s.user_id) === me ||
+      (myName && s.rider_name && String(s.rider_name).trim().toLowerCase() === myName)
+  );
 };
 
 export function logScan(parcel, scanned) {
+  const user = getUser();
   const entry = {
-    user_id: Number(getUser()?.user_id),
+    user_id: Number(user?.user_id),
+    rider_name: user?.name || "",
     parcel_id: parcel.parcel_id,
     scanned: scanned || parcel.transaction_number || parcel.parcel_id,
     transaction_number: parcel.transaction_number || scanned || parcel.parcel_id,
     receiver: parcel.receiver || parcel.receiver_name || "",
+    contact: parcel.contact || parcel.receiver_contact || "",
+    address: parcel.address || parcel.receiver_address || "",
+    contents: parcel.contents || "",
     seller: parcel.seller || parcel.seller_name || "",
-    status: parcel.status || "VERIFIED",
+    status: parcel.raw_status || parcel.verification_status || parcel.status || "VERIFIED",
     at: parcel.scanned_at ? new Date(parcel.scanned_at).toISOString() : new Date().toISOString(),
   };
-  store.set((list) => [entry, ...list.filter((s) => !(s.user_id === entry.user_id && s.parcel_id === entry.parcel_id))].slice(0, MAX));
+  store.set((list) =>
+    [entry, ...list.filter((s) => !(Number(s.user_id) === Number(entry.user_id) && s.parcel_id === entry.parcel_id))].slice(
+      0,
+      MAX
+    )
+  );
 }
 
 export function syncScansFromServerParcels(riderId, parcels = []) {

@@ -172,6 +172,11 @@ async function ensureSchema() {
 
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS transaction_number VARCHAR(100);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_address VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
@@ -185,6 +190,16 @@ async function ensureSchema() {
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rider_id INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_status VARCHAR(20);
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_note VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_proof TEXT;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS scheduled_for VARCHAR(20);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rescheduled BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS reschedule_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub_at TIMESTAMPTZ;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_coordinated BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_note VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS last_failure VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_attempts TEXT;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS scanned_at TIMESTAMPTZ;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
 
@@ -195,10 +210,21 @@ async function ensureSchema() {
         receiver_name VARCHAR(150) NOT NULL,
         receiver_contact VARCHAR(50) NOT NULL DEFAULT '',
         receiver_address VARCHAR(500) NOT NULL DEFAULT '',
+        receiver_house_number VARCHAR(100) NOT NULL DEFAULT '',
+        receiver_street VARCHAR(150) NOT NULL DEFAULT '',
+        receiver_barangay VARCHAR(150) NOT NULL DEFAULT '',
+        receiver_city VARCHAR(150) NOT NULL DEFAULT '',
+        receiver_province VARCHAR(150) NOT NULL DEFAULT '',
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT uq_seller_customer_name UNIQUE (seller_id, normalized_name)
       );
+
+      ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100) NOT NULL DEFAULT '';
+      ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150) NOT NULL DEFAULT '';
+      ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150) NOT NULL DEFAULT '';
+      ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150) NOT NULL DEFAULT '';
+      ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
 
       CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
 

@@ -16,7 +16,11 @@ export const enrichParcel = (p) => {
   syncAutomaticReschedules();
   const addr = getParcelAddress(p);
   const d = getDeliveryRecordForParcel(p.parcel_id) || getDeliveryRecordForParcel(p.transaction_number);
-  let next = addr && !p.receiver_address ? { ...p, receiver_address: addr } : { ...p };
+  let next = {
+    ...(addr && !p.receiver_address ? { ...p, receiver_address: addr } : p),
+    raw_status: p.status,
+    verification_status: p.verification_status || (p.status === "VERIFIED" ? "VERIFIED" : p.verification_status),
+  };
 
   let dbAttempts = [];
   if (Array.isArray(p.attempts)) {
@@ -192,13 +196,20 @@ export const getByTransaction = async (txn) => {
 // Hahanapin muna bilang transaction number; kung wala, susubukan bilang parcel ID.
 // (Para pwede ring i-type ang parcel ID bilang fallback.)
 export async function findParcel(value, role) {
+  const restoreRiderStatus = (res) => {
+    if (!res?.parcel) return res;
+    if (role === "rider" && (res.parcel.raw_status === "VERIFIED" || res.parcel.verification_status === "VERIFIED")) {
+      return { ...res, parcel: { ...res.parcel, status: "VERIFIED" } };
+    }
+    return res;
+  };
   try {
-    return await getByTransaction(value);
+    return restoreRiderStatus(await getByTransaction(value));
   } catch (err) {
     if (!/not found/i.test(err.message)) throw err;
     const path = role === "seller" ? "/parcels/seller" : role === "coordinator" ? "/parcels/coordinator" : "/parcels";
     const res = await api(`${path}/${enc(value)}`);
-    return res?.parcel ? { ...res, parcel: enrichParcel(res.parcel) } : res;
+    return restoreRiderStatus(res?.parcel ? { ...res, parcel: enrichParcel(res.parcel) } : res);
   }
 }
 

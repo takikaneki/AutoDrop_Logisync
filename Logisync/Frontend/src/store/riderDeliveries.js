@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { createStore } from "./createStore.js";
 import { api, getUser } from "../api.js";
 import { getParcels, updateParcelRecord, useParcels } from "./records.js";
-import { syncScansFromServerParcels, useRiderScans } from "./riderScans.js";
+import { getRiderScans, syncScansFromServerParcels, useRiderScans } from "./riderScans.js";
 import { fetchMyRiderParcels, reportDelivered, reportFailed, scanForDelivery } from "../services/deliveryService.js";
 import { addNotification, markRead } from "./notifications.js";
 import { getParcelAddress } from "./customers.js";
@@ -39,6 +39,27 @@ function resolveParcelAddress(parcel) {
 const store = createStore([], "pt-rider-deliveries");
 const me = () => Number(getUser()?.user_id);
 
+function isSameRider(d, riderId = me()) {
+  if (!d) return false;
+  if (riderId && Number(d.user_id) === Number(riderId)) return true;
+  const currentName = String(getUser()?.name || "").trim().toLowerCase();
+  const itemRiderName = String(d.rider_name || "").trim().toLowerCase();
+  if (currentName && itemRiderName && currentName === itemRiderName) return true;
+  return false;
+}
+
+function isSameParcelItem(a, b) {
+  if (!a || !b) return false;
+  const aPid = String(a.parcel_id || "").trim().toLowerCase();
+  const aTxn = String(a.transaction_number || "").trim().toLowerCase();
+  const bPid = String(b.parcel_id || "").trim().toLowerCase();
+  const bTxn = String(b.transaction_number || "").trim().toLowerCase();
+  return (
+    (aPid && (aPid === bPid || aPid === bTxn)) ||
+    (aTxn && (aTxn === bPid || aTxn === bTxn))
+  );
+}
+
 export const MAX_RESCHEDULES = 3;
 
 export const STAGE = {
@@ -57,7 +78,10 @@ export const FAIL_REASONS = [
   "Other",
 ];
 
-export const isCleared = (parcel) => parcel?.status === "VERIFIED";
+export const isCleared = (parcel) =>
+  parcel?.status === "VERIFIED" ||
+  parcel?.verification_status === "VERIFIED" ||
+  parcel?.raw_status === "VERIFIED";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -280,8 +304,15 @@ function mapServerParcelToDelivery(row, riderId) {
     }
   }
 
+  const rawScheduled = cleanField(row.scheduled_for);
+  const scannedIso = toIsoDate(scannedMs);
+  const today = todayIso();
+  const scheduledFor =
+    rawScheduled ||
+    (stage === STAGE.TO_DELIVER && !isRescheduled && scannedIso < today ? today : scannedIso);
+
   return {
-    user_id: riderId,
+    user_id: Number(riderId),
     rider_name: user?.name || "Rider",
     parcel_id: row.parcel_id,
     transaction_number: cleanField(row.transaction_number) || row.parcel_id,
@@ -292,7 +323,7 @@ function mapServerParcelToDelivery(row, riderId) {
     seller: cleanField(row.seller || row.seller_name),
     scannedAt: scannedMs,
     doneAt: doneMs,
-    scheduledFor: cleanField(row.scheduled_for) || toIsoDate(scannedMs),
+    scheduledFor,
     rescheduled: isRescheduled,
     rescheduleCount: reschedCount,
     maxReschedules: MAX_RESCHEDULES,
@@ -313,83 +344,203 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
   if (!riderId || syncInFlight) return;
   syncInFlight = true;
   try {
-    const mineRes = await fetchMyRiderParcels().catch(() => null);
-    const serverParcels = Array.isArray(mineRes?.parcels) ? mineRes.parcels : null;
+    const user = getUser();
 
-    if (serverParcels) {
-      syncScansFromServerParcels(riderId, serverParcels);
-
-      const serverByKey = new Map();
-      serverParcels.forEach((p) => {
-        if (p.parcel_id) serverByKey.set(String(p.parcel_id).toLowerCase(), p);
-        if (p.transaction_number) serverByKey.set(String(p.transaction_number).toLowerCase(), p);
+    // 1. Reconcile any verified scans in pt-rider-scans on this device into pt-rider-deliveries
+    const localScans = getRiderScans();
+    if (Array.isArray(localScans) && localScans.length > 0) {
+      const existingDeliveries = store.get().filter((d) => isSameRider(d, riderId));
+      const missingFromDeliveries = localScans.filter((s) => {
+        const isVer = !s.status || s.status === "VERIFIED" || s.status === "OUT_FOR_DELIVERY";
+        if (!isVer) return false;
+        return !existingDeliveries.some((d) => isSameParcelItem(d, s));
       });
+      if (missingFromDeliveries.length > 0) {
+        const additions = missingFromDeliveries.map((s) => {
+          const ts = s.at ? new Date(s.at).getTime() : Date.now();
+          return {
+            user_id: Number(riderId),
+            rider_name: user?.name || s.rider_name || "Rider",
+            parcel_id: s.parcel_id || s.transaction_number || s.scanned,
+            transaction_number: cleanField(s.transaction_number || s.scanned) || s.parcel_id,
+            receiver: cleanField(s.receiver),
+            contact: cleanField(s.contact),
+            address: cleanField(s.address),
+            contents: cleanField(s.contents),
+            seller: cleanField(s.seller),
+            scannedAt: ts,
+            scheduledFor: toIsoDate(ts) < todayIso() ? todayIso() : toIsoDate(ts),
+            rescheduled: false,
+            rescheduleCount: 0,
+            maxReschedules: MAX_RESCHEDULES,
+            attempts: [],
+            returnToHub: false,
+            stage: STAGE.TO_DELIVER,
+          };
+        });
+        store.set((list) => [...additions, ...list]);
+      }
+    }
 
-      // Push any local-only scanned deliveries on this device to the shared database so web & mobile stay in sync
-      const currentLocal = store.get().filter((d) => d.user_id === riderId);
-      for (const localItem of currentLocal) {
-        const pid = String(localItem.parcel_id || localItem.transaction_number || "").trim();
-        if (!pid) continue;
-        const inServer =
-          serverByKey.has(String(localItem.parcel_id || "").toLowerCase()) ||
-          serverByKey.has(String(localItem.transaction_number || "").toLowerCase());
-        const pushKey = `${riderId}:${pid}:${localItem.stage}:${localItem.rescheduleCount || 0}`;
-        if (!inServer && !pushedLocalKeys.has(pushKey)) {
-          pushedLocalKeys.add(pushKey);
-          try {
-            await scanForDelivery(pid, {
-              scheduledFor: localItem.scheduledFor,
-              rescheduled: localItem.rescheduled,
-              rescheduleCount: localItem.rescheduleCount,
+    // 2. Fetch current rider parcels from shared PostgreSQL database
+    let mineRes = await fetchMyRiderParcels().catch(() => null);
+    let serverParcels = Array.isArray(mineRes?.parcels) ? mineRes.parcels : null;
+
+    const serverByKey = new Map();
+    if (serverParcels) {
+      serverParcels.forEach((p) => {
+        if (p.parcel_id) serverByKey.set(String(p.parcel_id).trim().toLowerCase(), p);
+        if (p.transaction_number) serverByKey.set(String(p.transaction_number).trim().toLowerCase(), p);
+      });
+    }
+
+    // 3. Push any local-only or locally-updated deliveries on this device to the shared database
+    const currentLocal = store.get().filter((d) => isSameRider(d, riderId));
+    let didPushLocal = false;
+
+    for (const localItem of currentLocal) {
+      const pid = String(localItem.parcel_id || localItem.transaction_number || "").trim();
+      const txn = String(localItem.transaction_number || localItem.parcel_id || "").trim();
+      if (!pid && !txn) continue;
+
+      const serverRow =
+        serverByKey.get(pid.toLowerCase()) ||
+        serverByKey.get(txn.toLowerCase()) ||
+        null;
+
+      const needsPush =
+        !serverRow ||
+        (localItem.stage === STAGE.DELIVERED && serverRow.delivery_status !== "DELIVERED") ||
+        ((localItem.returnToHub || localItem.stage === STAGE.RETURN_TO_HUB) &&
+          !serverRow.return_to_hub &&
+          serverRow.delivery_status !== "RETURN_TO_HUB" &&
+          serverRow.delivery_status !== "FAILED") ||
+        (localItem.stage === STAGE.FAILED &&
+          serverRow.delivery_status !== "FAILED" &&
+          serverRow.delivery_status !== "RETURN_TO_HUB") ||
+        (localItem.rescheduled && Number(localItem.rescheduleCount || 0) > Number(serverRow.reschedule_count || 0));
+
+      const pushKey = `${riderId}:${pid}:${txn}:${localItem.stage}:${localItem.rescheduleCount || 0}`;
+      if (needsPush && !pushedLocalKeys.has(pushKey)) {
+        try {
+          const targetId = txn || pid;
+          await scanForDelivery(targetId, {
+            scheduledFor: localItem.scheduledFor || todayIso(),
+            rescheduled: Boolean(localItem.rescheduled),
+            rescheduleCount: Number(localItem.rescheduleCount || 0),
+          });
+          if (localItem.stage === STAGE.DELIVERED) {
+            await reportDelivered(targetId, localItem.note || "", {
+              proof: localItem.proof || "",
+              attempts: localItem.attempts || [],
+              scheduledFor: localItem.scheduledFor || todayIso(),
+              rescheduleCount: Number(localItem.rescheduleCount || 0),
             });
-            if (localItem.stage === STAGE.DELIVERED) {
-              await reportDelivered(pid, localItem.note || "", {
-                proof: localItem.proof || "",
-                attempts: localItem.attempts || [],
-                scheduledFor: localItem.scheduledFor,
-                rescheduleCount: localItem.rescheduleCount || 0,
-              });
-            } else if (
-              localItem.returnToHub ||
-              localItem.stage === STAGE.RETURN_TO_HUB ||
-              localItem.stage === STAGE.FAILED ||
-              localItem.rescheduled
-            ) {
-              await reportFailed(pid, localItem.lastFailure || localItem.reason || "Rescheduled", localItem.note || "", {
+          } else if (
+            localItem.returnToHub ||
+            localItem.stage === STAGE.RETURN_TO_HUB ||
+            localItem.stage === STAGE.FAILED ||
+            localItem.rescheduled
+          ) {
+            await reportFailed(
+              targetId,
+              localItem.lastFailure || localItem.reason || "Rescheduled",
+              localItem.note || "",
+              {
                 outcome: localItem.returnToHub || localItem.stage === STAGE.RETURN_TO_HUB ? "return_to_hub" : "rescheduled",
-                scheduledFor: localItem.scheduledFor,
+                scheduledFor: localItem.scheduledFor || todayIso(),
                 rescheduled: Boolean(localItem.rescheduled),
                 rescheduleCount: Number(localItem.rescheduleCount || 0),
                 returnToHub: Boolean(localItem.returnToHub || localItem.stage === STAGE.RETURN_TO_HUB),
                 attempts: localItem.attempts || [],
+              }
+            );
+          }
+          pushedLocalKeys.add(pushKey);
+          didPushLocal = true;
+        } catch {
+          // Ignore push errors for demo/non-DB parcels
+        }
+      }
+    }
+
+    if (didPushLocal) {
+      const refreshed = await fetchMyRiderParcels().catch(() => null);
+      if (Array.isArray(refreshed?.parcels)) {
+        serverParcels = refreshed.parcels;
+      }
+    }
+
+    // 4. Also check Delivery audit logs on the backend to recover any parcels scanned by this rider
+    try {
+      const auditRes = await api("/audit-logs?category=Delivery&limit=50").catch(() => null);
+      const logs = Array.isArray(auditRes?.logs) ? auditRes.logs : [];
+      if (logs.length > 0) {
+        const knownKeys = new Set();
+        (serverParcels || []).forEach((p) => {
+          if (p.parcel_id) knownKeys.add(String(p.parcel_id).trim().toLowerCase());
+          if (p.transaction_number) knownKeys.add(String(p.transaction_number).trim().toLowerCase());
+        });
+        store.get().filter((d) => isSameRider(d, riderId)).forEach((d) => {
+          if (d.parcel_id) knownKeys.add(String(d.parcel_id).trim().toLowerCase());
+          if (d.transaction_number) knownKeys.add(String(d.transaction_number).trim().toLowerCase());
+        });
+
+        for (const log of logs) {
+          const target = String(log.target || "").trim();
+          if (!target || knownKeys.has(target.toLowerCase())) continue;
+          knownKeys.add(target.toLowerCase());
+          try {
+            const enc = encodeURIComponent(target);
+            const pRes = await api(`/parcels/${enc}`).catch(() =>
+              api(`/parcels/by-transaction/${enc}`).catch(() => null)
+            );
+            if (pRes?.parcel) {
+              const p = pRes.parcel;
+              await scanForDelivery(p.parcel_id || target).catch(() => {});
+              if (!serverParcels) serverParcels = [];
+              serverParcels.push({
+                ...p,
+                delivery_status:
+                  /delivered/i.test(log.action) && !/failed|retry/i.test(log.action)
+                    ? "DELIVERED"
+                    : /failed/i.test(log.action)
+                    ? "FAILED"
+                    : p.delivery_status || "TO_DELIVER",
+                scanned_at: p.scanned_at || log.created_at,
               });
             }
           } catch {
-            // Ignore push errors for demo/non-DB parcels
+            /* ignore */
           }
         }
       }
+    } catch {
+      /* ignore audit log fallback errors */
+    }
 
-      // Merge server parcels into store (adding new parcels scanned on mobile/other devices and updating existing ones)
+    if (serverParcels) {
+      syncScansFromServerParcels(riderId, serverParcels);
+
+      // 5. Merge server parcels into store (adding new parcels scanned on mobile/other devices and updating existing ones)
       store.set((list) => {
-        const otherUsers = list.filter((d) => d.user_id !== riderId);
-        const myExisting = list.filter((d) => d.user_id === riderId);
-        const matchedLocalIds = new Set();
+        const otherUsers = list.filter((d) => !isSameRider(d, riderId));
+        const myExisting = list.filter((d) => isSameRider(d, riderId));
+        const matchedLocalIndices = new Set();
 
         const updatedFromServer = serverParcels.map((row) => {
           const mapped = mapServerParcelToDelivery(row, riderId);
-          const existing = myExisting.find(
-            (d) =>
-              String(d.parcel_id || "").toLowerCase() === String(row.parcel_id || "").toLowerCase() ||
-              (row.transaction_number &&
-                String(d.transaction_number || "").toLowerCase() === String(row.transaction_number).toLowerCase())
-          );
-          if (!existing) return mapped;
-          matchedLocalIds.add(existing.parcel_id);
+          const idx = myExisting.findIndex((d) => isSameParcelItem(d, row));
+          if (idx === -1) return mapped;
+          matchedLocalIndices.add(idx);
+          const existing = myExisting[idx];
 
           return {
             ...existing,
             ...mapped,
+            user_id: Number(riderId),
+            parcel_id: mapped.parcel_id || existing.parcel_id,
+            transaction_number: mapped.transaction_number || cleanField(existing.transaction_number),
             address: mapped.address || cleanField(existing.address),
             contact: mapped.contact || cleanField(existing.contact),
             contents: mapped.contents || cleanField(existing.contents),
@@ -409,16 +560,20 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
           };
         });
 
-        const remainingLocal = myExisting.filter((d) => !matchedLocalIds.has(d.parcel_id));
+        const remainingLocal = myExisting.filter((_, idx) => !matchedLocalIndices.has(idx));
         const mergedMine = [...updatedFromServer, ...remainingLocal];
         return [...mergedMine, ...otherUsers];
       });
     }
 
-    // Look up individual parcels that still lack address or contact
+    // 6. Look up individual parcels that still lack address, contact, or real parcel_id
     const stillMissing = store
       .get()
-      .filter((d) => d.user_id === riderId && (!cleanField(d.address) || !cleanField(d.contact)));
+      .filter(
+        (d) =>
+          isSameRider(d, riderId) &&
+          (!cleanField(d.address) || !cleanField(d.contact) || d.parcel_id === d.transaction_number)
+      );
 
     for (const d of stillMissing) {
       const key = String(d.transaction_number || d.parcel_id || "").trim();
@@ -427,8 +582,8 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
 
       try {
         const enc = encodeURIComponent(key);
-        const res = await api(`/parcels/by-transaction/${enc}`).catch(() =>
-          api(`/parcels/${encodeURIComponent(d.parcel_id || key)}`).catch(() => null)
+        const res = await api(`/parcels/by-transaction/${enc}?hydrate=1`).catch(() =>
+          api(`/parcels/${encodeURIComponent(d.parcel_id || key)}?hydrate=1`).catch(() => null)
         );
         const p = res?.parcel;
         if (!p) continue;
@@ -437,13 +592,16 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
         const contents = cleanField(p.contents);
         const seller = cleanField(p.seller?.name || p.seller || p.seller_name);
         const txn = cleanField(p.transaction_number);
+        const realParcelId = cleanField(p.parcel_id);
 
         store.set((list) =>
           list.map((item) => {
-            if (item.user_id !== riderId) return item;
-            if (item.parcel_id !== d.parcel_id && item.transaction_number !== d.transaction_number) return item;
+            if (!isSameRider(item, riderId)) return item;
+            if (!isSameParcelItem(item, d)) return item;
             return {
               ...item,
+              user_id: Number(riderId),
+              parcel_id: realParcelId || item.parcel_id,
               address: cleanField(item.address) || addr,
               contact: cleanField(item.contact) || contact,
               contents: cleanField(item.contents) || contents,
@@ -476,7 +634,7 @@ export const useMyDeliveries = () => {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    const timer = setInterval(() => syncRiderDeliveriesWithServer(id), 6000);
+    const timer = setInterval(() => syncRiderDeliveriesWithServer(id), 5000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
@@ -484,7 +642,7 @@ export const useMyDeliveries = () => {
     };
   }, [id]);
   return all
-    .filter((d) => d.user_id === id)
+    .filter((d) => isSameRider(d, id))
     .map((d) => {
       const addr = resolveParcelAddress(d);
       const contact = cleanField(d.contact || d.receiver_contact);
@@ -564,14 +722,22 @@ export function addToDeliver(parcel, scanned) {
   const resolvedContents = cleanField(parcel.contents);
   const resolvedSeller = cleanField(parcel.seller?.name || parcel.seller || parcel.seller_name);
   const resolvedTxn = cleanField(parcel.transaction_number) || cleanField(scanned);
+  const resolvedParcelId = cleanField(parcel.parcel_id) || resolvedTxn;
 
-  const exists = store.get().some((d) => d.user_id === id && d.parcel_id === parcel.parcel_id);
+  const exists = store.get().some(
+    (d) =>
+      isSameRider(d, id) &&
+      isSameParcelItem(d, { parcel_id: resolvedParcelId, transaction_number: resolvedTxn })
+  );
   if (exists) {
     store.set((l) =>
       l.map((d) =>
-        d.user_id === id && d.parcel_id === parcel.parcel_id
+        isSameRider(d, id) &&
+        isSameParcelItem(d, { parcel_id: resolvedParcelId, transaction_number: resolvedTxn })
           ? {
               ...d,
+              user_id: id || d.user_id,
+              parcel_id: resolvedParcelId || d.parcel_id,
               transaction_number: cleanField(d.transaction_number) || resolvedTxn,
               receiver: cleanField(d.receiver) || cleanField(parcel.receiver || parcel.receiver_name),
               contact: cleanField(d.contact) || resolvedContact,
@@ -582,7 +748,10 @@ export function addToDeliver(parcel, scanned) {
           : d
       )
     );
-    sync(() => scanForDelivery(parcel.parcel_id || resolvedTxn));
+    sync(async () => {
+      await scanForDelivery(resolvedParcelId || resolvedTxn);
+      await syncRiderDeliveriesWithServer(id);
+    });
     return "exists";
   }
   const now = Date.now();
@@ -591,7 +760,7 @@ export function addToDeliver(parcel, scanned) {
     {
       user_id: id,
       rider_name: user?.name || "Rider",
-      parcel_id: parcel.parcel_id,
+      parcel_id: resolvedParcelId,
       transaction_number: resolvedTxn,
       receiver: cleanField(parcel.receiver || parcel.receiver_name),
       contact: resolvedContact,
@@ -610,7 +779,7 @@ export function addToDeliver(parcel, scanned) {
     ...l,
   ]);
   sync(async () => {
-    await scanForDelivery(parcel.parcel_id || resolvedTxn, { scheduledFor, rescheduled: false, rescheduleCount: 0 });
+    await scanForDelivery(resolvedParcelId || resolvedTxn, { scheduledFor, rescheduled: false, rescheduleCount: 0 });
     await syncRiderDeliveriesWithServer(id);
   });
   return "added";
@@ -619,7 +788,7 @@ export function addToDeliver(parcel, scanned) {
 const patch = (parcelId, change) =>
   store.set((l) =>
     l.map((d) =>
-      d.user_id === me() && d.parcel_id === parcelId
+      isSameRider(d, me()) && isSameParcelItem(d, { parcel_id: parcelId, transaction_number: parcelId })
         ? { ...d, ...(typeof change === "function" ? change(d) : change) }
         : d
     )
@@ -629,7 +798,9 @@ export const markDelivered = (parcelId, { proof, note }) => {
   let nextAttempts = [];
   let scheduledFor = todayIso();
   let rescheduleCount = 0;
+  let targetId = parcelId;
   patch(parcelId, (d) => {
+    targetId = d.parcel_id || d.transaction_number || parcelId;
     scheduledFor = d.scheduledFor || todayIso();
     rescheduleCount = d.rescheduleCount || 0;
     nextAttempts = [
@@ -658,14 +829,15 @@ export const markDelivered = (parcelId, { proof, note }) => {
     };
   });
   updateParcelRecord(parcelId, { status: "Delivered" });
-  sync(() =>
-    reportDelivered(parcelId, note, {
+  sync(async () => {
+    await reportDelivered(targetId, note, {
       proof,
       attempts: nextAttempts,
       scheduledFor,
       rescheduleCount,
-    })
-  );
+    });
+    await syncRiderDeliveriesWithServer(me());
+  });
 };
 
 // Kapag nabigo ang rider sa pag-deliver:
@@ -675,13 +847,16 @@ export const markDelivered = (parcelId, { proof, note }) => {
 //   awtomatikong magiging "Return to Hub", tatanggalin sa pending deliveries ng rider,
 //   at aabisuhan ang coordinator para ma-coordinate ang pagbabalik sa seller.
 export const markFailed = (parcelId, { reason, note, customDate }) => {
-  const current = store.get().find((d) => d.user_id === me() && d.parcel_id === parcelId);
+  const current = store.get().find(
+    (d) => isSameRider(d, me()) && isSameParcelItem(d, { parcel_id: parcelId, transaction_number: parcelId })
+  );
   if (!current) return null;
 
   const count = Number(current.rescheduleCount || 0);
   const today = todayIso();
   const baseDate = current.scheduledFor && current.scheduledFor >= today ? current.scheduledFor : today;
   const txn = current.transaction_number || parcelId;
+  const targetId = current.parcel_id || txn;
   const riderName = getUser()?.name || current.rider_name || "Rider";
 
   if (count < MAX_RESCHEDULES) {
@@ -730,16 +905,17 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
       to: "/notifications",
     });
 
-    sync(() =>
-      reportFailed(parcelId, reason, note, {
+    sync(async () => {
+      await reportFailed(targetId, reason, note, {
         outcome: "rescheduled",
         scheduledFor: nextDate,
         rescheduled: true,
         rescheduleCount: nextCount,
         returnToHub: false,
         attempts: nextAttempts,
-      })
-    );
+      });
+      await syncRiderDeliveriesWithServer(me());
+    });
 
     return { outcome: "rescheduled", scheduledFor: nextDate, rescheduleCount: nextCount, maxReschedules: MAX_RESCHEDULES };
   }
@@ -786,28 +962,32 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
     to: "/notifications",
   });
 
-  sync(() =>
-    reportFailed(parcelId, reason, note, {
+  sync(async () => {
+    await reportFailed(targetId, reason, note, {
       outcome: "return_to_hub",
       scheduledFor: baseDate,
       rescheduled: true,
       rescheduleCount: MAX_RESCHEDULES,
       returnToHub: true,
       attempts: nextAttempts,
-    })
-  );
+    });
+    await syncRiderDeliveriesWithServer(me());
+  });
   return { outcome: "return_to_hub", scheduledFor: null, rescheduleCount: count, maxReschedules: MAX_RESCHEDULES };
 };
 
 // Subukan ulit ang failed delivery — HINDING-HINDI pwede kapag Return to Hub / lampas na sa 3-day limit
 export const reattempt = (parcelId) => {
-  const current = store.get().find((d) => d.user_id === me() && d.parcel_id === parcelId);
+  const current = store.get().find(
+    (d) => isSameRider(d, me()) && isSameParcelItem(d, { parcel_id: parcelId, transaction_number: parcelId })
+  );
   if (!current) return false;
   if (current.returnToHub || current.stage === STAGE.RETURN_TO_HUB || Number(current.rescheduleCount || 0) >= MAX_RESCHEDULES) {
     return false;
   }
   const nextCount = Number(current.rescheduleCount || 0) + 1;
   const nextDate = addDaysIso(todayIso(), 1);
+  const targetId = current.parcel_id || current.transaction_number || parcelId;
   patch(parcelId, {
     stage: STAGE.TO_DELIVER,
     doneAt: null,
@@ -818,7 +998,10 @@ export const reattempt = (parcelId) => {
     rescheduleCount: nextCount,
     lastRescheduledAt: Date.now(),
   });
-  sync(() => scanForDelivery(parcelId));
+  sync(async () => {
+    await scanForDelivery(targetId, { scheduledFor: nextDate, rescheduled: true, rescheduleCount: nextCount });
+    await syncRiderDeliveriesWithServer(me());
+  });
   return true;
 };
 

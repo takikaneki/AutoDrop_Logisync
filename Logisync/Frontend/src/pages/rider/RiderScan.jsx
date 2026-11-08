@@ -8,14 +8,20 @@ import { DetailList, Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../../components/styles.js";
 import { findParcel } from "../../services/parcelService.js";
 import { logScan, useRiderScans } from "../../store/riderScans.js";
-import { addToDeliver, findAssigned } from "../../store/riderDeliveries.js";
+import { addToDeliver, findAssigned, syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 import { formatDate } from "../../utils/format.js";
 
 // Ano ang ibig sabihin ng status para sa rider (galing lang sa status na ibinalik ng backend)
-function readiness(status) {
-  if (status === "VERIFIED") return { tone: "success", icon: "fa-circle-check", title: "Cleared for delivery", text: "The coordinator verified this parcel. You can proceed with the delivery." };
-  if (status === "REJECTED") return { tone: "error", icon: "fa-ban", title: "Do not deliver", text: "This parcel was rejected by the coordinator. Message the coordinator before doing anything." };
-  if (status === "REUPLOAD_REQUESTED") return { tone: "warn", icon: "fa-rotate-left", title: "On hold", text: "The seller must upload a new video. Do not take this parcel yet." };
+function readiness(status, verificationStatus) {
+  if (status === "VERIFIED" || verificationStatus === "VERIFIED") {
+    return { tone: "success", icon: "fa-circle-check", title: "Cleared for delivery", text: "The coordinator verified this parcel. You can proceed with the delivery." };
+  }
+  if (status === "REJECTED" || verificationStatus === "REJECTED") {
+    return { tone: "error", icon: "fa-ban", title: "Do not deliver", text: "This parcel was rejected by the coordinator. Message the coordinator before doing anything." };
+  }
+  if (status === "REUPLOAD_REQUESTED") {
+    return { tone: "warn", icon: "fa-rotate-left", title: "On hold", text: "The seller must upload a new video. Do not take this parcel yet." };
+  }
   return { tone: "warn", icon: "fa-hourglass-half", title: "Not verified yet", text: "The coordinator has not verified this parcel. Do not take it until it is verified." };
 }
 
@@ -36,9 +42,16 @@ export default function RiderScan() {
     setLooking(true);
     setError("");
     try {
-      // Una sa mga assigned sa rider; kung wala, sa backend
-      const local = findAssigned(value);
-      const data = local ? { parcel: local } : await findParcel(value, "rider");
+      // Hanapin muna sa backend database para makuha ang totoong parcel_id at ma-save agad sa server;
+      // kung wala sa backend, gumamit ng local assigned record bilang fallback.
+      let data = null;
+      try {
+        data = await findParcel(value, "rider");
+      } catch (serverErr) {
+        const local = findAssigned(value);
+        if (local) data = { parcel: local };
+        else throw serverErr;
+      }
       const p = data.parcel;
       if (expect && !same(p.parcel_id, expect) && !same(p.transaction_number, expect)) {
         setParcel(null);
@@ -58,6 +71,7 @@ export default function RiderScan() {
 
   // Galing sa Recent Scans ("Check again"): /rider/scan?txn=...
   useEffect(() => {
+    syncRiderDeliveriesWithServer();
     const txn = params.get("txn");
     if (txn) lookup(txn);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -71,7 +85,7 @@ export default function RiderScan() {
     setParams(params, { replace: true });
   };
 
-  const r = parcel && readiness(parcel.status);
+  const r = parcel && readiness(parcel.status, parcel.verification_status);
 
   return (
     <>

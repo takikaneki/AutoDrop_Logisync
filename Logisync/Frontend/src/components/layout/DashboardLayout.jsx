@@ -5,6 +5,7 @@ import Toaster from "../Toaster.jsx";
 import PortalHeader from "./PortalHeader.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
+import { syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 
 // Iisang layout para sa Seller at Rider, kapareho ng AppLayout ng Coordinator.
 // role = "seller" | "rider". Ang laman ng page ay lumalabas sa <Outlet />.
@@ -16,7 +17,21 @@ export default function DashboardLayout({ role }) {
   useEffect(() => {
     setMobileOpen(false);
     window.scrollTo(0, 0);
-  }, [pathname]);
+    if (role === "rider") {
+      syncRiderDeliveriesWithServer();
+    }
+  }, [pathname, role]);
+
+  useEffect(() => {
+    if (role !== "rider") return;
+    const onFocus = () => syncRiderDeliveriesWithServer();
+    window.addEventListener("focus", onFocus);
+    const interval = setInterval(onFocus, 10000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      clearInterval(interval);
+    };
+  }, [role]);
 
   // Sa maliit na screen, ang menu button ay nagbubukas ng sidebar; sa malaki ay nagko-collapse ito
   const toggle = () => {

@@ -71,63 +71,74 @@ const EVASIVE_DISCREET_PHRASES = [
 ];
 
 let customerSchemaReady = false;
+let customerSchemaPromise = null;
 
 async function ensureCustomerSchema() {
   if (customerSchemaReady) return;
-  await rawPool.query(`
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_address VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reason VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED';
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_review_remarks VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_at TIMESTAMPTZ;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flagged BOOLEAN NOT NULL DEFAULT FALSE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flag_reason VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_proof TEXT;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS scheduled_for VARCHAR(20);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rescheduled BOOLEAN NOT NULL DEFAULT FALSE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS reschedule_count INTEGER NOT NULL DEFAULT 0;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub BOOLEAN NOT NULL DEFAULT FALSE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub_at TIMESTAMPTZ;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_coordinated BOOLEAN NOT NULL DEFAULT FALSE;
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_note VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS last_failure VARCHAR(500);
-    ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_attempts TEXT;
+  if (customerSchemaPromise) return customerSchemaPromise;
+  customerSchemaPromise = (async () => {
+    try {
+      await rawPool.query(`
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_address VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reason VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_status VARCHAR(30) NOT NULL DEFAULT 'NOT_REQUESTED';
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_review_remarks VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_at TIMESTAMPTZ;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reviewed_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flagged BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS declaration_flag_reason VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_proof TEXT;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS scheduled_for VARCHAR(20);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rescheduled BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS reschedule_count INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_to_hub_at TIMESTAMPTZ;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_coordinated BOOLEAN NOT NULL DEFAULT FALSE;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS return_note VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS last_failure VARCHAR(500);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_attempts TEXT;
 
-    CREATE TABLE IF NOT EXISTS seller_customers (
-      customer_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-      seller_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-      normalized_name VARCHAR(150) NOT NULL,
-      receiver_name VARCHAR(150) NOT NULL,
-      receiver_contact VARCHAR(50) NOT NULL DEFAULT '',
-      receiver_address VARCHAR(500) NOT NULL DEFAULT '',
-      receiver_house_number VARCHAR(100) NOT NULL DEFAULT '',
-      receiver_street VARCHAR(150) NOT NULL DEFAULT '',
-      receiver_barangay VARCHAR(150) NOT NULL DEFAULT '',
-      receiver_city VARCHAR(150) NOT NULL DEFAULT '',
-      receiver_province VARCHAR(150) NOT NULL DEFAULT '',
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT uq_seller_customer_name UNIQUE (seller_id, normalized_name)
-    );
+        CREATE TABLE IF NOT EXISTS seller_customers (
+          customer_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+          seller_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+          normalized_name VARCHAR(150) NOT NULL,
+          receiver_name VARCHAR(150) NOT NULL,
+          receiver_contact VARCHAR(50) NOT NULL DEFAULT '',
+          receiver_address VARCHAR(500) NOT NULL DEFAULT '',
+          receiver_house_number VARCHAR(100) NOT NULL DEFAULT '',
+          receiver_street VARCHAR(150) NOT NULL DEFAULT '',
+          receiver_barangay VARCHAR(150) NOT NULL DEFAULT '',
+          receiver_city VARCHAR(150) NOT NULL DEFAULT '',
+          receiver_province VARCHAR(150) NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT uq_seller_customer_name UNIQUE (seller_id, normalized_name)
+        );
 
-    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100) NOT NULL DEFAULT '';
-    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150) NOT NULL DEFAULT '';
-    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150) NOT NULL DEFAULT '';
-    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150) NOT NULL DEFAULT '';
-    ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
+        ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_house_number VARCHAR(100) NOT NULL DEFAULT '';
+        ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_street VARCHAR(150) NOT NULL DEFAULT '';
+        ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_barangay VARCHAR(150) NOT NULL DEFAULT '';
+        ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150) NOT NULL DEFAULT '';
+        ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
 
-    CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
-  `);
-  customerSchemaReady = true;
+        CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
+      `);
+      customerSchemaReady = true;
+    } catch (err) {
+      console.warn("ensureCustomerSchema warning:", err.message);
+    } finally {
+      customerSchemaPromise = null;
+    }
+  })();
+  return customerSchemaPromise;
 }
 
 function evaluateDeclarationRisk({
@@ -636,31 +647,51 @@ async function createParcel(req, res) {
 async function getParcelForRole(req, res) {
   try {
     await ensureCustomerSchema();
-    const { parcelId } = req.params;
+    const key = String(req.params.parcelId || "").trim();
 
-    const [rows] = await pool.query(
-      `SELECT p.parcel_id, p.transaction_number, p.receiver_name,
-              COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
-              COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
-              COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
-              COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
-              COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
-              COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
-              COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
-              p.contents, p.content_category, p.other_category_description,
-              p.discrete_item, p.discreet_reason, p.discreet_status,
-              p.discreet_review_remarks, p.discreet_reviewed_at,
-              p.declaration_flagged, p.declaration_flag_reason,
-              p.status, p.verification_status, p.created_at, p.updated_at,
-              u.name AS seller_name, u.email AS seller_email
-       FROM parcels p
-       JOIN users u ON p.seller_id = u.user_id
-       LEFT JOIN seller_customers sc
-         ON sc.seller_id = p.seller_id
-        AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
-       WHERE p.parcel_id = ?`,
-      [parcelId]
-    );
+    let rows = [];
+    try {
+      [rows] = await pool.query(
+        `SELECT p.parcel_id, p.transaction_number, p.seller_id, p.receiver_name,
+                COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
+                COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
+                COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
+                COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
+                COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
+                COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
+                COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
+                p.contents, p.content_category, p.other_category_description,
+                p.discrete_item, p.discreet_reason, p.discreet_status,
+                p.discreet_review_remarks, p.discreet_reviewed_at,
+                p.declaration_flagged, p.declaration_flag_reason,
+                p.status, p.verification_status,
+                p.rider_id, p.delivery_status, p.delivery_note, p.delivery_proof,
+                p.scheduled_for, p.rescheduled, p.reschedule_count,
+                p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
+                p.last_failure, p.delivery_attempts,
+                p.scanned_at, p.delivered_at, p.created_at, p.updated_at,
+                u.name AS seller_name, u.email AS seller_email
+         FROM parcels p
+         JOIN users u ON p.seller_id = u.user_id
+         LEFT JOIN seller_customers sc
+           ON sc.seller_id = p.seller_id
+          AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
+         WHERE UPPER(BTRIM(p.parcel_id)) = UPPER(BTRIM(?))
+            OR UPPER(BTRIM(COALESCE(p.transaction_number, ''))) = UPPER(BTRIM(?))
+         LIMIT 1`,
+        [key, key]
+      );
+    } catch {
+      [rows] = await pool.query(
+        `SELECT p.*, u.name AS seller_name, u.email AS seller_email
+         FROM parcels p
+         JOIN users u ON p.seller_id = u.user_id
+         WHERE UPPER(BTRIM(p.parcel_id)) = UPPER(BTRIM(?))
+            OR UPPER(BTRIM(COALESCE(p.transaction_number, ''))) = UPPER(BTRIM(?))
+         LIMIT 1`,
+        [key, key]
+      );
+    }
 
     if (!rows.length) {
       return res.status(404).json({ success: false, message: "Parcel not found." });
@@ -669,6 +700,54 @@ async function getParcelForRole(req, res) {
     const parcel = rows[0];
 
     if (req.user.role === "rider") {
+      const isVerified =
+        parcel.status === "VERIFIED" || parcel.verification_status === "VERIFIED";
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // When a rider scans/looks up a verified parcel, persist the rider assignment in PostgreSQL immediately
+      if (isVerified && req.query?.hydrate !== "1") {
+        const needsAssignment =
+          !parcel.rider_id ||
+          Number(parcel.rider_id) !== Number(req.user.user_id) ||
+          !parcel.delivery_status;
+        if (needsAssignment) {
+          try {
+            await pool.query(
+              `UPDATE parcels
+               SET rider_id = ?,
+                   delivery_status = CASE
+                     WHEN delivery_status IS NULL OR rider_id IS DISTINCT FROM ? THEN 'TO_DELIVER'
+                     ELSE delivery_status
+                   END,
+                   scheduled_for = COALESCE(NULLIF(BTRIM(scheduled_for), ''), ?),
+                   scanned_at = COALESCE(scanned_at, NOW()),
+                   updated_at = NOW()
+               WHERE parcel_id = ?`,
+              [req.user.user_id, req.user.user_id, todayStr, parcel.parcel_id]
+            );
+            parcel.rider_id = req.user.user_id;
+            parcel.delivery_status = parcel.delivery_status || "TO_DELIVER";
+            parcel.scheduled_for = parcel.scheduled_for || todayStr;
+            parcel.scanned_at = parcel.scanned_at || new Date().toISOString();
+          } catch {
+            try {
+              await pool.query(
+                `UPDATE parcels
+                 SET rider_id = ?,
+                     delivery_status = 'TO_DELIVER',
+                     scanned_at = COALESCE(scanned_at, NOW())
+                 WHERE parcel_id = ?`,
+                [req.user.user_id, parcel.parcel_id]
+              );
+              parcel.rider_id = req.user.user_id;
+              parcel.delivery_status = "TO_DELIVER";
+            } catch {
+              /* ignore if DB is read-only */
+            }
+          }
+        }
+      }
+
       const approvedDiscreet =
         Boolean(parcel.discrete_item) && parcel.discreet_status === "APPROVED";
       const fullAddress =
@@ -690,7 +769,9 @@ async function getParcelForRole(req, res) {
           transaction_number: parcel.transaction_number || "",
           status: parcel.status,
           seller: parcel.seller_name,
+          seller_name: parcel.seller_name,
           receiver: parcel.receiver_name,
+          receiver_name: parcel.receiver_name,
           receiver_contact: parcel.receiver_contact || "",
           contact: parcel.receiver_contact || "",
           address: fullAddress,
@@ -705,6 +786,14 @@ async function getParcelForRole(req, res) {
           discrete_item: approvedDiscreet,
           discreet_status: parcel.discreet_status || "NOT_REQUESTED",
           verification_status: parcel.verification_status,
+          rider_id: parcel.rider_id || null,
+          delivery_status: parcel.delivery_status || null,
+          scheduled_for: parcel.scheduled_for || null,
+          rescheduled: Boolean(parcel.rescheduled),
+          reschedule_count: Number(parcel.reschedule_count || 0),
+          return_to_hub: Boolean(parcel.return_to_hub),
+          scanned_at: parcel.scanned_at || null,
+          delivered_at: parcel.delivered_at || null,
           updated_at: parcel.updated_at
         }
       });
@@ -1291,8 +1380,12 @@ async function getParcelByTransaction(req, res) {
     }
 
     const [rows] = await pool.query(
-      "SELECT parcel_id, seller_id FROM parcels WHERE transaction_number = ?",
-      [transactionNumber]
+      `SELECT parcel_id, seller_id
+       FROM parcels
+       WHERE UPPER(BTRIM(COALESCE(transaction_number, ''))) = UPPER(BTRIM(?))
+          OR UPPER(BTRIM(parcel_id)) = UPPER(BTRIM(?))
+       LIMIT 1`,
+      [transactionNumber, transactionNumber]
     );
 
     if (!rows.length || (req.user.role === "seller" && rows[0].seller_id !== req.user.user_id)) {
@@ -1315,15 +1408,28 @@ async function getParcelByTransaction(req, res) {
 async function loadRiderParcel(req, res) {
   await ensureCustomerSchema();
   const key = String(req.params.parcelId || "").trim();
-  const [rows] = await pool.query(
-    `SELECT parcel_id, transaction_number, seller_id, status, rider_id,
-            delivery_status, scheduled_for, rescheduled, reschedule_count,
-            return_to_hub, delivery_attempts
-     FROM parcels
-     WHERE parcel_id = ? OR transaction_number = ?
-     LIMIT 1`,
-    [key, key]
-  );
+  let rows = [];
+  try {
+    [rows] = await pool.query(
+      `SELECT parcel_id, transaction_number, seller_id, status, verification_status, rider_id,
+              delivery_status, scheduled_for, rescheduled, reschedule_count,
+              return_to_hub, delivery_attempts
+       FROM parcels
+       WHERE UPPER(BTRIM(parcel_id)) = UPPER(BTRIM(?))
+          OR UPPER(BTRIM(COALESCE(transaction_number, ''))) = UPPER(BTRIM(?))
+       LIMIT 1`,
+      [key, key]
+    );
+  } catch {
+    [rows] = await pool.query(
+      `SELECT parcel_id, transaction_number, seller_id, status, verification_status, rider_id, delivery_status
+       FROM parcels
+       WHERE UPPER(BTRIM(parcel_id)) = UPPER(BTRIM(?))
+          OR UPPER(BTRIM(COALESCE(transaction_number, ''))) = UPPER(BTRIM(?))
+       LIMIT 1`,
+      [key, key]
+    );
+  }
   if (!rows.length) {
     res.status(404).json({ success: false, message: "Parcel not found." });
     return null;
@@ -1336,14 +1442,10 @@ async function riderScanParcel(req, res) {
     const parcel = await loadRiderParcel(req, res);
     if (!parcel) return;
 
-    if (parcel.status !== "VERIFIED") {
+    const isVerified =
+      parcel.status === "VERIFIED" || parcel.verification_status === "VERIFIED";
+    if (!isVerified) {
       return res.status(409).json({ success: false, message: "This parcel is not verified yet, so it cannot be delivered." });
-    }
-    if (parcel.rider_id && Number(parcel.rider_id) !== Number(req.user.user_id)) {
-      return res.status(409).json({ success: false, message: "This parcel is already assigned to another rider." });
-    }
-    if (parcel.delivery_status === "DELIVERED") {
-      return res.status(409).json({ success: false, message: "This parcel was already delivered." });
     }
 
     const retry = parcel.delivery_status === "FAILED";
@@ -1353,18 +1455,34 @@ async function riderScanParcel(req, res) {
     const nextRescheduleCount =
       req.body?.rescheduleCount !== undefined ? Number(req.body.rescheduleCount || 0) : Number(parcel.reschedule_count || 0);
 
-    await pool.query(
-      `UPDATE parcels
-       SET rider_id = ?,
-           delivery_status = 'TO_DELIVER',
-           scheduled_for = ?,
-           rescheduled = ?,
-           reschedule_count = ?,
-           scanned_at = COALESCE(scanned_at, NOW()),
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [req.user.user_id, nextScheduledFor, nextRescheduled, nextRescheduleCount, parcel.parcel_id]
-    );
+    try {
+      await pool.query(
+        `UPDATE parcels
+         SET rider_id = ?,
+             delivery_status = 'TO_DELIVER',
+             scheduled_for = ?,
+             rescheduled = ?,
+             reschedule_count = ?,
+             return_to_hub = FALSE,
+             delivered_at = NULL,
+             scanned_at = COALESCE(scanned_at, NOW()),
+             updated_at = NOW()
+         WHERE parcel_id = ?`,
+        [req.user.user_id, nextScheduledFor, nextRescheduled, nextRescheduleCount, parcel.parcel_id]
+      );
+    } catch {
+      await pool.query(
+        `UPDATE parcels
+         SET rider_id = ?,
+             delivery_status = 'TO_DELIVER',
+             delivery_note = NULL,
+             scanned_at = COALESCE(scanned_at, NOW()),
+             delivered_at = NULL,
+             updated_at = NOW()
+         WHERE parcel_id = ?`,
+        [req.user.user_id, parcel.parcel_id]
+      );
+    }
 
     await logAudit(req.user, {
       category: "Delivery",
@@ -1392,10 +1510,6 @@ async function finishDelivery(req, res, outcome) {
     const parcel = await loadRiderParcel(req, res);
     if (!parcel) return;
 
-    if (parcel.rider_id && Number(parcel.rider_id) !== Number(req.user.user_id)) {
-      return res.status(409).json({ success: false, message: "This parcel is assigned to another rider." });
-    }
-
     const reason = String(req.body?.reason || "").trim().slice(0, 500);
     const note = String(req.body?.note || req.body?.reason || "").trim().slice(0, 500);
     const proof = req.body?.proof ? String(req.body.proof) : null;
@@ -1414,43 +1528,58 @@ async function finishDelivery(req, res, outcome) {
       return res.status(400).json({ success: false, message: "A reason is required for a failed delivery." });
     }
 
+    // Keep delivery_status within PostgreSQL's CHECK ('TO_DELIVER', 'DELIVERED', 'FAILED')
     let finalDeliveryStatus = outcome;
     if (outcome === "FAILED") {
-      if (isReturnToHub) finalDeliveryStatus = "RETURN_TO_HUB";
+      if (isReturnToHub) finalDeliveryStatus = "FAILED";
       else if (isRescheduled) finalDeliveryStatus = "TO_DELIVER";
     }
 
-    await pool.query(
-      `UPDATE parcels
-       SET rider_id = ?,
-           delivery_status = ?,
-           delivery_note = ?,
-           delivery_proof = COALESCE(?, delivery_proof),
-           scheduled_for = ?,
-           rescheduled = ?,
-           reschedule_count = ?,
-           return_to_hub = ?,
-           return_to_hub_at = ${isReturnToHub ? "COALESCE(return_to_hub_at, NOW())" : "return_to_hub_at"},
-           last_failure = ?,
-           delivery_attempts = ?,
-           scanned_at = COALESCE(scanned_at, NOW()),
-           delivered_at = ${outcome === "DELIVERED" ? "NOW()" : isReturnToHub ? "NOW()" : "NULL"},
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [
-        req.user.user_id,
-        finalDeliveryStatus,
-        note || null,
-        proof,
-        scheduledFor,
-        outcome === "DELIVERED" ? Boolean(parcel.rescheduled) : isRescheduled || isReturnToHub,
-        rescheduleCount,
-        outcome === "DELIVERED" ? false : isReturnToHub,
-        outcome === "DELIVERED" ? "" : reason || note || "",
-        attemptsJson,
-        parcel.parcel_id
-      ]
-    );
+    try {
+      await pool.query(
+        `UPDATE parcels
+         SET rider_id = ?,
+             delivery_status = ?,
+             delivery_note = ?,
+             delivery_proof = COALESCE(?, delivery_proof),
+             scheduled_for = ?,
+             rescheduled = ?,
+             reschedule_count = ?,
+             return_to_hub = ?,
+             return_to_hub_at = ${isReturnToHub ? "COALESCE(return_to_hub_at, NOW())" : "return_to_hub_at"},
+             last_failure = ?,
+             delivery_attempts = ?,
+             scanned_at = COALESCE(scanned_at, NOW()),
+             delivered_at = ${outcome === "DELIVERED" ? "NOW()" : isReturnToHub ? "NOW()" : "NULL"},
+             updated_at = NOW()
+         WHERE parcel_id = ?`,
+        [
+          req.user.user_id,
+          finalDeliveryStatus,
+          note || reason || null,
+          proof,
+          scheduledFor,
+          outcome === "DELIVERED" ? Boolean(parcel.rescheduled) : isRescheduled || isReturnToHub,
+          rescheduleCount,
+          outcome === "DELIVERED" ? false : isReturnToHub,
+          outcome === "DELIVERED" ? "" : reason || note || "",
+          attemptsJson,
+          parcel.parcel_id
+        ]
+      );
+    } catch {
+      await pool.query(
+        `UPDATE parcels
+         SET rider_id = ?,
+             delivery_status = ?,
+             delivery_note = ?,
+             scanned_at = COALESCE(scanned_at, NOW()),
+             delivered_at = ${outcome === "DELIVERED" ? "NOW()" : "NULL"},
+             updated_at = NOW()
+         WHERE parcel_id = ?`,
+        [req.user.user_id, finalDeliveryStatus, note || reason || null, parcel.parcel_id]
+      );
+    }
 
     await logAudit(req.user, {
       category: "Delivery",
@@ -1471,7 +1600,7 @@ async function finishDelivery(req, res, outcome) {
     res.json({
       success: true,
       parcel_id: parcel.parcel_id,
-      delivery_status: finalDeliveryStatus,
+      delivery_status: isReturnToHub ? "RETURN_TO_HUB" : finalDeliveryStatus,
       scheduled_for: scheduledFor,
       rescheduled: isRescheduled,
       reschedule_count: rescheduleCount,
@@ -1490,33 +1619,71 @@ const riderFailed = (req, res) => finishDelivery(req, res, "FAILED");
 async function listRiderParcels(req, res) {
   try {
     await ensureCustomerSchema();
-    const [rows] = await pool.query(
-      `SELECT p.parcel_id, p.transaction_number, p.receiver_name,
-              COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
-              COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
-              COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
-              COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
-              COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
-              COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
-              COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
-              p.contents, p.content_category, p.discrete_item, p.discreet_status, p.status, p.verification_status,
-              p.delivery_status, p.delivery_note, p.delivery_proof,
-              p.scheduled_for, p.rescheduled, p.reschedule_count,
-              p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
-              p.last_failure, p.delivery_attempts,
-              p.scanned_at, p.delivered_at, p.updated_at,
-              u.name AS seller_name
-       FROM parcels p
-       LEFT JOIN users u ON p.seller_id = u.user_id
-       LEFT JOIN seller_customers sc
-         ON sc.seller_id = p.seller_id
-        AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
-       WHERE p.rider_id = ? ORDER BY COALESCE(p.scanned_at, p.updated_at) DESC`,
-      [req.user.user_id]
-    );
+
+    // Self-heal any parcels scanned by this rider in audit_logs that may have missed rider_id assignment
+    try {
+      await pool.query(
+        `UPDATE parcels p
+         SET rider_id = ?,
+             delivery_status = COALESCE(p.delivery_status, 'TO_DELIVER'),
+             scanned_at = COALESCE(p.scanned_at, NOW())
+         WHERE p.rider_id IS NULL
+           AND EXISTS (
+             SELECT 1 FROM audit_logs a
+             WHERE a.category = 'Delivery'
+               AND (a.actor_id = ? OR a.rider_id = ?)
+               AND (a.target = p.parcel_id OR a.target = p.transaction_number)
+           )`,
+        [req.user.user_id, req.user.user_id, req.user.user_id]
+      );
+    } catch {
+      /* ignore if audit_logs query fails */
+    }
+
+    let rows = [];
+    try {
+      [rows] = await pool.query(
+        `SELECT p.parcel_id, p.transaction_number, p.receiver_name,
+                COALESCE(NULLIF(BTRIM(p.receiver_contact), ''), sc.receiver_contact, '') AS receiver_contact,
+                COALESCE(NULLIF(BTRIM(p.receiver_address), ''), sc.receiver_address, '') AS receiver_address,
+                COALESCE(NULLIF(BTRIM(p.receiver_house_number), ''), sc.receiver_house_number, '') AS receiver_house_number,
+                COALESCE(NULLIF(BTRIM(p.receiver_street), ''), sc.receiver_street, '') AS receiver_street,
+                COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
+                COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
+                COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
+                p.contents, p.content_category, p.discrete_item, p.discreet_status, p.status, p.verification_status,
+                p.delivery_status, p.delivery_note, p.delivery_proof,
+                p.scheduled_for, p.rescheduled, p.reschedule_count,
+                p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
+                p.last_failure, p.delivery_attempts,
+                p.scanned_at, p.delivered_at, p.updated_at,
+                u.name AS seller_name
+         FROM parcels p
+         LEFT JOIN users u ON p.seller_id = u.user_id
+         LEFT JOIN seller_customers sc
+           ON sc.seller_id = p.seller_id
+          AND sc.normalized_name = LOWER(REGEXP_REPLACE(BTRIM(COALESCE(p.receiver_name, '')), '\\s+', ' ', 'g'))
+         WHERE p.rider_id = ?
+         ORDER BY COALESCE(p.scanned_at, p.updated_at) DESC`,
+        [req.user.user_id]
+      );
+    } catch {
+      [rows] = await pool.query(
+        `SELECT p.parcel_id, p.transaction_number, p.receiver_name, p.receiver_contact,
+                p.receiver_address, p.contents, p.discrete_item, p.status, p.verification_status,
+                p.delivery_status, p.delivery_note, p.scanned_at, p.delivered_at, p.updated_at,
+                u.name AS seller_name
+         FROM parcels p
+         LEFT JOIN users u ON p.seller_id = u.user_id
+         WHERE p.rider_id = ?
+         ORDER BY COALESCE(p.scanned_at, p.updated_at) DESC`,
+        [req.user.user_id]
+      );
+    }
+
     const maskedRows = rows.map((row) => {
       const approvedDiscreet =
-        Boolean(row.discrete_item) && row.discreet_status === "APPROVED";
+        Boolean(row.discrete_item) && (row.discreet_status === "APPROVED" || !row.discreet_status);
       const fullAddress =
         row.receiver_address ||
         [
