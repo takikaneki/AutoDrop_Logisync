@@ -305,9 +305,54 @@ export default function Verification() {
       )}
 
       <StatGrid>
-        {summary.map((s) => (
-          <StatCard key={s.label} label={s.label} value={loading ? "…" : s.value} icon={s.icon} tone={s.tone} />
-        ))}
+        <button
+          type="button"
+          onClick={() => setFilter("VIDEO_SUBMITTED")}
+          className="text-left w-full h-full cursor-pointer focus:outline-none"
+        >
+          <StatCard
+            label="Under verification"
+            value={loading ? "…" : count("VIDEO_SUBMITTED")}
+            icon="fa-hourglass-half"
+            tone="blue"
+          />
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter("DISCREET_PENDING")}
+          className="text-left w-full h-full cursor-pointer focus:outline-none"
+        >
+          <StatCard
+            label="Discreet requests pending"
+            value={loading ? "…" : discreetPendingCount}
+            icon="fa-user-shield"
+            tone="orange"
+          />
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter("VERIFIED")}
+          className="text-left w-full h-full cursor-pointer focus:outline-none"
+        >
+          <StatCard
+            label="Verified"
+            value={loading ? "…" : count("VERIFIED")}
+            icon="fa-check"
+            tone="green"
+          />
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter("FLAGGED_DECLARATION")}
+          className="text-left w-full h-full cursor-pointer focus:outline-none"
+        >
+          <StatCard
+            label="Flagged / Rejected"
+            value={loading ? "…" : flaggedCount + count("REJECTED")}
+            icon="fa-triangle-exclamation"
+            tone="red"
+          />
+        </button>
       </StatGrid>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>

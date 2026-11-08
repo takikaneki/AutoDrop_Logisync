@@ -37,7 +37,14 @@ const statusIcons = {
 };
 
 const PAGE_SIZE = 10;
-const STATUS_OPTIONS = ["In Transit", "Rescheduled", "Delivered", "Return to Hub", "Failed Delivery"];
+const STATUS_OPTIONS = [
+  "In Transit",
+  "Rescheduled",
+  "Delivered",
+  "Return to Hub",
+  "Failed Delivery",
+  "Failed / Return to Hub",
+];
 const REPORT_DEFAULTS = { status: "All", seller: "All", rider: "All", from: "", to: "" };
 
 function mapParcel(rawParcel, index) {
@@ -337,7 +344,9 @@ export default function Parcels() {
       (parcel) =>
         (status === "All Status" ||
           parcel.status === status ||
-          (status === "Failed Delivery" && parcel.status === "Return to Hub")) &&
+          (status === "Failed Delivery" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub")) ||
+          (status === "Failed / Return to Hub" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub")) ||
+          (status === "In Transit" && (parcel.status === "In Transit" || parcel.status === "Rescheduled"))) &&
         (!query ||
           [
             parcel.id,
@@ -670,7 +679,22 @@ export default function Parcels() {
       <div className={reportOpen ? "print:hidden" : ""}>
         <StatGrid cols={3}>
           {cards.map((card) => (
-            <StatCard key={card.label} label={card.label} value={loading ? "—" : counts[card.label]} icon={card.icon} tone={card.tone} />
+            <button
+              key={card.label}
+              type="button"
+              onClick={() => {
+                setStatus(card.label);
+                setPage(1);
+              }}
+              className="text-left w-full h-full cursor-pointer focus:outline-none"
+            >
+              <StatCard
+                label={card.label}
+                value={loading ? "—" : counts[card.label]}
+                icon={card.icon}
+                tone={card.tone}
+              />
+            </button>
           ))}
         </StatGrid>
       </div>
@@ -723,6 +747,7 @@ export default function Parcels() {
             <option>In Transit</option>
             <option>Rescheduled</option>
             <option>Delivered</option>
+            <option>Failed / Return to Hub</option>
             <option>Return to Hub</option>
             <option>Failed Delivery</option>
           </select>

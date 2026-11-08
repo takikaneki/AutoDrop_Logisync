@@ -23,7 +23,7 @@ export const setRiderStatus = (id, status) =>
 
 // Naka-save sa browser para makapag-submit ang Seller/Rider at makita ito ng Coordinator (at makita nila ang sagot).
 // TODO: GET/POST /api/complaints
-const complaintStore = createStore(complaints, "pt-complaints");
+const complaintStore = createStore([], "pt-complaints");
 export const useComplaints = complaintStore.use;
 export const updateComplaint = (id, patch) =>
   complaintStore.set((l) => l.map((c) => (c.id === id ? { ...c, ...patch, updatedAt: Date.now() } : c)));

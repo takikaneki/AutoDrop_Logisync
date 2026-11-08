@@ -55,11 +55,15 @@ export default function Topbar({ title, subtitle, right, children }) {
     });
   });
 
-  // Dashboard without extra buttons: show clean page heading on mobile, sr-only on desktop
+  const isHomeDashboard = title === "Dashboard";
+
+  // Dashboard without extra buttons: show clean page heading on mobile (as Home), sr-only on desktop
   if (crumbs.length === 1 && !actions) {
     return (
       <header className="mb-3 min-[821px]:sr-only print:hidden">
-        <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{label}</h1>
+        <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+          {isHomeDashboard ? t("Home") : label}
+        </h1>
       </header>
     );
   }
@@ -82,7 +86,14 @@ export default function Topbar({ title, subtitle, right, children }) {
           </nav>
         )}
         <h1 className="text-[22px] max-[600px]:text-[19px] font-bold leading-tight text-[#27364f] dark:text-[#f1eeeb]">
-          {label}
+          {isHomeDashboard ? (
+            <>
+              <span className="max-[820px]:hidden">{label}</span>
+              <span className="hidden max-[820px]:inline">{t("Home")}</span>
+            </>
+          ) : (
+            label
+          )}
         </h1>
         {subtitle && (
           <p className="mt-0.5 text-[13px] max-[600px]:text-[12px] text-[#888] leading-snug">

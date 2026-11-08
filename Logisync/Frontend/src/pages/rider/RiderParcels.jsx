@@ -25,7 +25,6 @@ const BADGE = {
 
 const TABS = [
   ["all", "All"],
-  ["waiting", "Waiting to be scanned"],
   [STAGE.TO_DELIVER, "To Be Delivered"],
   [STAGE.DELIVERED, "Delivered"],
   [STAGE.RETURN_TO_HUB, "Return to Hub"],

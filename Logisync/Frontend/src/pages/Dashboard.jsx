@@ -79,7 +79,7 @@ export default function Dashboard() {
         <StatCard label="Total Parcels" value={v(stats.total)} icon="fa-box" tone="orange" to="/parcels" />
         <StatCard label="Needs Verification" value={v(stats.flagged)} icon="fa-hourglass-half" tone="blue" to="/verification?status=VIDEO_SUBMITTED" />
         <StatCard label="Verified Parcels" value={v(stats.pending)} icon="fa-circle-check" tone="green" to="/verification?status=VERIFIED" />
-        <StatCard label="Failed / Return to Hub" value={v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length || stats.delivered)} icon="fa-warehouse" tone="red" to="/parcels?status=Failed%20Delivery" />
+        <StatCard label="Failed / Return to Hub" value={v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length || stats.delivered)} icon="fa-warehouse" tone="red" to="/parcels?status=Failed%20/%20Return%20to%20Hub" />
       </StatGrid>
 
       {/* 2. VERIFICATION + RECENT PARCELS */}

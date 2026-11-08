@@ -81,16 +81,7 @@ export const parcels = statuses.map((status, i) => {
   };
 });
 
-export const complaints = [
-  { id: "C-1001", from: "Maria Santos", role: "Seller", subject: "Parcel PT-014 marked failed but recipient was home", category: "Delivery", priority: "High", status: "Open", date: "Oct 10, 2026", description: "The rider marked the parcel as failed delivery, but the recipient says nobody came. Please check the rider's logs.", notes: [] },
-  { id: "C-1002", from: "Mark Cruz", role: "Rider", subject: "Wrong address on PT-022", category: "Address", priority: "Medium", status: "In Progress", date: "Oct 10, 2026", description: "The address on the label does not match the recipient's actual location.", notes: ["Contacted seller for the correct address."] },
-  { id: "C-1003", from: "Angela Reyes", role: "Seller", subject: "Refund request handled by buyer", category: "Payment", priority: "Low", status: "Resolved", date: "Oct 8, 2026", description: "Buyer asked for a refund after receiving the parcel.", notes: ["Seller refunded the buyer directly."] },
-  { id: "C-1004", from: "John Reyes", role: "Rider", subject: "Seller packaging is torn", category: "Packaging", priority: "Medium", status: "Open", date: "Oct 9, 2026", description: "Picked up a parcel with a torn package. I took photos before leaving.", notes: [] },
-  { id: "C-1005", from: "Kevin Cruz", role: "Seller", subject: "Delayed pickup for 3 parcels", category: "Delivery", priority: "High", status: "In Progress", date: "Oct 9, 2026", description: "Three parcels have not been picked up since yesterday.", notes: ["Assigned to Rico Bautista."] },
-  { id: "C-1006", from: "Lisa Torres", role: "Seller", subject: "Verification takes too long", category: "Verification", priority: "Low", status: "Open", date: "Oct 8, 2026", description: "My parcels stay pending for more than a day before verification.", notes: [] },
-  { id: "C-1007", from: "Paolo Lim", role: "Rider", subject: "App cannot upload proof of delivery", category: "System", priority: "High", status: "Open", date: "Oct 7, 2026", description: "The proof of delivery photo fails to upload on slow signal.", notes: [] },
-  { id: "C-1008", from: "Rhea Gomez", role: "Seller", subject: "Wrong item reported by buyer", category: "Delivery", priority: "Medium", status: "Resolved", date: "Oct 5, 2026", description: "Buyer says the item differs from the order.", notes: ["Checked the seller video, item matched the order."] },
-];
+export const complaints = [];
 
 export const reportHistory = [
   { id: "Report-2026-10-09-001", ts: new Date(2026, 9, 9, 14, 20).getTime(), name: "Delivered parcels", filters: "Status: Delivered · Sep 1 – Sep 27", rows: 82, by: "Coordinator", query: { status: "Delivered", seller: "All", rider: "All", from: "2026-09-01", to: "2026-09-27" } },
