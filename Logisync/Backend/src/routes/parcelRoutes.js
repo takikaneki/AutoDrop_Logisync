@@ -18,6 +18,7 @@ const {
   rejectParcel,
   requestReupload,
   streamVideo,
+  coordinatorInitiateReturnToHub,
   coordinatorHubVerify,
   coordinatorRtsDispatch,
   sellerConfirmReturned,
@@ -105,6 +106,12 @@ router.get("/videos/:videoId",
 );
 
 // Return to Sender (RTS) Workflow
+router.post("/coordinator/:parcelId/return-to-hub",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  coordinatorInitiateReturnToHub
+);
+
 router.post("/coordinator/:parcelId/hub-verify",
   authenticateToken,
   authorizeRoles("coordinator"),

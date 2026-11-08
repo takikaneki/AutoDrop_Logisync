@@ -2051,6 +2051,59 @@ async function listRiderParcels(req, res) {
 
 // ---------------- RETURN TO SENDER (RTS) 4-STAGE WORKFLOW ----------------
 
+// Stage 1 approval: Coordinator initiates or approves Return to Hub (e.g. from recipient refusal)
+async function coordinatorInitiateReturnToHub(req, res) {
+  try {
+    await ensureCustomerSchema();
+    const parcelId = String(req.params.parcelId || "").trim();
+    const reason = String(req.body?.reason || "Recipient refused parcel. Coordinator initiated Return to Hub.").trim();
+    const [rows] = await pool.query(
+      `SELECT parcel_id, transaction_number, seller_id, rider_id, status, delivery_status
+       FROM parcels
+       WHERE parcel_id = ? OR transaction_number = ?
+       LIMIT 1`,
+      [parcelId, parcelId]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: "Parcel not found." });
+    }
+    const p = rows[0];
+
+    await pool.query(
+      `UPDATE parcels
+       SET return_to_hub = TRUE,
+           return_to_hub_at = NOW(),
+           delivery_status = 'FAILED',
+           status = 'RETURN_TO_HUB',
+           rts_status = 'RETURN_TO_HUB',
+           last_failure = ?,
+           updated_at = NOW()
+       WHERE parcel_id = ?`,
+      [reason, p.parcel_id]
+    );
+
+    await logAudit(req.user, {
+      category: "Delivery",
+      action: "Initiated Return to Hub",
+      target: p.parcel_id,
+      detail: `Coordinator approved Return to Hub for parcel ${p.transaction_number || p.parcel_id}: ${reason}`,
+      sellerId: p.seller_id,
+      riderId: p.rider_id
+    });
+
+    res.json({
+      success: true,
+      message: "Parcel marked for Return to Hub (RTS Stage 1).",
+      parcel_id: p.parcel_id,
+      rts_status: "RETURN_TO_HUB",
+      status: "RETURN_TO_HUB"
+    });
+  } catch (error) {
+    console.error("coordinatorInitiateReturnToHub error:", error);
+    res.status(500).json({ success: false, message: "Failed to initiate Return to Hub." });
+  }
+}
+
 // Stage 2: Hub Verification (Coordinator verifies parcel arrival at Hub via scan or action)
 async function coordinatorHubVerify(req, res) {
   try {
@@ -2508,6 +2561,7 @@ module.exports = {
   rejectParcel,
   requestReupload,
   streamVideo,
+  coordinatorInitiateReturnToHub,
   coordinatorHubVerify,
   coordinatorRtsDispatch,
   sellerConfirmReturned,

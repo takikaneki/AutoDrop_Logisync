@@ -48,7 +48,7 @@ export default function Dashboard() {
   useEffect(() => {
     listParcels()
       .then((list) => setReal((Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456")))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingStats(false));
   }, []);
 
@@ -62,7 +62,7 @@ export default function Dashboard() {
   const loadIncidents = () => {
     fetchIncidents("coordinator")
       .then((data) => setIncidents(Array.isArray(data?.incidents) ? data.incidents : []))
-      .catch(() => {});
+      .catch(() => { });
   };
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function Dashboard() {
       await confirmIncident(incidentId);
       toast("Incident confirmed. Affected rider parcels are placed on delivery hold.", "info");
       loadIncidents();
-      listParcels().then(setReal).catch(() => {});
+      listParcels().then(setReal).catch(() => { });
     } catch (e) {
       toast(e.message || "Failed to confirm incident", "error");
     }
@@ -93,7 +93,7 @@ export default function Dashboard() {
       toast(`Action '${actionType}' applied to incident.`, "success");
       setIncidentActionTarget(null);
       loadIncidents();
-      listParcels().then(setReal).catch(() => {});
+      listParcels().then(setReal).catch(() => { });
     } catch (e) {
       toast(e.message || "Failed to execute action", "error");
     } finally {
@@ -166,11 +166,10 @@ export default function Dashboard() {
                         <span className="rounded bg-[#ffedd5] px-2 py-0.5 text-xs font-semibold text-[#c2410c]">
                           {inc.incident_type}
                         </span>
-                        <span className={`rounded px-2 py-0.5 text-xs font-bold ${
-                          inc.status === "CONFIRMED"
+                        <span className={`rounded px-2 py-0.5 text-xs font-bold ${inc.status === "CONFIRMED"
                             ? "bg-[#eaf8ef] text-[#1f7f4a]"
                             : "bg-[#fef3c7] text-[#92400e]"
-                        }`}>
+                          }`}>
                           {inc.status === "CONFIRMED" ? "Hold Confirmed" : "Reported — Awaiting Confirmation"}
                         </span>
                       </div>
@@ -476,11 +475,10 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setActionType("resume")}
-                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
-                    actionType === "resume"
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${actionType === "resume"
                       ? "border-[#16a34a] bg-[#f0fdf4] text-[#15803d]"
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
-                  }`}
+                    }`}
                 >
                   <i className="fa-solid fa-play block text-base mb-1" />
                   Resume Delivery
@@ -488,11 +486,10 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setActionType("reschedule")}
-                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
-                    actionType === "reschedule"
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${actionType === "reschedule"
                       ? "border-[#d97706] bg-[#fffbeb] text-[#b45309]"
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
-                  }`}
+                    }`}
                 >
                   <i className="fa-solid fa-calendar-day block text-base mb-1" />
                   Reschedule
@@ -500,11 +497,10 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => setActionType("extend_hold")}
-                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
-                    actionType === "extend_hold"
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${actionType === "extend_hold"
                       ? "border-[#7c3aed] bg-[#f5f3ff] text-[#6d28d9]"
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
-                  }`}
+                    }`}
                 >
                   <i className="fa-solid fa-clock block text-base mb-1" />
                   Extend Hold

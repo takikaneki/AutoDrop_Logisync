@@ -2,9 +2,42 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getRole, getUser } from "../../api.js";
 import { listContacts, listMessages, markMessageRead, sendMessage } from "../../services/messageService.js";
+import { initiateReturnToHub } from "../../services/parcelService.js";
+import { getDeliveryRecordForParcel, initiateReturnToHubLocal } from "../../store/riderDeliveries.js";
+import { toast } from "../../store/toast.js";
 import { formatDate } from "../../utils/format.js";
 
 const POLL_MS = 15000;
+
+function parseRefusalReport(messageText) {
+  if (!messageText) return null;
+  const s = String(messageText);
+  const isRefusal =
+    s.includes("[FAILED DELIVERY REPORT") ||
+    s.includes("RECIPIENT REFUSAL") ||
+    (s.includes("Refusal Reason:") && (s.includes("Tracking / Txn:") || s.includes("Parcel / Txn:")));
+  if (!isRefusal) return null;
+
+  const txnMatch = s.match(/(?:Tracking \/ Txn|Parcel \/ Txn):\s*([^\n\r]+)/i);
+  const parcelIdMatch = s.match(/Parcel ID:\s*([^\n\r]+)/i);
+  const receiverMatch = s.match(/Receiver:\s*([^\n\r]+)/i);
+  const reasonMatch = s.match(/Refusal Reason:\s*([^\n\r]+)/i);
+  const riderMatch = s.match(/Rider:\s*([^\n\r]+)/i);
+  const notesMatch = s.match(/(?:Notes|Rider Notes):\s*([^\n\r]+)/i);
+
+  const txn = txnMatch?.[1]?.trim() || "";
+  const parcelId = parcelIdMatch?.[1]?.trim() || txn;
+
+  return {
+    txn,
+    parcelId,
+    receiver: receiverMatch?.[1]?.trim() || "",
+    reason: reasonMatch?.[1]?.trim() || "Recipient Refused Parcel",
+    rider: riderMatch?.[1]?.trim() || "",
+    notes: notesMatch?.[1]?.trim() || "",
+    raw: s,
+  };
+}
 
 // Messaging para sa Seller, Rider at Coordinator (iisang component).
 // Backend rule: coordinator <-> seller/rider lang. Ang listahan ng contacts ay galing sa /api/users/contacts.
@@ -29,8 +62,53 @@ export default function ChatView({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [initiatingRthId, setInitiatingRthId] = useState(null);
+  const [initiatedRthSet, setInitiatedRthSet] = useState(() => new Set());
   const marking = useRef(new Set());
   const bottom = useRef(null);
+
+  const handleInitiateRth = async (report) => {
+    const key = report.parcelId || report.txn;
+    if (!key) return;
+    setInitiatingRthId(key);
+    try {
+      // 1. Backend API call
+      try {
+        await initiateReturnToHub(key, report.reason || "Recipient Refusal");
+      } catch (err) {
+        console.warn("Backend initiateReturnToHub fallback:", err);
+      }
+      // 2. Local store synchronization
+      initiateReturnToHubLocal(key, report.reason || "Recipient Refusal");
+
+      // 3. Mark as initiated in local state so UI updates immediately
+      setInitiatedRthSet((prev) => {
+        const next = new Set(prev);
+        if (report.txn) next.add(String(report.txn).trim());
+        if (report.parcelId) next.add(String(report.parcelId).trim());
+        return next;
+      });
+
+      // 4. Send confirmation message back to rider in chat thread if active contact is rider
+      if (active && active.user_id) {
+        try {
+          await sendMessage(
+            active.user_id,
+            `[COORDINATOR ACTION · RETURN TO HUB APPROVED]\nTracking / Txn: ${report.txn || report.parcelId}\nReason: ${report.reason}\nStatus: Approved for Return to Hub (RTS Stage 1 active). Please bring the sealed parcel back to the hub.`
+          );
+          await load(true);
+        } catch (msgErr) {
+          console.warn("Failed to send RTH confirmation message:", msgErr);
+        }
+      }
+
+      toast.success(`Return to Hub approved for ${report.txn || report.parcelId}. Parcel transitioned to RTS.`);
+    } catch (err) {
+      toast.error(err.message || "Failed to initiate Return to Hub.");
+    } finally {
+      setInitiatingRthId(null);
+    }
+  };
 
   const load = useCallback(async (silent = false) => {
     try {
@@ -198,8 +276,19 @@ return contacts
                     <strong className="truncate text-sm">{contact.name}</strong>
                     <span className="shrink-0 text-[11px] capitalize text-slate-400">{contact.role}</span>
                   </span>
-                  <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                    {last ? last.message : "No messages yet"}
+                  <span className="flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                    {(() => {
+                      const rep = last ? parseRefusalReport(last.message) : null;
+                      if (rep) {
+                        return (
+                          <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                            Refusal Report · {rep.txn || rep.reason}
+                          </span>
+                        );
+                      }
+                      return last ? last.message : "No messages yet";
+                    })()}
                   </span>
                 </span>
                 {unread > 0 && (
@@ -234,6 +323,121 @@ return contacts
               {thread.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No messages yet. Say hello!</p>}
               {thread.map((m) => {
                 const mine = Number(m.sender_id) === me;
+                const refusalReport = parseRefusalReport(m.message);
+
+                if (refusalReport) {
+                  const isRthInitiated =
+                    initiatedRthSet.has(String(refusalReport.txn).trim()) ||
+                    initiatedRthSet.has(String(refusalReport.parcelId).trim()) ||
+                    (() => {
+                      const rec = getDeliveryRecordForParcel(refusalReport.parcelId || refusalReport.txn);
+                      return rec?.status === "return_to_hub" || rec?.stage === "rts" || rec?.rts_initiated;
+                    })();
+
+                  return (
+                    <div
+                      key={m.message_id}
+                      className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`w-full max-w-[95%] sm:max-w-md rounded-2xl border p-4 shadow-sm ${
+                          mine
+                            ? "border-amber-300 bg-amber-50/90 text-slate-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-slate-100"
+                            : "border-rose-300 bg-rose-50/90 text-slate-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 border-b border-rose-200/70 pb-2.5 dark:border-rose-900/40">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white shadow-xs">
+                              <i className="fa-solid fa-triangle-exclamation text-sm" />
+                            </span>
+                            <div>
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                                Failed Delivery · Recipient Refusal
+                              </h4>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                Direct Rider Incident Report
+                              </p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-700 dark:bg-rose-900/60 dark:text-rose-300">
+                            Refused
+                          </span>
+                        </div>
+
+                        <div className="mt-3 space-y-1.5 text-xs">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 dark:text-slate-400">Tracking / Txn:</span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-white">
+                              {refusalReport.txn || refusalReport.parcelId}
+                            </span>
+                          </div>
+                          {refusalReport.receiver && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-slate-500 dark:text-slate-400">Receiver:</span>
+                              <span className="font-medium text-slate-800 dark:text-slate-200">
+                                {refusalReport.receiver}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 dark:text-slate-400">Refusal Reason:</span>
+                            <span className="font-semibold text-rose-600 dark:text-rose-400">
+                              {refusalReport.reason}
+                            </span>
+                          </div>
+                          {refusalReport.rider && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-slate-500 dark:text-slate-400">Reporting Rider:</span>
+                              <span className="text-slate-700 dark:text-slate-300">
+                                {refusalReport.rider}
+                              </span>
+                            </div>
+                          )}
+                          {refusalReport.notes && (
+                            <div className="mt-1.5 rounded-lg bg-white/70 p-2 text-[11px] italic text-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+                              "{refusalReport.notes}"
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Coordinator action button */}
+                        {myRole === "coordinator" && (
+                          <div className="mt-4 border-t border-rose-200/70 pt-3 dark:border-rose-900/40">
+                            {isRthInitiated ? (
+                              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                <i className="fa-solid fa-circle-check" />
+                                <span>Return to Hub Approved (RTS Stage 1 Active)</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <button
+                                  type="button"
+                                  disabled={initiatingRthId === (refusalReport.parcelId || refusalReport.txn)}
+                                  onClick={() => handleInitiateRth(refusalReport)}
+                                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-3.5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700 active:scale-[0.99] disabled:opacity-50"
+                                >
+                                  <i className="fa-solid fa-warehouse" />
+                                  {initiatingRthId === (refusalReport.parcelId || refusalReport.txn)
+                                    ? "Initiating Return to Hub…"
+                                    : "Initiate Return to Hub"}
+                                </button>
+                                <p className="mt-1.5 text-center text-[10.5px] text-slate-500 dark:text-slate-400">
+                                  Approve Return to Hub (RTS Stage 1). This marks the parcel for RTS dispatch.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <small className="mt-1 text-[11px] text-slate-400">
+                        {formatDate(m.created_at)}
+                        {mine && <> · {m.is_read ? "Read" : "Sent"}</>}
+                      </small>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={m.message_id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                     <div

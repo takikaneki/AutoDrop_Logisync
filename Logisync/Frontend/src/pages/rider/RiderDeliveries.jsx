@@ -11,6 +11,7 @@ import {
   MAX_RESCHEDULES,
   STAGE,
   addDaysIso,
+  isRecipientRefusal,
   markDelivered,
   markFailed,
   reattempt,
@@ -22,6 +23,7 @@ import {
   formatDate,
   formatDay,
   formatDeliveryDayLabel,
+  formatShortDay,
   getManilaDateKey,
   parseValidTimestamp,
 } from "../../utils/format.js";
@@ -446,14 +448,19 @@ export default function RiderDeliveries() {
       if (reason === "Other" && !note.trim()) return setError("Please explain the reason in the notes.");
       const result = markFailed(d.parcel_id, { reason, note: note.trim() });
       reportFailure(d, { reason, note: note.trim(), result });
-      if (result?.outcome === "return_to_hub") {
+      if (result?.outcome === "recipient_refused") {
+        toast(
+          `Failed delivery report for ${d.transaction_number} sent to Coordinator in Messages. Awaiting Return-to-Hub decision.`,
+          "info"
+        );
+      } else if (result?.outcome === "return_to_hub") {
         toast(
           `${d.transaction_number} reached the ${MAX_RESCHEDULES}-day rescheduling limit and was marked as Return to Hub. Coordinator notified.`,
           "error"
         );
       } else {
         toast(
-          `${d.transaction_number} automatically rescheduled for ${formatDay(result?.scheduledFor)} (Day ${result?.rescheduleCount} of ${MAX_RESCHEDULES}).`,
+          `${d.transaction_number} rescheduled for next day: ${formatShortDay(result?.scheduledFor)} (${result?.rescheduleCount}/${MAX_RESCHEDULES}).`,
           "info"
         );
       }
@@ -1008,40 +1015,17 @@ export default function RiderDeliveries() {
               </div>
             ) : (
               <div>
-                <div
-                  className={`mb-4 rounded-xl border p-3.5 text-[13px] ${
-                    modalWillReturnToHub
-                      ? "border-[#d8b4fe] bg-[#f8f5ff] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]"
-                      : "border-[#fde68a] bg-[#fffbeb] text-[#92400e] dark:border-[#78350f] dark:bg-[#2d2416] dark:text-[#fcd34d]"
-                  }`}
-                >
-                  {modalWillReturnToHub ? (
-                    <>
-                      <strong className="block font-bold">
-                        <i className="fa-solid fa-warehouse mr-1.5" />
-                        3-Day Rescheduling Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Days)
-                      </strong>
-                      <p className="mt-1">
-                        This parcel has already used all {MAX_RESCHEDULES} rescheduling days. Confirming this failed
-                        delivery will automatically mark it as <strong>“Return to Hub”</strong>, remove it from your
-                        pending deliveries, and notify the Coordinator.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <strong className="block font-bold">
-                        <i className="fa-solid fa-calendar-check mr-1.5" />
-                        Automatic Rescheduling (Day {modalReschedCount + 1} of {MAX_RESCHEDULES})
-                      </strong>
-                      <p className="mt-1">
-                        This parcel will be automatically rescheduled to the next available delivery date:{" "}
-                        <strong>{formatDay(modalNextDate)}</strong> ({MAX_RESCHEDULES - (modalReschedCount + 1)}{" "}
-                        reschedule day{MAX_RESCHEDULES - (modalReschedCount + 1) === 1 ? "" : "s"} remaining before
-                        Return to Hub).
-                      </p>
-                    </>
-                  )}
-                </div>
+                {modalWillReturnToHub && (
+                  <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
+                    <strong className="block font-bold">
+                      <i className="fa-solid fa-warehouse mr-1.5" />
+                      3-Day Rescheduling Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Days)
+                    </strong>
+                    <p className="mt-1">
+                      This parcel has completed all 3 rescheduled delivery days and will be marked as Return to Hub.
+                    </p>
+                  </div>
+                )}
 
                 <label className={labelCls} htmlFor="reason">
                   Failure Reason
@@ -1061,14 +1045,14 @@ export default function RiderDeliveries() {
                   ))}
                 </select>
 
-                {["Recipient Refused Parcel", "Wrong Recipient / Unknown Consignee", "Refused COD Payment"].includes(reason) && (
+                {isRecipientRefusal(reason) && (
                   <div className="mt-3 rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
                     <strong className="block font-bold">
                       <i className="fa-solid fa-shield-halved mr-1.5" />
                       Recipient Refusal Protocol
                     </strong>
                     <p className="mt-1">
-                      Keep the parcel sealed. Do not collect any payment. The refusal reason, delivery attempt, Rider ID, and timestamp will be officially recorded, and both Coordinator and Seller will be notified.
+                      Keep the parcel sealed. Do not collect any payment. A direct failed-delivery report will be sent to the Coordinator in Messages for Return-to-Hub review.
                     </p>
                   </div>
                 )}
@@ -1109,9 +1093,11 @@ export default function RiderDeliveries() {
               <button onClick={confirm} disabled={busy} className={btnPrimary}>
                 {action.type === "delivered"
                   ? "Confirm delivered"
+                  : isRecipientRefusal(reason)
+                  ? "Send Refusal Report to Coordinator"
                   : modalWillReturnToHub
                   ? "Confirm & Mark Return to Hub"
-                  : `Reschedule to ${formatDay(modalNextDate)}`}
+                  : `Reschedule Next Day – ${formatShortDay(modalNextDate)} (${modalReschedCount + 1}/${MAX_RESCHEDULES})`}
               </button>
             </div>
           </>

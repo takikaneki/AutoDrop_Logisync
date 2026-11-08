@@ -275,6 +275,13 @@ export const decideDiscreetHandling = (parcelId, decision, remarks = "") =>
     body: { decision, remarks },
   });
 
+// Coordinator: Stage 1 Return to Hub Initiation / Approval
+export const initiateReturnToHub = (parcelId, reason = "") =>
+  api(`/parcels/coordinator/${enc(parcelId)}/return-to-hub`, {
+    method: "POST",
+    body: { reason },
+  });
+
 // Coordinator: Stage 2 Hub Verification
 export const hubVerifyParcel = (parcelId) =>
   api(`/parcels/coordinator/${enc(parcelId)}/hub-verify`, { method: "POST" });

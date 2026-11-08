@@ -4,6 +4,7 @@ import { api, getUser } from "../api.js";
 import { getParcels, updateParcelRecord, useParcels } from "./records.js";
 import { getRiderScans, syncScansFromServerParcels, useRiderScans } from "./riderScans.js";
 import { fetchMyRiderParcels, reportDelivered, reportFailed, scanForDelivery } from "../services/deliveryService.js";
+import { listContacts, sendMessage } from "../services/messageService.js";
 import { addNotification, markRead } from "./notifications.js";
 import { getParcelAddress } from "./customers.js";
 
@@ -80,6 +81,17 @@ export const FAIL_REASONS = [
   "Other",
 ];
 
+export function isRecipientRefusal(reason) {
+  if (!reason) return false;
+  const s = String(reason).trim().toLowerCase();
+  return (
+    s.includes("refused") ||
+    s.includes("refusal") ||
+    s.includes("wrong recipient") ||
+    s.includes("unknown consignee")
+  );
+}
+
 export const isCleared = (parcel) =>
   parcel?.status === "VERIFIED" ||
   parcel?.verification_status === "VERIFIED" ||
@@ -154,6 +166,19 @@ export function syncAutomaticReschedules() {
 
     // Huwag pakialaman kung nasa RTS stage na
     if (d.rts_status && d.rts_status !== "RETURN_TO_HUB") {
+      return raw;
+    }
+
+    // Huwag i-reschedule ang mga recipient refusal (Coordinator ang nagdedesisyon ng Return to Hub)
+    if (
+      d.refusal_awaiting_coordinator ||
+      isRecipientRefusal(d.lastFailure) ||
+      isRecipientRefusal(d.reason) ||
+      (Array.isArray(d.attempts) &&
+        d.attempts.some(
+          (a) => a && (a.outcome === "recipient_refused" || isRecipientRefusal(a.reason))
+        ))
+    ) {
       return raw;
     }
 
@@ -1042,6 +1067,93 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
   const targetId = current.parcel_id || txn;
   const riderName = getUser()?.name || current.rider_name || "Rider";
 
+  // 1. RECIPIENT REFUSAL:
+  // HINDI awtomatikong nagre-reschedule.
+  // Nagpapadala ng direct message sa Coordinator para sa Return-to-Hub desisyon.
+  if (isRecipientRefusal(reason)) {
+    const attemptEntry = {
+      id: `att-${parcelId}-refusal-${Date.now()}`,
+      attempt: (current.attempts?.length || 0) + 1,
+      failedAt: Date.now(),
+      scheduledDate: baseDate,
+      rescheduledTo: null,
+      rescheduleDay: count,
+      reason,
+      note: note || "Recipient refused delivery. Direct message sent to Coordinator for Return to Hub decision.",
+      auto: false,
+      outcome: "recipient_refused",
+    };
+    const nextAttempts = [...(current.attempts || []), attemptEntry];
+
+    patch(parcelId, {
+      stage: STAGE.FAILED,
+      doneAt: Date.now(),
+      rescheduled: false,
+      refusal_awaiting_coordinator: true,
+      lastFailure: reason,
+      lastNote: note || "",
+      reason,
+      note: note || "",
+      proof: "",
+      attempts: nextAttempts,
+    });
+
+    updateParcelRecord(parcelId, { status: "Failed Delivery" });
+    if (txn !== parcelId) updateParcelRecord(txn, { status: "Failed Delivery" });
+
+    addNotification({
+      id: `refusal-${parcelId}-${Date.now()}`,
+      kind: "delivery",
+      icon: "fa-shield-halved",
+      tone: "red",
+      title: `Recipient Refusal: ${txn}`,
+      text: `${riderName} reported "${reason}". Direct message sent to Messages. Coordinator review needed for Return to Hub.`,
+      read: false,
+      to: "/messages",
+    });
+
+    sync(async () => {
+      await reportFailed(targetId, reason, note, {
+        outcome: "recipient_refused",
+        scheduledFor: baseDate,
+        rescheduled: false,
+        rescheduleCount: count,
+        returnToHub: false,
+        attempts: nextAttempts,
+      }).catch(() => {});
+
+      try {
+        const contacts = await listContacts();
+        const coordinator = contacts.find((c) => c.role === "coordinator");
+        if (coordinator) {
+          const msg = `🚨 [FAILED DELIVERY REPORT - RECIPIENT REFUSAL]
+Tracking / Txn: ${txn}
+Parcel ID: ${current.parcel_id || txn}
+Receiver: ${current.receiver || "Consignee"}
+Contact: ${current.contact || "N/A"}
+Address: ${current.address || "N/A"}
+Refusal Reason: ${reason}
+Rider: ${riderName} (ID: ${me()})
+Notes: ${note || "Recipient refused parcel."}
+
+Action Required: Please review and initiate Return to Hub.`;
+          await sendMessage(coordinator.user_id, msg);
+        }
+      } catch (err) {
+        console.warn("Could not send refusal message to coordinator:", err);
+      }
+
+      await syncRiderDeliveriesWithServer(me());
+    });
+
+    return {
+      outcome: "recipient_refused",
+      scheduledFor: null,
+      rescheduleCount: count,
+      maxReschedules: MAX_RESCHEDULES,
+    };
+  }
+
   if (count < MAX_RESCHEDULES) {
     const nextCount = count + 1;
     const nextDate = customDate && customDate > baseDate ? customDate : addDaysIso(baseDate, 1);
@@ -1279,3 +1391,46 @@ export const coordinateReturnToSeller = (parcelId, { note = "", by } = {}) => {
   }
   return target;
 };
+
+// Coordinator initiated/approved Return to Hub (e.g. from recipient refusal)
+export function initiateReturnToHubLocal(parcelIdOrTxn, reason = "") {
+  if (!parcelIdOrTxn) return null;
+  const key = String(parcelIdOrTxn).trim().toLowerCase();
+  let found = null;
+  store.set((list) =>
+    list.map((d) => {
+      const match =
+        String(d.parcel_id || "").toLowerCase() === key ||
+        String(d.transaction_number || "").toLowerCase() === key;
+      if (!match) return d;
+      const nextAttempts = [
+        ...(d.attempts || []),
+        {
+          id: `att-${d.parcel_id}-rth-coord-${Date.now()}`,
+          attempt: (d.attempts?.length || 0) + 1,
+          failedAt: Date.now(),
+          scheduledDate: d.scheduledFor || todayIso(),
+          rescheduledTo: null,
+          rescheduleDay: d.rescheduleCount || 1,
+          reason: reason || "Coordinator approved Return to Hub",
+          note: "Return to Hub approved by Coordinator following recipient refusal review.",
+          auto: false,
+          outcome: "return_to_hub",
+        },
+      ];
+      found = {
+        ...d,
+        stage: STAGE.RETURN_TO_HUB,
+        returnToHub: true,
+        returnToHubAt: Date.now(),
+        rts_status: "RETURN_TO_HUB",
+        refusal_awaiting_coordinator: false,
+        lastFailure: reason || d.lastFailure || "Recipient Refused Parcel",
+        attempts: nextAttempts,
+      };
+      return found;
+    })
+  );
+  updateParcelRecord(parcelIdOrTxn, { status: "Return to Hub" });
+  return found;
+}
