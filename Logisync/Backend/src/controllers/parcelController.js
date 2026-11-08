@@ -1317,6 +1317,281 @@ async function streamVideo(req, res) {
   }
 }
 
+const MANILA_TZ = "Asia/Manila";
+
+function getManilaDateStr(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: MANILA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(d);
+}
+
+function addCalendarDays(isoDateStr, days) {
+  const [y, m, d] = String(isoDateStr).slice(0, 10).split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days, 12, 0, 0));
+  return dt.toISOString().slice(0, 10);
+}
+
+function diffCalendarDays(dateStrA, dateStrB) {
+  const [y1, m1, d1] = String(dateStrA).slice(0, 10).split("-").map(Number);
+  const [y2, m2, d2] = String(dateStrB).slice(0, 10).split("-").map(Number);
+  const utc1 = Date.UTC(y1, m1 - 1, d1);
+  const utc2 = Date.UTC(y2, m2 - 1, d2);
+  return Math.round((utc2 - utc1) / (24 * 60 * 60 * 1000));
+}
+
+// Automatic Reschedule Evaluator & Status Transition (3-Day Rescheduling Rule)
+// Day 0: Initial scheduled date
+// Day 1: Rescheduled – Day 1 of 3 (TO_DELIVER)
+// Day 2: Rescheduled – Day 2 of 3 (TO_DELIVER)
+// Day 3: Rescheduled – Day 3 of 3 (TO_DELIVER)
+// Day > 3 (after Day 3 opportunity has passed): Eligible for Return to Hub (FAILED, return_to_hub = TRUE)
+async function evaluateAutomaticReschedules(parcels = []) {
+  if (!Array.isArray(parcels) || parcels.length === 0) return parcels;
+  const todayStr = getManilaDateStr();
+
+  for (const p of parcels) {
+    const deliveryStatus = String(p.delivery_status || "").toUpperCase();
+    if (deliveryStatus === "DELIVERED") continue;
+    if (!p.rider_id && !p.delivery_status && !p.scheduled_for) continue;
+
+    let attempts = [];
+    if (Array.isArray(p.attempts)) {
+      attempts = [...p.attempts];
+    } else if (p.delivery_attempts) {
+      try {
+        const parsed = JSON.parse(p.delivery_attempts);
+        if (Array.isArray(parsed)) attempts = parsed;
+      } catch {
+        attempts = [];
+      }
+    }
+
+    const firstAtt = attempts.find((a) => a && a.scheduledDate);
+    const initialDate =
+      (firstAtt && firstAtt.scheduledDate) ||
+      (p.scanned_at ? getManilaDateStr(p.scanned_at) : null) ||
+      (p.scheduled_for ? String(p.scheduled_for).slice(0, 10) : null) ||
+      (p.created_at ? getManilaDateStr(p.created_at) : null) ||
+      todayStr;
+
+    const elapsedDays = diffCalendarDays(initialDate, todayStr);
+
+    let nextScheduledFor = p.scheduled_for || initialDate;
+    let nextRescheduled = false;
+    let nextRescheduleCount = 0;
+    let nextReturnToHub = false;
+    let nextDeliveryStatus = "TO_DELIVER";
+    let nextReturnToHubAt = p.return_to_hub_at || null;
+    let nextAttempts = [];
+
+    if (elapsedDays <= 0) {
+      nextScheduledFor = initialDate;
+      nextRescheduled = false;
+      nextRescheduleCount = 0;
+      nextReturnToHub = false;
+      nextDeliveryStatus = "TO_DELIVER";
+      nextAttempts = attempts.filter((a) => a && a.outcome !== "return_to_hub" && a.outcome !== "rescheduled");
+    } else if (elapsedDays === 1) {
+      nextScheduledFor = addCalendarDays(initialDate, 1);
+      nextRescheduled = true;
+      nextRescheduleCount = 1;
+      nextReturnToHub = false;
+      nextDeliveryStatus = "TO_DELIVER";
+      nextAttempts = [
+        {
+          id: `att-${p.parcel_id}-day-1`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: nextScheduledFor,
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${nextScheduledFor} (Day 1 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        }
+      ];
+    } else if (elapsedDays === 2) {
+      nextScheduledFor = addCalendarDays(initialDate, 2);
+      nextRescheduled = true;
+      nextRescheduleCount = 2;
+      nextReturnToHub = false;
+      nextDeliveryStatus = "TO_DELIVER";
+      nextAttempts = [
+        {
+          id: `att-${p.parcel_id}-day-1`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: addCalendarDays(initialDate, 1),
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 1)} (Day 1 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-2`,
+          attempt: 2,
+          scheduledDate: addCalendarDays(initialDate, 1),
+          rescheduledTo: nextScheduledFor,
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${addCalendarDays(initialDate, 1)}) passed without delivery. Automatically rescheduled to ${nextScheduledFor} (Day 2 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        }
+      ];
+    } else if (elapsedDays === 3) {
+      nextScheduledFor = addCalendarDays(initialDate, 3);
+      nextRescheduled = true;
+      nextRescheduleCount = 3;
+      nextReturnToHub = false;
+      nextDeliveryStatus = "TO_DELIVER";
+      nextAttempts = [
+        {
+          id: `att-${p.parcel_id}-day-1`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: addCalendarDays(initialDate, 1),
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 1)} (Day 1 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-2`,
+          attempt: 2,
+          scheduledDate: addCalendarDays(initialDate, 1),
+          rescheduledTo: addCalendarDays(initialDate, 2),
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${addCalendarDays(initialDate, 1)}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 2)} (Day 2 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-3`,
+          attempt: 3,
+          scheduledDate: addCalendarDays(initialDate, 2),
+          rescheduledTo: nextScheduledFor,
+          rescheduleDay: 3,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${addCalendarDays(initialDate, 2)}) passed without delivery. Automatically rescheduled to ${nextScheduledFor} (Day 3 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        }
+      ];
+    } else {
+      nextScheduledFor = addCalendarDays(initialDate, 3);
+      nextRescheduled = true;
+      nextRescheduleCount = 3;
+      nextReturnToHub = true;
+      nextDeliveryStatus = "FAILED";
+      nextReturnToHubAt = nextReturnToHubAt || new Date().toISOString();
+      nextAttempts = [
+        {
+          id: `att-${p.parcel_id}-day-1`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: addCalendarDays(initialDate, 1),
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 1)} (Day 1 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-2`,
+          attempt: 2,
+          scheduledDate: addCalendarDays(initialDate, 1),
+          rescheduledTo: addCalendarDays(initialDate, 2),
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${addCalendarDays(initialDate, 1)}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 2)} (Day 2 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-3`,
+          attempt: 3,
+          scheduledDate: addCalendarDays(initialDate, 2),
+          rescheduledTo: addCalendarDays(initialDate, 3),
+          rescheduleDay: 3,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${addCalendarDays(initialDate, 2)}) passed without delivery. Automatically rescheduled to ${addCalendarDays(initialDate, 3)} (Day 3 of 3).`,
+          auto: true,
+          outcome: "rescheduled"
+        },
+        {
+          id: `att-${p.parcel_id}-day-rth`,
+          attempt: 4,
+          scheduledDate: addCalendarDays(initialDate, 3),
+          rescheduledTo: null,
+          rescheduleDay: 3,
+          reason: "Undelivered after 3-day rescheduling period",
+          note: "Parcel remained undelivered after the 3-day rescheduling period. Automatically marked as Return to Hub.",
+          auto: true,
+          outcome: "return_to_hub"
+        }
+      ];
+    }
+
+    const changed =
+      p.scheduled_for !== nextScheduledFor ||
+      Boolean(p.rescheduled) !== nextRescheduled ||
+      Number(p.reschedule_count || 0) !== nextRescheduleCount ||
+      Boolean(p.return_to_hub) !== nextReturnToHub ||
+      p.delivery_status !== nextDeliveryStatus ||
+      JSON.stringify(attempts) !== JSON.stringify(nextAttempts);
+
+    if (changed) {
+      p.scheduled_for = nextScheduledFor;
+      p.rescheduled = nextRescheduled;
+      p.reschedule_count = nextRescheduleCount;
+      p.return_to_hub = nextReturnToHub;
+      p.return_to_hub_at = nextReturnToHubAt;
+      p.delivery_status = nextDeliveryStatus;
+      p.attempts = nextAttempts;
+      p.delivery_attempts = JSON.stringify(nextAttempts);
+
+      try {
+        await pool.query(
+          `UPDATE parcels
+           SET scheduled_for = ?,
+               rescheduled = ?,
+               reschedule_count = ?,
+               return_to_hub = ?,
+               return_to_hub_at = ?,
+               delivery_status = ?,
+               delivery_attempts = ?,
+               updated_at = NOW()
+           WHERE parcel_id = ?`,
+          [
+            nextScheduledFor,
+            nextRescheduled,
+            nextRescheduleCount,
+            nextReturnToHub,
+            nextReturnToHubAt,
+            nextDeliveryStatus,
+            JSON.stringify(nextAttempts),
+            p.parcel_id
+          ]
+        );
+      } catch (err) {
+        console.warn("Failed to persist automatic reschedule for parcel:", p.parcel_id, err.message);
+      }
+    } else {
+      p.attempts = nextAttempts;
+    }
+  }
+  return parcels;
+}
+
 // GET /api/parcels  -> seller: sariling parcels lang | coordinator: lahat
 async function listParcels(req, res) {
   try {
@@ -1364,6 +1639,7 @@ async function listParcels(req, res) {
       params
     );
 
+    await evaluateAutomaticReschedules(rows);
     res.json({ success: true, parcels: rows });
   } catch (error) {
     console.error(error);
@@ -1550,7 +1826,7 @@ async function finishDelivery(req, res, outcome) {
              last_failure = ?,
              delivery_attempts = ?,
              scanned_at = COALESCE(scanned_at, NOW()),
-             delivered_at = ${outcome === "DELIVERED" ? "NOW()" : isReturnToHub ? "NOW()" : "NULL"},
+             delivered_at = ${outcome === "DELIVERED" ? "NOW()" : "NULL"},
              updated_at = NOW()
          WHERE parcel_id = ?`,
         [
@@ -1717,6 +1993,7 @@ async function listRiderParcels(req, res) {
         attempts: parsedAttempts
       };
     });
+    await evaluateAutomaticReschedules(maskedRows);
     res.json({ success: true, parcels: maskedRows });
   } catch (error) {
     console.error(error);

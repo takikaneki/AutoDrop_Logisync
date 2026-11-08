@@ -17,14 +17,17 @@ import {
   useMyDeliveries,
 } from "../../store/riderDeliveries.js";
 import { compressImage } from "../../utils/image.js";
-import { formatDate, formatDay } from "../../utils/format.js";
+import {
+  formatDate,
+  formatDay,
+  formatDeliveryDayLabel,
+  getManilaDateKey,
+  parseValidTimestamp,
+} from "../../utils/format.js";
 import { latestFor, reportFailure, useFailedDeliveries, withdrawFailure } from "../../store/failedDeliveries.js";
 import { toast } from "../../store/toast.js";
 
 const STEP = 15; // ilang card ang idinadagdag ng "Show more"
-
-const SHOW_NAVIGATE = true;
-const mapsUrl = (address) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 const COPY = {
   [STAGE.TO_DELIVER]: {
@@ -60,15 +63,22 @@ function areaOf(address) {
   return parts.find((p) => /^(brgy|barangay)\b/i.test(p)) || (parts.length > 1 ? parts[parts.length - 1] : "Other");
 }
 
-const dayKey = (ts) => new Date(ts).toDateString();
-function dayLabel(ts) {
-  const d = new Date(ts);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return "Today";
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+function getDeliveryTimestamp(d) {
+  return (
+    parseValidTimestamp(d?.doneAt) ||
+    parseValidTimestamp(d?.delivered_at) ||
+    parseValidTimestamp(d?.deliveredAt) ||
+    parseValidTimestamp(d?.returnToHubAt) ||
+    parseValidTimestamp(d?.return_to_hub_at) ||
+    parseValidTimestamp(d?.updated_at) ||
+    parseValidTimestamp(d?.updatedAt) ||
+    parseValidTimestamp(d?.attempts?.[d?.attempts?.length - 1]?.failedAt) ||
+    parseValidTimestamp(d?.scannedAt) ||
+    parseValidTimestamp(d?.scanned_at) ||
+    parseValidTimestamp(d?.created_at) ||
+    parseValidTimestamp(d?.createdAt) ||
+    Date.now()
+  );
 }
 
 const card =
@@ -91,21 +101,6 @@ function hasValue(val) {
 
 function cleanText(val) {
   return hasValue(val) ? String(val).trim() : "";
-}
-
-function Navigate({ address }) {
-  const addr = cleanText(address);
-  if (!SHOW_NAVIGATE || !addr) return null;
-  return (
-    <a
-      href={mapsUrl(addr)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand hover:underline"
-    >
-      <i className="fa-solid fa-location-arrow" /> Navigate
-    </a>
-  );
 }
 
 // Pinagsamang ulo ng card: receiver (clickable sa mobile at desktop para mag-expand/collapse), address, at detalye
@@ -184,8 +179,7 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
               {address || "No delivery address provided"}
             </p>
             {address && (
-              <div className="mt-2.5 flex items-center justify-end gap-2.5">
-                <Navigate address={address} />
+              <div className="mt-2.5 flex items-center justify-end">
                 <button
                   type="button"
                   onClick={() => onCopyAddress?.(cardKey, address)}
@@ -533,9 +527,12 @@ export default function RiderDeliveries() {
   const deliveredCard = (d) => {
     const cardKey = d.parcel_id || d.transaction_number;
     const expanded = Boolean(expandedCards[cardKey]);
-    const doneTime = d.doneAt
-      ? new Date(d.doneAt).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })
-      : "Delivered";
+    const deliveryTs = getDeliveryTimestamp(d);
+    const doneTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(deliveryTs));
 
     return (
       <article key={cardKey} className={card}>
@@ -578,6 +575,19 @@ export default function RiderDeliveries() {
           </>
         ) : (
           <div className="mt-3 space-y-2.5">
+            <div className="rounded-xl border border-[#e5e8ee] bg-[#f8fafc] p-3 text-[13px] text-[#52627a] dark:border-night-line dark:bg-night-soft dark:text-[#d1c9c2]">
+              <div className="flex flex-wrap items-center justify-between gap-1">
+                <span className="font-semibold text-[#27364f] dark:text-[#f1eeeb]">Delivered:</span>
+                <span className="font-bold text-[#29945a]">{formatDate(deliveryTs)}</span>
+              </div>
+              {(d.scannedAt || d.created_at) && (
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[12px]">
+                  <span>Initial Registration / Scan:</span>
+                  <span>{formatDate(d.scannedAt || d.created_at)}</span>
+                </div>
+              )}
+            </div>
+
             {cleanText(d.note) && (
               <p className="text-[13px] text-[#666] dark:text-[#d1c9c2]">“{cleanText(d.note)}”</p>
             )}
@@ -715,7 +725,12 @@ export default function RiderDeliveries() {
         : []),
     ],
     [STAGE.DELIVERED]: [
-      [`Today · ${mine.filter((d) => dayKey(d.doneAt) === new Date().toDateString()).length} delivered`, "text-[#29945a] bg-[#eaf8ef]"],
+      [
+        `Today · ${
+          mine.filter((d) => getManilaDateKey(getDeliveryTimestamp(d)) === getManilaDateKey(Date.now())).length
+        } delivered`,
+        "text-[#29945a] bg-[#eaf8ef]",
+      ],
       [`${mine.length} in total`, "text-[#777] bg-[#f1f1f1]"],
     ],
     [STAGE.FAILED]: [
@@ -757,12 +772,15 @@ export default function RiderDeliveries() {
   } else if (stage === STAGE.DELIVERED) {
     const days = new Map();
     shown.forEach((d) => {
-      const k = dayKey(d.doneAt);
-      days.set(k, { ts: d.doneAt, items: [...(days.get(k)?.items || []), d] });
+      const ts = getDeliveryTimestamp(d);
+      const k = getManilaDateKey(ts);
+      days.set(k, { ts, items: [...(days.get(k)?.items || []), d] });
     });
     body = [...days].map(([k, g]) => (
       <div key={k}>
-        <GroupTitle count={list.filter((d) => dayKey(d.doneAt) === k).length}>{dayLabel(g.ts)}</GroupTitle>
+        <GroupTitle count={list.filter((d) => getManilaDateKey(getDeliveryTimestamp(d)) === k).length}>
+          {formatDeliveryDayLabel(g.ts)}
+        </GroupTitle>
         <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{g.items.map(deliveredCard)}</div>
       </div>
     ));

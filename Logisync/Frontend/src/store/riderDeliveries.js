@@ -83,31 +83,50 @@ export const isCleared = (parcel) =>
   parcel?.verification_status === "VERIFIED" ||
   parcel?.raw_status === "VERIFIED";
 
-const pad = (n) => String(n).padStart(2, "0");
-
-export function toIsoDate(value = Date.now()) {
-  const d = value instanceof Date ? new Date(value.getTime()) : new Date(value);
-  if (Number.isNaN(d.getTime())) return todayIso();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
+const MANILA_TZ = "Asia/Manila";
 
 export function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: MANILA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+export function toIsoDate(value = Date.now()) {
+  const ts = typeof value === "number" ? value : new Date(value).getTime();
+  if (Number.isNaN(ts) || ts <= 0) return todayIso();
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: MANILA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(ts));
 }
 
 export function addDaysIso(isoDateStr, days = 1) {
-  const base = isoDateStr ? new Date(`${isoDateStr}T00:00:00`) : new Date();
-  if (Number.isNaN(base.getTime())) return todayIso();
-  base.setDate(base.getDate() + days);
-  return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+  const [y, m, d] = String(isoDateStr || todayIso()).slice(0, 10).split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days, 12, 0, 0));
+  return dt.toISOString().slice(0, 10);
+}
+
+export function diffCalendarDays(dateStrA, dateStrB) {
+  const [y1, m1, d1] = String(dateStrA || todayIso()).slice(0, 10).split("-").map(Number);
+  const [y2, m2, d2] = String(dateStrB || todayIso()).slice(0, 10).split("-").map(Number);
+  const utc1 = Date.UTC(y1, m1 - 1, d1);
+  const utc2 = Date.UTC(y2, m2 - 1, d2);
+  return Math.round((utc2 - utc1) / (24 * 60 * 60 * 1000));
 }
 
 const sync = (fn) => fn().catch(() => {});
 
-// Awtomatikong nagre-reschedule kapag lumampas na ang scheduled delivery date (hanggang 3 araw).
-// Kapag hindi pa rin na-deliver pagkatapos ng 3-day rescheduling period, nagiging "Return to Hub"
-// at tinatanggal sa pending deliveries ng rider.
+// Awtomatikong nagre-reschedule ayon sa 3-Day Rescheduling Rule:
+// - Day 0: Initial scheduled date
+// - Day 1: Rescheduled – Day 1 of 3 (TO_DELIVER, active delivery day)
+// - Day 2: Rescheduled – Day 2 of 3 (TO_DELIVER, active delivery day)
+// - Day 3: Rescheduled – Day 3 of 3 (TO_DELIVER, active delivery day)
+// - Day > 3: Pagkatapos lumampas ang ika-3 araw -> Eligible for Return to Hub (FAILED, returnToHub = true)
 export function syncAutomaticReschedules() {
   const current = store.get();
   if (!Array.isArray(current) || current.length === 0) return;
@@ -121,111 +140,251 @@ export function syncAutomaticReschedules() {
     let d = { ...raw };
     let itemChanged = false;
 
-    // Migration para sa mga lumang record sa localStorage (hal. na-reschedule bago nagkaroon ng counter/history)
+    // Huwag pakialaman ang mga na-deliver na
+    if (d.stage === STAGE.DELIVERED) {
+      return raw;
+    }
+
     if (!Array.isArray(d.attempts)) {
       d.attempts = [];
       itemChanged = true;
     }
 
-    if (!d.scheduledFor) {
-      d.scheduledFor = toIsoDate(d.scannedAt || Date.now());
-      itemChanged = true;
-    }
+    const firstAtt = d.attempts.find((a) => a && a.scheduledDate);
+    const initialDate =
+      (firstAtt && firstAtt.scheduledDate) ||
+      (d.scannedAt ? toIsoDate(d.scannedAt) : null) ||
+      (d.scheduledFor ? String(d.scheduledFor).slice(0, 10) : null) ||
+      today;
 
-    if (d.rescheduled && (!d.rescheduleCount || d.rescheduleCount < 1)) {
-      d.rescheduleCount = 1;
-      if (d.attempts.length === 0) {
-        const prevDate = addDaysIso(d.scheduledFor, -1);
-        d.attempts = [
-          {
-            id: `att-${d.parcel_id}-seed-1`,
-            attempt: 1,
-            failedAt: d.scannedAt || Date.now(),
-            scheduledDate: prevDate,
-            rescheduledTo: d.scheduledFor,
-            rescheduleDay: 1,
-            reason: d.lastFailure || d.reason || "Delivery attempt failed",
-            note: d.note || `Rescheduled to ${d.scheduledFor} (Day 1 of ${MAX_RESCHEDULES})`,
-            auto: false,
-            outcome: "rescheduled",
-          },
-        ];
+    const elapsedDays = diffCalendarDays(initialDate, today);
+
+    if (elapsedDays <= 0) {
+      if (d.rescheduled || d.returnToHub || d.rescheduleCount > 0) {
+        d.scheduledFor = initialDate;
+        d.rescheduled = false;
+        d.rescheduleCount = 0;
+        d.returnToHub = false;
+        d.stage = STAGE.TO_DELIVER;
+        d.attempts = d.attempts.filter((a) => a && a.outcome !== "return_to_hub" && a.outcome !== "rescheduled");
+        itemChanged = true;
       }
-      itemChanged = true;
-    }
+    } else if (elapsedDays === 1) {
+      const day1Sched = addDaysIso(initialDate, 1);
+      const expectedAttempts = [
+        {
+          id: `att-${d.parcel_id}-auto-1-${day1Sched}`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: day1Sched,
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${day1Sched} (Day 1 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+      ];
 
-    // Kung nasa pending deliveries (TO_DELIVER) at lumampas na ang scheduled date
-    if (d.stage === STAGE.TO_DELIVER && d.scheduledFor && d.scheduledFor < today) {
-      let count = Number(d.rescheduleCount || 0);
-      let sched = d.scheduledFor;
-      const attempts = [...(d.attempts || [])];
-
-      while (sched < today) {
-        if (count < MAX_RESCHEDULES) {
-          count += 1;
-          const nextDate = addDaysIso(sched, 1);
-          const reason = d.lastFailure || d.reason || "Undelivered on scheduled date";
-          attempts.push({
-            id: `att-${d.parcel_id}-auto-${count}-${nextDate}`,
-            attempt: attempts.length + 1,
-            failedAt: new Date(`${sched}T23:59:00`).getTime(),
-            scheduledDate: sched,
-            rescheduledTo: nextDate,
-            rescheduleDay: count,
-            reason,
-            note: `Scheduled delivery date (${sched}) passed without delivery. Automatically rescheduled to ${nextDate} (Day ${count} of ${MAX_RESCHEDULES}).`,
-            auto: true,
-            outcome: "rescheduled",
-          });
-          sched = nextDate;
-          d.scheduledFor = nextDate;
-          d.rescheduled = true;
-          d.rescheduleCount = count;
-          d.lastFailure = reason;
-          d.lastRescheduledAt = Date.now();
-          itemChanged = true;
-        } else {
-          // Naabot na ang 3-day rescheduling limit at lumampas pa rin ang ika-3 araw -> Return to Hub
-          const reason = d.lastFailure || d.reason || "Undelivered after 3-day rescheduling period";
-          attempts.push({
-            id: `att-${d.parcel_id}-auto-rth`,
-            attempt: attempts.length + 1,
-            failedAt: new Date(`${sched}T23:59:00`).getTime(),
-            scheduledDate: sched,
-            rescheduledTo: null,
-            rescheduleDay: MAX_RESCHEDULES,
-            reason,
-            note: `Parcel remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling period. Automatically marked as Return to Hub.`,
-            auto: true,
-            outcome: "return_to_hub",
-          });
-          d.stage = STAGE.RETURN_TO_HUB;
-          d.returnToHub = true;
-          d.returnToHubAt = Date.now();
-          d.doneAt = Date.now();
-          d.reason = reason;
-          d.lastFailure = reason;
-          d.attempts = attempts;
-          itemChanged = true;
-
-          pendingCoordinatorNotifs.push({
-            id: `rth-${d.parcel_id}`,
-            kind: "delivery",
-            icon: "fa-warehouse",
-            tone: "red",
-            title: `Return to Hub: ${d.transaction_number || d.parcel_id}`,
-            text: `${d.receiver || "Customer"} (${d.seller || "Seller"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling limit and must be returned to the hub.`,
-            read: false,
-            to: "/notifications",
-          });
-          parcelStatusUpdates.push({ id: d.parcel_id, txn: d.transaction_number, status: "Return to Hub" });
-          break;
-        }
-      }
-
-      if (d.stage === STAGE.TO_DELIVER) {
-        d.attempts = attempts;
+      if (
+        d.scheduledFor !== day1Sched ||
+        !d.rescheduled ||
+        d.rescheduleCount !== 1 ||
+        d.returnToHub ||
+        d.stage !== STAGE.TO_DELIVER ||
+        d.attempts.length !== 1 ||
+        d.attempts[0]?.rescheduleDay !== 1
+      ) {
+        d.scheduledFor = day1Sched;
+        d.rescheduled = true;
+        d.rescheduleCount = 1;
+        d.returnToHub = false;
+        d.stage = STAGE.TO_DELIVER;
+        d.attempts = expectedAttempts;
+        d.lastFailure = "Undelivered on scheduled date";
+        itemChanged = true;
         parcelStatusUpdates.push({ id: d.parcel_id, txn: d.transaction_number, status: "Rescheduled" });
+      }
+    } else if (elapsedDays === 2) {
+      const day1Sched = addDaysIso(initialDate, 1);
+      const day2Sched = addDaysIso(initialDate, 2);
+      const expectedAttempts = [
+        {
+          id: `att-${d.parcel_id}-auto-1-${day1Sched}`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: day1Sched,
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${day1Sched} (Day 1 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-2-${day2Sched}`,
+          attempt: 2,
+          scheduledDate: day1Sched,
+          rescheduledTo: day2Sched,
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${day1Sched}) passed without delivery. Automatically rescheduled to ${day2Sched} (Day 2 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+      ];
+
+      if (
+        d.scheduledFor !== day2Sched ||
+        !d.rescheduled ||
+        d.rescheduleCount !== 2 ||
+        d.returnToHub ||
+        d.stage !== STAGE.TO_DELIVER ||
+        d.attempts.length !== 2 ||
+        d.attempts[1]?.rescheduleDay !== 2
+      ) {
+        d.scheduledFor = day2Sched;
+        d.rescheduled = true;
+        d.rescheduleCount = 2;
+        d.returnToHub = false;
+        d.stage = STAGE.TO_DELIVER;
+        d.attempts = expectedAttempts;
+        d.lastFailure = "Undelivered on scheduled date";
+        itemChanged = true;
+        parcelStatusUpdates.push({ id: d.parcel_id, txn: d.transaction_number, status: "Rescheduled" });
+      }
+    } else if (elapsedDays === 3) {
+      const day1Sched = addDaysIso(initialDate, 1);
+      const day2Sched = addDaysIso(initialDate, 2);
+      const day3Sched = addDaysIso(initialDate, 3);
+      const expectedAttempts = [
+        {
+          id: `att-${d.parcel_id}-auto-1-${day1Sched}`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: day1Sched,
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${day1Sched} (Day 1 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-2-${day2Sched}`,
+          attempt: 2,
+          scheduledDate: day1Sched,
+          rescheduledTo: day2Sched,
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${day1Sched}) passed without delivery. Automatically rescheduled to ${day2Sched} (Day 2 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-3-${day3Sched}`,
+          attempt: 3,
+          scheduledDate: day2Sched,
+          rescheduledTo: day3Sched,
+          rescheduleDay: 3,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${day2Sched}) passed without delivery. Automatically rescheduled to ${day3Sched} (Day 3 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+      ];
+
+      if (
+        d.scheduledFor !== day3Sched ||
+        !d.rescheduled ||
+        d.rescheduleCount !== 3 ||
+        d.returnToHub ||
+        d.stage !== STAGE.TO_DELIVER ||
+        d.attempts.length !== 3 ||
+        d.attempts[2]?.rescheduleDay !== 3
+      ) {
+        d.scheduledFor = day3Sched;
+        d.rescheduled = true;
+        d.rescheduleCount = 3;
+        d.returnToHub = false;
+        d.stage = STAGE.TO_DELIVER;
+        d.attempts = expectedAttempts;
+        d.lastFailure = "Undelivered on scheduled date";
+        itemChanged = true;
+        parcelStatusUpdates.push({ id: d.parcel_id, txn: d.transaction_number, status: "Rescheduled" });
+      }
+    } else {
+      // elapsedDays > 3: Natapos na ang buong 3-day rescheduling period -> Return to Hub
+      const day1Sched = addDaysIso(initialDate, 1);
+      const day2Sched = addDaysIso(initialDate, 2);
+      const day3Sched = addDaysIso(initialDate, 3);
+      const expectedAttempts = [
+        {
+          id: `att-${d.parcel_id}-auto-1-${day1Sched}`,
+          attempt: 1,
+          scheduledDate: initialDate,
+          rescheduledTo: day1Sched,
+          rescheduleDay: 1,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${initialDate}) passed without delivery. Automatically rescheduled to ${day1Sched} (Day 1 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-2-${day2Sched}`,
+          attempt: 2,
+          scheduledDate: day1Sched,
+          rescheduledTo: day2Sched,
+          rescheduleDay: 2,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${day1Sched}) passed without delivery. Automatically rescheduled to ${day2Sched} (Day 2 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-3-${day3Sched}`,
+          attempt: 3,
+          scheduledDate: day2Sched,
+          rescheduledTo: day3Sched,
+          rescheduleDay: 3,
+          reason: "Undelivered on scheduled date",
+          note: `Scheduled delivery date (${day2Sched}) passed without delivery. Automatically rescheduled to ${day3Sched} (Day 3 of ${MAX_RESCHEDULES}).`,
+          auto: true,
+          outcome: "rescheduled",
+        },
+        {
+          id: `att-${d.parcel_id}-auto-rth`,
+          attempt: 4,
+          scheduledDate: day3Sched,
+          rescheduledTo: null,
+          rescheduleDay: 3,
+          reason: "Undelivered after 3-day rescheduling period",
+          note: `Parcel remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling period. Automatically marked as Return to Hub.`,
+          auto: true,
+          outcome: "return_to_hub",
+        },
+      ];
+
+      if (!d.returnToHub || d.stage !== STAGE.RETURN_TO_HUB || d.attempts.length !== 4) {
+        d.stage = STAGE.RETURN_TO_HUB;
+        d.returnToHub = true;
+        d.returnToHubAt = d.returnToHubAt || Date.now();
+        d.doneAt = d.doneAt || Date.now();
+        d.rescheduled = true;
+        d.rescheduleCount = 3;
+        d.reason = "Undelivered after 3-day rescheduling period";
+        d.lastFailure = "Undelivered after 3-day rescheduling period";
+        d.attempts = expectedAttempts;
+        itemChanged = true;
+
+        pendingCoordinatorNotifs.push({
+          id: `rth-${d.parcel_id}`,
+          kind: "delivery",
+          icon: "fa-warehouse",
+          tone: "red",
+          title: `Return to Hub: ${d.transaction_number || d.parcel_id}`,
+          text: `${d.receiver || "Customer"} (${d.seller || "Seller"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling limit and must be returned to the hub.`,
+          read: false,
+          to: "/notifications",
+        });
+        parcelStatusUpdates.push({ id: d.parcel_id, txn: d.transaction_number, status: "Return to Hub" });
       }
     }
 
@@ -535,6 +694,17 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
           matchedLocalIndices.add(idx);
           const existing = myExisting[idx];
 
+          const isDelivered =
+            mapped.stage === STAGE.DELIVERED || existing.stage === STAGE.DELIVERED;
+          const isReturnToHub =
+            !isDelivered &&
+            (mapped.returnToHub || (existing.returnToHub && Number(mapped.rescheduleCount || 0) >= MAX_RESCHEDULES));
+
+          const safeDoneAt =
+            mapped.doneAt ||
+            existing.doneAt ||
+            (isDelivered ? Date.now() : null);
+
           return {
             ...existing,
             ...mapped,
@@ -547,16 +717,12 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
             seller: mapped.seller || cleanField(existing.seller),
             proof: mapped.proof || existing.proof || "",
             note: mapped.note || existing.note || "",
-            attempts: mapped.attempts.length >= (existing.attempts?.length || 0) ? mapped.attempts : existing.attempts || [],
-            rescheduleCount: Math.max(mapped.rescheduleCount, Number(existing.rescheduleCount || 0)),
-            rescheduled: mapped.rescheduled || Boolean(existing.rescheduled),
-            returnToHub: mapped.returnToHub || Boolean(existing.returnToHub),
-            stage:
-              mapped.stage === STAGE.DELIVERED || existing.stage === STAGE.DELIVERED
-                ? STAGE.DELIVERED
-                : mapped.returnToHub || existing.returnToHub || mapped.stage === STAGE.RETURN_TO_HUB
-                ? STAGE.RETURN_TO_HUB
-                : mapped.stage,
+            doneAt: safeDoneAt,
+            attempts: mapped.attempts?.length > 0 ? mapped.attempts : existing.attempts || [],
+            rescheduleCount: mapped.rescheduleCount !== undefined ? mapped.rescheduleCount : Number(existing.rescheduleCount || 0),
+            rescheduled: mapped.rescheduled !== undefined ? mapped.rescheduled : Boolean(existing.rescheduled),
+            returnToHub: isReturnToHub,
+            stage: isDelivered ? STAGE.DELIVERED : isReturnToHub ? STAGE.RETURN_TO_HUB : STAGE.TO_DELIVER,
           };
         });
 

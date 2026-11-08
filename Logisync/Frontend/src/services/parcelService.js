@@ -65,11 +65,17 @@ export const enrichParcel = (p) => {
 
   if (d) {
     let status = next.status;
-    if (d.stage === STAGE.DELIVERED) {
+    const reschedCount = Math.max(Number(d.rescheduleCount || 0), Number(next.rescheduleCount || 0));
+    const isDelivered = d.stage === STAGE.DELIVERED || next.status === "DELIVERED";
+    const isRth =
+      !isDelivered &&
+      ((d.returnToHub || d.stage === STAGE.RETURN_TO_HUB || next.returnToHub) && reschedCount >= 3);
+
+    if (isDelivered) {
       status = "DELIVERED";
-    } else if (d.returnToHub || d.stage === STAGE.RETURN_TO_HUB) {
+    } else if (isRth) {
       status = "RETURN_TO_HUB";
-    } else if (d.rescheduled && d.stage === STAGE.TO_DELIVER) {
+    } else if ((d.rescheduled || next.rescheduled) && (d.stage === STAGE.TO_DELIVER || next.status === "RESCHEDULED")) {
       status = "RESCHEDULED";
     } else if (d.stage === STAGE.TO_DELIVER) {
       status = "OUT_FOR_DELIVERY";
@@ -82,11 +88,11 @@ export const enrichParcel = (p) => {
       status,
       rescheduled: Boolean(d.rescheduled || next.rescheduled),
       scheduledFor: d.scheduledFor || next.scheduledFor || null,
-      rescheduleCount: Math.max(Number(d.rescheduleCount || 0), Number(next.rescheduleCount || 0)),
-      maxReschedules: Number(d.maxReschedules || 3),
+      rescheduleCount: reschedCount,
+      maxReschedules: 3,
       attempts: Array.isArray(d.attempts) && d.attempts.length >= dbAttempts.length ? d.attempts : dbAttempts,
       lastFailure: d.lastFailure || d.reason || next.lastFailure || "",
-      returnToHub: Boolean(d.returnToHub || d.stage === STAGE.RETURN_TO_HUB || next.returnToHub),
+      returnToHub: isRth,
       returnCoordinated: Boolean(d.returnCoordinated || next.returnCoordinated),
       returnNote: d.returnNote || next.returnNote || "",
       deliveryRecord: d,
