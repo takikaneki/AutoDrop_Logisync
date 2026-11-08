@@ -18,3 +18,4 @@ router.patch("/mark-read", authenticateToken, authorizeRoles("coordinator"), mar
 router.patch("/:id", authenticateToken, authorizeRoles("coordinator"), updateComplaint);
 
 module.exports = router;
+
