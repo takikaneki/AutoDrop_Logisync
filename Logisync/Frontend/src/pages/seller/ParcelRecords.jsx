@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import Pagination from "../../components/Pagination.jsx";
-import { EmptyState } from "../../components/ui.jsx";
+import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
 import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../../components/styles.js";
@@ -181,7 +181,12 @@ export default function ParcelRecords() {
                 return (
                   <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
                     <td className={`${td} whitespace-nowrap font-mono text-[12px]`}>{p.parcel_id}</td>
-                    <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || "—"}</td>
+                    <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
+                      <span className="inline-flex items-center gap-1.5 flex-wrap">
+                        <span>{p.transaction_number || "—"}</span>
+                        {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                      </span>
+                    </td>
                     <td className={td}>
                       <strong className="block text-[14px] text-[#333] dark:text-[#f1eeeb]">{p.receiver_name}</strong>
                       <span className="block text-[12px] text-[#aaa]">{p.receiver_contact || "—"}</span>
@@ -270,9 +275,12 @@ export default function ParcelRecords() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <span className="block font-mono text-[11px] text-[#999]">{p.parcel_id}</span>
-                      <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                        #{p.transaction_number || p.parcel_id}
-                      </strong>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                          #{p.transaction_number || p.parcel_id}
+                        </strong>
+                        {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                      </div>
                     </div>
                     <StatusBadge status={p.status} />
                   </div>

@@ -2,28 +2,50 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
-import { EmptyState } from "../../components/ui.jsx";
+import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { LoadingRow, Notice, PanelLink, PanelTitle, StatCard, StatGrid } from "../../components/portal.jsx";
 import { panel, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
 import DashboardShortcuts from "../../components/dashboard/DashboardShortcuts.jsx";
-import { listParcels } from "../../services/parcelService.js";
+import { listParcels, confirmReturnedParcel } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
+import { toast } from "../../store/toast.js";
 
 export default function SellerDashboard() {
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const refreshParcels = () => {
     listParcels()
       .then(setParcels)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    refreshParcels();
   }, []);
+
+  const handleSellerConfirmReceipt = async (parcelId) => {
+    try {
+      await confirmReturnedParcel(parcelId);
+      toast("Receipt of returned parcel confirmed.");
+      refreshParcels();
+    } catch (err) {
+      toast(err.message || "Failed to confirm receipt.", "error");
+    }
+  };
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
   const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED", "RETURN_TO_HUB"].includes(p.status));
+  const rtsParcels = parcels.filter(
+    (p) =>
+      p.returnToHub ||
+      p.status === "RETURN_TO_HUB" ||
+      p.status === "RETURNED" ||
+      Boolean(p.rts_status)
+  );
 
   const v = (n) => (loading ? "…" : n);
   const link = (p) => `/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`;
@@ -74,6 +96,93 @@ export default function SellerDashboard() {
         </div>
       </section>
 
+      {/* RETURNED PARCELS (RTS) TRACKING */}
+      <section className="mb-7 max-[820px]:mb-4">
+        <div className={`${panel} p-[30px] max-[600px]:p-4`}>
+          <PanelTitle icon="fa-boxes-packing">
+            Returned Parcels Tracking (Return to Sender)
+          </PanelTitle>
+          <p className="mb-4 text-xs text-[#777] dark:text-[#b8b0a8]">
+            Monitor returned parcels across the 4 RTS stages: Return to Hub, Hub Arrival Verification, RTS In Transit, and Returned to Seller.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 max-[768px]:grid-cols-1 mb-5">
+            <div className="rounded-xl border border-purple-200 bg-purple-50/70 p-4 dark:border-purple-800/40 dark:bg-purple-900/20">
+              <small className="block text-xs font-semibold text-purple-700 dark:text-purple-300">
+                <i className="fa-solid fa-warehouse mr-1.5" /> For Return (Hub)
+              </small>
+              <strong className="mt-1 block text-2xl font-bold text-purple-900 dark:text-purple-100">
+                {v(rtsParcels.filter((p) => !p.rts_status || p.rts_status === "RETURN_TO_HUB" || p.rts_status === "HUB_VERIFIED").length)}
+              </strong>
+              <span className="text-[11px] text-purple-600/80">Pending/verified at hub</span>
+            </div>
+
+            <div className="rounded-xl border border-orange-200 bg-orange-50/70 p-4 dark:border-orange-800/40 dark:bg-orange-900/20">
+              <small className="block text-xs font-semibold text-orange-700 dark:text-orange-300">
+                <i className="fa-solid fa-truck-fast mr-1.5" /> RTS – In Transit
+              </small>
+              <strong className="mt-1 block text-2xl font-bold text-orange-900 dark:text-orange-100">
+                {v(rtsParcels.filter((p) => p.rts_status === "RTS_IN_TRANSIT").length)}
+              </strong>
+              <span className="text-[11px] text-orange-600/80">On delivery back to you</span>
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-800/40 dark:bg-emerald-900/20">
+              <small className="block text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                <i className="fa-solid fa-circle-check mr-1.5" /> Returned to Seller
+              </small>
+              <strong className="mt-1 block text-2xl font-bold text-emerald-900 dark:text-emerald-100">
+                {v(rtsParcels.filter((p) => p.rts_status === "RETURNED_TO_SELLER" || p.status === "RETURNED").length)}
+              </strong>
+              <span className="text-[11px] text-emerald-600/80">Received &amp; completed</span>
+            </div>
+          </div>
+
+          {rtsParcels.length === 0 ? (
+            <p className="py-6 text-center text-sm text-[#999]">{loading ? "" : "No returned parcels at this time."}</p>
+          ) : (
+            <div className="space-y-3">
+              {rtsParcels.slice(0, 5).map((p) => {
+                const isCod = p.is_cod || p.payment_method === "COD";
+                const canConfirm = p.rts_status === "RTS_IN_TRANSIT";
+                return (
+                  <div key={p.parcel_id} className="rounded-xl border border-[#edf0f4] p-4 flex flex-wrap items-center justify-between gap-3 dark:border-night-line">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link to={link(p)} className="font-bold text-brand hover:underline">
+                          {p.transaction_number || p.parcel_id}
+                        </Link>
+                        {isCod && <CodBadge />}
+                        <StatusBadge status={p.rts_status === "RETURNED_TO_SELLER" || p.status === "RETURNED" ? "Returned to Seller" : p.rts_status === "RTS_IN_TRANSIT" ? "RTS – In Transit" : p.rts_status === "HUB_VERIFIED" ? "Hub Verified" : "Return to Hub"} />
+                      </div>
+                      <p className="text-xs text-[#777] mt-1 dark:text-[#b8b0a8]">
+                        Customer: <strong>{p.receiver_name}</strong> · Reason: {p.last_failure || "Return to Hub"}
+                      </p>
+                    </div>
+
+                    <div>
+                      {canConfirm ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSellerConfirmReceipt(p.parcel_id)}
+                          className="rounded-lg bg-[#29945a] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#217a49]"
+                        >
+                          <i className="fa-solid fa-box-open mr-1.5" /> Confirm Receipt
+                        </button>
+                      ) : (
+                        <Link to={link(p)} className="text-xs font-semibold text-brand hover:underline">
+                          Track Details →
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* RECENT PARCELS */}
       <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
         <PanelTitle icon="fa-box" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
@@ -94,7 +203,12 @@ export default function SellerDashboard() {
                 <tbody>
                   {parcels.slice(0, 5).map((p) => (
                     <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || p.parcel_id}</td>
+                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
+                        <span className="inline-flex items-center gap-1.5 flex-wrap">
+                          <span>{p.transaction_number || p.parcel_id}</span>
+                          {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                        </span>
+                      </td>
                       <td className={td}>{p.receiver_name}</td>
                       <td className={td}>{p.contents || "—"}</td>
                       <td className={td}>
@@ -127,9 +241,12 @@ export default function SellerDashboard() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <Link to={link(p)} className="block truncate text-[14px] font-bold text-brand hover:underline">
-                        {p.transaction_number || p.parcel_id}
-                      </Link>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link to={link(p)} className="block truncate text-[14px] font-bold text-brand hover:underline">
+                          {p.transaction_number || p.parcel_id}
+                        </Link>
+                        {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                      </div>
                       <span className="block truncate text-[13px] font-medium text-[#333] dark:text-[#f1eeeb]">{p.receiver_name}</span>
                     </div>
                     <StatusBadge status={p.status} />

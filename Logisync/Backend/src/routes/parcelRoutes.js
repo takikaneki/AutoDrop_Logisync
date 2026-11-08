@@ -17,7 +17,14 @@ const {
   verifyParcel,
   rejectParcel,
   requestReupload,
-  streamVideo
+  streamVideo,
+  coordinatorHubVerify,
+  coordinatorRtsDispatch,
+  sellerConfirmReturned,
+  reportRiderIncident,
+  listRiderIncidents,
+  confirmRiderIncident,
+  actionRiderIncident
 } = require("../controllers/parcelController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 const { uploadVideo: uploadVideoMiddleware } = require("../middleware/upload");
@@ -95,6 +102,56 @@ router.get("/videos/:videoId",
   authenticateToken,
   authorizeRoles("coordinator"),
   streamVideo
+);
+
+// Return to Sender (RTS) Workflow
+router.post("/coordinator/:parcelId/hub-verify",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  coordinatorHubVerify
+);
+
+router.post("/coordinator/:parcelId/rts-dispatch",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  coordinatorRtsDispatch
+);
+
+router.post("/seller/:parcelId/confirm-returned",
+  authenticateToken,
+  authorizeRoles("seller", "coordinator"),
+  sellerConfirmReturned
+);
+
+// Rider Incidents & Delivery Hold
+router.post("/rider/incidents",
+  authenticateToken,
+  authorizeRoles("rider"),
+  reportRiderIncident
+);
+
+router.get("/rider/incidents",
+  authenticateToken,
+  authorizeRoles("rider"),
+  listRiderIncidents
+);
+
+router.get("/coordinator/incidents",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  listRiderIncidents
+);
+
+router.post("/coordinator/incidents/:incidentId/confirm",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  confirmRiderIncident
+);
+
+router.post("/coordinator/incidents/:incidentId/action",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  actionRiderIncident
 );
 
 module.exports = router;

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import Pagination from "../../components/Pagination.jsx";
-import { EmptyState } from "../../components/ui.jsx";
+import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, panel, td, th } from "../../components/styles.js";
 import { getUser } from "../../api.js";
 import { createStore } from "../../store/createStore.js";
@@ -419,7 +419,10 @@ export default function RiderParcels() {
                     return (
                       <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
                         <td className={`${td} whitespace-nowrap`}>
-                          <strong className="block text-[#333] dark:text-[#f1eeeb]">{p.transaction_number || p.parcel_id}</strong>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <strong className="text-[#333] dark:text-[#f1eeeb]">{p.transaction_number || p.parcel_id}</strong>
+                            {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                          </div>
                           {p.contents && String(p.contents).trim() !== "-" && String(p.contents).trim() !== "—" && (
                             <span className="text-[12px] text-[#aaa]">{p.contents}</span>
                           )}
@@ -474,9 +477,12 @@ export default function RiderParcels() {
                   <article key={p.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                          {p.transaction_number || p.parcel_id}
-                        </strong>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                            {p.transaction_number || p.parcel_id}
+                          </strong>
+                          {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                        </div>
                         {validContents && <span className="block text-[12px] text-[#888]">{validContents}</span>}
                       </div>
                       <span className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${cls}`}>

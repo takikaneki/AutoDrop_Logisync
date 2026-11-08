@@ -19,8 +19,16 @@ const STATUS = {
   Rescheduled: { label: "Rescheduled", cls: amber },
   RETURN_TO_HUB: { label: "Return to Hub", cls: purple },
   "Return to Hub": { label: "Return to Hub", cls: purple },
+  HUB_VERIFIED: { label: "Hub Verified", cls: purple },
+  "Hub Verified": { label: "Hub Verified", cls: purple },
+  RTS_IN_TRANSIT: { label: "RTS – In Transit", cls: orange },
+  "RTS – In Transit": { label: "RTS – In Transit", cls: orange },
+  "RTS In Transit": { label: "RTS – In Transit", cls: orange },
+  DELIVERY_HOLD: { label: "Delivery Hold", cls: amber },
+  "Delivery Hold": { label: "Delivery Hold", cls: amber },
   RETURNED_TO_SELLER: { label: "Returned to Seller", cls: blue },
   "Returned to Seller": { label: "Returned to Seller", cls: blue },
+  RETURNED: { label: "Returned to Seller", cls: blue },
   DELIVERED: { label: "Delivered", cls: green },
   Delivered: { label: "Delivered", cls: green },
   FAILED: { label: "Failed Delivery", cls: red },
@@ -33,16 +41,33 @@ export function getParcelStatus(parcel) {
   if (!parcel) return "In Transit";
   const status = String(parcel.delivery_status || "").toLowerCase();
   const parcelStatus = String(parcel.status || "").toLowerCase();
+  const rtsStatus = String(parcel.rts_status || "").toLowerCase();
 
-  if (parcel.returnCoordinated || status === "returned_to_seller" || parcelStatus === "returned to seller") {
+  if (
+    rtsStatus === "returned_to_seller" ||
+    status === "returned_to_seller" ||
+    parcelStatus === "returned" ||
+    parcelStatus === "returned to seller" ||
+    parcel.returnCoordinated
+  ) {
     return "Returned to Seller";
+  }
+  if (rtsStatus === "rts_in_transit" || status === "rts_in_transit") {
+    return "RTS – In Transit";
+  }
+  if (rtsStatus === "hub_verified" || status === "hub_verified") {
+    return "Hub Verified";
+  }
+  if (parcel.delivery_hold) {
+    return "Delivery Hold";
   }
   if (
     parcel.returnToHub ||
     status === "return_to_hub" ||
     status === "return to hub" ||
     parcelStatus === "return_to_hub" ||
-    parcelStatus === "return to hub"
+    parcelStatus === "return to hub" ||
+    rtsStatus === "return_to_hub"
   ) {
     return "Return to Hub";
   }

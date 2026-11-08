@@ -70,9 +70,11 @@ export const STAGE = {
 };
 
 export const FAIL_REASONS = [
+  "Recipient Refused Parcel",
+  "Wrong Recipient / Unknown Consignee",
+  "Refused COD Payment",
   "Recipient not home",
   "Wrong or incomplete address",
-  "Recipient refused the parcel",
   "Cannot contact the recipient",
   "Parcel damaged",
   "Other",
@@ -142,6 +144,16 @@ export function syncAutomaticReschedules() {
 
     // Huwag pakialaman ang mga na-deliver na
     if (d.stage === STAGE.DELIVERED) {
+      return raw;
+    }
+
+    // Huwag i-reschedule kung may delivery hold (dahil sa incident)
+    if (d.delivery_hold || d.deliveryHold) {
+      return raw;
+    }
+
+    // Huwag pakialaman kung nasa RTS stage na
+    if (d.rts_status && d.rts_status !== "RETURN_TO_HUB") {
       return raw;
     }
 
@@ -491,6 +503,11 @@ function mapServerParcelToDelivery(row, riderId) {
     returnToHubAt: row.return_to_hub_at ? new Date(row.return_to_hub_at).getTime() : isReturnToHub ? doneMs : null,
     returnCoordinated: Boolean(row.return_coordinated),
     returnNote: cleanField(row.return_note),
+    is_cod: Boolean(row.is_cod || String(row.payment_method || "").toUpperCase() === "COD"),
+    payment_method: Boolean(row.is_cod || String(row.payment_method || "").toUpperCase() === "COD") ? "COD" : "NON_COD",
+    rts_status: row.rts_status || null,
+    delivery_hold: Boolean(row.delivery_hold),
+    delivery_hold_reason: cleanField(row.delivery_hold_reason),
     reason: cleanField(row.last_failure || row.delivery_note),
     lastFailure: cleanField(row.last_failure || row.delivery_note),
     note: cleanField(row.delivery_note),

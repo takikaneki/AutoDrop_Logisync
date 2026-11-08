@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
-import { EmptyState, StatusBadge } from "../components/ui.jsx";
+import { EmptyState, StatusBadge, CodBadge } from "../components/ui.jsx";
 import { btnGhost, btnPrimary, inputCls, panel } from "../components/styles.js";
 import {
   decideDiscreetHandling,
   getByTransaction,
   getCoordinatorParcel,
+  hubVerifyParcel,
+  rtsDispatchParcel,
+  confirmReturnedParcel,
 } from "../services/parcelService.js";
+import { getUser } from "../api.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDay } from "../utils/format.js";
 import { coordinateReturn } from "../store/failedDeliveries.js";
@@ -58,6 +62,52 @@ export default function ParcelDetails() {
   const [error, setError] = useState("");
   const [discreetRemarks, setDiscreetRemarks] = useState("");
   const [discreetBusy, setDiscreetBusy] = useState(false);
+  const [rtsBusy, setRtsBusy] = useState(false);
+  const user = getUser();
+  const isCoordinator = user?.role === "coordinator";
+  const isSeller = user?.role === "seller";
+
+  const handleHubVerify = async () => {
+    if (!parcel?.parcel_id) return;
+    setRtsBusy(true);
+    try {
+      await hubVerifyParcel(parcel.parcel_id);
+      toast("Parcel marked as Hub Verified.", "success");
+      await load();
+    } catch (err) {
+      toast(err.message || "Failed to verify hub arrival.", "error");
+    } finally {
+      setRtsBusy(false);
+    }
+  };
+
+  const handleRtsDispatch = async () => {
+    if (!parcel?.parcel_id) return;
+    setRtsBusy(true);
+    try {
+      await rtsDispatchParcel(parcel.parcel_id);
+      toast("Parcel dispatched towards seller (RTS In Transit).", "success");
+      await load();
+    } catch (err) {
+      toast(err.message || "Failed to dispatch RTS parcel.", "error");
+    } finally {
+      setRtsBusy(false);
+    }
+  };
+
+  const handleConfirmReturned = async () => {
+    if (!parcel?.parcel_id) return;
+    setRtsBusy(true);
+    try {
+      await confirmReturnedParcel(parcel.parcel_id, user?.name || "Seller");
+      toast("Receipt of returned parcel confirmed.", "success");
+      await load();
+    } catch (err) {
+      toast(err.message || "Failed to confirm receipt.", "error");
+    } finally {
+      setRtsBusy(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -135,15 +185,25 @@ export default function ParcelDetails() {
       : parcel.content_category
     : "Unspecified";
 
+  const isCod = Boolean(parcel?.is_cod || String(parcel?.payment_method || "").toUpperCase() === "COD");
+  const rtsStage = parcel?.rts_status || (parcel?.returnToHub ? "RETURN_TO_HUB" : null);
+
   const fields = [
     ["Parcel ID", parcel?.parcel_id || parcel?.id],
     ["Transaction Number", parcel?.transaction_number],
+    ["Payment Method", isCod ? "Cash on Delivery (COD)" : "Prepaid (Non-COD)"],
     ["Parcel Status", parcel?.status],
     ["Seller Name", parcel?.seller_name || parcel?.seller?.name],
     ["Assigned Rider Name", parcel?.rider_name || parcel?.assigned_rider_name || parcel?.rider?.name || parcel?.deliveryRecord?.rider_name],
     ["Parcel Creation Date", dateValue(parcel?.created_at)],
     ["Verification Status", verification],
     ["Delivery Status", delivery],
+    ...(parcel?.delivery_hold
+      ? [["Delivery Hold", `Active (${parcel.delivery_hold_reason || "Incident reported"})`]]
+      : []),
+    ...(rtsStage
+      ? [["RTS Workflow Stage", rtsStage === "RETURNED_TO_SELLER" ? "Stage 4: Returned to Seller" : rtsStage === "RTS_IN_TRANSIT" ? "Stage 3: RTS In Transit" : rtsStage === "HUB_VERIFIED" ? "Stage 2: Hub Verified" : "Stage 1: Return to Hub"]]
+      : []),
     ...(parcel?.scheduledFor && !parcel?.returnToHub
       ? [
           [
@@ -157,7 +217,16 @@ export default function ParcelDetails() {
   return (
     <>
       <Topbar
-        title={loading ? "Parcel Details" : `Parcel ${parcel?.parcel_id || parcel?.transaction_number || "Details"}`}
+        title={
+          loading ? (
+            "Parcel Details"
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <span>Parcel {parcel?.parcel_id || parcel?.transaction_number || "Details"}</span>
+              {isCod && <CodBadge />}
+            </span>
+          )
+        }
         subtitle="Parcel record, declared content category, discreet handling verification, and delivery history."
       >
         <Link to="/parcels" className={btnGhost}>
@@ -194,27 +263,147 @@ export default function ParcelDetails() {
             </section>
           )}
 
-          {parcel?.returnToHub && (
+          {parcel?.delivery_hold && (
+            <section
+              role="alert"
+              className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-900 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-200"
+            >
+              <h2 className="flex items-center gap-2 text-[16px] font-bold">
+                <i className="fa-solid fa-hand text-amber-600" />
+                Temporary Delivery Hold Active
+              </h2>
+              <p className="mt-1 text-[13.5px] leading-relaxed">
+                This parcel is currently held due to a reported rider incident ({parcel.delivery_hold_reason || "Accident/Breakdown"}). The 3-day delivery rescheduling counter is paused and will not consume days while on hold.
+              </p>
+            </section>
+          )}
+
+          {(parcel?.returnToHub || parcel?.rts_status || parcel?.status === "RETURNED") && (
             <section className="rounded-2xl border border-[#d8b4fe] bg-[#faf7ff] p-5 dark:border-[#5b21b6] dark:bg-[#221933]">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-[16px] font-bold text-[#6d28d9] dark:text-[#c4b5fd]">
-                    <i className="fa-solid fa-warehouse mr-2" />
-                    Return to Hub — Maximum 3-Day Rescheduling Limit Reached
+                  <h2 className="text-[17px] font-bold text-[#6d28d9] dark:text-[#c4b5fd]">
+                    <i className="fa-solid fa-boxes-packing mr-2" />
+                    Return to Sender (RTS) Workflow — 4 Stages
                   </h2>
                   <p className="mt-1 text-[13px] text-[#666] dark:text-[#d1c9c2]">
-                    This parcel remained undelivered after 3 rescheduled delivery days ({parcel.lastFailure || "undelivered"}) and has been removed from the rider&apos;s pending deliveries.
+                    Tracking returned parcel through Return to Hub, Hub Arrival Verification, RTS Dispatch, and Seller Receipt.
                   </p>
                 </div>
-                {parcel.returnCoordinated ? (
-                  <span className="rounded-full bg-[#eaf8ef] px-3.5 py-1.5 text-[12.5px] font-bold text-[#29945a]">
-                    <i className="fa-solid fa-circle-check mr-1.5" /> Return to Seller Coordinated
-                  </span>
-                ) : (
-                  <button onClick={handleCoordinateReturn} className={btnPrimary}>
-                    <i className="fa-solid fa-rotate-left" /> Coordinate Return to Seller
-                  </button>
-                )}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isCoordinator && (!parcel.rts_status || parcel.rts_status === "RETURN_TO_HUB") && (
+                    <button
+                      type="button"
+                      disabled={rtsBusy}
+                      onClick={handleHubVerify}
+                      className="rounded-lg bg-[#7c3aed] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#6d28d9] disabled:opacity-50"
+                    >
+                      <i className="fa-solid fa-circle-check mr-1.5" /> Verify Hub Arrival
+                    </button>
+                  )}
+
+                  {isCoordinator && parcel.rts_status === "HUB_VERIFIED" && (
+                    <button
+                      type="button"
+                      disabled={rtsBusy}
+                      onClick={handleRtsDispatch}
+                      className="rounded-lg bg-[#ea580c] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#c2410c] disabled:opacity-50"
+                    >
+                      <i className="fa-solid fa-truck-fast mr-1.5" /> Dispatch to Seller (RTS In Transit)
+                    </button>
+                  )}
+
+                  {(isSeller || isCoordinator) && parcel.rts_status === "RTS_IN_TRANSIT" && (
+                    <button
+                      type="button"
+                      disabled={rtsBusy}
+                      onClick={handleConfirmReturned}
+                      className="rounded-lg bg-[#29945a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#217a49] disabled:opacity-50"
+                    >
+                      <i className="fa-solid fa-box-open mr-1.5" /> Confirm Receipt (Returned to Seller)
+                    </button>
+                  )}
+
+                  {parcel.rts_status === "RETURNED_TO_SELLER" && (
+                    <span className="rounded-full bg-[#eaf8ef] px-3.5 py-1.5 text-[12.5px] font-bold text-[#29945a]">
+                      <i className="fa-solid fa-circle-check mr-1.5" /> Returned to Seller
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 4-Stage Visual Progress Bar */}
+              <div className="mt-5 grid grid-cols-4 gap-2 text-center text-xs max-[768px]:grid-cols-2 max-[480px]:grid-cols-1">
+                {/* Stage 1: Return to Hub */}
+                <div
+                  className={`rounded-xl border p-3 ${
+                    parcel.returnToHub || parcel.rts_status
+                      ? "border-[#7c3aed]/40 bg-white font-bold text-[#7c3aed] shadow-sm dark:bg-night-panel dark:text-[#c4b5fd]"
+                      : "border-gray-200 bg-gray-50 text-gray-400 dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <div className="text-[14px] mb-1">
+                    <i className="fa-solid fa-warehouse mr-1" /> Stage 1
+                  </div>
+                  <div>Return to Hub</div>
+                  <small className="block mt-1 font-normal opacity-75">
+                    {parcel.return_to_hub_at ? dateValue(parcel.return_to_hub_at) : "Rider Initiated"}
+                  </small>
+                </div>
+
+                {/* Stage 2: Hub Verification */}
+                <div
+                  className={`rounded-xl border p-3 ${
+                    ["HUB_VERIFIED", "RTS_IN_TRANSIT", "RETURNED_TO_SELLER"].includes(parcel.rts_status)
+                      ? "border-[#7c3aed]/40 bg-white font-bold text-[#7c3aed] shadow-sm dark:bg-night-panel dark:text-[#c4b5fd]"
+                      : "border-gray-200 bg-gray-50 text-gray-400 dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <div className="text-[14px] mb-1">
+                    <i className="fa-solid fa-qrcode mr-1" /> Stage 2
+                  </div>
+                  <div>Hub Verification</div>
+                  <small className="block mt-1 font-normal opacity-75">
+                    {parcel.hub_verified_at ? dateValue(parcel.hub_verified_at) : "Pending Hub Arrival"}
+                  </small>
+                </div>
+
+                {/* Stage 3: RTS In Transit */}
+                <div
+                  className={`rounded-xl border p-3 ${
+                    ["RTS_IN_TRANSIT", "RETURNED_TO_SELLER"].includes(parcel.rts_status)
+                      ? "border-[#ea580c]/40 bg-white font-bold text-[#ea580c] shadow-sm dark:bg-night-panel dark:text-[#ff9858]"
+                      : "border-gray-200 bg-gray-50 text-gray-400 dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <div className="text-[14px] mb-1">
+                    <i className="fa-solid fa-truck-fast mr-1" /> Stage 3
+                  </div>
+                  <div>RTS In Transit</div>
+                  <small className="block mt-1 font-normal opacity-75">
+                    {parcel.rts_dispatched_at ? dateValue(parcel.rts_dispatched_at) : "Dispatched to Seller"}
+                  </small>
+                </div>
+
+                {/* Stage 4: Returned to Seller */}
+                <div
+                  className={`rounded-xl border p-3 ${
+                    parcel.rts_status === "RETURNED_TO_SELLER" || parcel.status === "RETURNED"
+                      ? "border-[#29945a]/40 bg-white font-bold text-[#29945a] shadow-sm dark:bg-night-panel dark:text-[#52c686]"
+                      : "border-gray-200 bg-gray-50 text-gray-400 dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <div className="text-[14px] mb-1">
+                    <i className="fa-solid fa-circle-check mr-1" /> Stage 4
+                  </div>
+                  <div>Returned to Seller</div>
+                  <small className="block mt-1 font-normal opacity-75">
+                    {parcel.returned_to_seller_at
+                      ? `Received by ${parcel.returned_received_by || "Seller"}`
+                      : "Pending Seller Receipt"}
+                  </small>
+                </div>
               </div>
             </section>
           )}

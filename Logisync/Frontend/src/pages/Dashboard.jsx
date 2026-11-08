@@ -2,12 +2,18 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Topbar from "../components/Topbar.jsx";
-import { StatusBadge } from "../components/ui.jsx";
+import { EmptyState, Modal, StatusBadge } from "../components/ui.jsx";
 import { StatCard, StatGrid } from "../components/portal.jsx";
 import DashboardShortcuts from "../components/dashboard/DashboardShortcuts.jsx";
 import RecentActivity from "../components/audit/RecentActivity.jsx";
-import { inputCls } from "../components/styles.js";
-import { listParcels } from "../services/parcelService.js";
+import { btnGhost, btnPrimary, inputCls } from "../components/styles.js";
+import {
+  listParcels,
+  fetchIncidents,
+  confirmIncident,
+  actionIncident,
+} from "../services/parcelService.js";
+import { toast } from "../store/toast.js";
 import { parcelStats } from "../utils/stats.js";
 import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
@@ -45,6 +51,56 @@ export default function Dashboard() {
       .catch(() => {})
       .finally(() => setLoadingStats(false));
   }, []);
+
+  const [incidents, setIncidents] = useState([]);
+  const [incidentActionTarget, setIncidentActionTarget] = useState(null);
+  const [actionType, setActionType] = useState("resume"); // resume | reschedule | extend_hold
+  const [actionBusy, setActionBusy] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [actionNotes, setActionNotes] = useState("");
+
+  const loadIncidents = () => {
+    fetchIncidents("coordinator")
+      .then((data) => setIncidents(Array.isArray(data?.incidents) ? data.incidents : []))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadIncidents();
+  }, []);
+
+  const handleConfirmIncident = async (incidentId) => {
+    try {
+      await confirmIncident(incidentId);
+      toast("Incident confirmed. Affected rider parcels are placed on delivery hold.", "info");
+      loadIncidents();
+      listParcels().then(setReal).catch(() => {});
+    } catch (e) {
+      toast(e.message || "Failed to confirm incident", "error");
+    }
+  };
+
+  const handleActionIncident = async () => {
+    if (!incidentActionTarget) return;
+    setActionBusy(true);
+    try {
+      await actionIncident(incidentActionTarget.incident_id, {
+        action: actionType,
+        notes: actionNotes,
+        new_date: rescheduleDate,
+        extend_hours: 24,
+      });
+      toast(`Action '${actionType}' applied to incident.`, "success");
+      setIncidentActionTarget(null);
+      loadIncidents();
+      listParcels().then(setReal).catch(() => {});
+    } catch (e) {
+      toast(e.message || "Failed to execute action", "error");
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
   const stats = parcelStats(real);
   const v = (n) => (loadingStats ? "…" : n);
   const countStatus = (s) => real.filter((p) => p.status === s).length;
@@ -81,6 +137,115 @@ export default function Dashboard() {
         <StatCard label="Verified Parcels" value={v(stats.pending)} icon="fa-circle-check" tone="green" to="/verification?status=VERIFIED" />
         <StatCard label="Failed / Return to Hub" value={v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length || stats.delivered)} icon="fa-warehouse" tone="red" to="/parcels?status=Failed%20/%20Return%20to%20Hub" />
       </StatGrid>
+
+      {/* RIDER INCIDENT MANAGEMENT / DELIVERY HOLD */}
+      {incidents.filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED").length > 0 && (
+        <section className="mb-7 rounded-2xl border border-[#fed7aa] bg-[#fffaf5] p-6 dark:border-[#7c2d12] dark:bg-[#2b1810]">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="text-[18px] font-bold text-[#c2410c] dark:text-[#fb923c] flex items-center gap-2">
+              <i className="fa-solid fa-triangle-exclamation" /> Active Rider Incidents & Delivery Holds
+            </h2>
+            <span className="rounded-full bg-[#ea580c] px-3 py-1 text-xs font-bold text-white">
+              {incidents.filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED").length} active
+            </span>
+          </div>
+          <div className="space-y-3">
+            {incidents
+              .filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED")
+              .map((inc) => (
+                <div
+                  key={inc.incident_id}
+                  className="rounded-xl border border-[#fed7aa] bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-panel"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                          {inc.rider_name || `Rider #${inc.rider_id}`}
+                        </strong>
+                        <span className="rounded bg-[#ffedd5] px-2 py-0.5 text-xs font-semibold text-[#c2410c]">
+                          {inc.incident_type}
+                        </span>
+                        <span className={`rounded px-2 py-0.5 text-xs font-bold ${
+                          inc.status === "CONFIRMED"
+                            ? "bg-[#eaf8ef] text-[#1f7f4a]"
+                            : "bg-[#fef3c7] text-[#92400e]"
+                        }`}>
+                          {inc.status === "CONFIRMED" ? "Hold Confirmed" : "Reported — Awaiting Confirmation"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-[#555] dark:text-[#cbd5e1]">{inc.description}</p>
+                      <small className="text-xs text-[#999]">{formatDate(inc.created_at)}</small>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {inc.status === "REPORTED" && (
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmIncident(inc.incident_id)}
+                          className="rounded-lg bg-[#ea580c] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#c2410c]"
+                        >
+                          <i className="fa-solid fa-pause-circle mr-1" /> Confirm Hold
+                        </button>
+                      )}
+                      {inc.status === "CONFIRMED" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIncidentActionTarget(inc);
+                            setActionType("resume");
+                            setActionNotes("");
+                          }}
+                          className="rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1d4ed8]"
+                        >
+                          <i className="fa-solid fa-sliders mr-1" /> Take Action
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </section>
+      )}
+
+      {/* RTS MONITORING SUMMARY */}
+      <section className="mb-7 rounded-2xl border border-[#e5e8ee] bg-white p-5 dark:border-night-line dark:bg-night-panel">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="text-[17px] font-bold text-[#27364f] dark:text-[#f1eeeb] flex items-center gap-2">
+            <i className="fa-solid fa-truck-ramp-box text-brand" /> Return to Sender (RTS) 4-Stage Monitoring
+          </h2>
+          <Link to="/parcels?status=Failed%20/%20Return%20to%20Hub" className="text-xs font-bold text-brand hover:underline">
+            View All Return Parcels →
+          </Link>
+        </div>
+        <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[500px]:grid-cols-1 text-center">
+          <div className="rounded-xl border border-[#ede9fe] bg-[#f5f3ff] p-3.5 dark:border-night-line dark:bg-night-head">
+            <span className="block text-xs font-bold uppercase text-[#7c3aed]">Stage 1 · Return to Hub</span>
+            <strong className="mt-1 block text-2xl font-bold text-[#6d28d9] dark:text-[#c4b5fd]">
+              {v(real.filter((p) => p.status === "RETURN_TO_HUB" || p.rts_status === "RETURN_TO_HUB" || p.returnToHub).length)}
+            </strong>
+          </div>
+          <div className="rounded-xl border border-[#cffafe] bg-[#ecfeff] p-3.5 dark:border-night-line dark:bg-night-head">
+            <span className="block text-xs font-bold uppercase text-[#0e7490]">Stage 2 · Hub Verified</span>
+            <strong className="mt-1 block text-2xl font-bold text-[#0891b2] dark:text-[#67e8f9]">
+              {v(real.filter((p) => p.status === "HUB_VERIFIED" || p.rts_status === "HUB_VERIFIED").length)}
+            </strong>
+          </div>
+          <div className="rounded-xl border border-[#fef3c7] bg-[#fffbeb] p-3.5 dark:border-night-line dark:bg-night-head">
+            <span className="block text-xs font-bold uppercase text-[#b45309]">Stage 3 · RTS In Transit</span>
+            <strong className="mt-1 block text-2xl font-bold text-[#d97706] dark:text-[#fde68a]">
+              {v(real.filter((p) => p.status === "RTS_IN_TRANSIT" || p.rts_status === "RTS_IN_TRANSIT").length)}
+            </strong>
+          </div>
+          <div className="rounded-xl border border-[#dcfce7] bg-[#f0fdf4] p-3.5 dark:border-night-line dark:bg-night-head">
+            <span className="block text-xs font-bold uppercase text-[#15803d]">Stage 4 · Returned to Seller</span>
+            <strong className="mt-1 block text-2xl font-bold text-[#16a34a] dark:text-[#86efac]">
+              {v(real.filter((p) => p.status === "RETURNED_TO_SELLER" || p.rts_status === "RETURNED_TO_SELLER").length)}
+            </strong>
+          </div>
+        </div>
+      </section>
 
       {/* 2. VERIFICATION + RECENT PARCELS */}
       <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
@@ -281,6 +446,136 @@ export default function Dashboard() {
 
       {/* 4. RECENT ACTIVITY */}
       <div className="mt-6 max-[600px]:mt-4"><RecentActivity to="/audit" /></div>
+
+      {/* Incident Action Modal */}
+      <Modal
+        open={!!incidentActionTarget}
+        onClose={() => setIncidentActionTarget(null)}
+        z="z-[3500]"
+        className="w-full max-w-[500px] p-6 dark:bg-night-panel"
+      >
+        {incidentActionTarget && (
+          <>
+            <button
+              onClick={() => setIncidentActionTarget(null)}
+              aria-label="Close"
+              className="absolute right-3.5 top-3.5 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+            <h2 className="text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb] mb-1">
+              Incident Action — {incidentActionTarget.rider_name || `Rider #${incidentActionTarget.rider_id}`}
+            </h2>
+            <p className="text-xs text-[#888] mb-4">
+              {incidentActionTarget.incident_type}: &ldquo;{incidentActionTarget.description}&rdquo;
+            </p>
+
+            <div className="space-y-3 mb-4">
+              <label className="text-xs font-bold uppercase text-[#888] block">Choose Coordinator Action</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActionType("resume")}
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
+                    actionType === "resume"
+                      ? "border-[#16a34a] bg-[#f0fdf4] text-[#15803d]"
+                      : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <i className="fa-solid fa-play block text-base mb-1" />
+                  Resume Delivery
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActionType("reschedule")}
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
+                    actionType === "reschedule"
+                      ? "border-[#d97706] bg-[#fffbeb] text-[#b45309]"
+                      : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <i className="fa-solid fa-calendar-day block text-base mb-1" />
+                  Reschedule
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActionType("extend_hold")}
+                  className={`rounded-xl border p-2.5 text-xs font-bold text-center transition ${
+                    actionType === "extend_hold"
+                      ? "border-[#7c3aed] bg-[#f5f3ff] text-[#6d28d9]"
+                      : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
+                  }`}
+                >
+                  <i className="fa-solid fa-clock block text-base mb-1" />
+                  Extend Hold
+                </button>
+              </div>
+            </div>
+
+            {actionType === "resume" && (
+              <p className="text-xs text-[#16a34a] bg-[#f0fdf4] p-3 rounded-lg border border-[#bbf7d0] mb-3">
+                <i className="fa-solid fa-circle-check mr-1" />
+                This will lift the temporary delivery hold on this rider&apos;s parcels and resume active delivery.
+              </p>
+            )}
+
+            {actionType === "reschedule" && (
+              <div className="mb-3">
+                <label className="text-xs font-bold text-[#555] dark:text-[#d1c9c2] block mb-1">
+                  Rescheduled Delivery Date (Optional, defaults to tomorrow)
+                </label>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className={inputCls}
+                />
+                <p className="text-[11px] text-[#888] mt-1">
+                  Reschedules parcels safely without consuming rider&apos;s 3-day failure count.
+                </p>
+              </div>
+            )}
+
+            {actionType === "extend_hold" && (
+              <p className="text-xs text-[#7c3aed] bg-[#f5f3ff] p-3 rounded-lg border border-[#ddd6fe] mb-3">
+                <i className="fa-solid fa-pause-circle mr-1" />
+                Keeps parcels on hold for another 24 hours while rider resolves the incident.
+              </p>
+            )}
+
+            <div className="mb-4">
+              <label className="text-xs font-bold text-[#555] dark:text-[#d1c9c2] block mb-1">
+                Coordinator Notes
+              </label>
+              <input
+                type="text"
+                value={actionNotes}
+                onChange={(e) => setActionNotes(e.target.value)}
+                placeholder="Optional notes for this action..."
+                className={inputCls}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIncidentActionTarget(null)}
+                className={btnGhost}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionBusy}
+                onClick={handleActionIncident}
+                className={btnPrimary}
+              >
+                {actionBusy ? "Saving…" : "Apply Action"}
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
     </>
   );
 }

@@ -1034,6 +1034,53 @@ export default function CreateParcel() {
               )}
             </div>
 
+            {/* Payment Method Selector (COD Indicator Only - No Payment Processing / Amount) */}
+            <div className="rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div>
+                  <strong className="text-[14px] text-[#27364f] dark:text-[#f1eeeb] flex items-center gap-1.5">
+                    <i className="fa-solid fa-money-bill-wave text-brand" />
+                    Payment Method Tag
+                  </strong>
+                  <p className="text-[12px] text-[#777] dark:text-[#b8b0a8] mt-0.5">
+                    Identify whether this parcel is Cash on Delivery (COD) or Non-COD (Prepaid).
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-[#ea580c] bg-[#fff0e5] px-2 py-0.5 rounded border border-[#ffcca8]">
+                  Identification Only
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setValues((v) => ({ ...v, is_cod: false, payment_method: "NON_COD" }))}
+                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
+                    !values.is_cod
+                      ? "bg-brand text-white border-brand shadow-sm"
+                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
+                  }`}
+                >
+                  <i className="fa-solid fa-credit-card" /> Non-COD (Prepaid)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setValues((v) => ({ ...v, is_cod: true, payment_method: "COD" }))}
+                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
+                    values.is_cod
+                      ? "bg-[#ea580c] text-white border-[#ea580c] shadow-sm"
+                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
+                  }`}
+                >
+                  <i className="fa-solid fa-hand-holding-dollar" /> Cash on Delivery (COD)
+                </button>
+              </div>
+              <small className="block mt-2 text-[11px] text-[#999]">
+                Riders verify exact COD amounts directly in the Shopee app. No payment amounts are handled inside LogiSync.
+              </small>
+            </div>
+
             {/* Live Flag Warnings */}
             {liveWarnings.length > 0 && (
               <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-[12.5px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">

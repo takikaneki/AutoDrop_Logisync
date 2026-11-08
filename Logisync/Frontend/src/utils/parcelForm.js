@@ -167,6 +167,8 @@ export const EMPTY_PARCEL = {
   other_category_description: "",
   discrete_item: false,
   discreet_reason: "",
+  is_cod: false,
+  payment_method: "NON_COD",
 };
 
 const RESTRICTED_KEYWORDS = [
