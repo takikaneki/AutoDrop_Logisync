@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { EmptyState } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
 import { btnPrimary, inputCls, labelCls, panel, td, textareaCls, th } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { getUser } from "../../api.js";
+import { createComplaint, fetchComplaints } from "../../services/complaintService.js";
 import { addComplaint, useComplaints } from "../../store/records.js";
 import { addNotification } from "../../store/notifications.js";
 import { toast } from "../../store/toast.js";
@@ -40,50 +41,140 @@ const CONFIG = {
 
 const empty = { type: "Complaint", category: "", subject: "", description: "", parcel: "" };
 
+function formatDate(val) {
+  if (!val) return "—";
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return String(val);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 // Pareho para sa Seller at Rider. Napupunta sa Complaints page ng Coordinator, at dito makikita ang sagot niya.
 export default function PortalComplaints() {
   const role = useBase().slice(1);
   const cfg = CONFIG[role];
   const user = getUser();
-  const all = useComplaints();
+  const fallbackComplaints = useComplaints();
+  const [dbComplaints, setDbComplaints] = useState([]);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [openId, setOpenId] = useState(null);
 
-  const mine = all.filter((c) => c.userId === Number(user?.user_id) || (!c.userId && c.from === user?.name && c.role === cfg.role));
+  const loadData = async () => {
+    try {
+      const list = await fetchComplaints();
+      if (Array.isArray(list) && list.length > 0) {
+        setDbComplaints(list);
+      }
+    } catch {
+      // fallback
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const rawList = dbComplaints.length > 0 ? dbComplaints : fallbackComplaints;
+
+  const mine = rawList
+    .map((c) => {
+      const id = c.complaint_id ? `C-${c.complaint_id}` : c.id || "C-0";
+      const subject = c.subject || "Untitled";
+      const kind = c.complaint_kind || c.kind || "Complaint";
+      const date = formatDate(c.created_at || c.date);
+      const status = c.status || "Open";
+      const priority = c.priority || "Medium";
+      const description = c.description || "";
+      const userId = Number(c.user_id || c.userId);
+
+      let notesList = [];
+      if (Array.isArray(c.notes)) {
+        notesList = c.notes;
+      } else if (typeof c.notes === "string" && c.notes.trim()) {
+        try {
+          const parsed = JSON.parse(c.notes);
+          if (Array.isArray(parsed)) notesList = parsed;
+        } catch {
+          notesList = [];
+        }
+      }
+
+      return {
+        ...c,
+        rawId: c.complaint_id || c.id,
+        id,
+        subject,
+        kind,
+        date,
+        status,
+        priority,
+        description,
+        userId,
+        notes: notesList,
+      };
+    })
+    .filter(
+      (c) =>
+        c.userId === Number(user?.user_id) ||
+        (!c.userId && c.from === user?.name && c.role === cfg.role) ||
+        dbComplaints.length > 0 // Backend filters by user_id for seller/rider
+    );
+
   const urgent = form.type === "Urgent Request";
   const categories = cfg.categories[form.type];
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value, ...(k === "type" ? { category: "" } : {}) }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!form.category) return setError("Please choose a category.");
     if (!form.subject.trim()) return setError("Please enter a subject.");
     if (!form.description.trim()) return setError("Please describe the problem or request.");
     setError("");
+    setSubmitting(true);
 
-    // TODO: POST /api/complaints
-    const c = addComplaint({
-      userId: Number(user?.user_id),
-      from: user?.name || cfg.role,
-      role: cfg.role,
-      kind: form.type,
-      category: urgent ? `Urgent · ${form.category}` : form.category,
-      subject: form.subject.trim(),
-      description: form.description.trim() + (form.parcel.trim() ? `\n\nRelated parcel: ${form.parcel.trim()}` : ""),
-      priority: urgent ? "High" : "Medium",
-    });
-    addNotification({
-      kind: role,
-      icon: urgent ? "fa-triangle-exclamation" : "fa-headset",
-      tone: urgent ? "red" : "orange",
-      read: false,
-      title: `${user?.name || cfg.role} sent ${urgent ? "an urgent request" : form.type === "Request" ? "a request" : "a complaint"}`,
-      text: c.subject,
-      to: "/complaints",
-    });
-    setForm(empty);
-    toast(`${c.id} submitted. The coordinator will review it.`);
+    const fullDescription =
+      form.description.trim() + (form.parcel.trim() ? `\n\nRelated parcel: ${form.parcel.trim()}` : "");
+
+    try {
+      await createComplaint({
+        kind: form.type,
+        category: urgent ? `Urgent · ${form.category}` : form.category,
+        subject: form.subject.trim(),
+        description: fullDescription,
+        priority: urgent ? "High" : "Medium",
+      });
+
+      // Also mirror to local fallback store
+      addComplaint({
+        userId: Number(user?.user_id),
+        from: user?.name || cfg.role,
+        role: cfg.role,
+        kind: form.type,
+        category: urgent ? `Urgent · ${form.category}` : form.category,
+        subject: form.subject.trim(),
+        description: fullDescription,
+        priority: urgent ? "High" : "Medium",
+      });
+
+      addNotification({
+        kind: role,
+        icon: urgent ? "fa-triangle-exclamation" : "fa-headset",
+        tone: urgent ? "red" : "orange",
+        read: false,
+        title: `${user?.name || cfg.role} sent ${urgent ? "an urgent request" : form.type === "Request" ? "a request" : "a complaint"}`,
+        text: form.subject.trim(),
+        to: "/complaints",
+      });
+
+      setForm(empty);
+      await loadData();
+      toast("Submitted. The coordinator will review your request.");
+    } catch {
+      toast("Failed to submit complaint. Please check your connection.", "error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const current = openId && mine.find((c) => c.id === openId);

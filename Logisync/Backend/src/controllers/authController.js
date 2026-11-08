@@ -289,7 +289,8 @@ async function me(req, res) {
 
 async function verifyPassword(req, res) {
   try {
-    const currentPassword = req.body?.currentPassword ?? req.body?.password;
+    const currentPassword =
+      req.body?.currentPassword ?? req.body?.password ?? req.body?.oldPassword;
     if (typeof currentPassword !== "string" || !currentPassword) {
       return res.status(400).json({
         success: false,
@@ -298,7 +299,9 @@ async function verifyPassword(req, res) {
     }
 
     const userId = Number(req.user?.user_id);
-    if (!Number.isInteger(userId) || userId <= 0) {
+    const userEmail = req.user?.email ? String(req.user.email).trim().toLowerCase() : null;
+
+    if ((!Number.isInteger(userId) || userId <= 0) && !userEmail) {
       return res.status(401).json({
         success: false,
         message: "Authentication required.",
@@ -306,8 +309,11 @@ async function verifyPassword(req, res) {
     }
 
     const [rows] = await pool.query(
-      `SELECT user_id, password_hash FROM users WHERE user_id = ?`,
-      [userId]
+      `SELECT user_id, password_hash, email
+       FROM users
+       WHERE user_id = ? OR (email IS NOT NULL AND LOWER(email) = ?)
+       LIMIT 1`,
+      [Number.isInteger(userId) && userId > 0 ? userId : -1, userEmail || ""]
     );
 
     if (!rows.length) {
@@ -364,7 +370,9 @@ async function changePassword(req, res) {
     }
 
     const userId = Number(req.user?.user_id);
-    if (!Number.isInteger(userId) || userId <= 0) {
+    const userEmail = req.user?.email ? String(req.user.email).trim().toLowerCase() : null;
+
+    if ((!Number.isInteger(userId) || userId <= 0) && !userEmail) {
       return res.status(401).json({
         success: false,
         message: "Authentication required.",
@@ -374,8 +382,9 @@ async function changePassword(req, res) {
     const [rows] = await pool.query(
       `SELECT user_id, name, email, role, password_hash
        FROM users
-       WHERE user_id = ?`,
-      [userId]
+       WHERE user_id = ? OR (email IS NOT NULL AND LOWER(email) = ?)
+       LIMIT 1`,
+      [Number.isInteger(userId) && userId > 0 ? userId : -1, userEmail || ""]
     );
 
     if (!rows.length) {

@@ -307,8 +307,10 @@ export default function Verification() {
       <StatGrid>
         <button
           type="button"
-          onClick={() => setFilter("VIDEO_SUBMITTED")}
-          className="text-left w-full h-full cursor-pointer focus:outline-none"
+          onClick={() => setFilter((prev) => (prev === "VIDEO_SUBMITTED" ? "ALL" : "VIDEO_SUBMITTED"))}
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+            filter === "VIDEO_SUBMITTED" ? "ring-2 ring-brand/50 shadow-sm" : ""
+          }`}
         >
           <StatCard
             label="Under verification"
@@ -319,8 +321,10 @@ export default function Verification() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter("DISCREET_PENDING")}
-          className="text-left w-full h-full cursor-pointer focus:outline-none"
+          onClick={() => setFilter((prev) => (prev === "DISCREET_PENDING" ? "ALL" : "DISCREET_PENDING"))}
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+            filter === "DISCREET_PENDING" ? "ring-2 ring-brand/50 shadow-sm" : ""
+          }`}
         >
           <StatCard
             label="Discreet requests pending"
@@ -331,8 +335,10 @@ export default function Verification() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter("VERIFIED")}
-          className="text-left w-full h-full cursor-pointer focus:outline-none"
+          onClick={() => setFilter((prev) => (prev === "VERIFIED" ? "ALL" : "VERIFIED"))}
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+            filter === "VERIFIED" ? "ring-2 ring-brand/50 shadow-sm" : ""
+          }`}
         >
           <StatCard
             label="Verified"
@@ -343,8 +349,10 @@ export default function Verification() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter("FLAGGED_DECLARATION")}
-          className="text-left w-full h-full cursor-pointer focus:outline-none"
+          onClick={() => setFilter((prev) => (prev === "FLAGGED_DECLARATION" ? "ALL" : "FLAGGED_DECLARATION"))}
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+            filter === "FLAGGED_DECLARATION" ? "ring-2 ring-brand/50 shadow-sm" : ""
+          }`}
         >
           <StatCard
             label="Flagged / Rejected"

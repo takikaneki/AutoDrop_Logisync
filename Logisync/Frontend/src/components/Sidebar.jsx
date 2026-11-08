@@ -9,6 +9,7 @@ import { toggleDark, usePrefs, useT } from "../store/prefs.js";
 import { useProfile } from "../store/profile.js";
 import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
+import { fetchUnreadComplaintCount } from "../services/complaintService.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 
 const groups = [
@@ -52,13 +53,17 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [unreadConversations, setUnreadConversations] = useState(0);
+  const [unreadComplaints, setUnreadComplaints] = useState(0);
   const currentUserId = Number(getUser()?.user_id);
 
   useEffect(() => {
     let mounted = true;
-    const refreshUnreadConversations = async () => {
+    const refreshCounts = async () => {
       try {
-        const messages = await listMessages();
+        const [messages, complaintCount] = await Promise.all([
+          listMessages().catch(() => []),
+          fetchUnreadComplaintCount().catch(() => 0),
+        ]);
         if (!mounted) return;
         const senders = new Set(
           messages
@@ -66,18 +71,18 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
             .map((m) => Number(m.sender_id))
         );
         setUnreadConversations(senders.size);
+        setUnreadComplaints(Number(complaintCount) || 0);
       } catch {
-        // Keep the sidebar usable if the messages endpoint is temporarily unavailable.
+        // Keep the sidebar usable
       }
     };
-    refreshUnreadConversations();
-    const timer = setInterval(refreshUnreadConversations, 15000);
+    refreshCounts();
+    const timer = setInterval(refreshCounts, 15000);
     return () => { mounted = false; clearInterval(timer); };
   }, [currentUserId]);
 
   const unread = useNotifications().filter((n) => !n.read).length;
-  const openComplaints = useComplaints().filter((c) => c.status === "Open").length;
-  const badges = { messages: unreadConversations, notifications: unread, complaints: openComplaints };
+  const badges = { messages: unreadConversations, notifications: unread, complaints: unreadComplaints };
 
   const navClass = ({ isActive }) =>
     `relative flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] transition ${

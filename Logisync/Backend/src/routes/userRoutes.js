@@ -14,8 +14,13 @@ router.get("/contacts", authenticateToken, listContacts);
 
 // Authenticated user password verification & update
 router.post("/verify-password", authenticateToken, verifyPassword);
+router.post("/password/verify", authenticateToken, verifyPassword);
 router.patch("/password", authenticateToken, changePassword);
 router.post("/password", authenticateToken, changePassword);
+router.put("/password", authenticateToken, changePassword);
+router.post("/change-password", authenticateToken, changePassword);
+router.patch("/change-password", authenticateToken, changePassword);
+router.put("/change-password", authenticateToken, changePassword);
 
 // Accounts: coordinator lang
 router.get("/", authenticateToken, authorizeRoles("coordinator"), listUsers);

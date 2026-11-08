@@ -36,12 +36,21 @@ export default function Notifications() {
       </Topbar>
 
       {/* Announcements (nasa itaas ng notification table). Dito rin ang link papunta sa pamamahala nito. */}
-      <AnnouncementsPanel
-        items={announcements.map((a) => ({ id: a.id, title: a.title, text: a.message, ts: a.ts, toRiders: !!a.toRiders, toSellers: !!a.toSellers }))}
-        limit={3}
-        manageTo="/announcements"
-        heading="Announcements"
-      />
+      {announcements.length > 0 && (
+        <AnnouncementsPanel
+          items={announcements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            text: a.message,
+            ts: a.ts,
+            toRiders: !!a.toRiders,
+            toSellers: !!a.toSellers,
+          }))}
+          limit={3}
+          manageTo="/announcements"
+          heading="Announcements"
+        />
+      )}
 
       {/* Failed deliveries na naghihintay ng desisyon */}
       <FailedDeliveryReview />
