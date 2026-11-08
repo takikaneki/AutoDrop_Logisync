@@ -81,7 +81,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
 
   const navClass = ({ isActive }) =>
     `relative flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] transition ${
-      collapsed ? "min-[801px]:justify-center min-[801px]:px-0 max-[800px]:px-3.5" : "px-3.5"
+      collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
     } ${
       isActive
         ? "bg-brand-soft text-brand font-semibold dark:bg-night-line"
@@ -92,18 +92,18 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-[1px] min-[801px]:hidden"
+          className="fixed inset-0 z-[65] bg-black/40 backdrop-blur-[1px] min-[821px]:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`flex shrink-0 flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line min-[801px]:sticky min-[801px]:top-14 min-[801px]:h-[calc(100vh-56px)] min-[801px]:self-start max-[800px]:fixed max-[800px]:left-0 max-[800px]:top-0 max-[800px]:z-[60] max-[800px]:h-[calc(100vh-64px)] max-[800px]:w-[284px] max-[800px]:max-w-[86vw] max-[800px]:px-4 max-[800px]:shadow-2xl ${
-          collapsed ? "min-[801px]:w-[78px] min-[801px]:px-2.5" : "min-[801px]:w-[250px] min-[801px]:px-[18px]"
-        } ${mobileOpen ? "max-[800px]:translate-x-0" : "max-[800px]:-translate-x-full"}`}
+        className={`flex shrink-0 flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line min-[821px]:sticky min-[821px]:top-14 min-[821px]:h-[calc(100vh-56px)] min-[821px]:self-start max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[288px] max-[820px]:max-w-[86vw] max-[820px]:px-4 max-[820px]:pb-20 max-[820px]:shadow-2xl ${
+          collapsed ? "min-[821px]:w-[78px] min-[821px]:px-2.5" : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:px-3.5 xl:px-[18px]"
+        } ${mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"}`}
       >
-        <div className="mb-3.5 border-b border-[#f1f1f1] px-1 pb-3.5 min-[801px]:hidden dark:border-night-line">
+        <div className="mb-3.5 border-b border-[#f1f1f1] px-1 pb-3.5 min-[821px]:hidden dark:border-night-line">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
               <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-5 w-auto shrink-0 object-contain" />
@@ -161,8 +161,8 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
             <div key={g.title} className="mb-2">
               {collapsed ? (
                 <>
-                  <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line first:hidden max-[800px]:hidden" />
-                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[801px]:hidden">{t(g.title)}</p>
+                  <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line first:hidden max-[820px]:hidden" />
+                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[821px]:hidden">{t(g.title)}</p>
                 </>
               ) : (
                 <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">{t(g.title)}</p>
@@ -172,11 +172,11 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
                 return (
                   <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
                     <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                    <span className={`flex-1 ${collapsed ? "min-[801px]:hidden" : ""}`}>{t(l.label)}</span>
+                    <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{t(l.label)}</span>
                     {count > 0 && (
                       <span
                         className={`min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[11px] font-bold flex items-center justify-center ${
-                          collapsed ? "min-[801px]:absolute min-[801px]:top-1 min-[801px]:right-2" : ""
+                          collapsed ? "min-[821px]:absolute min-[821px]:top-1 min-[821px]:right-2" : ""
                         }`}
                       >
                         {count}
@@ -188,15 +188,15 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
             </div>
           ))}
 
-          {/* Mobile-only Info Links (hidden from top header on small screens) */}
-          <div className="mb-2 min-[901px]:hidden">
+          {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
+          <div className="mb-2 min-[960px]:hidden">
             <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
               {t("Quick Links")}
             </p>
             {infoLinks.map((l) => (
               <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
                 <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                <span className={`flex-1 ${collapsed ? "min-[801px]:hidden" : ""}`}>{t(l.label)}</span>
+                <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{t(l.label)}</span>
               </NavLink>
             ))}
           </div>
@@ -206,7 +206,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
         <div className="mt-auto pt-3 border-t border-[#eee] dark:border-night-line">
           <NavLink to="/settings" onClick={onClose} className={navClass} title={t("Settings")}>
             <i className="fa-solid fa-gear w-5 text-center" />
-            <span className={collapsed ? "min-[801px]:hidden" : ""}>{t("Settings")}</span>
+            <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
           </NavLink>
           <button
             onClick={() => {
@@ -215,11 +215,11 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
             }}
             title={t("Logout")}
             className={`w-full flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line ${
-              collapsed ? "min-[801px]:justify-center min-[801px]:px-0 max-[800px]:px-3.5" : "px-3.5"
+              collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
             }`}
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            <span className={collapsed ? "min-[801px]:hidden" : ""}>{t("Logout")}</span>
+            <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Logout")}</span>
           </button>
         </div>
       </aside>

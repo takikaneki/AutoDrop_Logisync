@@ -1,7 +1,7 @@
 // Isang lugar para sa lahat ng usapan sa Express backend.
 // Ang /api ay naka-proxy ng Vite papunta sa http://127.0.0.1:5000 (tingnan ang vite.config.js).
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 

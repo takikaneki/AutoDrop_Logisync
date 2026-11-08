@@ -23,12 +23,12 @@ export default function Dashboard() {
   const [real, setReal] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 600px)").matches : false
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 820px)").matches : false
   );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 600px)");
+    const mq = window.matchMedia("(max-width: 820px)");
     const onChange = (e) => setIsMobile(e.matches);
     setIsMobile(mq.matches);
     if (mq.addEventListener) {
@@ -112,23 +112,23 @@ export default function Dashboard() {
         </div>
 
         {/* RECENT PARCELS */}
-        <div className={`${panel} min-h-[420px] max-[600px]:min-h-0 overflow-hidden`}>
+        <div className={`${panel} min-h-[420px] max-[820px]:min-h-0 overflow-hidden`}>
           <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
             <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
             <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] border-collapse">
+          <div className="hidden min-[701px]:block overflow-x-auto">
+            <table className="w-full min-w-[580px] border-collapse">
               <thead>
                 <tr className="bg-[#f5f6f9] text-left text-sm text-[#65748b] dark:bg-night-head dark:text-[#ddd7d2]">
                   {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
-                    <th key={h} className="px-5 py-4 font-normal">{h}</th>
+                    <th key={h} className="px-4 py-3.5 font-normal">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {recentRows.map((p) => {
-                  const cell = "px-5 py-4 border-b border-[#edf0f4] dark:border-night-line";
+                  const cell = "px-4 py-3.5 border-b border-[#edf0f4] dark:border-night-line";
                   return (
                     <tr key={p.id} className="text-sm text-[#52627a] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
                       <td className={`${cell} whitespace-nowrap font-semibold text-[#27364f] dark:text-[#f1eeeb]`}>
@@ -143,6 +143,32 @@ export default function Dashboard() {
                 })}
               </tbody>
             </table>
+          </div>
+          <div className="min-[701px]:hidden space-y-2.5">
+            {recentRows.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-[#edf0f4] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    {p.parcelId ? (
+                      <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="block truncate text-[14px] font-bold text-brand hover:underline">
+                        {p.id}
+                      </Link>
+                    ) : (
+                      <strong className="block truncate text-[14px] text-[#27364f] dark:text-[#f1eeeb]">{p.id}</strong>
+                    )}
+                    <span className="text-[12px] text-[#888]">{p.seller} · {p.date}</span>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-[#f1f3f7] pt-2 text-[12px] text-[#777] dark:border-night-line">
+                  <span>Verification</span>
+                  <StatusBadge status={p.verification} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -160,7 +186,7 @@ export default function Dashboard() {
               </select>
             </div>
           </div>
-          <div className="mb-4 flex items-center gap-2 text-[13px] text-[#8a8a8a]">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#8a8a8a]">
             {period === "day" && (
               <button type="button" onClick={() => setWeekOffset((n) => n - 1)} aria-label="Previous week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 dark:border-night-line"><i className="fa-solid fa-chevron-left text-[11px]" /></button>
             )}
@@ -172,14 +198,14 @@ export default function Dashboard() {
               </>
             )}
           </div>
-          <div className="h-[420px] max-[600px]:h-[260px] w-full overflow-hidden">
+          <div className="h-[380px] max-[820px]:h-[260px] w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={series.rows}
                 margin={
                   isMobile
-                    ? { top: 10, right: 8, left: -22, bottom: 4 }
-                    : { top: 5, right: 10, left: -10, bottom: 0 }
+                    ? { top: 10, right: 6, left: -24, bottom: 4 }
+                    : { top: 5, right: 10, left: -12, bottom: 0 }
                 }
               >
                 <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
@@ -194,24 +220,24 @@ export default function Dashboard() {
                   tickLine={false}
                   axisLine={false}
                   tick={isMobile ? { fontSize: 11, fill: "#8a8a8a" } : tick}
-                  width={isMobile ? 44 : 60}
+                  width={isMobile ? 42 : 56}
                   allowDecimals={false}
                 />
                 <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} labelFormatter={(_, items) => items?.[0]?.payload?.full} />
                 <Legend
                   iconType="circle"
-                  iconSize={isMobile ? 9 : 14}
+                  iconSize={isMobile ? 9 : 12}
                   verticalAlign="bottom"
-                  height={isMobile ? 32 : undefined}
+                  height={34}
                   wrapperStyle={
                     isMobile
                       ? { fontSize: 12, paddingTop: 10, lineHeight: "18px" }
-                      : { fontSize: 13 }
+                      : { fontSize: 13, paddingTop: 8 }
                   }
                 />
-                <Bar dataKey="Delivered" stackId="a" fill={COLORS.Delivered} maxBarSize={isMobile ? 28 : undefined} />
-                <Bar dataKey="Pending" stackId="a" fill={COLORS.Pending} maxBarSize={isMobile ? 28 : undefined} />
-                <Bar dataKey="Flagged" stackId="a" fill={COLORS.Flagged} radius={[5, 5, 0, 0]} maxBarSize={isMobile ? 28 : undefined} />
+                <Bar dataKey="Delivered" stackId="a" fill={COLORS.Delivered} maxBarSize={isMobile ? 28 : 48} />
+                <Bar dataKey="Pending" stackId="a" fill={COLORS.Pending} maxBarSize={isMobile ? 28 : 48} />
+                <Bar dataKey="Flagged" stackId="a" fill={COLORS.Flagged} radius={[5, 5, 0, 0]} maxBarSize={isMobile ? 28 : 48} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -219,17 +245,17 @@ export default function Dashboard() {
 
         <div className={panel}>
           <h3 className="mb-5 max-[600px]:mb-2 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
-          <div className="h-[420px] max-[600px]:h-[275px] w-full overflow-hidden">
+          <div className="h-[380px] max-[820px]:h-[275px] w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={isMobile ? { top: 6, right: 6, left: 6, bottom: 6 } : undefined}>
+              <PieChart margin={{ top: 6, right: 6, left: 6, bottom: 6 }}>
                 <Pie
                   data={pie}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
-                  cy={isMobile ? "44%" : "50%"}
-                  innerRadius={isMobile ? 50 : 78}
-                  outerRadius={isMobile ? 80 : 125}
+                  cy="45%"
+                  innerRadius={isMobile ? 50 : 70}
+                  outerRadius={isMobile ? 80 : 112}
                   paddingAngle={2}
                 >
                   {pie.map((s) => <Cell key={s.name} fill={COLORS[s.name]} />)}
@@ -237,14 +263,14 @@ export default function Dashboard() {
                 <Tooltip />
                 <Legend
                   iconType="circle"
-                  iconSize={isMobile ? 9 : 14}
+                  iconSize={isMobile ? 9 : 12}
                   verticalAlign="bottom"
                   align="center"
-                  height={isMobile ? 36 : undefined}
+                  height={36}
                   wrapperStyle={
                     isMobile
                       ? { fontSize: 12, paddingTop: 12, lineHeight: "18px" }
-                      : { fontSize: 13 }
+                      : { fontSize: 13, paddingTop: 10 }
                   }
                 />
               </PieChart>

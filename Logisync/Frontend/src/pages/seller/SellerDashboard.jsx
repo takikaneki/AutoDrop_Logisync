@@ -51,12 +51,12 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 800px)").matches : false
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 820px)").matches : false
   );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(max-width: 800px)");
+    const mq = window.matchMedia("(max-width: 820px)");
     const onChange = (e) => setIsMobile(e.matches);
     setIsMobile(mq.matches);
     if (mq.addEventListener) {
@@ -105,21 +105,21 @@ export default function SellerDashboard() {
       </StatGrid>
 
       {/* STATUS CHART + ACTION NEEDED */}
-      <section className="mb-7 max-[800px]:mb-4 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[800px]:gap-4 max-[1200px]:grid-cols-1">
-        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[800px]:p-4`}>
+      <section className="mb-7 max-[820px]:mb-4 grid grid-cols-[2fr_1fr] items-stretch gap-6 max-[820px]:gap-4 max-[1200px]:grid-cols-1">
+        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[820px]:p-4`}>
           <PanelTitle icon="fa-chart-column">Parcels by Status</PanelTitle>
           {parcels.length === 0 ? (
             <EmptyState title={loading ? "Loading…" : "No data yet"} text={loading ? "" : "Register a parcel to see your status breakdown."} />
           ) : (
             <>
-              <div className="min-h-[280px] max-[800px]:mt-1 max-[800px]:mx-auto max-[800px]:min-h-0 max-[800px]:h-[235px] w-full flex-1 overflow-hidden">
+              <div className="min-h-[280px] max-[820px]:mt-1 max-[820px]:mx-auto max-[820px]:min-h-0 max-[820px]:h-[235px] w-full min-w-0 flex-1 overflow-hidden">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
                     margin={
                       isMobile
-                        ? { top: 12, right: 12, left: 0, bottom: 8 }
-                        : { top: 10, right: 10, left: -20, bottom: 0 }
+                        ? { top: 12, right: 8, left: -4, bottom: 8 }
+                        : { top: 10, right: 10, left: -16, bottom: 4 }
                     }
                   >
                     <CartesianGrid strokeDasharray="4 4" stroke="#e4e8ef" vertical={false} />
@@ -129,15 +129,15 @@ export default function SellerDashboard() {
                       axisLine={{ stroke: "#dfe5ed" }}
                       fontSize={12}
                       interval={0}
-                      height={isMobile ? 42 : 30}
-                      padding={isMobile ? { left: 8, right: 8 } : undefined}
-                      tick={isMobile ? <MobileStatusTick /> : undefined}
+                      height={42}
+                      padding={isMobile ? { left: 6, right: 6 } : { left: 8, right: 8 }}
+                      tick={<MobileStatusTick />}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
-                      fontSize={isMobile ? 11 : 14}
-                      width={isMobile ? 28 : 60}
+                      fontSize={isMobile ? 11 : 13}
+                      width={isMobile ? 28 : 48}
                       tickMargin={isMobile ? 4 : 6}
                       allowDecimals={false}
                     />
@@ -153,7 +153,7 @@ export default function SellerDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-[#f1f3f7] pt-3 text-[12px] text-[#64748b] min-[801px]:hidden dark:border-night-line dark:text-[#d1c9c2]">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-[#f1f3f7] pt-3 text-[12px] text-[#64748b] dark:border-night-line dark:text-[#d1c9c2]">
                 {chartData.map((d) => (
                   <span key={d.name} className="inline-flex items-center gap-1.5">
                     <span
@@ -208,41 +208,65 @@ export default function SellerDashboard() {
         ) : parcels.length === 0 ? (
           <EmptyState title="No parcels yet" text="Register your first parcel to get started." />
         ) : (
-          <div className="overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
-            <table className="w-full min-w-[720px] border-collapse">
-              <thead className="bg-[#fafafa] dark:bg-night-head">
-                <tr>
-                  {["Transaction no.", "Receiver", "Contents", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {parcels.slice(0, 5).map((p) => (
-                  <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                    <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || p.parcel_id}</td>
-                    <td className={td}>{p.receiver_name}</td>
-                    <td className={td}>{p.contents || "—"}</td>
-                    <td className={td}>
-                      <StatusBadge status={p.status} />
-                      {p.rescheduled && !p.returnToHub && p.scheduledFor && (
-                        <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
-                          Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
-                        </span>
-                      )}
-                      {p.returnToHub && (
-                        <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
-                          {p.returnCoordinated ? "Return to Seller Coordinated" : "3-Day Limit Reached"}
-                        </span>
-                      )}
-                    </td>
-                    <td className={`${td} whitespace-nowrap`}>{formatDate(p.updated_at)}</td>
-                    <td className={`${td} text-right`}>
-                      <Link to={link(p)} className="font-semibold text-brand hover:underline">View</Link>
-                    </td>
+          <>
+            <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+              <table className="w-full min-w-[680px] border-collapse">
+                <thead className="bg-[#fafafa] dark:bg-night-head">
+                  <tr>
+                    {["Transaction no.", "Receiver", "Contents", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {parcels.slice(0, 5).map((p) => (
+                    <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
+                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || p.parcel_id}</td>
+                      <td className={td}>{p.receiver_name}</td>
+                      <td className={td}>{p.contents || "—"}</td>
+                      <td className={td}>
+                        <StatusBadge status={p.status} />
+                        {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                          <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
+                            Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
+                          </span>
+                        )}
+                        {p.returnToHub && (
+                          <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
+                            {p.returnCoordinated ? "Return to Seller Coordinated" : "3-Day Limit Reached"}
+                          </span>
+                        )}
+                      </td>
+                      <td className={`${td} whitespace-nowrap`}>{formatDate(p.updated_at)}</td>
+                      <td className={`${td} text-right`}>
+                        <Link to={link(p)} className="font-semibold text-brand hover:underline">View</Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="min-[701px]:hidden space-y-2.5">
+              {parcels.slice(0, 5).map((p) => (
+                <div
+                  key={p.parcel_id}
+                  className="rounded-xl border border-[#edf0f4] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link to={link(p)} className="block truncate text-[14px] font-bold text-brand hover:underline">
+                        {p.transaction_number || p.parcel_id}
+                      </Link>
+                      <span className="block truncate text-[13px] font-medium text-[#333] dark:text-[#f1eeeb]">{p.receiver_name}</span>
+                    </div>
+                    <StatusBadge status={p.status} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-[#f1f3f7] pt-2 text-[12px] text-[#888] dark:border-night-line">
+                    <span className="truncate">{p.contents || "Parcel"} · {formatDate(p.updated_at)}</span>
+                    <Link to={link(p)} className="shrink-0 font-semibold text-brand hover:underline">View →</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
 

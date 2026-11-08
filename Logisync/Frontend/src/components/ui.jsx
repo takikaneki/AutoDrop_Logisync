@@ -51,10 +51,10 @@ export function Modal({ open, onClose, children, z = "z-[1000]", className = "" 
   if (!open) return null;
   return (
     <div
-      className={`fixed inset-0 ${z} flex items-center justify-center p-5 bg-[rgba(25,50,79,.35)] backdrop-blur-[3px]`}
+      className={`fixed inset-0 ${z} flex items-center justify-center overflow-y-auto p-3 sm:p-5 bg-[rgba(25,50,79,.35)] backdrop-blur-[3px]`}
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className={`relative bg-white rounded-[20px] shadow-[0_18px_60px_rgba(25,50,79,.2)] ${className}`}>
+      <div className={`relative my-auto max-h-[90dvh] max-w-[calc(100vw-24px)] overflow-y-auto bg-white rounded-[20px] shadow-[0_18px_60px_rgba(25,50,79,.2)] max-[480px]:!p-4 ${className}`}>
         {children}
       </div>
     </div>

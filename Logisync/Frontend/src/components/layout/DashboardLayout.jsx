@@ -35,17 +35,17 @@ export default function DashboardLayout({ role }) {
 
   // Sa maliit na screen, ang menu button ay nagbubukas ng sidebar; sa malaki ay nagko-collapse ito
   const toggle = () => {
-    if (window.matchMedia("(max-width: 800px)").matches) setMobileOpen((v) => !v);
+    if (window.matchMedia("(max-width: 820px)").matches) setMobileOpen((v) => !v);
     else setCollapsed((v) => !v);
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen max-w-[100vw] overflow-x-hidden">
       <PortalHeader role={role} onToggleSidebar={toggle} />
-      <div className="flex items-start">
+      <div className="flex items-start max-w-full">
         <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-        <main className="flex min-h-[calc(100vh-56px)] min-w-0 flex-1 flex-col px-[35px] pt-6 pb-6 max-[800px]:min-h-0 max-[800px]:px-3.5 max-[800px]:pt-3.5 max-[800px]:pb-20 print:p-0">
-          <div className="flex-1">
+        <main className="flex min-h-[calc(100vh-56px)] min-w-0 max-w-full flex-1 flex-col overflow-x-hidden px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 max-[820px]:min-h-0 max-[820px]:px-3.5 max-[820px]:pt-3.5 max-[820px]:pb-24 max-[380px]:px-2.5 print:p-0">
+          <div className="flex-1 min-w-0">
             <Outlet />
           </div>
           <Footer />

@@ -17,20 +17,20 @@ const tones = {
 export function StatCard({ label, value, icon, tone = "orange", to }) {
   const body = (
     <div
-      className={`${panel} flex h-full min-h-[124px] max-[600px]:min-h-[88px] items-center gap-4 max-[600px]:gap-3.5 !px-6 !py-5 max-[600px]:!px-4 max-[600px]:!py-4 transition ${
+      className={`${panel} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 transition ${
         to ? "hover:border-brand/40 hover:shadow-sm active:scale-[0.99]" : ""
       }`}
     >
       <div
-        className={`flex h-[60px] w-[60px] max-[600px]:h-[46px] max-[600px]:w-[46px] shrink-0 items-center justify-center rounded-full text-[24px] max-[600px]:text-[19px] ${tones[tone]}`}
+        className={`flex h-[56px] w-[56px] max-[1280px]:h-[48px] max-[1280px]:w-[48px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-full text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}
       >
         <i className={`fa-solid ${icon}`} />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[15px] max-[600px]:text-[13px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
+        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[14.5px] max-[1280px]:text-[13.5px] max-[480px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
           {label}
         </h3>
-        <h2 className="truncate text-[32px] max-[600px]:text-[24px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
+        <h2 className="truncate text-[30px] max-[1280px]:text-[26px] max-[600px]:text-[22px] max-[480px]:text-[20px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
           {value}
         </h2>
       </div>

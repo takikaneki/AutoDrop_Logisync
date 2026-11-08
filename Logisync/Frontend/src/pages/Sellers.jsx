@@ -248,7 +248,7 @@ export default function Sellers() {
           </select>
         </div>
 
-        <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
           <table className="w-full min-w-[780px] border-collapse">
             <thead className="bg-[#fafafa] dark:bg-night-head">
               <tr>
@@ -330,6 +330,71 @@ export default function Sellers() {
                   : "Try a different search or status filter."
               }
             />
+          )}
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="min-[701px]:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-[13px] text-[#888]">Loading sellers…</div>
+          ) : pageRows.length === 0 ? (
+            <EmptyState
+              icon="fa-store"
+              title="No sellers found"
+              text={
+                sellers.length === 0
+                  ? "No seller accounts have been created yet. Create a Seller account in the Accounts page."
+                  : "Try a different search or status filter."
+              }
+            />
+          ) : (
+            pageRows.map((s) => (
+              <div
+                key={s.userId}
+                className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Avatar initials={s.initials} tone={s.tone} className="h-9 w-9 text-[12px] shrink-0" />
+                    <div className="min-w-0">
+                      <strong className="block truncate text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{s.name}</strong>
+                      <span className="block truncate text-[12px] text-[#888]">{s.shop} · {s.id}</span>
+                    </div>
+                  </div>
+                  <span
+                    className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
+                      tone[s.status]
+                    }`}
+                  >
+                    {s.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-[#f1f3f7] pt-2.5 text-[12.5px] dark:border-night-line">
+                  <span className="text-[#666] dark:text-[#d1c9c2]">
+                    <strong className="text-[#333] dark:text-[#f1eeeb]">{s.counts.total}</strong> parcels
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setViewId(s.userId)}
+                      className="font-bold text-brand hover:underline"
+                    >
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      disabled={updatingId === s.userId}
+                      onClick={() => setConfirm({ seller: s, kind: actionFor(s) })}
+                      className={`font-semibold hover:underline disabled:opacity-50 ${
+                        actionFor(s) === "Suspend" ? "text-[#d94747]" : "text-[#29945a]"
+                      }`}
+                    >
+                      {actionFor(s)}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
         <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />

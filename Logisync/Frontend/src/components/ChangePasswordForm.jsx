@@ -21,6 +21,7 @@ export default function ChangePasswordForm() {
   const [again, setAgain] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [saving, setSaving] = useState(false);
   const s = strength(next);
   const labels = ["Too weak", "Weak", "Fair", "Good", "Strong"];
@@ -29,17 +30,23 @@ export default function ChangePasswordForm() {
   const submit = async (e) => {
     e.preventDefault();
     if (saving) return;
+    setSuccess("");
     if (!cur) return setError("Please enter your current password.");
+    if (!next) return setError("Please enter a new password.");
     if (next.length < 8) return setError("The new password must be at least 8 characters.");
     if (next === cur) return setError("The new password must be different from the current one.");
     if (next !== again) return setError("The new passwords do not match.");
     setError("");
     setSaving(true);
     try {
-      await changePassword(cur, next);
+      const res = await changePassword(cur, next, again);
+      const msg = res?.message || "Password updated successfully.";
       logAction({ category: "Settings", action: "Changed password" });
-      toast("Password updated.");
-      setCur(""); setNext(""); setAgain("");
+      setSuccess(msg);
+      toast(msg);
+      setCur("");
+      setNext("");
+      setAgain("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,7 +61,18 @@ export default function ChangePasswordForm() {
       {fields.map(([l, v, fn, ac], i) => (
         <div key={l} className="mb-5">
           <label className={labelCls} htmlFor={`pw${i}`}>{l}</label>
-          <input id={`pw${i}`} type={show ? "text" : "password"} autoComplete={ac} value={v} onChange={(e) => { fn(e.target.value); setError(""); }} className={inputCls} />
+          <input
+            id={`pw${i}`}
+            type={show ? "text" : "password"}
+            autoComplete={ac}
+            value={v}
+            onChange={(e) => {
+              fn(e.target.value);
+              setError("");
+              setSuccess("");
+            }}
+            className={inputCls}
+          />
           {i === 1 && next && (
             <div className="mt-2">
               <div className="flex gap-1.5">{[1, 2, 3, 4].map((n) => <span key={n} className={`h-1.5 flex-1 rounded-full ${s >= n ? colors[s] : "bg-[#e5e5e5] dark:bg-night-line"}`} />)}</div>
@@ -65,6 +83,7 @@ export default function ChangePasswordForm() {
       ))}
       <label className="flex items-center gap-2 mb-5 text-[13px] text-[#777] cursor-pointer dark:text-[#d1c9c2]"><input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="accent-brand" /> Show passwords</label>
       {error && <p role="alert" className="mb-4 text-[13px] font-semibold text-[#d94747]"><i className="fa-solid fa-circle-exclamation mr-1" />{error}</p>}
+      {success && <p role="status" className="mb-4 text-[13px] font-semibold text-[#29945a]"><i className="fa-solid fa-circle-check mr-1" />{success}</p>}
       <button type="submit" disabled={saving} className={`${btnPrimary} disabled:opacity-60`}><i className="fa-solid fa-key" /> {saving ? "Updating…" : "Update password"}</button>
     </form>
   );

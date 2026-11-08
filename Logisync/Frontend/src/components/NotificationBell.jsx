@@ -57,7 +57,7 @@ export default function NotificationBell() {
         title="Notifications"
         aria-label="Notifications"
         aria-expanded={open}
-        className={`relative w-[40px] h-[40px] rounded-full hover:text-brand ${
+        className={`relative w-[40px] h-[40px] max-[480px]:w-9 max-[480px]:h-9 shrink-0 rounded-full hover:text-brand ${
           open ? "bg-brand-soft text-brand dark:bg-night-line" : "bg-[#f5f5f5] text-[#555] dark:bg-night-line dark:text-[#d1c9c2]"
         }`}
       >
@@ -70,7 +70,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[50px] z-[1500] w-[380px] overflow-hidden rounded-[15px] border border-[#eee] bg-white shadow-[0_18px_50px_rgba(0,0,0,.15)] animate-popup dark:border-night-line dark:bg-night-panel max-[600px]:fixed max-[600px]:left-3 max-[600px]:right-3 max-[600px]:top-[68px] max-[600px]:w-auto">
+        <div className="absolute right-0 top-[50px] z-[1500] w-[380px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[15px] border border-[#eee] bg-white shadow-[0_18px_50px_rgba(0,0,0,.15)] animate-popup dark:border-night-line dark:bg-night-panel max-[600px]:fixed max-[600px]:left-3 max-[600px]:right-3 max-[600px]:top-[62px] max-[600px]:w-auto max-[600px]:max-w-none">
           <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5">
             <div className="flex items-center gap-2">
               <h3 className="text-[15px] font-bold">Notifications</h3>

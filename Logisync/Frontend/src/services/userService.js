@@ -1,4 +1,4 @@
-import { api, getToken, getUser } from "../api.js";
+import { API_BASE_URL, api, getToken, getUser } from "../api.js";
 
 // Accounts (coordinator lang). Walang password hash na ibinabalik ng backend.
 export async function listUsers(role) {
@@ -34,19 +34,21 @@ export async function updateUserVerification(userId, status) {
   });
 }
 
-// Change password.
-// 1) Beripikahin ang current password gamit ang EXISTING na POST /api/auth/login (binabasa lang ang
-//    sagot; hindi ginagamit ang token). Mali ang password -> 401 -> "current password is incorrect".
-// 2) Kapag tama, PATCH /api/auth/password { currentPassword, newPassword }.
-// Hiwalay na fetch (hindi gamit ang api()) para hindi ma-logout ang user kapag 401 ang sagot.
+// Change password para sa Coordinator, Seller, at Rider.
+// Ginagamit ang API_BASE_URL (VITE_API_URL o /api) at ang token ng naka-login na user.
+// Hiwalay na fetch (hindi gamit ang api()) para hindi ma-logout ang user kapag mali ang current password.
 const SERVER_DOWN = "Cannot reach the server. Make sure the backend is running on port 5000.";
 
-async function send(path, method, body, withToken) {
+async function send(path, method, body, withToken = true) {
+  const token = getToken();
   let res;
   try {
-    res = await fetch(`/api${path}`, {
+    res = await fetch(`${API_BASE_URL}${path}`, {
       method,
-      headers: { "Content-Type": "application/json", ...(withToken ? { Authorization: `Bearer ${getToken()}` } : {}) },
+      headers: {
+        "Content-Type": "application/json",
+        ...(withToken && token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(body),
     });
   } catch {
@@ -61,18 +63,76 @@ async function send(path, method, body, withToken) {
   return { res, data };
 }
 
-export async function changePassword(currentPassword, newPassword) {
-  const email = getUser()?.email;
-  if (!email) throw new Error("Please log in again.");
+export async function verifyCurrentPassword(currentPassword) {
+  const user = getUser();
+  const token = getToken();
+  if (!user || !token) throw new Error("Please log in again.");
 
-  // 1. Tama ba ang current password?
-  const check = await send("/auth/login", "POST", { email, password: currentPassword }, false);
-  if (check.res.status === 401) throw new Error("Your current password is incorrect.");
-  if (!check.res.ok) throw new Error(check.data?.message || (check.res.status >= 500 ? SERVER_DOWN : `Could not verify password (${check.res.status}).`));
+  // 1. Subukan ang dedicated POST /auth/verify-password endpoint
+  const verifyRes = await send("/auth/verify-password", "POST", { currentPassword }, true);
+  if (verifyRes.res.ok && verifyRes.data?.success !== false) {
+    return true;
+  }
+  if (verifyRes.res.status === 400 || verifyRes.res.status === 401 || verifyRes.res.status === 403) {
+    throw new Error(verifyRes.data?.message || "Incorrect current password.");
+  }
 
-  // 2. I-save ang bagong password
-  const { res, data } = await send("/auth/password", "PATCH", { currentPassword, newPassword }, true);
-  if (res.status === 404) throw new Error("Your current password is correct, but the server cannot change passwords yet (no password endpoint).");
-  if (!res.ok || data?.success === false) throw new Error(data?.message || `Could not change password (${res.status}).`);
+  // 2. Fallback sa POST /auth/login (may termsAccepted: true) kung hindi pa na-deploy ang bagong route
+  if (verifyRes.res.status === 404 && user.email) {
+    const loginCheck = await send(
+      "/auth/login",
+      "POST",
+      {
+        email: user.email,
+        password: currentPassword,
+        role: user.role,
+        termsAccepted: true,
+      },
+      false
+    );
+    if (loginCheck.res.ok && loginCheck.data?.success !== false) {
+      return true;
+    }
+    if (loginCheck.res.status === 401 || loginCheck.res.status === 400) {
+      throw new Error("Incorrect current password.");
+    }
+    throw new Error(
+      loginCheck.data?.message ||
+        (loginCheck.res.status >= 500 ? SERVER_DOWN : `Could not verify password (${loginCheck.res.status}).`)
+    );
+  }
+
+  throw new Error(
+    verifyRes.data?.message ||
+      (verifyRes.res.status >= 500 ? SERVER_DOWN : `Could not verify password (${verifyRes.res.status}).`)
+  );
+}
+
+export async function changePassword(currentPassword, newPassword, confirmPassword = newPassword) {
+  const user = getUser();
+  const token = getToken();
+  if (!user || !token) throw new Error("Please log in again.");
+
+  // 1. Beripikahin muna ang current password
+  await verifyCurrentPassword(currentPassword);
+
+  // 2. I-save ang bagong password sa database
+  const { res, data } = await send(
+    "/auth/password",
+    "PATCH",
+    { currentPassword, newPassword, confirmPassword },
+    true
+  );
+
+  if (res.status === 400 || res.status === 401 || res.status === 403) {
+    throw new Error(data?.message || "Incorrect current password.");
+  }
+
+  if (!res.ok || data?.success === false) {
+    throw new Error(
+      data?.message || (res.status >= 500 ? SERVER_DOWN : `Could not update password (${res.status}).`)
+    );
+  }
+
   return data;
 }

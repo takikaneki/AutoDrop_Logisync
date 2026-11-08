@@ -141,23 +141,57 @@ export default function PortalComplaints() {
         {mine.length === 0 ? (
           <EmptyState icon="fa-inbox" title="Nothing submitted yet" text="Your complaints and requests will be listed here with the coordinator's response." />
         ) : (
-          <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
-            <table className="w-full min-w-[640px] border-collapse">
-              <thead className="bg-[#fafafa] dark:bg-night-head"><tr>{["Ticket", "Subject", "Type", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
-              <tbody>
-                {mine.map((c) => (
-                  <tr key={c.id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                    <td className={`${td} font-bold text-[#333] dark:text-[#f1eeeb]`}>{c.id}</td>
-                    <td className={`${td} max-w-[260px]`}><span className="line-clamp-2">{c.subject}</span></td>
-                    <td className={td}>{c.kind || "Complaint"}{c.priority === "High" && <span className="ml-1.5 text-[11px] font-bold text-[#d94747]">URGENT</span>}</td>
-                    <td className={`${td} whitespace-nowrap`}>{c.date}</td>
-                    <td className={td}><span className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-semibold ${statusTone[c.status]}`}>{c.status}</span></td>
-                    <td className={`${td} text-right`}><button onClick={() => setOpenId(openId === c.id ? null : c.id)} className="text-[13px] font-semibold text-brand hover:underline">{openId === c.id ? "Hide" : "View"}</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+              <table className="w-full min-w-[640px] border-collapse">
+                <thead className="bg-[#fafafa] dark:bg-night-head"><tr>{["Ticket", "Subject", "Type", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {mine.map((c) => (
+                    <tr key={c.id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
+                      <td className={`${td} font-bold text-[#333] dark:text-[#f1eeeb]`}>{c.id}</td>
+                      <td className={`${td} max-w-[260px]`}><span className="line-clamp-2">{c.subject}</span></td>
+                      <td className={td}>{c.kind || "Complaint"}{c.priority === "High" && <span className="ml-1.5 text-[11px] font-bold text-[#d94747]">URGENT</span>}</td>
+                      <td className={`${td} whitespace-nowrap`}>{c.date}</td>
+                      <td className={td}><span className={`whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-semibold ${statusTone[c.status]}`}>{c.status}</span></td>
+                      <td className={`${td} text-right`}><button onClick={() => setOpenId(openId === c.id ? null : c.id)} className="text-[13px] font-semibold text-brand hover:underline">{openId === c.id ? "Hide" : "View"}</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List */}
+            <div className="min-[701px]:hidden space-y-3">
+              {mine.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[12px] font-bold text-brand">{c.id}</span>
+                      <strong className="block truncate text-[14px] text-[#27364f] dark:text-[#f1eeeb]">{c.subject}</strong>
+                      <span className="text-[11.5px] text-[#888]">{c.kind || "Complaint"} · {c.date}</span>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusTone[c.status]}`}>
+                      {c.status}
+                    </span>
+                  </div>
+                  <div className="mt-2.5 flex items-center justify-between border-t border-[#f1f3f7] pt-2 text-[12px] dark:border-night-line">
+                    {c.priority === "High" ? (
+                      <span className="font-bold text-[#d94747]">URGENT</span>
+                    ) : <span className="text-[#888]">Standard</span>}
+                    <button
+                      onClick={() => setOpenId(openId === c.id ? null : c.id)}
+                      className="font-bold text-brand hover:underline"
+                    >
+                      {openId === c.id ? "Hide details" : "View response →"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {current && (

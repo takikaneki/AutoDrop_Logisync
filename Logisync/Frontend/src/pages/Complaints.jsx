@@ -78,7 +78,7 @@ export default function Complaints() {
           </select>
         </div>
 
-        <div className="w-full overflow-x-auto border border-[#eee] rounded-[10px] dark:border-night-line">
+        <div className="hidden min-[701px]:block w-full overflow-x-auto border border-[#eee] rounded-[10px] dark:border-night-line">
           <table className="w-full min-w-[820px] border-collapse">
             <thead className="bg-[#fafafa] dark:bg-night-head"><tr>{["Ticket", "From", "Subject", "Priority", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
             {loading ? <TableSkeleton rows={6} cols={7} /> : (
@@ -98,6 +98,39 @@ export default function Complaints() {
             )}
           </table>
           {!loading && rows.length === 0 && <EmptyState icon="fa-inbox" title="No complaints found" text="Nothing matches these filters." />}
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="min-[701px]:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-[13px] text-[#888]">Loading complaints…</div>
+          ) : pageRows.length === 0 ? (
+            <EmptyState icon="fa-inbox" title="No complaints found" text="Nothing matches these filters." />
+          ) : (
+            pageRows.map((c) => (
+              <div
+                key={c.id}
+                className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[12px] font-bold text-brand">{c.id}</span>
+                    <strong className="block truncate text-[14.5px] text-[#27364f] dark:text-[#f1eeeb]">{c.subject}</strong>
+                    <span className="text-[12px] text-[#888]">{c.from} ({c.role}) · {c.date}</span>
+                  </div>
+                  <span className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusTone[c.status]}`}>
+                    {c.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-[#f1f3f7] pt-2.5 text-[12.5px] dark:border-night-line">
+                  <span className={`font-semibold ${prioTone[c.priority]}`}>{c.priority} priority</span>
+                  <button onClick={() => setOpenId(c.id)} className="font-bold text-brand hover:underline">
+                    Open Ticket →
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
         <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>

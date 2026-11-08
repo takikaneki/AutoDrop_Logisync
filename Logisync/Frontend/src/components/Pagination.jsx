@@ -10,13 +10,13 @@ export default function Pagination({ page, pageSize, total, onPage }) {
     else if (nums[nums.length - 1] !== "…") nums.push("…");
   }
 
-  const btn = "min-w-[30px] h-[30px] px-2 rounded-md border text-[13px]";
+  const btn = "min-w-[34px] h-[34px] px-2.5 rounded-md border text-[13px]";
   return (
     <div className="flex items-center justify-between mt-[18px] gap-3 flex-wrap max-[600px]:flex-col max-[600px]:items-start">
       <span className="text-[12px] text-[#999]">
         Showing {from}–{to} of {total}
       </span>
-      <div className="flex items-center gap-[5px]">
+      <div className="flex flex-wrap items-center gap-[5px]">
         <button
           disabled={page <= 1}
           onClick={() => onPage(page - 1)}

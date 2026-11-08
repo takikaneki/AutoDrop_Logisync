@@ -287,4 +287,160 @@ async function me(req, res) {
   res.json({ success: true, user: req.user });
 }
 
-module.exports = { register, login, me };
+async function verifyPassword(req, res) {
+  try {
+    const currentPassword = req.body?.currentPassword ?? req.body?.password;
+    if (typeof currentPassword !== "string" || !currentPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter your current password.",
+      });
+    }
+
+    const userId = Number(req.user?.user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT user_id, password_hash FROM users WHERE user_id = ?`,
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    const valid = await bcrypt.compare(currentPassword, rows[0].password_hash);
+    if (!valid) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect current password.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Current password verified.",
+    });
+  } catch (error) {
+    console.error("verifyPassword error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify current password.",
+    });
+  }
+}
+
+async function changePassword(req, res) {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body || {};
+
+    if (typeof currentPassword !== "string" || !currentPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter your current password.",
+      });
+    }
+
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "The new password must be at least 8 characters.",
+      });
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "The new passwords do not match.",
+      });
+    }
+
+    const userId = Number(req.user?.user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required.",
+      });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT user_id, name, email, role, password_hash
+       FROM users
+       WHERE user_id = ?`,
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Account not found.",
+      });
+    }
+
+    const user = rows[0];
+    const valid = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!valid) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect current password.",
+      });
+    }
+
+    const sameAsCurrent =
+      newPassword === currentPassword ||
+      (await bcrypt.compare(newPassword, user.password_hash));
+    if (sameAsCurrent) {
+      return res.status(400).json({
+        success: false,
+        message: "The new password must be different from the current one.",
+      });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      `UPDATE users
+       SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = ?`,
+      [newPasswordHash, user.user_id]
+    );
+
+    try {
+      await pool.query(
+        `INSERT INTO audit_logs
+         (actor_id, actor_name, actor_role, category, action, target, detail)
+         VALUES (?, ?, ?, 'Settings', 'Changed password', ?, ?)`,
+        [
+          user.user_id,
+          user.name,
+          user.role,
+          user.email,
+          "User updated their account password.",
+        ]
+      );
+    } catch {
+      /* non-fatal if audit_logs insert fails */
+    }
+
+    return res.json({
+      success: true,
+      message: "Password updated successfully.",
+    });
+  } catch (error) {
+    console.error("changePassword error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update password.",
+    });
+  }
+}
+
+module.exports = { register, login, me, verifyPassword, changePassword };

@@ -74,45 +74,92 @@ export default function AuditTable({ note }) {
       {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
 
       {!error && (
-        <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
-          <table className="w-full min-w-[760px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
-              <tr>{["When", "Who", "Action", "Target", "Details"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {loading && <tr><td colSpan={5} className={`${td} text-center text-[#999]`}>Loading…</td></tr>}
-              {!loading && data.logs.map((l) => {
+        <>
+          <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            <table className="w-full min-w-[760px] border-collapse">
+              <thead className="bg-[#fafafa] dark:bg-night-head">
+                <tr>{["When", "Who", "Action", "Target", "Details"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {loading && <tr><td colSpan={5} className={`${td} text-center text-[#999]`}>Loading…</td></tr>}
+                {!loading && data.logs.map((l) => {
+                  const m = metaOf(l.category);
+                  return (
+                    <tr
+                      key={l.log_id}
+                      onClick={() => navigate(destinationFor(l))}
+                      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(destinationFor(l)); } }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`Open ${l.category} section for ${l.action}`}
+                      title="Click to open the related section"
+                      className="cursor-pointer text-[#666] hover:bg-[#fffaf7] focus:bg-[#fffaf7] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                    >
+                      <td className={`${td} whitespace-nowrap`}>{new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
+                      <td className={td}>
+                        {Number(l.actor_id) === me ? <strong>You</strong> : l.actor_name}{" "}
+                        <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${ROLE_BADGE[l.actor_role] || ""}`}>{l.actor_role}</span>
+                      </td>
+                      <td className={td}>
+                        <span className="inline-flex items-center gap-2 font-semibold text-[#333] dark:text-[#f1eeeb]">
+                          <i className={`fa-solid ${m.icon} w-4 text-[13px] text-brand`} />{l.action}
+                        </span>
+                      </td>
+                      <td className={`${td} font-mono text-[13px]`}>{l.target || "—"}</td>
+                      <td className={`${td} max-w-[280px]`}>{l.detail || "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {!loading && data.logs.length === 0 && <EmptyState icon="fa-clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
+          </div>
+
+          {/* Mobile Card List */}
+          <div className="min-[701px]:hidden space-y-3">
+            {loading ? (
+              <div className="py-8 text-center text-[13px] text-[#888]">Loading activity…</div>
+            ) : data.logs.length === 0 ? (
+              <EmptyState icon="fa-clipboard-list" title="No log entries" text="Nothing matches your search yet." />
+            ) : (
+              data.logs.map((l) => {
                 const m = metaOf(l.category);
                 return (
-                  <tr
+                  <div
                     key={l.log_id}
                     onClick={() => navigate(destinationFor(l))}
-                    onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(destinationFor(l)); } }}
-                    tabIndex={0}
-                    role="link"
-                    aria-label={`Open ${l.category} section for ${l.action}`}
-                    title="Click to open the related section"
-                    className="cursor-pointer text-[#666] hover:bg-[#fffaf7] focus:bg-[#fffaf7] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                    className="cursor-pointer rounded-xl border border-[#eee] bg-[#fcfcfd] p-3.5 transition active:scale-[0.99] dark:border-night-line dark:bg-night-head"
                   >
-                    <td className={`${td} whitespace-nowrap`}>{new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
-                    <td className={td}>
-                      {Number(l.actor_id) === me ? <strong>You</strong> : l.actor_name}{" "}
-                      <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${ROLE_BADGE[l.actor_role] || ""}`}>{l.actor_role}</span>
-                    </td>
-                    <td className={td}>
-                      <span className="inline-flex items-center gap-2 font-semibold text-[#333] dark:text-[#f1eeeb]">
-                        <i className={`fa-solid ${m.icon} w-4 text-[13px] text-brand`} />{l.action}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                          <i className={`fa-solid ${m.icon} text-brand text-[12px]`} />
+                          {l.action}
+                        </span>
+                        {l.target && l.target !== "—" && (
+                          <span className="block truncate font-mono text-[12px] text-brand mt-0.5">
+                            {l.target}
+                          </span>
+                        )}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${ROLE_BADGE[l.actor_role] || ""}`}>
+                        {Number(l.actor_id) === me ? "You" : l.actor_name || l.actor_role}
                       </span>
-                    </td>
-                    <td className={`${td} font-mono text-[13px]`}>{l.target || "—"}</td>
-                    <td className={`${td} max-w-[280px]`}>{l.detail || "—"}</td>
-                  </tr>
+                    </div>
+                    {l.detail && l.detail !== "—" && (
+                      <p className="mt-1.5 text-[12px] text-[#777] line-clamp-2 dark:text-[#aaa]">
+                        {l.detail}
+                      </p>
+                    )}
+                    <div className="mt-2 text-right text-[11px] text-[#aaa]">
+                      {new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                    </div>
+                  </div>
                 );
-              })}
-            </tbody>
-          </table>
-          {!loading && data.logs.length === 0 && <EmptyState icon="fa-clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
-        </div>
+              })
+            )}
+          </div>
+        </>
       )}
 
       {!error && data.total > 0 && <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onPage={setPage} />}

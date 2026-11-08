@@ -58,7 +58,7 @@ export default function Topbar({ title, subtitle, right, children }) {
   // Dashboard without extra buttons: show clean page heading on mobile, sr-only on desktop
   if (crumbs.length === 1 && !actions) {
     return (
-      <header className="mb-3 min-[801px]:sr-only print:hidden">
+      <header className="mb-3 min-[821px]:sr-only print:hidden">
         <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{label}</h1>
       </header>
     );

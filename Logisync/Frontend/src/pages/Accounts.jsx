@@ -340,46 +340,81 @@ export default function Accounts() {
             </Notice>
           )}
           {!loadError && (
-            <div className="overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
-              <table className="w-full min-w-[520px] border-collapse">
-                <thead className="bg-[#fafafa] dark:bg-night-head">
-                  <tr>
-                    {["Name", "Email", "Role", "Created"].map((h) => (
-                      <th key={h} className={th}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && (
+            <>
+              <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+                <table className="w-full min-w-[520px] border-collapse">
+                  <thead className="bg-[#fafafa] dark:bg-night-head">
                     <tr>
-                      <td colSpan={4} className={`${td} text-center text-[#999]`}>
-                        Loading…
-                      </td>
+                      {["Name", "Email", "Role", "Created"].map((h) => (
+                        <th key={h} className={th}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  )}
-                  {!loading &&
-                    rows.map((u) => (
-                      <tr key={u.user_id}>
-                        <td className={`${td} font-semibold`}>{u.name}</td>
-                        <td className={`${td} break-all`}>{u.email}</td>
-                        <td className={td}>
-                          <span
-                            className={`rounded-full px-3 py-1 text-[12px] font-semibold capitalize ${
-                              ROLE_BADGE[u.role]
-                            }`}
-                          >
-                            {u.role}
-                          </span>
+                  </thead>
+                  <tbody>
+                    {loading && (
+                      <tr>
+                        <td colSpan={4} className={`${td} text-center text-[#999]`}>
+                          Loading…
                         </td>
-                        <td className={`${td} whitespace-nowrap text-[#999]`}>{formatDate(u.created_at)}</td>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
-              {!loading && rows.length === 0 && <EmptyState icon="fa-users" title="No accounts found" />}
-            </div>
+                    )}
+                    {!loading &&
+                      rows.map((u) => (
+                        <tr key={u.user_id}>
+                          <td className={`${td} font-semibold`}>{u.name}</td>
+                          <td className={`${td} break-all`}>{u.email}</td>
+                          <td className={td}>
+                            <span
+                              className={`rounded-full px-3 py-1 text-[12px] font-semibold capitalize ${
+                                ROLE_BADGE[u.role]
+                              }`}
+                            >
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className={`${td} whitespace-nowrap text-[#999]`}>{formatDate(u.created_at)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+                {!loading && rows.length === 0 && <EmptyState icon="fa-users" title="No accounts found" />}
+              </div>
+
+              {/* Mobile Card List */}
+              <div className="min-[701px]:hidden space-y-3">
+                {loading ? (
+                  <div className="py-8 text-center text-[13px] text-[#888]">Loading accounts…</div>
+                ) : rows.length === 0 ? (
+                  <EmptyState icon="fa-users" title="No accounts found" />
+                ) : (
+                  rows.map((u) => (
+                    <div
+                      key={u.user_id}
+                      className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <strong className="block truncate text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{u.name}</strong>
+                          <span className="block break-all text-[12.5px] text-[#777] dark:text-[#aaa]">{u.email}</span>
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${
+                            ROLE_BADGE[u.role]
+                          }`}
+                        >
+                          {u.role}
+                        </span>
+                      </div>
+                      <div className="mt-2 text-right text-[11.5px] text-[#aaa]">
+                        Joined {formatDate(u.created_at)}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </section>
       </div>

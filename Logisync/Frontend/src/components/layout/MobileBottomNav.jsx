@@ -29,7 +29,7 @@ export default function MobileBottomNav({ role = "coordinator", mobileOpen, onTo
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed bottom-0 inset-x-0 z-40 hidden max-[800px]:grid grid-cols-5 h-16 bg-white/95 backdrop-blur-md border-t border-[#eaeaea] px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] print:hidden dark:bg-night-panel/95 dark:border-night-line"
+      className="fixed bottom-0 inset-x-0 z-40 hidden max-[820px]:grid grid-cols-5 h-16 bg-white/95 backdrop-blur-md border-t border-[#eaeaea] px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] print:hidden dark:bg-night-panel/95 dark:border-night-line"
     >
       {links.map((item) => (
         <NavLink

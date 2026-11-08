@@ -5,11 +5,17 @@ const {
   listUsers,
   reviewSeller
 } = require("../controllers/userController");
+const { verifyPassword, changePassword } = require("../controllers/authController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
 router.get("/contacts", authenticateToken, listContacts);
+
+// Authenticated user password verification & update
+router.post("/verify-password", authenticateToken, verifyPassword);
+router.patch("/password", authenticateToken, changePassword);
+router.post("/password", authenticateToken, changePassword);
 
 // Accounts: coordinator lang
 router.get("/", authenticateToken, authorizeRoles("coordinator"), listUsers);

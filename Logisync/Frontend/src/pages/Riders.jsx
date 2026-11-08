@@ -224,7 +224,7 @@ export default function Riders() {
           </select>
         </div>
 
-        <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
           <table className="w-full min-w-[700px] border-collapse">
             <thead className="bg-[#fafafa] dark:bg-night-head">
               <tr>
@@ -299,6 +299,57 @@ export default function Riders() {
                   : "Try a different search, zone, or status filter."
               }
             />
+          )}
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="min-[701px]:hidden space-y-3">
+          {loading ? (
+            <div className="py-8 text-center text-[13px] text-[#888]">Loading riders…</div>
+          ) : pageRows.length === 0 ? (
+            <EmptyState
+              icon="fa-motorcycle"
+              title="No riders found"
+              text={
+                riders.length === 0
+                  ? "No rider accounts have been created yet. Create a Rider account in the Accounts page."
+                  : "Try a different search, zone, or status filter."
+              }
+            />
+          ) : (
+            pageRows.map((r) => (
+              <div
+                key={r.userId}
+                className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <strong className="block text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{r.name}</strong>
+                    <span className="text-[12px] text-[#888]">{r.id} · {r.zone}</span>
+                  </div>
+                  <span
+                    className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      tone[r.status] || tone.Active
+                    }`}
+                  >
+                    {r.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex items-center justify-between border-t border-[#f1f3f7] pt-2.5 text-[12.5px] dark:border-night-line">
+                  <div className="text-[#666] dark:text-[#d1c9c2]">
+                    <span className="font-semibold text-[#333] dark:text-[#f1eeeb]">{r.stats.total}</span> parcels
+                    {r.stats.transit > 0 && <span className="text-brand font-semibold ml-1">({r.stats.transit} active)</span>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setViewId(r.userId)}
+                    className="font-bold text-brand hover:underline"
+                  >
+                    View Details →
+                  </button>
+                </div>
+              </div>
+            ))
           )}
         </div>
         <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
