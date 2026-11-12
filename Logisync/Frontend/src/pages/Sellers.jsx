@@ -569,7 +569,7 @@ export default function Sellers() {
                 )}
               </div>
             </div>
-            <div className="mb-5 grid grid-cols-3 gap-3">
+            <div className="mb-5 grid grid-cols-3 gap-3 max-[520px]:grid-cols-1">
               <div className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head">
                 <small className="block text-[12px] text-[#999]">Total parcels</small>
                 <strong className="text-[20px]">{current.counts.total}</strong>

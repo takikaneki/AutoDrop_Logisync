@@ -426,7 +426,7 @@ export default function CreateParcel() {
                   />
                   {scanned
                     ? "Transaction number scanned from the QR code."
-                    : "Scan the Shopee QR code on the parcel."}
+                    : "Scan with camera, upload a QR image from your device, or type below."}
                 </p>
                 <button type="button" onClick={() => setScanning((v) => !v)} className={btnGhost}>
                   {scanning ? "Close scanner" : scanned ? "Scan again" : "Open scanner"}

@@ -612,7 +612,7 @@ export default function Riders() {
               </div>
             </div>
 
-            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 max-[380px]:grid-cols-1">
               {[
                 ["Assigned", current.stats.total],
                 ["In transit", current.stats.transit],
