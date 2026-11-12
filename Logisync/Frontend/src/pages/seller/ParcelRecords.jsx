@@ -7,7 +7,7 @@ import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
 import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../../components/styles.js";
-import { listParcels } from "../../services/parcelService.js";
+import { listParcels, confirmReturnedParcel } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 import { bucketOf } from "../../utils/stats.js";
@@ -19,8 +19,8 @@ const PENDING = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
 const FILTERS = [
   { key: "NEEDS_VIDEO", label: "Needs Video", icon: "fa-video", tone: "yellow", match: (p) => PENDING.includes(p.status) },
   { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "fa-hourglass-half", tone: "blue", match: (p) => p.status === "VIDEO_SUBMITTED" },
-  { key: "VERIFIED", label: "Verified / In Delivery", icon: "fa-circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) },
-  { key: "RETURN_TO_HUB", label: "Return to Hub / Rejected", icon: "fa-warehouse", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED"].includes(p.status) },
+  { key: "VERIFIED", label: "Verified / In Delivery", icon: "fa-circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) && !p.rts_status && !p.returnToHub },
+  { key: "RETURN_TO_HUB", label: "Return to Hub / RTS", icon: "fa-warehouse", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED", "RETURNED", "RETURNED_TO_SELLER", "RTS_IN_TRANSIT", "HUB_VERIFIED"].includes(p.status) || Boolean(p.rts_status) || Boolean(p.returnToHub) },
 ];
 const BUCKETS = { FLAGGED: "Flagged", PENDING: "Pending", DELIVERED: "Delivered" };
 
@@ -49,6 +49,15 @@ export default function ParcelRecords() {
       .finally(() => setLoading(false));
   };
   useEffect(load, []);
+
+  const handleConfirmReceipt = async (parcelId) => {
+    try {
+      await confirmReturnedParcel(parcelId);
+      load();
+    } catch (e) {
+      setError(e.message || "Failed to confirm receipt of returned parcel.");
+    }
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -223,12 +232,22 @@ export default function ParcelRecords() {
                     </td>
                     <td className={td}>
                       <StatusBadge status={p.status} />
+                      {p.rts_status === "RTS_IN_TRANSIT" && (
+                        <span className="mt-1 block text-[11px] font-semibold text-[#ea580c]">
+                          RTS – In Transit
+                        </span>
+                      )}
+                      {p.rts_status === "HUB_VERIFIED" && (
+                        <span className="mt-1 block text-[11px] font-semibold text-[#7c3aed]">
+                          Hub Verified
+                        </span>
+                      )}
                       {p.rescheduled && !p.returnToHub && p.scheduledFor && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
                           Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
                         </span>
                       )}
-                      {p.returnToHub && (
+                      {p.returnToHub && !p.rts_status && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
                           {p.returnCoordinated ? "Return Coordinated" : "3-Day Limit Reached"}
                         </span>
@@ -236,9 +255,19 @@ export default function ParcelRecords() {
                     </td>
                     <td className={`${td} whitespace-nowrap`}>{formatDate(p.created_at)}</td>
                     <td className={`${td} whitespace-nowrap text-right`}>
-                      <Link to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
-                        {needsVideo ? "Upload video" : "View details"}
-                      </Link>
+                      {p.rts_status === "RTS_IN_TRANSIT" ? (
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmReceipt(p.parcel_id)}
+                          className="rounded-lg bg-[#29945a] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#217a49]"
+                        >
+                          <i className="fa-solid fa-box-open mr-1" /> Confirm Receipt
+                        </button>
+                      ) : (
+                        <Link to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
+                          {needsVideo ? "Upload video" : "View details"}
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 );
@@ -284,13 +313,25 @@ export default function ParcelRecords() {
                     </div>
                     <StatusBadge status={p.status} />
                   </div>
+                  {p.rts_status === "RTS_IN_TRANSIT" && (
+                    <p className="mt-2 rounded-lg bg-orange-50 px-2.5 py-1 text-[12px] font-semibold text-orange-700 dark:bg-orange-950/30 dark:text-orange-300">
+                      <i className="fa-solid fa-truck-fast mr-1" />
+                      RTS – In Transit (On way to Seller)
+                    </p>
+                  )}
+                  {p.rts_status === "HUB_VERIFIED" && (
+                    <p className="mt-2 rounded-lg bg-purple-50 px-2.5 py-1 text-[12px] font-semibold text-purple-700 dark:bg-purple-950/30 dark:text-purple-300">
+                      <i className="fa-solid fa-warehouse mr-1" />
+                      Hub Verified (Pending RTS Dispatch)
+                    </p>
+                  )}
                   {p.rescheduled && !p.returnToHub && p.scheduledFor && (
                     <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
                       <i className="fa-solid fa-calendar-day mr-1" />
                       Rescheduled (Day {p.rescheduleCount || 1}/3) · {formatDay(p.scheduledFor)}
                     </p>
                   )}
-                  {p.returnToHub && (
+                  {p.returnToHub && !p.rts_status && (
                     <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
                       <i className="fa-solid fa-warehouse mr-1" />
                       Return to Hub · {p.returnCoordinated ? "Return to Seller Coordinated" : "Reached 3-Day Reschedule Limit"}
@@ -331,15 +372,25 @@ export default function ParcelRecords() {
                   </div>
                   <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
                     <span className="text-[#999]">{formatDate(p.created_at)}</span>
-                    <Link
-                      to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
-                        needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
-                      }`}
-                    >
-                      <i className={`fa-solid ${needsVideo ? "fa-video" : "fa-arrow-right"}`} />
-                      {needsVideo ? "Upload video" : "View details"}
-                    </Link>
+                    {p.rts_status === "RTS_IN_TRANSIT" ? (
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmReceipt(p.parcel_id)}
+                        className="rounded-lg bg-[#29945a] px-3.5 py-1.5 text-[12px] font-bold text-white transition hover:bg-[#217a49]"
+                      >
+                        <i className="fa-solid fa-box-open mr-1.5" /> Confirm Receipt
+                      </button>
+                    ) : (
+                      <Link
+                        to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
+                          needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
+                        }`}
+                      >
+                        <i className={`fa-solid ${needsVideo ? "fa-video" : "fa-arrow-right"}`} />
+                        {needsVideo ? "Upload video" : "View details"}
+                      </Link>
+                    )}
                   </div>
                 </article>
               );

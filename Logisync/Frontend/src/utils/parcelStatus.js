@@ -47,8 +47,7 @@ export function getParcelStatus(parcel) {
     rtsStatus === "returned_to_seller" ||
     status === "returned_to_seller" ||
     parcelStatus === "returned" ||
-    parcelStatus === "returned to seller" ||
-    parcel.returnCoordinated
+    parcelStatus === "returned to seller"
   ) {
     return "Returned to Seller";
   }

@@ -5,7 +5,7 @@ import ScanPanel from "../../components/qr/ScanPanel.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { DetailList, Notice, PanelTitle, Steps } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../../components/styles.js";
-import { findParcel, getSellerParcel, uploadVideo } from "../../services/parcelService.js";
+import { findParcel, getSellerParcel, uploadVideo, confirmReturnedParcel } from "../../services/parcelService.js";
 import { formatDate, formatDay, formatSize } from "../../utils/format.js";
 
 const MAX_MB = 50;
@@ -42,15 +42,36 @@ function buildSteps({ parcel, videos = [], verification_records: records = [] })
     { ...verifyStep, note: decided && decision ? formatDate(decision.verified_at) : "" },
   ];
 
-  if (isPostVerify && s !== "VERIFIED") {
+  const rts = parcel.rts_status || (parcel.returnToHub ? "RETURN_TO_HUB" : null);
+  if (rts || ["RETURNED", "RETURNED_TO_SELLER", "RTS_IN_TRANSIT", "HUB_VERIFIED", "RETURN_TO_HUB"].includes(s)) {
+    steps.push({
+      label: "Return to Hub (Failed Delivery)",
+      note: parcel.lastFailure || "Failed delivery routed to hub",
+      state: "done",
+    });
+    const isHubDone = ["HUB_VERIFIED", "RTS_IN_TRANSIT", "RETURNED_TO_SELLER"].includes(parcel.rts_status) || s === "RETURNED";
+    steps.push({
+      label: "Hub Arrival Verification",
+      note: parcel.hub_verified_at ? formatDate(parcel.hub_verified_at) : isHubDone ? "Verified at Hub" : "Pending hub arrival",
+      state: isHubDone ? "done" : parcel.rts_status === "RETURN_TO_HUB" || parcel.returnToHub ? "current" : "todo",
+    });
+    const isRtsTransitDone = ["RTS_IN_TRANSIT", "RETURNED_TO_SELLER"].includes(parcel.rts_status) || s === "RETURNED";
+    steps.push({
+      label: "Return to Seller – In Transit",
+      note: parcel.rts_dispatched_at ? formatDate(parcel.rts_dispatched_at) : isRtsTransitDone ? "Dispatched" : "Pending RTS dispatch",
+      state: parcel.rts_status === "RETURNED_TO_SELLER" || s === "RETURNED" ? "done" : parcel.rts_status === "RTS_IN_TRANSIT" ? "current" : "todo",
+    });
+    const isReturnedDone = parcel.rts_status === "RETURNED_TO_SELLER" || s === "RETURNED";
+    steps.push({
+      label: "Returned to Seller (Confirmed)",
+      note: isReturnedDone
+        ? `Received by ${parcel.returned_received_by || "Seller"} (${formatDate(parcel.returned_to_seller_at || parcel.updated_at)})`
+        : "Awaiting Seller receipt confirmation",
+      state: isReturnedDone ? "done" : parcel.rts_status === "RTS_IN_TRANSIT" ? "current" : "todo",
+    });
+  } else if (isPostVerify && s !== "VERIFIED") {
     if (s === "DELIVERED") {
       steps.push({ label: "Delivered to customer", note: "Completed", state: "done" });
-    } else if (s === "RETURN_TO_HUB") {
-      steps.push({
-        label: parcel.returnCoordinated ? "Return to Hub · Coordinated to Seller" : "Return to Hub (3-Day Limit Reached)",
-        note: parcel.lastFailure || "Undelivered after 3 rescheduled days",
-        state: "fail",
-      });
     } else if (s === "RESCHEDULED") {
       steps.push({
         label: `Rescheduled (Day ${parcel.rescheduleCount || 1} of ${parcel.maxReschedules || 3})`,
@@ -77,8 +98,24 @@ export default function ScanUpload() {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [confirmingRts, setConfirmingRts] = useState(false);
   const [success, setSuccess] = useState("");
   const input = useRef(null);
+
+  const handleConfirmReceipt = async () => {
+    if (!data?.parcel?.parcel_id || confirmingRts) return;
+    setConfirmingRts(true);
+    setUploadError("");
+    try {
+      await confirmReturnedParcel(data.parcel.parcel_id);
+      setData(await getSellerParcel(data.parcel.parcel_id));
+      setSuccess("You have confirmed receipt of this returned parcel. Return to Seller workflow completed.");
+    } catch (err) {
+      setUploadError(err.message || "Failed to confirm receipt of returned parcel.");
+    } finally {
+      setConfirmingRts(false);
+    }
+  };
 
   const lookup = async (value) => {
     setLooking(true);
@@ -235,6 +272,40 @@ export default function ScanUpload() {
             </section>
 
             {success && <Notice tone="success" icon="fa-circle-check" role="status">{success}</Notice>}
+
+            {parcel.rts_status === "RTS_IN_TRANSIT" && (
+              <section className="rounded-xl border border-orange-300 bg-orange-50 p-5 text-orange-900 dark:border-orange-800/40 dark:bg-orange-900/20 dark:text-orange-200">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-bold text-base flex items-center gap-2">
+                      <i className="fa-solid fa-truck-fast text-orange-600" />
+                      Return to Seller – In Transit
+                    </h3>
+                    <p className="mt-1 text-xs text-orange-800 dark:text-orange-300">
+                      The hub has dispatched this returned parcel back to you. Please confirm receipt below once you have physically received it.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={confirmingRts}
+                    onClick={handleConfirmReceipt}
+                    className="rounded-lg bg-[#29945a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#217a49] disabled:opacity-50"
+                  >
+                    <i className="fa-solid fa-box-open mr-1.5" /> {confirmingRts ? "Confirming…" : "Confirm Receipt"}
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {(parcel.rts_status === "RETURNED_TO_SELLER" || parcel.status === "RETURNED") && (
+              <Notice tone="success" icon="fa-circle-check">
+                <strong className="block">Returned to Seller — Completed</strong>
+                <p className="mt-0.5">
+                  Receipt confirmed on {formatDate(parcel.returned_to_seller_at || parcel.updated_at)}
+                  {parcel.returned_received_by ? ` by ${parcel.returned_received_by}` : ""}.
+                </p>
+              </Notice>
+            )}
 
             {parcel.returnToHub && (
               <Notice tone="error" icon="fa-warehouse">

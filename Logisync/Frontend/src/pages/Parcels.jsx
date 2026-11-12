@@ -34,6 +34,9 @@ const statusIcons = {
   Rescheduled: "fa-calendar-day",
   Delivered: "fa-check",
   "Return to Hub": "fa-warehouse",
+  "Hub Verified": "fa-warehouse",
+  "RTS – In Transit": "fa-truck-fast",
+  "Returned to Seller": "fa-circle-check",
   "Failed Delivery": "fa-triangle-exclamation",
 };
 
@@ -43,6 +46,9 @@ const STATUS_OPTIONS = [
   "Rescheduled",
   "Delivered",
   "Return to Hub",
+  "Hub Verified",
+  "RTS – In Transit",
+  "Returned to Seller",
   "Failed Delivery",
   "Failed / Return to Hub",
 ];
@@ -64,9 +70,18 @@ function mapParcel(rawParcel, index) {
   const validDate = date && !Number.isNaN(date.getTime());
   const iso = validDate ? date.toISOString().slice(0, 10) : parcel.iso || "";
 
-  let resolvedStatus = STATUS_OPTIONS.includes(parcel.status) ? parcel.status : getParcelStatus(parcel);
-  if (parcel.returnToHub) resolvedStatus = "Return to Hub";
-  else if (parcel.rescheduled && resolvedStatus !== "Delivered") resolvedStatus = "Rescheduled";
+  let resolvedStatus = getParcelStatus(parcel);
+  if (parcel.rts_status === "RETURNED_TO_SELLER" || parcel.status === "RETURNED") {
+    resolvedStatus = "Returned to Seller";
+  } else if (parcel.rts_status === "RTS_IN_TRANSIT") {
+    resolvedStatus = "RTS – In Transit";
+  } else if (parcel.rts_status === "HUB_VERIFIED") {
+    resolvedStatus = "Hub Verified";
+  } else if (parcel.returnToHub || parcel.rts_status === "RETURN_TO_HUB") {
+    resolvedStatus = "Return to Hub";
+  } else if (parcel.rescheduled && resolvedStatus !== "Delivered") {
+    resolvedStatus = "Rescheduled";
+  }
 
   return {
     id: String(parcel.parcel_id ?? parcel.id ?? ""),
