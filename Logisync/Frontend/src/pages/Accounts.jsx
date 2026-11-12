@@ -24,6 +24,8 @@ const EMPTY = {
   shop_name: "",
   zone: "General",
   vehicle: "Motorcycle",
+  agency: "",
+  rider_type: "",
   password: "",
   role: "seller",
 };
@@ -74,6 +76,10 @@ export default function Accounts() {
     });
     if (phoneErr) er.phone = phoneErr;
     if (form.password.length < 8) er.password = "Password must be at least 8 characters.";
+    if (form.role === "rider") {
+      if (!form.agency.trim()) er.agency = "Enter the rider's assigned agency.";
+      if (!form.rider_type) er.rider_type = "Select First Mile (FM) or Last Mile (LM).";
+    }
     setErrors(er);
     return Object.keys(er).length === 0;
   };
@@ -93,6 +99,8 @@ export default function Accounts() {
         shop_name: form.role === "seller" ? form.shop_name.trim() || undefined : undefined,
         zone: form.role === "rider" ? form.zone.trim() || "General" : undefined,
         vehicle: form.role === "rider" ? form.vehicle.trim() || "Motorcycle" : undefined,
+        agency: form.role === "rider" ? form.agency.trim() : undefined,
+        rider_type: form.role === "rider" ? form.rider_type : undefined,
       });
       setCreated({ ...user, password: form.password });
       setUsers((l) => [{ ...user, created_at: user.created_at || new Date().toISOString() }, ...l]);
@@ -204,6 +212,38 @@ export default function Accounts() {
                   autoComplete="off"
                   className={inputCls}
                 />
+              </div>
+            )}
+
+            {form.role === "rider" && (
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="acc-agency" className={labelCls}>
+                    Assigned agency
+                  </label>
+                  <input
+                    id="acc-agency"
+                    type="text"
+                    value={form.agency}
+                    onChange={set("agency")}
+                    maxLength={150}
+                    placeholder="e.g. Test Logistics Agency"
+                    autoComplete="off"
+                    className={inputCls}
+                  />
+                  {errors.agency && <p role="alert" className="mt-1 text-[12px] text-[#d94747]">{errors.agency}</p>}
+                </div>
+                <div>
+                  <label htmlFor="acc-rtype" className={labelCls}>
+                    Rider type
+                  </label>
+                  <select id="acc-rtype" value={form.rider_type} onChange={set("rider_type")} className={inputCls}>
+                    <option value="">Select…</option>
+                    <option value="FM">First Mile (FM)</option>
+                    <option value="LM">Last Mile (LM)</option>
+                  </select>
+                  {errors.rider_type && <p role="alert" className="mt-1 text-[12px] text-[#d94747]">{errors.rider_type}</p>}
+                </div>
               </div>
             )}
 

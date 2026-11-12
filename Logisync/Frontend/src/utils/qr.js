@@ -6,6 +6,12 @@
 // Kapag nakita na ang totoong sample ng QR, dito lang natin aayusin.
 const QUERY_KEYS = ["transaction_number", "transactionNumber", "txn", "tn", "order_id", "id"];
 
+export const TRANSACTION_NUMBER_REGEX = /^SPX\d{9}$/i;
+
+export function isValidTransactionNumber(raw) {
+  return TRANSACTION_NUMBER_REGEX.test(String(raw ?? "").trim());
+}
+
 export function parseTransactionNumber(raw) {
   const text = String(raw ?? "").trim();
   if (!text) return "";
@@ -15,13 +21,18 @@ export function parseTransactionNumber(raw) {
       const url = new URL(text);
       for (const key of QUERY_KEYS) {
         const v = url.searchParams.get(key);
-        if (v && v.trim()) return v.trim();
+        if (v && v.trim()) return v.trim().toUpperCase();
       }
       const last = url.pathname.split("/").filter(Boolean).pop();
-      if (last) return decodeURIComponent(last).trim();
+      if (last) return decodeURIComponent(last).trim().toUpperCase();
     } catch {
       /* hindi valid na URL: gamitin ang buong text */
     }
   }
-  return text;
+
+  // Extract embedded SPX token if present
+  const match = text.match(/\bSPX\d{9}\b/i);
+  if (match) return match[0].toUpperCase();
+
+  return text.toUpperCase();
 }

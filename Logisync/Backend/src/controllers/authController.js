@@ -246,11 +246,30 @@ async function login(req, res) {
       /* non-fatal if audit_logs insert fails */
     }
 
+    // Rider classification (FM / LM) para sa role-based access sa frontend.
+    let riderInfo = {};
+    if (user.role === "rider") {
+      try {
+        const [rr] = await pool.query(
+          "SELECT rider_type, rider_code, agency FROM users WHERE user_id = ?",
+          [user.user_id]
+        );
+        riderInfo = {
+          rider_type: rr[0]?.rider_type || "LM",
+          rider_code: rr[0]?.rider_code || null,
+          agency: rr[0]?.agency || null,
+        };
+      } catch {
+        riderInfo = { rider_type: "LM" };
+      }
+    }
+
     const safeUser = {
       user_id: user.user_id,
       name: user.name,
       email: user.email,
       role: user.role,
+      ...riderInfo,
       terms_accepted: true,
       privacy_accepted: true,
       policy_version: appliedVersion,

@@ -3,7 +3,8 @@ const {
   listContacts,
   createUser,
   listUsers,
-  reviewSeller
+  reviewSeller,
+  updateSellerAccount
 } = require("../controllers/userController");
 const { verifyPassword, changePassword } = require("../controllers/authController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
@@ -38,6 +39,13 @@ router.patch(
   authenticateToken,
   authorizeRoles("coordinator"),
   reviewSeller
+);
+
+router.patch(
+  "/:id/profile",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  updateSellerAccount
 );
 
 module.exports = router;

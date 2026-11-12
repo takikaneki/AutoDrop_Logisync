@@ -5,7 +5,7 @@ import Pagination from "../components/Pagination.jsx";
 import { Avatar, ConfirmDialog, EmptyState, Modal, StatusBadge, TableSkeleton } from "../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../components/styles.js";
-import { listUsers, updateUserVerification } from "../services/userService.js";
+import { createUser, listUsers, updateSeller, updateUserVerification } from "../services/userService.js";
 import { listParcels } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
@@ -14,11 +14,30 @@ import { getParcelStatus } from "../utils/parcelStatus.js";
 
 const tone = {
   Active: "bg-[#eaf8ef] text-[#29945a]",
-  Suspended: "bg-[#fff0f0] text-[#d94747]",
+  Inactive: "bg-[#fff0f0] text-[#d94747]",
 };
 
 const AVATAR_TONES = ["orange", "blue", "green", "purple"];
 const PAGE_SIZE = 8;
+
+const EMPTY_FORM = {
+  userId: null,
+  sellerCode: "",
+  name: "",
+  shop_name: "",
+  email: "",
+  phone: "",
+  pickup_address: "",
+  status: "Active",
+  password: "",
+};
+
+function generateTestPassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "Sel";
+  for (let i = 0; i < 7; i += 1) out += chars[Math.floor(Math.random() * chars.length)];
+  return `${out}#${Math.floor(10 + Math.random() * 90)}`;
+}
 
 function getInitials(name) {
   return (
@@ -76,7 +95,7 @@ export default function Sellers() {
   // Build database-driven seller records with live parcel metrics
   const sellers = useMemo(() => {
     return rawSellers.map((u, idx) => {
-      const sellerCode = `S-${String(u.user_id).padStart(2, "0")}`;
+      const sellerCode = u.seller_code || `SEL-${String(u.user_id).padStart(4, "0")}`;
       const mine = parcels.filter(
         (p) =>
           (p.seller_id != null && Number(p.seller_id) === Number(u.user_id)) ||
@@ -91,11 +110,13 @@ export default function Sellers() {
         (p) => p.verification_status === "VERIFIED" || p.status === "VERIFIED"
       ).length;
 
-      const uiStatus = u.verification_status === "REJECTED" ? "Suspended" : "Active";
+      const uiStatus = u.verification_status === "REJECTED" ? "Inactive" : "Active";
 
       return {
         userId: u.user_id,
         id: sellerCode,
+        pickup: u.pickup_address || "",
+        raw: u,
         name: u.name || "Unnamed Seller",
         shop: u.shop_name || u.name || "Seller Store",
         email: u.email || "—",
@@ -130,24 +151,112 @@ export default function Sellers() {
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const current = viewId != null ? sellers.find((s) => s.userId === viewId) : null;
 
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState(null);
+
+  const setField = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setFormError("");
+  };
+
+  const openCreate = () => {
+    setForm({ ...EMPTY_FORM, password: generateTestPassword() });
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const openEdit = (s) => {
+    setForm({
+      userId: s.userId,
+      sellerCode: s.id,
+      name: s.raw?.name || "",
+      shop_name: s.raw?.shop_name || "",
+      email: s.raw?.email || "",
+      phone: s.raw?.phone || "",
+      pickup_address: s.raw?.pickup_address || "",
+      status: s.status,
+      password: "",
+    });
+    setFormError("");
+    setFormOpen(true);
+  };
+
+  const submitForm = async (e) => {
+    e.preventDefault();
+    const name = form.name.trim();
+    const shop = form.shop_name.trim();
+    const email = form.email.trim().toLowerCase();
+    const phone = form.phone.trim();
+    const pickup = form.pickup_address.trim();
+
+    if (!name || !shop || !email || !phone || !pickup) {
+      return setFormError("Please fill in the seller name, shop name, email, contact number and pickup address.");
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) return setFormError("Please enter a valid email address.");
+    if (!/^09\d{9}$/.test(phone)) {
+      return setFormError("Contact number must be an 11-digit mobile number starting with 09.");
+    }
+    if (!form.userId && form.password.length < 8) {
+      return setFormError("Assign a test password of at least 8 characters.");
+    }
+    if (form.userId && form.password && form.password.length < 8) {
+      return setFormError("The new password must be at least 8 characters.");
+    }
+
+    setSaving(true);
+    try {
+      if (form.userId) {
+        const payload = { name, shop_name: shop, email, phone, pickup_address: pickup, status: form.status };
+        if (form.password) payload.password = form.password;
+        const updated = await updateSeller(form.userId, payload);
+        setRawSellers((prev) => prev.map((u) => (u.user_id === form.userId ? { ...u, ...updated } : u)));
+        logAction({ category: "Sellers", action: "Updated seller", target: name, detail: email });
+        toast(`${name} — seller account updated.`);
+        setFormOpen(false);
+      } else {
+        const user = await createUser({
+          role: "seller",
+          name,
+          shop_name: shop,
+          email,
+          phone,
+          pickup_address: pickup,
+          password: form.password,
+          status: form.status,
+        });
+        setRawSellers((prev) => [user, ...prev]);
+        logAction({ category: "Sellers", action: "Created seller", target: name, detail: user.seller_code || email });
+        setFormOpen(false);
+        setCreated({ sellerCode: user.seller_code, shop, email, password: form.password });
+      }
+    } catch (err) {
+      setFormError(err.message || "Failed to save seller account.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const actions = {
-    Suspend: [
+    Deactivate: [
       "REJECTED",
-      "Suspended seller",
-      "Suspend this seller?",
-      "They will not be able to sign in or register new parcels while suspended.",
+      "Deactivated seller",
+      "Deactivate this seller?",
+      "They will not be able to sign in or register new parcels while inactive.",
       true,
     ],
-    Reactivate: [
+    Activate: [
       "APPROVED",
-      "Reactivated seller",
-      "Reactivate this seller?",
+      "Activated seller",
+      "Activate this seller?",
       "Their account will be active again.",
       false,
     ],
   };
 
-  const actionFor = (s) => (s.status === "Suspended" ? "Reactivate" : "Suspend");
+  const actionFor = (s) => (s.status === "Inactive" ? "Activate" : "Deactivate");
 
   const apply = async () => {
     if (!confirm) return;
@@ -180,11 +289,25 @@ export default function Sellers() {
     <>
       <Topbar
         title="Sellers"
-        subtitle="Review, suspend and reactivate registered seller accounts from the database."
+        subtitle="Create, edit, activate and deactivate seller accounts."
         right={
-          <button type="button" onClick={loadData} className={btnGhost}>
-            <i className="fa-solid fa-rotate" /> Refresh
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled
+              title="Coming soon: bulk import of sellers via CSV or Excel (planned for deployment)."
+              className={`${btnGhost} cursor-not-allowed opacity-60`}
+            >
+              <i className="fa-solid fa-file-import" /> Import Sellers
+              <span className="ml-1 rounded-full bg-[#f1f1f1] px-2 py-0.5 text-[10px] font-bold text-[#777]">Coming soon</span>
+            </button>
+            <button type="button" onClick={loadData} className={btnGhost}>
+              <i className="fa-solid fa-rotate" /> Refresh
+            </button>
+            <button type="button" onClick={openCreate} className={btnPrimary}>
+              <i className="fa-solid fa-plus" /> Add Seller
+            </button>
+          </div>
         }
       />
 
@@ -210,8 +333,8 @@ export default function Sellers() {
           tone="green"
         />
         <StatCard
-          label="Suspended"
-          value={loading ? "…" : sellers.filter((x) => x.status === "Suspended").length}
+          label="Inactive"
+          value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
           icon="fa-ban"
           tone="red"
         />
@@ -240,7 +363,7 @@ export default function Sellers() {
             className={inputCls}
             aria-label="Filter by status"
           >
-            {["All", "Active", "Suspended"].map((s) => (
+            {["All", "Active", "Inactive"].map((s) => (
               <option key={s} value={s}>
                 {s === "All" ? "All statuses" : s}
               </option>
@@ -306,10 +429,17 @@ export default function Sellers() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => openEdit(s)}
+                        className="mr-3 text-[13px] font-semibold text-[#3b82f6] hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
                         disabled={updatingId === s.userId}
                         onClick={() => setConfirm({ seller: s, kind: actionFor(s) })}
                         className={`text-[13px] font-semibold hover:underline disabled:opacity-50 ${
-                          actionFor(s) === "Suspend" ? "text-[#d94747]" : "text-[#29945a]"
+                          actionFor(s) === "Deactivate" ? "text-[#d94747]" : "text-[#29945a]"
                         }`}
                       >
                         {actionFor(s)}
@@ -383,10 +513,17 @@ export default function Sellers() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => openEdit(s)}
+                      className="font-semibold text-[#3b82f6] hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
                       disabled={updatingId === s.userId}
                       onClick={() => setConfirm({ seller: s, kind: actionFor(s) })}
                       className={`font-semibold hover:underline disabled:opacity-50 ${
-                        actionFor(s) === "Suspend" ? "text-[#d94747]" : "text-[#29945a]"
+                        actionFor(s) === "Deactivate" ? "text-[#d94747]" : "text-[#29945a]"
                       }`}
                     >
                       {actionFor(s)}
@@ -423,6 +560,13 @@ export default function Sellers() {
                 <p className="text-[13px] text-[#999]">
                   {current.id} · {current.email} · joined {current.joined}
                 </p>
+                {(current.shop || current.phone || current.pickup) && (
+                  <p className="mt-1 text-[12.5px] text-[#777] dark:text-[#d1c9c2]">
+                    {current.shop}
+                    {current.phone ? ` · ${current.phone}` : ""}
+                    {current.pickup ? ` · Pickup: ${current.pickup}` : ""}
+                  </p>
+                )}
               </div>
             </div>
             <div className="mb-5 grid grid-cols-3 gap-3">
@@ -480,6 +624,163 @@ export default function Sellers() {
               >
                 <i className="fa-solid fa-comment" /> Message
               </Link>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        open={formOpen}
+        onClose={() => !saving && setFormOpen(false)}
+        z="z-[3600]"
+        className="max-h-[92vh] w-full max-w-[560px] overflow-y-auto p-7 max-[600px]:p-5 dark:bg-night-panel"
+      >
+        {formOpen && (
+          <form onSubmit={submitForm} noValidate>
+            <button
+              type="button"
+              onClick={() => setFormOpen(false)}
+              aria-label="Close"
+              className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+            <h3 className="mb-1 pr-8 text-[18px] font-bold">
+              {form.userId ? "Edit Seller Account" : "Add Seller Account"}
+            </h3>
+            <p className="mb-4 text-[13px] text-[#999]">
+              Prototype account using developer-created test data. No real Shopee/SPX records or Gmail accounts are needed.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold">Seller ID</label>
+                <input
+                  value={form.userId ? form.sellerCode : "Auto-generated (SEL-0001…)"}
+                  readOnly
+                  className={`${inputCls} cursor-not-allowed bg-[#f6f6f6] dark:bg-night-head`}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-status">Account Status</label>
+                <select
+                  id="sf-status"
+                  value={form.status}
+                  onChange={(e) => setField("status", e.target.value)}
+                  className={inputCls}
+                >
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-name">Seller / Contact Person Name *</label>
+                <input id="sf-name" value={form.name} onChange={(e) => setField("name", e.target.value)} maxLength={100} className={inputCls} placeholder="e.g. Maria Santos" />
+              </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-shop">Shop Name *</label>
+                <input id="sf-shop" value={form.shop_name} onChange={(e) => setField("shop_name", e.target.value)} maxLength={150} className={inputCls} placeholder="e.g. Maria's Online Store" />
+              </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-email">Email Address *</label>
+                <input id="sf-email" type="email" value={form.email} onChange={(e) => setField("email", e.target.value)} className={inputCls} placeholder="seller01@logisync.test" />
+              </div>
+              <div>
+                <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-phone">Contact Number *</label>
+                <input
+                  id="sf-phone"
+                  inputMode="numeric"
+                  value={form.phone}
+                  onChange={(e) => setField("phone", e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  className={inputCls}
+                  placeholder="09XXXXXXXXX"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-pickup">Pickup Address *</label>
+              <textarea
+                id="sf-pickup"
+                rows={2}
+                value={form.pickup_address}
+                onChange={(e) => setField("pickup_address", e.target.value)}
+                maxLength={300}
+                className={`${inputCls} resize-none`}
+                placeholder="House/Unit, Street, Barangay, Trece Martires City, Cavite"
+              />
+            </div>
+
+            <div className="mt-3">
+              <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-pass">
+                {form.userId ? "Reset Test Password (optional)" : "Assigned Test Password *"}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="sf-pass"
+                  type="text"
+                  value={form.password}
+                  onChange={(e) => setField("password", e.target.value)}
+                  className={`${inputCls} font-mono`}
+                  placeholder={form.userId ? "Leave blank to keep current password" : "At least 8 characters"}
+                  autoComplete="off"
+                />
+                <button type="button" onClick={() => setField("password", generateTestPassword())} className={`${btnGhost} whitespace-nowrap`}>
+                  Generate
+                </button>
+              </div>
+              <small className="mt-1 block text-[12px] text-[#999]">
+                Share these credentials with the seller. Passwords are stored hashed and cannot be viewed later.
+              </small>
+            </div>
+
+            {formError && (
+              <div className="mt-4">
+                <Notice tone="error" icon="fa-circle-exclamation" role="alert">{formError}</Notice>
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button type="button" onClick={() => setFormOpen(false)} disabled={saving} className={btnGhost}>Cancel</button>
+              <button type="submit" disabled={saving} className={btnPrimary}>
+                {saving ? "Saving…" : form.userId ? "Save Changes" : "Create Seller"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!created}
+        onClose={() => setCreated(null)}
+        z="z-[3700]"
+        className="w-full max-w-[460px] p-7 dark:bg-night-panel"
+      >
+        {created && (
+          <>
+            <h3 className="mb-1 text-[18px] font-bold">
+              <i className="fa-solid fa-circle-check mr-2 text-[#29945a]" />
+              Seller account created
+            </h3>
+            <p className="mb-4 text-[13px] text-[#999]">Give these test login credentials to the seller. The password will not be shown again.</p>
+            <dl className="space-y-2 rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-4 text-[13.5px] dark:border-night-line dark:bg-night-head">
+              <div className="flex justify-between gap-3"><dt className="text-[#999]">Seller ID</dt><dd className="font-bold">{created.sellerCode}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-[#999]">Shop</dt><dd className="font-semibold">{created.shop}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-[#999]">Email</dt><dd className="break-all font-mono">{created.email}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-[#999]">Password</dt><dd className="font-mono font-bold">{created.password}</dd></div>
+            </dl>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(`Seller ID: ${created.sellerCode}\nEmail: ${created.email}\nPassword: ${created.password}`);
+                  toast("Credentials copied.");
+                }}
+                className={btnGhost}
+              >
+                <i className="fa-regular fa-copy" /> Copy
+              </button>
+              <button type="button" onClick={() => setCreated(null)} className={btnPrimary}>Done</button>
             </div>
           </>
         )}

@@ -27,7 +27,7 @@ const {
   confirmRiderIncident,
   actionRiderIncident
 } = require("../controllers/parcelController");
-const { authenticateToken, authorizeRoles } = require("../middleware/auth");
+const { authenticateToken, authorizeRoles, requireRiderType } = require("../middleware/auth");
 const { uploadVideo: uploadVideoMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
@@ -43,9 +43,9 @@ router.get("/by-transaction/:transactionNumber", authenticateToken, getParcelByT
 
 // Delivery ng rider (ilagay bago ang "/:parcelId")
 router.get("/rider/mine", authenticateToken, authorizeRoles("rider"), listRiderParcels);
-router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), riderScanParcel);
-router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), riderDelivered);
-router.post("/rider/:parcelId/failed", authenticateToken, authorizeRoles("rider"), riderFailed);
+router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderScanParcel);
+router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderDelivered);
+router.post("/rider/:parcelId/failed", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderFailed);
 
 router.post(
   "/",

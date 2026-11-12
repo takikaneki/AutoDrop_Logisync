@@ -247,6 +247,47 @@ function evaluateDeclarationRisk({
   };
 }
 
+function isValidTransactionNumber(tx) {
+  return /^SPX\d{9}$/i.test(String(tx || "").trim());
+}
+
+function isGibberishName(str) {
+  const s = String(str || "").trim().toLowerCase();
+  if (s.length < 2) return true;
+  const lettersOnly = s.replace(/[^a-z]/g, "");
+  if (lettersOnly.length < 2) return true;
+  if (!/[aeiouy]/.test(lettersOnly)) return true;
+  if (/[bcdfghjklmnpqrstvwxz]{5,}/.test(lettersOnly)) return true;
+  if (/(.)\1{2,}/.test(lettersOnly)) return true;
+  const mashes = ["asdf", "qwer", "zxcv", "hjkl", "ghjk", "dfgh", "wert", "xcvb", "fghj", "jklm", "whejsh"];
+  for (const m of mashes) {
+    if (lettersOnly.includes(m)) return true;
+  }
+  return false;
+}
+
+function isMeaningfulDescription(str) {
+  const s = String(str || "").trim();
+  if (s.length < 3) return false;
+  if (!/[a-zA-Z]/.test(s)) return false;
+  const lettersOnly = s.toLowerCase().replace(/[^a-z]/g, "");
+  if (lettersOnly.length < 2) return false;
+  if (!/[aeiouy]/.test(lettersOnly)) return false;
+  const words = s.split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const cleanWord = w.toLowerCase().replace(/[^a-z]/g, "");
+    if (cleanWord.length >= 5) {
+      if (/[bcdfghjklmnpqrstvwxz]{5,}/.test(cleanWord)) return false;
+      if (/(.)\1{2,}/.test(cleanWord)) return false;
+      const mashes = ["asdf", "qwer", "zxcv", "hjkl", "ghjk", "dfgh", "wert", "xcvb", "fghj", "jklm", "whejsh"];
+      for (const m of mashes) {
+        if (cleanWord.includes(m)) return false;
+      }
+    }
+  }
+  return true;
+}
+
 function normalizeCustomerName(name) {
   return String(name || "")
     .trim()
@@ -511,8 +552,28 @@ async function createParcel(req, res) {
       });
     }
 
-    const transactionNumber = transaction_number.trim();
-    const cleanReceiverName = receiver_name.trim().replace(/\s+/g, " ");
+    const transactionNumber = String(transaction_number || "").trim().toUpperCase();
+    if (!isValidTransactionNumber(transactionNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid transaction number. Must follow the format SPX123456789 (SPX followed by exactly 9 digits)."
+      });
+    }
+
+    const cleanReceiverName = String(receiver_name || "").trim().replace(/\s+/g, " ");
+    if (cleanReceiverName.length < 2 || cleanReceiverName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer / Receiver name must be between 2 and 100 characters."
+      });
+    }
+    if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'-]*[A-Za-zÀ-ÿ.]$/.test(cleanReceiverName) || isGibberishName(cleanReceiverName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid customer / receiver name (meaningless or random characters are not allowed)."
+      });
+    }
+
     const cleanReceiverContact = String(receiver_contact || "")
       .trim()
       .replace(/^\+639/, "09");
@@ -528,13 +589,50 @@ async function createParcel(req, res) {
     const cleanCity = String(receiver_city || "").trim();
     const cleanProvince = String(receiver_province || "").trim();
 
+    if (!cleanStreet || cleanStreet.length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "House/unit number and street name is required (minimum 3 characters)."
+      });
+    }
+    if (!cleanBarangay) {
+      return res.status(400).json({
+        success: false,
+        message: "Barangay is required. Please select or enter a barangay."
+      });
+    }
+    if (!cleanCity) {
+      return res.status(400).json({
+        success: false,
+        message: "City or municipality is required."
+      });
+    }
+    if (!cleanProvince) {
+      return res.status(400).json({
+        success: false,
+        message: "Province is required."
+      });
+    }
+
     let cleanReceiverAddress = String(receiver_address || "").trim();
     if (!cleanReceiverAddress && (cleanStreet || cleanBarangay || cleanCity)) {
       cleanReceiverAddress = [cleanHouseNumber, cleanStreet, cleanBarangay, cleanCity, cleanProvince]
         .filter(Boolean)
         .join(", ");
     }
-    const cleanContents = contents.trim();
+    const cleanContents = String(contents || "").trim();
+    if (cleanContents.length < 3 || cleanContents.length > 255) {
+      return res.status(400).json({
+        success: false,
+        message: "Parcel item description / contents must be between 3 and 255 characters."
+      });
+    }
+    if (!isMeaningfulDescription(cleanContents)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a meaningful parcel item description (meaningless or random characters like 'whejshsh' are not allowed)."
+      });
+    }
 
     // Discreet requests always start as PENDING_REVIEW so they never auto-approve a parcel
     const discreetStatus = isDiscrete ? "PENDING_REVIEW" : "NOT_REQUESTED";
@@ -548,14 +646,21 @@ async function createParcel(req, res) {
     });
 
     const [existing] = await pool.query(
-      "SELECT parcel_id FROM parcels WHERE transaction_number = ?",
+      "SELECT parcel_id, seller_id FROM parcels WHERE UPPER(transaction_number) = ?",
       [transactionNumber]
     );
 
     if (existing.length > 0) {
+      const isMine = Number(existing[0].seller_id) === Number(req.user.user_id);
+      if (isMine) {
+        return res.status(409).json({
+          success: false,
+          message: `You have already registered a parcel with this transaction number (${transactionNumber}). Duplicate submissions are not allowed.`
+        });
+      }
       return res.status(409).json({
         success: false,
-        message: "This transaction number is already registered."
+        message: "This transaction number is already registered in the system."
       });
     }
 

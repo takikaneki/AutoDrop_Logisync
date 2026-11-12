@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useT } from "../../store/prefs.js";
+import { riderTypeOf } from "./navConfig.js";
 
 const ITEMS = {
   coordinator: [
@@ -24,7 +25,16 @@ const ITEMS = {
 
 export default function MobileBottomNav({ role = "coordinator", mobileOpen, onToggleMenu }) {
   const t = useT();
-  const links = ITEMS[role] || ITEMS.coordinator;
+  let links = ITEMS[role] || ITEMS.coordinator;
+  if (role === "rider" && riderTypeOf() === "FM") {
+    // FM riders (seller pickups) have no delivery pages
+    links = [
+      { to: "/rider", end: true, icon: "fa-chart-pie", label: "Home" },
+      { to: "/rider/messages", icon: "fa-comments", label: "Messages" },
+      { to: "/rider/notifications", icon: "fa-bell", label: "Alerts" },
+      { to: "/rider/complaints", icon: "fa-headset", label: "Requests" },
+    ];
+  }
 
   return (
     <nav

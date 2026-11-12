@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { Notice, PanelTitle } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, panel } from "../../components/styles.js";
-import { createParcel, fetchSellerCustomers } from "../../services/parcelService.js";
+import { createParcel, fetchSellerCustomers, listParcels } from "../../services/parcelService.js";
 import {
   CONTENT_CATEGORIES,
   EMPTY_PARCEL,
@@ -25,7 +25,7 @@ import {
 } from "../../utils/phone.js";
 import ParcelCreated from "../../components/parcels/ParcelCreated.jsx";
 import QrScanner from "../../components/qr/QrScanner.jsx";
-import { parseTransactionNumber } from "../../utils/qr.js";
+import { isValidTransactionNumber, parseTransactionNumber } from "../../utils/qr.js";
 import { findCustomerByName, searchCustomers, useCustomers } from "../../store/customers.js";
 
 const STEPS = [
@@ -72,10 +72,26 @@ export default function CreateParcel() {
   const categoryWrapRef = useRef(null);
   const barangayWrapRef = useRef(null);
 
-  // Retrieve seller's saved customers from the database on mount
+  const [existingTxns, setExistingTxns] = useState(new Set());
+
+  const loadSellerParcels = useCallback(() => {
+    listParcels()
+      .then((list) => {
+        const set = new Set(
+          (Array.isArray(list) ? list : [])
+            .map((p) => String(p.transaction_number || "").trim().toUpperCase())
+            .filter(Boolean)
+        );
+        setExistingTxns(set);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Retrieve seller's saved customers and existing parcels from the database on mount
   useEffect(() => {
     fetchSellerCustomers().catch(() => {});
-  }, []);
+    loadSellerParcels();
+  }, [loadSellerParcels]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -169,12 +185,25 @@ export default function CreateParcel() {
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    const nextValue =
-      name === "transaction_number"
-        ? value.replace(/\D/g, "").slice(0, 11)
-        : name === "receiver_contact"
-        ? sanitizeMobileNumber(value)
-        : value;
+    let nextValue = value;
+    if (name === "transaction_number") {
+      nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+    } else if (name === "receiver_contact") {
+      nextValue = sanitizeMobileNumber(value);
+    }
+
+    if (name === "transaction_number") {
+      setValues((v) => ({ ...v, transaction_number: nextValue }));
+      if (existingTxns.has(nextValue)) {
+        setErrors((er) => ({
+          ...er,
+          transaction_number: `You have already registered a parcel with this transaction number (${nextValue}). Duplicate submissions are not allowed.`
+        }));
+      } else {
+        setErrors((er) => ({ ...er, transaction_number: undefined }));
+      }
+      return;
+    }
 
     if (name === "receiver_name") {
       const found = findCustomerByName(nextValue);
@@ -283,6 +312,10 @@ export default function CreateParcel() {
     setApiError("");
 
     const found = validateParcel(values);
+    const txnNorm = (values.transaction_number || "").trim().toUpperCase();
+    if (txnNorm && existingTxns.has(txnNorm)) {
+      found.transaction_number = `You have already registered a parcel with this transaction number (${txnNorm}). Duplicate submissions are not allowed.`;
+    }
     if (Object.keys(found).length) {
       setErrors(found);
       return;
@@ -294,19 +327,43 @@ export default function CreateParcel() {
         ...trimParcel(values),
         updateExistingCustomer: Boolean(updateSavedCustomer),
       };
-      setCreated(await createParcel(payload));
+      const createdParcel = await createParcel(payload);
+      setCreated(createdParcel);
+      setExistingTxns((prev) => new Set([...prev, txnNorm]));
     } catch (err) {
       setApiError(err.message);
+      if (err.message && err.message.toLowerCase().includes("transaction number")) {
+        setErrors((er) => ({ ...er, transaction_number: err.message }));
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const onScan = (text) => {
-    const txn = parseTransactionNumber(text);
+    const rawTxn = parseTransactionNumber(text).toUpperCase();
     setScanning(false);
-    if (!txn) return setApiError("The QR code was empty. Try again or type the number.");
-    setValues((v) => ({ ...v, transaction_number: txn.replace(/\D/g, "").slice(0, 11) }));
+    if (!rawTxn) {
+      setApiError("The QR code was empty. Try again or type the number.");
+      return;
+    }
+    if (!isValidTransactionNumber(rawTxn)) {
+      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow SPX123456789 (SPX followed by exactly 9 digits).`);
+      setErrors((er) => ({
+        ...er,
+        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX123456789).`
+      }));
+      return;
+    }
+    if (existingTxns.has(rawTxn)) {
+      setApiError(`You have already registered a parcel with this transaction number (${rawTxn}).`);
+      setErrors((er) => ({
+        ...er,
+        transaction_number: `You have already registered a parcel with this transaction number (${rawTxn}). Duplicate submissions are not allowed.`
+      }));
+      return;
+    }
+    setValues((v) => ({ ...v, transaction_number: rawTxn }));
     setErrors((er) => ({ ...er, transaction_number: undefined }));
     setApiError("");
     setScanned(true);
@@ -326,6 +383,7 @@ export default function CreateParcel() {
     setApiError("");
     setCreated(null);
     fetchSellerCustomers().catch(() => {});
+    loadSellerParcels();
   };
 
   const isAddressAutoFilled =
@@ -392,17 +450,15 @@ export default function CreateParcel() {
                 id="transaction_number"
                 name="transaction_number"
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]{11}"
                 value={values.transaction_number}
                 onChange={onChange}
-                placeholder="Enter 11-digit transaction number"
-                maxLength={11}
+                placeholder="e.g. SPX123456789"
+                maxLength={12}
                 aria-invalid={!!errors.transaction_number}
-                className={`${inputCls} ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
+                className={`${inputCls} font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
               />
               <p className={`mt-1 min-h-[16px] text-[12px] ${errors.transaction_number ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.transaction_number || "Enter exactly 11 digits. Numbers only; no letters or symbols."}
+                {errors.transaction_number || "Format: SPX followed by 9 digits (e.g. SPX123456789). Numbers only after SPX."}
               </p>
             </div>
 
