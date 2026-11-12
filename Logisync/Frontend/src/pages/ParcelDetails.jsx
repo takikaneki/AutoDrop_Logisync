@@ -194,6 +194,8 @@ export default function ParcelDetails() {
     ["Payment Method", isCod ? "Cash on Delivery (COD)" : "Prepaid (Non-COD)"],
     ["Parcel Status", parcel?.status],
     ["Seller Name", parcel?.seller_name || parcel?.seller?.name],
+    ...(parcel?.seller_code || parcel?.seller?.code || parcel?.seller_id ? [["Seller ID", parcel?.seller_code || parcel?.seller?.code || `SEL-${parcel?.seller_id}`]] : []),
+    ...(parcel?.shop_name || parcel?.seller?.shop_name || parcel?.shop ? [["Shop Name", parcel?.shop_name || parcel?.seller?.shop_name || parcel?.shop]] : []),
     ["Assigned Rider Name", parcel?.rider_name || parcel?.assigned_rider_name || parcel?.rider?.name || parcel?.deliveryRecord?.rider_name],
     ["Parcel Creation Date", dateValue(parcel?.created_at)],
     ["Verification Status", verification],

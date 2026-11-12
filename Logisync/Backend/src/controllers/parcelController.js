@@ -846,6 +846,10 @@ async function getParcelForRole(req, res) {
 
     const parcel = rows[0];
 
+    if (req.user.role === "seller" && Number(parcel.seller_id) !== Number(req.user.user_id)) {
+      return res.status(404).json({ success: false, message: "Parcel not found." });
+    }
+
     if (req.user.role === "rider") {
       const isVerified =
         parcel.status === "VERIFIED" || parcel.verification_status === "VERIFIED";
@@ -964,6 +968,7 @@ async function getSellerParcel(req, res) {
     await ensureCustomerSchema();
     const [rows] = await pool.query(
       `SELECT p.*, u.name AS seller_name, u.email AS seller_email,
+              u.seller_code, u.shop_name,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
@@ -1144,6 +1149,7 @@ async function getCoordinatorParcel(req, res) {
     await ensureCustomerSchema();
     const [parcelRows] = await pool.query(
       `SELECT p.*, u.name AS seller_name, u.email AS seller_email,
+              u.seller_code, u.shop_name,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
@@ -1416,9 +1422,10 @@ async function saveDecision(req, res, decision) {
 async function streamVideo(req, res) {
   try {
     const [rows] = await pool.query(
-      `SELECT file_path, file_name, mime_type
-       FROM video_proofs
-       WHERE video_id = ?`,
+      `SELECT vp.file_path, vp.file_name, vp.mime_type, p.seller_id
+       FROM video_proofs vp
+       JOIN parcels p ON vp.parcel_id = p.parcel_id
+       WHERE vp.video_id = ?`,
       [req.params.videoId]
     );
 
@@ -1430,6 +1437,13 @@ async function streamVideo(req, res) {
     }
 
     const video = rows[0];
+
+    if (req.user.role === "seller" && Number(video.seller_id) !== Number(req.user.user_id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to access this video proof."
+      });
+    }
 
     // Only allow redirects to Cloudinary HTTPS URLs
     let videoUrl;
@@ -1777,7 +1791,8 @@ async function listParcels(req, res) {
               p.rts_dispatched_at, p.rts_dispatched_by,
               p.returned_to_seller_at, p.returned_received_by,
               p.delivery_hold, p.delivery_hold_reason, p.delivery_hold_until, p.delivery_hold_at,
-              u.name AS seller_name, r.name AS rider_name,
+              u.name AS seller_name, u.email AS seller_email, u.seller_code, u.shop_name,
+              r.name AS rider_name,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
@@ -1816,7 +1831,7 @@ async function getParcelByTransaction(req, res) {
       [transactionNumber, transactionNumber]
     );
 
-    if (!rows.length || (req.user.role === "seller" && rows[0].seller_id !== req.user.user_id)) {
+    if (!rows.length || (req.user.role === "seller" && Number(rows[0].seller_id) !== Number(req.user.user_id))) {
       return res.status(404).json({ success: false, message: "Parcel not found." });
     }
 

@@ -51,7 +51,8 @@ const REPORT_DEFAULTS = { status: "All", seller: "All", rider: "All", from: "", 
 function mapParcel(rawParcel, index) {
   const parcel = enrichParcel(rawParcel);
   const sellerName = parcel.seller_name || parcel.seller || "Unknown Seller";
-  const initials = sellerName
+  const shopName = parcel.shop_name || parcel.shop || sellerName;
+  const initials = (shopName || sellerName)
     .split(/\s+/)
     .filter(Boolean)
     .map((part) => part[0])
@@ -72,7 +73,8 @@ function mapParcel(rawParcel, index) {
     transactionNumber: String(parcel.transaction_number || parcel.id || "—"),
     parcelId: parcel.parcel_id ?? parcel.id,
     seller: sellerName,
-    shop: parcel.shop || sellerName,
+    sellerCode: parcel.seller_code || "",
+    shop: shopName,
     initials: initials || "US",
     tone: parcel.tone || "orange",
     recipient: parcel.receiver_name || parcel.recipient || "—",

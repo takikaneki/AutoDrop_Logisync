@@ -101,7 +101,7 @@ router.post("/coordinator/:parcelId/request-reupload",
 
 router.get("/videos/:videoId",
   authenticateToken,
-  authorizeRoles("coordinator"),
+  authorizeRoles("coordinator", "seller"),
   streamVideo
 );
 
