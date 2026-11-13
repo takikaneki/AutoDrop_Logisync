@@ -27,16 +27,7 @@ export default function ScanPanel({
   if (centered) {
     return (
       <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6">
-        <div className="w-full">
-          <QrScanner
-            btnClass={btnClass}
-            allowImageUpload={allowImageUpload}
-            windowSize="large"
-            onScan={(text) => submit(text)}
-          />
-        </div>
-
-        <div className="w-full border-t border-[#eee] pt-5 dark:border-night-line">
+        <div className="w-full border-b border-[#eee] pb-5 dark:border-night-line">
           <p className="text-center text-[15px] font-bold">Can't scan? Type it instead</p>
           <p className="mt-1 text-center text-[13px] text-[#999]">
             Enter the {label.toLowerCase()} printed on the parcel. A parcel ID also works.
@@ -68,6 +59,15 @@ export default function ScanPanel({
             </button>
           </form>
           {error && <p className="mt-2 text-center text-[12px] text-[#d94747]">{error}</p>}
+        </div>
+
+        <div className="w-full">
+          <QrScanner
+            btnClass={btnClass}
+            allowImageUpload={allowImageUpload}
+            windowSize="large"
+            onScan={(text) => submit(text)}
+          />
         </div>
       </div>
     );
