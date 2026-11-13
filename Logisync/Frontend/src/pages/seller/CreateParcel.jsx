@@ -438,7 +438,7 @@ export default function CreateParcel() {
       {created ? (
         <ParcelCreated parcel={created} onReset={reset} />
       ) : (
-        <div className="mx-auto max-w-3xl">
+        <div className="w-full">
           <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-6 max-[600px]:p-4`}>
             <PanelTitle icon="fa-square-plus">Parcel Details</PanelTitle>
 
@@ -447,6 +447,9 @@ export default function CreateParcel() {
                 {apiError}
               </Notice>
             )}
+
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+              <div className="min-w-0 space-y-4">
 
             {/* QR Scanner bar */}
             <div className="rounded-xl border border-dashed border-[#e0d3ca] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
@@ -890,7 +893,10 @@ export default function CreateParcel() {
                 </div>
               </div>
             </div>
+              </div>
 
+              {/* Right Column: Contents, Category Declaration, Warnings & Submit */}
+              <div className="min-w-0 space-y-4">
             {/* 5. Parcel Item Description / Contents */}
             <div className="relative">
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -1154,6 +1160,8 @@ export default function CreateParcel() {
               <i className="fa-solid fa-check" />
               {submitting ? "Registering parcel..." : "Register parcel"}
             </button>
+              </div>
+            </div>
           </form>
         </div>
       )}
