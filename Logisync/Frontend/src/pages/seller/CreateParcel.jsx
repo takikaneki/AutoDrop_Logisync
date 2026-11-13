@@ -405,18 +405,6 @@ export default function CreateParcel() {
   const isContactAutoFilled =
     matchedCustomer?.contact && values.receiver_contact === matchedCustomer.contact;
 
-  const generateUniqueTxn = () => {
-    let candidate = "";
-    for (let i = 0; i < 20; i++) {
-      const digits = String(Math.floor(100000000 + Math.random() * 900000000));
-      candidate = `SPX${digits}`;
-      if (!existingTxns.has(candidate)) break;
-    }
-    setValues((v) => ({ ...v, transaction_number: candidate }));
-    setErrors((e) => ({ ...e, transaction_number: "" }));
-    setScanned(false);
-  };
-
   return (
     <>
       <Topbar
@@ -481,14 +469,6 @@ export default function CreateParcel() {
                 <label htmlFor="transaction_number" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
                   Transaction number <span className="text-brand">*</span>
                 </label>
-                <button
-                  type="button"
-                  onClick={generateUniqueTxn}
-                  className="text-[11.5px] font-semibold text-brand hover:underline"
-                >
-                  <i className="fa-solid fa-wand-magic-sparkles mr-1 text-[10px]" />
-                  Generate SPX#
-                </button>
               </div>
               <input
                 id="transaction_number"
