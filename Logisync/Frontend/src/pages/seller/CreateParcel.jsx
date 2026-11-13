@@ -406,7 +406,7 @@ export default function CreateParcel() {
     matchedCustomer?.contact && values.receiver_contact === matchedCustomer.contact;
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-6xl">
       <Topbar
         title="Create Parcel"
         subtitle="Register a parcel so the coordinator can verify it. The system generates the parcel ID."
@@ -415,7 +415,7 @@ export default function CreateParcel() {
             <button
               type="button"
               onClick={() => setInstructionsOpen(true)}
-              className={btnGhost}
+              className={`${btnGhost} border-[#f1d5c4] bg-[#fffaf7] text-[#27364f] shadow-xs hover:border-brand hover:bg-[#fff2ea] dark:border-night-line dark:bg-night-head dark:text-[#f1eeeb] max-[520px]:ml-auto`}
             >
               <i className="fa-regular fa-circle-question text-brand" /> Instructions
             </button>
@@ -426,8 +426,7 @@ export default function CreateParcel() {
       {created ? (
         <ParcelCreated parcel={created} onReset={reset} />
       ) : (
-        <div className="w-full">
-          <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-6 max-[600px]:p-4`}>
+        <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-6 max-[600px]:p-4`}>
             <PanelTitle icon="fa-square-plus">Parcel Details</PanelTitle>
 
             {apiError && (
@@ -1143,7 +1142,6 @@ export default function CreateParcel() {
               </div>
             </div>
           </form>
-        </div>
       )}
 
       {/* Instructions Modal */}
@@ -1202,6 +1200,6 @@ export default function CreateParcel() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
