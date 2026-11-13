@@ -46,7 +46,12 @@ function RequireRole({ allow }) {
     clearSession(); // walang role o hindi kilala
     return <Navigate to="/login" replace />;
   }
-  return allow.includes(role) ? <Outlet /> : <Navigate to={home} replace />;
+  const normalizedAllowed = allow.map((r) => String(r || "").toLowerCase());
+  return normalizedAllowed.includes(String(role).toLowerCase()) ? (
+    <Outlet />
+  ) : (
+    <Navigate to={home} replace />
+  );
 }
 
 // Kapag naka-login na, huwag nang ipakita ang login page
@@ -63,6 +68,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginRoute />} />
+      <Route path="/login/:portalRole" element={<LoginRoute />} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
 
       {/* SELLER */}

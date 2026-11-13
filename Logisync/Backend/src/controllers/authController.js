@@ -152,12 +152,21 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     await ensurePolicySchema();
-    const { email, password, termsAccepted, policyVersion } = req.body;
+    const { email, password, portal, role, loginRole, termsAccepted, policyVersion } = req.body;
 
     if (!email || !password) {
       return res
         .status(400)
         .json({ success: false, message: "Email and password are required." });
+    }
+
+    const selectedPortal = String(portal || role || loginRole || "").trim().toLowerCase();
+    const VALID_PORTALS = ["seller", "rider", "coordinator"];
+    if (!selectedPortal || !VALID_PORTALS.includes(selectedPortal)) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid login portal (seller, rider, or coordinator) must be specified."
+      });
     }
 
     if (!termsAccepted) {
@@ -171,7 +180,7 @@ async function login(req, res) {
     const [rows] = await pool.query(
       `SELECT user_id, name, email, password_hash, role, verification_status
        FROM users
-       WHERE email = ?`,
+       WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(?))`,
       [email.trim().toLowerCase()]
     );
 
@@ -188,6 +197,18 @@ async function login(req, res) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid email or password." });
+    }
+
+    // STRICT ROLE-BASED LOGIN RESTRICTION:
+    // Compare selected portal with the user's actual database role.
+    // Allow login only if both roles match. Reject authentication if they do not match.
+    // Do not create an authenticated session or issue an authentication token when role validation fails.
+    const actualRole = String(user.role || "").trim().toLowerCase();
+    if (actualRole !== selectedPortal) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is not authorized to access this login portal. Please use the correct login option."
+      });
     }
 
     if (
@@ -452,4 +473,37 @@ async function changePassword(req, res) {
   }
 }
 
-module.exports = { register, login, me, verifyPassword, changePassword };
+async function logout(req, res) {
+  try {
+    if (req.user) {
+      try {
+        await pool.query(
+          `INSERT INTO audit_logs
+           (actor_id, actor_name, actor_role, category, action, target, detail)
+           VALUES (?, ?, ?, 'Auth', 'User Logged Out', ?, ?)`,
+          [
+            req.user.user_id,
+            req.user.name,
+            req.user.role,
+            req.user.email,
+            "User logged out of their session."
+          ]
+        );
+      } catch {
+        /* non-fatal */
+      }
+    }
+    return res.json({
+      success: true,
+      message: "Logged out successfully."
+    });
+  } catch (error) {
+    console.error("logout error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed."
+    });
+  }
+}
+
+module.exports = { register, login, logout, me, verifyPassword, changePassword };

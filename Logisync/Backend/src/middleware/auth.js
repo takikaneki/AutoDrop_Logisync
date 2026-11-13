@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const { pool } = require("../config/database");
 
-function authenticateToken(req, res, next) {
+async function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.startsWith("Bearer ")
     ? authHeader.substring(7)
@@ -10,19 +11,62 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ success: false, message: "Authentication required." });
   }
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (error) {
     return res.status(401).json({ success: false, message: "Invalid or expired token." });
+  }
+
+  try {
+    // Retrieve actual user record from trusted database
+    const [rows] = await pool.query(
+      "SELECT user_id, name, email, role, verification_status FROM users WHERE user_id = ?",
+      [decoded.user_id]
+    );
+
+    if (!rows || !rows.length) {
+      return res.status(401).json({ success: false, message: "User account no longer exists." });
+    }
+
+    const dbUser = rows[0];
+
+    // Enforce account suspension
+    if (
+      (dbUser.role === "seller" || dbUser.role === "rider") &&
+      String(dbUser.verification_status || "").toUpperCase() === "REJECTED"
+    ) {
+      return res.status(403).json({ success: false, message: "Your account has been suspended." });
+    }
+
+    // Attach verified user info with trusted database role
+    req.user = {
+      ...decoded,
+      user_id: dbUser.user_id,
+      name: dbUser.name,
+      email: dbUser.email,
+      role: String(dbUser.role || "").toLowerCase()
+    };
+    next();
+  } catch {
+    // Fallback to cryptographically verified decoded JWT if DB is temporarily unreachable
+    req.user = {
+      ...decoded,
+      role: String(decoded.role || "").toLowerCase()
+    };
+    next();
   }
 }
 
 function authorizeRoles(...allowedRoles) {
+  const normalizedAllowed = allowedRoles.map((r) => String(r || "").toLowerCase());
   return (req, res, next) => {
-    if (!req.user || !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, message: "You are not authorized to access this resource." });
+    const userRole = String(req.user?.role || "").toLowerCase();
+    if (!req.user || !normalizedAllowed.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to access this resource."
+      });
     }
     next();
   };

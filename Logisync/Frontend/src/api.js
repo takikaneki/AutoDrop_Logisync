@@ -7,9 +7,23 @@ const USER_KEY = "user";
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 
+function decodeTokenPayload(token) {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    return JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
 export function getUser() {
   try {
-    return JSON.parse(localStorage.getItem(USER_KEY));
+    const cached = JSON.parse(localStorage.getItem(USER_KEY)) || {};
+    const roleFromToken = getRole();
+    if (!roleFromToken) return null;
+    return { ...cached, role: roleFromToken };
   } catch {
     return null;
   }
@@ -23,24 +37,40 @@ export function saveSession({ token, user }) {
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  try {
+    sessionStorage.clear();
+  } catch {
+    /* ignore */
+  }
 }
 
-// Ang role ay galing sa backend (nasa user na ibinalik ng login)
-export const getRole = () => getUser()?.role || null;
+// Ang role ay galing sa cryptographically signed JWT token payload
+export function getRole() {
+  const token = getToken();
+  if (!token) return null;
+  const payload = decodeTokenPayload(token);
+  if (!payload || !payload.role) {
+    clearSession();
+    return null;
+  }
+  if (payload.exp && payload.exp * 1000 < Date.now()) {
+    clearSession();
+    return null;
+  }
+  return String(payload.role).toLowerCase();
+}
 
 // Saan dadalhin ang user depende sa role. Kapag hindi kilala ang role -> null
 const ROLE_HOME = { seller: "/seller", rider: "/rider", coordinator: "/dashboard" };
-export const homePathForRole = (role) => ROLE_HOME[role] || null;
+export const homePathForRole = (role) => {
+  const normalized = String(role || "").toLowerCase();
+  return ROLE_HOME[normalized] || null;
+};
 
-// Binabasa ang "exp" sa loob ng JWT para malaman kung expired na (UX lang ito;
-// ang backend pa rin ang totoong nagpapasya kung valid ang token)
+// Binabasa ang "exp" sa loob ng JWT para malaman kung expired na
 function tokenExpired(token) {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return !payload.exp || payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
+  const payload = decodeTokenPayload(token);
+  return !payload || !payload.exp || payload.exp * 1000 < Date.now();
 }
 
 export function isLoggedIn() {
@@ -50,7 +80,17 @@ export function isLoggedIn() {
     clearSession();
     return false;
   }
-  return true;
+  return Boolean(getRole());
+}
+
+export async function logoutUser() {
+  try {
+    await api("/auth/logout", { method: "POST" });
+  } catch {
+    /* ignore if backend offline */
+  } finally {
+    clearSession();
+  }
 }
 
 const SERVER_DOWN = "Cannot reach the server. Make sure the backend is running on port 5000.";

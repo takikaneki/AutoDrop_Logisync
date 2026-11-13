@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { api, saveSession, homePathForRole } from "../api.js";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { api, saveSession, clearSession, homePathForRole } from "../api.js";
 import TermsModal from "../components/TermsModal.jsx";
 import ContactUsModal from "../components/auth/ContactUsModal.jsx";
 import WelcomeIntro from "../components/auth/WelcomeIntro.jsx";
@@ -145,9 +145,29 @@ const LOGIN_ROLES = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const { portalRole } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const urlRole = String(
+    portalRole || searchParams.get("role") || searchParams.get("portal") || ""
+  ).toLowerCase();
+  const initialRole = LOGIN_ROLES.some((r) => r.key === urlRole)
+    ? urlRole
+    : "coordinator";
+
   // Welcome screen muna; lalabas lang ang Sign-In pagkatapos pindutin ang "Let's Get Started"
   const [showIntro, setShowIntro] = useState(true);
-  const [selectedRole, setSelectedRole] = useState("coordinator");
+  const [selectedRole, setSelectedRole] = useState(initialRole);
+
+  useEffect(() => {
+    const roleFromParam = String(
+      portalRole || searchParams.get("role") || searchParams.get("portal") || ""
+    ).toLowerCase();
+    if (LOGIN_ROLES.some((r) => r.key === roleFromParam)) {
+      setSelectedRole(roleFromParam);
+    }
+  }, [portalRole, searchParams]);
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -192,19 +212,25 @@ export default function Login() {
         body: {
           email: email.trim(),
           password,
+          portal: selectedRole,
           role: selectedRole,
           termsAccepted: true,
           policyVersion: POLICY_VERSION,
         },
       });
 
-      const actualRole = String(data?.user?.role || selectedRole || "").toLowerCase();
-      if (actualRole && actualRole !== selectedRole) {
-        setSelectedRole(actualRole);
+      const actualRole = String(data?.user?.role || "").toLowerCase();
+      if (!actualRole || actualRole !== selectedRole) {
+        clearSession();
+        setError(
+          "Your account is not authorized to access this login portal. Please use the correct login option."
+        );
+        return;
       }
 
       const home = homePathForRole(actualRole);
       if (!home) {
+        clearSession();
         setError("Your account role is not supported.");
         return;
       }
@@ -212,6 +238,7 @@ export default function Login() {
       saveSession(data);
       navigate(home, { replace: true });
     } catch (err) {
+      clearSession();
       setError(err.message);
     } finally {
       setLoading(false);
@@ -311,16 +338,14 @@ export default function Login() {
                         setSelectedRole(roleOption.key);
                         setError("");
                       }}
-                      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-bold transition-all ${
-                        isActive
-                          ? "bg-white text-[#ea580c] shadow-sm ring-1 ring-orange-200/90"
-                          : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
-                      }`}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-bold transition-all ${isActive
+                        ? "bg-white text-[#ea580c] shadow-sm ring-1 ring-orange-200/90"
+                        : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
+                        }`}
                     >
                       <i
-                        className={`fa-solid ${roleOption.icon} text-[10px] ${
-                          isActive ? "text-[#ea580c]" : "text-slate-400"
-                        }`}
+                        className={`fa-solid ${roleOption.icon} text-[10px] ${isActive ? "text-[#ea580c]" : "text-slate-400"
+                          }`}
                       />
                       <span>{roleOption.label}</span>
                     </button>
