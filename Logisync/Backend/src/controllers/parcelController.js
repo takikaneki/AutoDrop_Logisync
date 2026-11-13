@@ -1,13 +1,17 @@
 const crypto = require("crypto");
-const { v2: cloudinary } = require("cloudinary");
+let cloudinary = null;
+try {
+  cloudinary = require("cloudinary").v2;
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+} catch {
+  // Cloudinary package optional/fallback if not yet installed
+}
 const { pool, rawPool } = require("../config/database");
 const { logAudit } = require("../utils/audit");
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 const VALID_CONTENT_CATEGORIES = [
   "Clothing and Accessories",
@@ -941,6 +945,10 @@ async function getParcelForRole(req, res) {
           updated_at: parcel.updated_at
         }
       });
+    }
+
+    if (req.user.role === "seller" && Number(parcel.seller_id) !== Number(req.user.user_id)) {
+      return res.status(404).json({ success: false, message: "Parcel not found." });
     }
 
     res.json({

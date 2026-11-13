@@ -2,6 +2,7 @@ const express = require("express");
 const {
   register,
   login,
+  logout,
   me,
   verifyPassword,
   changePassword,
@@ -14,7 +15,14 @@ const router = express.Router();
 // Public registration: authController forces role = seller
 router.post("/register", register);
 
+// Dedicated login portal endpoints & unified login endpoint
 router.post("/login", login);
+router.post("/login/seller", (req, res, next) => { req.body.portal = "seller"; next(); }, login);
+router.post("/login/rider", (req, res, next) => { req.body.portal = "rider"; next(); }, login);
+router.post("/login/coordinator", (req, res, next) => { req.body.portal = "coordinator"; next(); }, login);
+
+// Session management
+router.post("/logout", authenticateToken, logout);
 router.get("/me", authenticateToken, me);
 
 // Authenticated user: verify current password & update own password (Coordinator, Seller, Rider)
