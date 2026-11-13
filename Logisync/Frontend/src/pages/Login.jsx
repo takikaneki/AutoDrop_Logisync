@@ -3,6 +3,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, saveSession, clearSession, homePathForRole } from "../api.js";
 import TermsModal from "../components/TermsModal.jsx";
 import ContactUsModal from "../components/auth/ContactUsModal.jsx";
+import ForgotPasswordModal from "../components/auth/ForgotPasswordModal.jsx";
+import ResetPasswordModal from "../components/auth/ResetPasswordModal.jsx";
 import WelcomeIntro from "../components/auth/WelcomeIntro.jsx";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 import {
@@ -146,7 +148,7 @@ const LOGIN_ROLES = [
 export default function Login() {
   const navigate = useNavigate();
   const { portalRole } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const urlRole = String(
     portalRole || searchParams.get("role") || searchParams.get("portal") || ""
@@ -171,11 +173,70 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+
+  // Detect password reset token from URL
+  const resetTokenFromUrl = searchParams.get("resetToken") || searchParams.get("token") || "";
+  const [resetToken, setResetToken] = useState(resetTokenFromUrl);
+  const [resetOpen, setResetOpen] = useState(Boolean(resetTokenFromUrl));
+
+  useEffect(() => {
+    const tokenInUrl = searchParams.get("resetToken") || searchParams.get("token") || "";
+    if (tokenInUrl) {
+      setResetToken(tokenInUrl);
+      setResetOpen(true);
+      setShowIntro(false); // open sign-in view directly when visiting reset link
+    }
+  }, [searchParams]);
+
+  // Load saved Remember Me preference whenever active portal (selectedRole) changes
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(`logisync_remember_${selectedRole}`));
+      if (saved && saved.remember && saved.email) {
+        setEmail(saved.email);
+        setRememberMe(true);
+      } else {
+        setRememberMe(false);
+        setEmail("");
+      }
+    } catch {
+      setRememberMe(false);
+      setEmail("");
+    }
+    setError("");
+  }, [selectedRole]);
+
+  const handleRememberMeChange = (e) => {
+    const checked = e.target.checked;
+    setRememberMe(checked);
+    if (!checked) {
+      localStorage.removeItem(`logisync_remember_${selectedRole}`);
+    } else if (email.trim()) {
+      localStorage.setItem(
+        `logisync_remember_${selectedRole}`,
+        JSON.stringify({ remember: true, email: email.trim() })
+      );
+    }
+  };
+
+  const handleResetSuccess = (msg) => {
+    setResetOpen(false);
+    setResetToken("");
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("resetToken");
+    nextParams.delete("token");
+    setSearchParams(nextParams, { replace: true });
+    setSuccessMessage(msg || "Your password has been reset successfully. Please sign in with your new password.");
+    setError("");
+  };
 
   const activeRoleMeta =
     LOGIN_ROLES.find((r) => r.key === selectedRole) || LOGIN_ROLES[0];
@@ -201,6 +262,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
     if (!agreed) {
       setError("Please agree to our Terms and Conditions and Privacy Policy before signing in.");
       return;
@@ -226,6 +288,16 @@ export default function Login() {
           "Your account is not authorized to access this login portal. Please use the correct login option."
         );
         return;
+      }
+
+      // Persist or remove Remember Me credentials upon successful login
+      if (rememberMe) {
+        localStorage.setItem(
+          `logisync_remember_${selectedRole}`,
+          JSON.stringify({ remember: true, email: email.trim() })
+        );
+      } else {
+        localStorage.removeItem(`logisync_remember_${selectedRole}`);
       }
 
       const home = homePathForRole(actualRole);
@@ -354,7 +426,7 @@ export default function Login() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit} noValidate name="login" method="POST" action="#">
               {/* Email field */}
               <div className="mb-4">
                 <label htmlFor="email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
@@ -364,12 +436,26 @@ export default function Login() {
                   <i className="fa-regular fa-envelope shrink-0 text-base text-slate-400" />
                   <input
                     id="email"
+                    name="email"
                     type="email"
                     inputMode="email"
-                    autoComplete="email"
+                    autoComplete="username"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setEmail(v);
+                      if (rememberMe) {
+                        if (v.trim()) {
+                          localStorage.setItem(
+                            `logisync_remember_${selectedRole}`,
+                            JSON.stringify({ remember: true, email: v.trim() })
+                          );
+                        } else {
+                          localStorage.removeItem(`logisync_remember_${selectedRole}`);
+                        }
+                      }
+                    }}
                     placeholder={activeRoleMeta.emailPlaceholder}
                     className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                   />
@@ -385,6 +471,7 @@ export default function Login() {
                   <i className="fa-solid fa-lock shrink-0 text-base text-slate-400" />
                   <input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
@@ -406,18 +493,36 @@ export default function Login() {
                 {/* Remember me & Forgot password */}
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <label className="flex cursor-pointer select-none items-center gap-2 text-slate-600 transition-colors hover:text-slate-800">
-                    <input type="checkbox" className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand" />
+                    <input
+                      id="remember-me"
+                      name="rememberMe"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={handleRememberMeChange}
+                      className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand"
+                    />
                     <span className="font-medium">Remember me</span>
                   </label>
                   <button
                     type="button"
-                    onClick={() => setContactOpen(true)}
+                    onClick={() => setForgotOpen(true)}
                     className="font-bold text-brand transition-colors hover:text-brand-dark"
                   >
                     Forgot password?
                   </button>
                 </div>
               </div>
+
+              {/* Success message (e.g. after password reset) */}
+              {successMessage && (
+                <div
+                  role="status"
+                  className="mb-4 flex animate-popup items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700"
+                >
+                  <i className="fa-solid fa-circle-check mt-0.5 shrink-0 text-sm text-emerald-600" />
+                  <span className="leading-snug">{successMessage}</span>
+                </div>
+              )}
 
               {/* Error message */}
               {error && (
@@ -530,6 +635,28 @@ export default function Login() {
         onClose={() => setLegalDocModal(null)}
       />
       <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
+      <ForgotPasswordModal
+        open={forgotOpen}
+        defaultEmail={email}
+        onClose={() => setForgotOpen(false)}
+      />
+      <ResetPasswordModal
+        open={resetOpen}
+        token={resetToken}
+        onClose={() => {
+          setResetOpen(false);
+          setResetToken("");
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.delete("resetToken");
+          nextParams.delete("token");
+          setSearchParams(nextParams, { replace: true });
+        }}
+        onSuccess={handleResetSuccess}
+        onRequestNewLink={() => {
+          setResetOpen(false);
+          setForgotOpen(true);
+        }}
+      />
     </div>
   );
 }

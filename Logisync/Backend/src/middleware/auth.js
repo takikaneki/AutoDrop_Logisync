@@ -36,7 +36,10 @@ async function authenticateToken(req, res, next) {
       (dbUser.role === "seller" || dbUser.role === "rider") &&
       String(dbUser.verification_status || "").toUpperCase() === "REJECTED"
     ) {
-      return res.status(403).json({ success: false, message: "Your account has been suspended." });
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact the Coordinator."
+      });
     }
 
     // Attach verified user info with trusted database role
@@ -56,27 +59,6 @@ async function authenticateToken(req, res, next) {
     };
     next();
   }
-=======
-  req.user = decoded;
-
-  // Inactive (deactivated) sellers/riders lose access immediately, even with an existing session.
-  if (decoded.role === "seller" || decoded.role === "rider") {
-    const { pool } = require("../config/database");
-    pool
-      .query("SELECT verification_status FROM users WHERE user_id = ?", [decoded.user_id])
-      .then(([rows]) => {
-        if (rows.length && String(rows[0].verification_status).toUpperCase() === "REJECTED") {
-          return res.status(403).json({
-            success: false,
-            message: "Your account is inactive. Please contact the Coordinator."
-          });
-        }
-        next();
-      })
-      .catch(() => next());
-    return;
-  }
-  next();
 }
 
 function authorizeRoles(...allowedRoles) {
@@ -93,15 +75,12 @@ function authorizeRoles(...allowedRoles) {
   };
 }
 
-module.exports = { authenticateToken, authorizeRoles };
-=======
 // Rider classification guard. FM = First Mile (seller pickups), LM = Last Mile (buyer deliveries).
 // Binabasa ang rider_type sa database (hindi sa token) para hindi malusutan.
 function requireRiderType(...allowedTypes) {
   return async (req, res, next) => {
     if (!req.user || req.user.role !== "rider") return next();
     try {
-      const { pool } = require("../config/database");
       const [rows] = await pool.query("SELECT rider_type FROM users WHERE user_id = ?", [req.user.user_id]);
       const type = String(rows[0]?.rider_type || "LM").toUpperCase();
       if (!allowedTypes.includes(type)) {
@@ -121,4 +100,3 @@ function requireRiderType(...allowedTypes) {
 }
 
 module.exports = { authenticateToken, authorizeRoles, requireRiderType };
-

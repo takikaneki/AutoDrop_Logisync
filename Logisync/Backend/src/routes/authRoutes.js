@@ -6,6 +6,9 @@ const {
   me,
   verifyPassword,
   changePassword,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword,
 } = require("../controllers/authController");
 const { createUser } = require("../controllers/userController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
@@ -20,6 +23,11 @@ router.post("/login", login);
 router.post("/login/seller", (req, res, next) => { req.body.portal = "seller"; next(); }, login);
 router.post("/login/rider", (req, res, next) => { req.body.portal = "rider"; next(); }, login);
 router.post("/login/coordinator", (req, res, next) => { req.body.portal = "coordinator"; next(); }, login);
+
+// Password Recovery & Reset
+router.post("/forgot-password", forgotPassword);
+router.get("/reset-password/verify", verifyResetToken);
+router.post("/reset-password", resetPassword);
 
 // Session management
 router.post("/logout", authenticateToken, logout);
