@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, saveSession, clearSession, homePathForRole } from "../api.js";
 import TermsModal from "../components/TermsModal.jsx";
 import ContactUsModal from "../components/auth/ContactUsModal.jsx";
@@ -11,8 +11,14 @@ import {
   COPYRIGHT_OWNER,
   POLICY_VERSION,
   clearTermsRecord,
+  getTermsRecord,
   saveTermsRecord,
 } from "../data/terms.js";
+import {
+  clearRememberedCredentials,
+  getRememberedCredentials,
+  saveRememberedCredentials,
+} from "../utils/rememberMe.js";
 
 /**
  * Subtle graphic & icon background inspired by the LogiSync Welcome Page
@@ -147,6 +153,7 @@ const LOGIN_ROLES = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { portalRole } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -157,8 +164,24 @@ export default function Login() {
     ? urlRole
     : "coordinator";
 
-  // Welcome screen muna; lalabas lang ang Sign-In pagkatapos pindutin ang "Let's Get Started"
-  const [showIntro, setShowIntro] = useState(true);
+  // Welcome screen muna; kung galing sa logout, may direct param, o nabisita na sa session na ito, deretso sa sign-in
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      if (location.state?.fromLogout || sessionStorage.getItem("logisync_intro_seen") === "true") {
+        return false;
+      }
+    } catch {
+      /* ignore */
+    }
+    const hasParam = Boolean(
+      portalRole ||
+      searchParams.get("role") ||
+      searchParams.get("portal") ||
+      searchParams.get("resetToken") ||
+      searchParams.get("token")
+    );
+    return !hasParam;
+  });
   const [selectedRole, setSelectedRole] = useState(initialRole);
 
   useEffect(() => {
@@ -177,7 +200,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(() => Boolean(getTermsRecord()));
   const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -198,32 +221,39 @@ export default function Login() {
 
   // Load saved Remember Me preference whenever active portal (selectedRole) changes
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(`logisync_remember_${selectedRole}`));
-      if (saved && saved.remember && saved.email) {
-        setEmail(saved.email);
-        setRememberMe(true);
-      } else {
+    let isCurrent = true;
+    getRememberedCredentials(selectedRole)
+      .then((saved) => {
+        if (!isCurrent) return;
+        if (saved && saved.remember && saved.email) {
+          setEmail(saved.email);
+          setPassword(saved.password || "");
+          setRememberMe(true);
+        } else {
+          setRememberMe(false);
+          setEmail("");
+          setPassword("");
+        }
+      })
+      .catch(() => {
+        if (!isCurrent) return;
         setRememberMe(false);
         setEmail("");
-      }
-    } catch {
-      setRememberMe(false);
-      setEmail("");
-    }
+        setPassword("");
+      });
     setError("");
+    return () => {
+      isCurrent = false;
+    };
   }, [selectedRole]);
 
   const handleRememberMeChange = (e) => {
     const checked = e.target.checked;
     setRememberMe(checked);
     if (!checked) {
-      localStorage.removeItem(`logisync_remember_${selectedRole}`);
-    } else if (email.trim()) {
-      localStorage.setItem(
-        `logisync_remember_${selectedRole}`,
-        JSON.stringify({ remember: true, email: email.trim() })
-      );
+      clearRememberedCredentials(selectedRole);
+    } else if (email.trim() && password) {
+      saveRememberedCredentials(selectedRole, email.trim(), password);
     }
   };
 
@@ -292,12 +322,9 @@ export default function Login() {
 
       // Persist or remove Remember Me credentials upon successful login
       if (rememberMe) {
-        localStorage.setItem(
-          `logisync_remember_${selectedRole}`,
-          JSON.stringify({ remember: true, email: email.trim() })
-        );
+        await saveRememberedCredentials(selectedRole, email.trim(), password);
       } else {
-        localStorage.removeItem(`logisync_remember_${selectedRole}`);
+        clearRememberedCredentials(selectedRole);
       }
 
       const home = homePathForRole(actualRole);
@@ -318,7 +345,18 @@ export default function Login() {
   };
 
   if (showIntro) {
-    return <WelcomeIntro onComplete={() => setShowIntro(false)} />;
+    return (
+      <WelcomeIntro
+        onComplete={() => {
+          try {
+            sessionStorage.setItem("logisync_intro_seen", "true");
+          } catch {
+            /* ignore */
+          }
+          setShowIntro(false);
+        }}
+      />
+    );
   }
 
   const inputWrap =
@@ -447,12 +485,9 @@ export default function Login() {
                       setEmail(v);
                       if (rememberMe) {
                         if (v.trim()) {
-                          localStorage.setItem(
-                            `logisync_remember_${selectedRole}`,
-                            JSON.stringify({ remember: true, email: v.trim() })
-                          );
+                          saveRememberedCredentials(selectedRole, v.trim(), password);
                         } else {
-                          localStorage.removeItem(`logisync_remember_${selectedRole}`);
+                          clearRememberedCredentials(selectedRole);
                         }
                       }
                     }}
@@ -476,7 +511,13 @@ export default function Login() {
                     autoComplete="current-password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      const p = e.target.value;
+                      setPassword(p);
+                      if (rememberMe && email.trim()) {
+                        saveRememberedCredentials(selectedRole, email.trim(), p);
+                      }
+                    }}
                     placeholder="Enter your password"
                     className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                   />
