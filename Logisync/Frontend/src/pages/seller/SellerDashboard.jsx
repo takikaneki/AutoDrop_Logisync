@@ -28,7 +28,17 @@ export default function SellerDashboard() {
   }, []);
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
-  const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED", "RETURN_TO_HUB"].includes(p.status));
+  const needsVideoParcels = parcels.filter(
+    (p) =>
+      p.status !== "DELIVERED" &&
+      !p.returnToHub &&
+      p.status !== "RETURN_TO_HUB" &&
+      ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"].includes(p.status)
+  );
+  const returnToHubParcels = parcels.filter(
+    (p) => p.status !== "DELIVERED" && (p.status === "RETURN_TO_HUB" || Boolean(p.returnToHub))
+  );
+  const needAction = [...needsVideoParcels, ...returnToHubParcels];
 
   const v = (n) => (loading ? "…" : n);
   const link = (p) => `/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`;
@@ -50,32 +60,99 @@ export default function SellerDashboard() {
 
       {/* ACTION NEEDED */}
       <section className="mb-7 max-[820px]:mb-4">
-        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[600px]:p-4`}>
-          <PanelTitle icon="fa-bell">Action Needed</PanelTitle>
-          <div className="mb-4 max-[600px]:mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 max-[600px]:p-4 dark:bg-night-head">
-            <div className="flex h-[56px] w-[56px] max-[600px]:h-[44px] max-[600px]:w-[44px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] max-[600px]:text-[19px] text-orange-500">
-              <i className="fa-solid fa-triangle-exclamation" />
-            </div>
+        <div className={`${panel} flex min-w-0 flex-col border-[#f5d5be] p-[28px] max-[600px]:p-4 dark:border-night-line`}>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-[32px] max-[600px]:text-[24px] font-bold leading-tight text-orange-500">
-                {v(needAction.length)} <small className="text-base max-[600px]:text-sm font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
+              <h2 className="flex items-center gap-2 text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                <i className="fa-solid fa-bell text-brand" />
+                Action Needed
               </h2>
-              <p className="text-sm max-[600px]:text-xs text-[#64748b]">need your attention (reupload, rejected, or Return to Hub).</p>
+              <p className="mt-0.5 text-[13px] text-[#64748b] dark:text-[#b8b0a8]">
+                Parcels requiring seller attention
+              </p>
             </div>
+            <span className="rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
+              {v(needAction.length)} {needAction.length === 1 ? "parcel" : "parcels"}
+            </span>
+          </div>
+
+          {/* Two Priority Categories Only: Needs Video & Return to Hub */}
+          <div className="space-y-2.5">
+            <Link
+              to="/seller/parcels?status=NEEDS_VIDEO"
+              className="flex items-center justify-between gap-3 rounded-xl border border-[#edf0f4] bg-[#fffaf7] px-4 py-3.5 transition hover:border-brand/50 hover:bg-[#fff4ed] dark:border-night-line dark:bg-night-head dark:hover:border-brand/50"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-brand dark:bg-brand/15">
+                  <i className="fa-solid fa-video" />
+                </span>
+                <div className="min-w-0">
+                  <strong className="block text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Needs Video
+                  </strong>
+                  <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
+                    Upload packing video proof for verification
+                  </span>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
+                {v(needsVideoParcels.length)} {needsVideoParcels.length === 1 ? "parcel" : "parcels"}
+              </span>
+            </Link>
+
+            <Link
+              to="/seller/parcels?status=RETURN_TO_HUB"
+              className="flex items-center justify-between gap-3 rounded-xl border border-[#edf0f4] bg-[#fffaf7] px-4 py-3.5 transition hover:border-brand/50 hover:bg-[#fff4ed] dark:border-night-line dark:bg-night-head dark:hover:border-brand/50"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-brand dark:bg-brand/15">
+                  <i className="fa-solid fa-box-archive" />
+                </span>
+                <div className="min-w-0">
+                  <strong className="block text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Return to Hub
+                  </strong>
+                  <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
+                    Returned parcels requiring seller attention
+                  </span>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
+                {v(returnToHubParcels.length)} {returnToHubParcels.length === 1 ? "parcel" : "parcels"}
+              </span>
+            </Link>
           </div>
 
           {needAction.length === 0 ? (
-            <p className="py-6 max-[600px]:py-4 text-center text-[14px] text-[#999]">{loading ? "" : "Nothing to fix. You're all set."}</p>
+            <div className="mt-4 rounded-xl border border-dashed border-[#e5e8ee] py-5 text-center text-[13.5px] text-[#888] dark:border-night-line dark:text-[#b8b0a8]">
+              {loading ? "Checking parcels…" : "No seller action is currently required. You're all set."}
+            </div>
           ) : (
-            <ul className="flex-1">
+            <ul className="mt-4 divide-y divide-[#edf0f4] rounded-xl border border-[#edf0f4] dark:divide-night-line dark:border-night-line">
               {needAction.slice(0, 5).map((p) => (
-                <li key={p.parcel_id} className="flex items-center justify-between gap-3 border-b border-[#edf0f4] py-3 text-[14px] last:border-b-0 dark:border-night-line">
-                  <Link to={link(p)} className="truncate font-semibold text-brand hover:underline">{p.transaction_number || p.parcel_id}</Link>
-                  <StatusBadge status={p.status} />
+                <li key={p.parcel_id}>
+                  <Link
+                    to={link(p)}
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-[13.5px] transition hover:bg-[#fffaf7] dark:hover:bg-night-head"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate font-bold text-brand">
+                        {p.transaction_number || p.parcel_id}
+                      </span>
+                      <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
+                        {p.receiver_name || "Customer"} {p.contents ? `· ${p.contents}` : ""}
+                      </span>
+                    </div>
+                    <StatusBadge status={p.status} />
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
+
+          <p className="mt-3 text-[12px] text-[#888] dark:text-[#b8b0a8]">
+            Only parcels requiring seller action appear here.
+          </p>
         </div>
       </section>
 
