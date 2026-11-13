@@ -16,10 +16,17 @@ export const enrichParcel = (p) => {
   syncAutomaticReschedules();
   const addr = getParcelAddress(p);
   const d = getDeliveryRecordForParcel(p.parcel_id) || getDeliveryRecordForParcel(p.transaction_number);
+  const isCod = Boolean(p.is_cod || String(p.payment_method || "").toUpperCase() === "COD");
+
   let next = {
     ...(addr && !p.receiver_address ? { ...p, receiver_address: addr } : p),
     raw_status: p.status,
     verification_status: p.verification_status || (p.status === "VERIFIED" ? "VERIFIED" : p.verification_status),
+    is_cod: isCod,
+    payment_method: isCod ? "COD" : "NON_COD",
+    delivery_hold: Boolean(p.delivery_hold),
+    delivery_hold_reason: p.delivery_hold_reason || "",
+    delivery_hold_until: p.delivery_hold_until || null,
   };
 
   let dbAttempts = [];
@@ -138,6 +145,8 @@ export async function createParcel({
   discrete_item = false,
   discreet_reason = "",
   updateExistingCustomer = false,
+  is_cod = false,
+  payment_method = "NON_COD",
 }) {
   const data = await api("/parcels", {
     method: "POST",
@@ -157,6 +166,8 @@ export async function createParcel({
       discrete_item,
       discreet_reason,
       updateExistingCustomer,
+      is_cod,
+      payment_method,
     },
   });
   const created = {
@@ -251,6 +262,35 @@ export const decideDiscreetHandling = (parcelId, decision, remarks = "") =>
   api(`/parcels/coordinator/${enc(parcelId)}/discreet`, {
     method: "POST",
     body: { decision, remarks },
+  });
+
+// Coordinator: Return to Hub Initiation / Approval
+export const initiateReturnToHub = (parcelId, reason = "") =>
+  api(`/parcels/coordinator/${enc(parcelId)}/return-to-hub`, {
+    method: "POST",
+    body: { reason },
+  });
+
+// Rider: Report incident
+export const reportIncident = ({ incident_type, description }) =>
+  api("/parcels/rider/incidents", {
+    method: "POST",
+    body: { incident_type, description },
+  });
+
+// List incidents (Coordinator sees all, Rider sees own)
+export const fetchIncidents = (role = "coordinator") =>
+  api(`/parcels/${role === "rider" ? "rider" : "coordinator"}/incidents`);
+
+// Coordinator: Confirm incident
+export const confirmIncident = (incidentId) =>
+  api(`/parcels/coordinator/incidents/${incidentId}/confirm`, { method: "POST" });
+
+// Coordinator: Action incident strictly: 'resume', 'reschedule', 'extend_hold'
+export const actionIncident = (incidentId, { action, notes = "", new_date = "", extend_hours = 24 }) =>
+  api(`/parcels/coordinator/incidents/${incidentId}/action`, {
+    method: "POST",
+    body: { action, notes, new_date, extend_hours },
   });
 
 // GET /api/parcels/videos/:videoId (coordinator lang) -> blob URL

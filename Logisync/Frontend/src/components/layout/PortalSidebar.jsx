@@ -4,7 +4,7 @@ import LogoutModal from "../LogoutModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { NAV, ROLE_LABEL, TOP_LINKS, toPath } from "./navConfig.js";
+import { NAV, ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 
 const TOP_ICONS = {
@@ -77,7 +77,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
         </div>
 
         <nav className="flex flex-col gap-0.5" aria-label="Sidebar">
-          {NAV[role].map((g) => (
+          {navFor(role).map((g) => (
             <div key={g.title} className="mb-2">
               {collapsed ? (
                 <>

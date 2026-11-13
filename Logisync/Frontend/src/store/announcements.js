@@ -8,9 +8,15 @@ const MOCK_TITLES = new Set([
 
 function purgeMocks(list) {
   if (!Array.isArray(list)) return [];
-  return list.filter(
-    (a) => a && a.title && !MOCK_TITLES.has(String(a.title).trim().toLowerCase())
-  );
+  return list.filter((a) => {
+    if (!a || !a.title) return false;
+    const t = String(a.title).trim().toLowerCase();
+    const id = String(a.id || "").toLowerCase();
+    if (["an1", "an2", "an3"].includes(id)) return false;
+    if (MOCK_TITLES.has(t)) return false;
+    if (t.includes("delivery cancellation") || t.includes("holiday schedule") || t.includes("verification rules")) return false;
+    return true;
+  });
 }
 
 // Clean localStorage immediately upon module evaluation

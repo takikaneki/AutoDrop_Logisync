@@ -2,24 +2,29 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
-import { EmptyState } from "../../components/ui.jsx";
+import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { LoadingRow, Notice, PanelLink, PanelTitle, StatCard, StatGrid } from "../../components/portal.jsx";
 import { panel, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
 import DashboardShortcuts from "../../components/dashboard/DashboardShortcuts.jsx";
 import { listParcels } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
+import { toast } from "../../store/toast.js";
 
 export default function SellerDashboard() {
   const [parcels, setParcels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const refreshParcels = () => {
     listParcels()
       .then(setParcels)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    refreshParcels();
   }, []);
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
@@ -94,7 +99,12 @@ export default function SellerDashboard() {
                 <tbody>
                   {parcels.slice(0, 5).map((p) => (
                     <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{p.transaction_number || p.parcel_id}</td>
+                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
+                        <span className="inline-flex items-center gap-1.5 flex-wrap">
+                          <span>{p.transaction_number || p.parcel_id}</span>
+                          {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                        </span>
+                      </td>
                       <td className={td}>{p.receiver_name}</td>
                       <td className={td}>{p.contents || "—"}</td>
                       <td className={td}>
@@ -127,9 +137,12 @@ export default function SellerDashboard() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <Link to={link(p)} className="block truncate text-[14px] font-bold text-brand hover:underline">
-                        {p.transaction_number || p.parcel_id}
-                      </Link>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link to={link(p)} className="block truncate text-[14px] font-bold text-brand hover:underline">
+                          {p.transaction_number || p.parcel_id}
+                        </Link>
+                        {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
+                      </div>
                       <span className="block truncate text-[13px] font-medium text-[#333] dark:text-[#f1eeeb]">{p.receiver_name}</span>
                     </div>
                     <StatusBadge status={p.status} />

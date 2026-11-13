@@ -2,14 +2,16 @@ import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import DeliveryTabs from "../../components/rider/DeliveryTabs.jsx";
-import { EmptyState, Modal } from "../../components/ui.jsx";
+import { EmptyState, Modal, CodBadge } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, panel, textareaCls } from "../../components/styles.js";
+import { reportIncident } from "../../services/parcelService.js";
 import {
   FAIL_REASONS,
   MAX_RESCHEDULES,
   STAGE,
   addDaysIso,
+  isRecipientRefusal,
   markDelivered,
   markFailed,
   reattempt,
@@ -21,6 +23,7 @@ import {
   formatDate,
   formatDay,
   formatDeliveryDayLabel,
+  formatShortDay,
   getManilaDateKey,
   parseValidTimestamp,
 } from "../../utils/format.js";
@@ -121,8 +124,9 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
           aria-expanded={expanded}
           className="group flex min-w-0 flex-1 items-center gap-2 text-left focus:outline-none"
         >
-          <h3 className="min-w-0 break-words text-[18px] font-bold leading-snug text-[#27364f] transition-colors group-hover:text-brand dark:text-[#f1eeeb]">
-            {receiver}
+          <h3 className="min-w-0 break-words text-[18px] font-bold leading-snug text-[#27364f] transition-colors group-hover:text-brand dark:text-[#f1eeeb] inline-flex items-center gap-2 flex-wrap">
+            <span>{receiver}</span>
+            {(d.is_cod || d.payment_method === "COD" || d.paymentMethod === "COD") && <CodBadge />}
           </h3>
           <span
             className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f4f6f9] text-[11px] text-[#64748b] transition-transform duration-200 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-line dark:text-[#d1c9c2] ${
@@ -169,6 +173,21 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
             ) : (
               <p className="mt-0.5 text-[14px] text-[#94a3b8]">No contact number provided</p>
             )}
+          </div>
+
+          <div>
+            <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+              Payment Method
+            </span>
+            <div className="mt-0.5 text-[14px] text-[#52627a] dark:text-[#d1c9c2]">
+              {(d.is_cod || d.payment_method === "COD" || d.paymentMethod === "COD") ? (
+                <span className="inline-flex items-center gap-1.5 font-bold text-[#b45309]">
+                  <CodBadge /> Cash on Delivery (check exact amount via official Shopee app)
+                </span>
+              ) : (
+                <span>Prepaid (Non-COD)</span>
+              )}
+            </div>
           </div>
 
           <div>
@@ -301,6 +320,29 @@ export default function RiderDeliveries() {
   const [viewer, setViewer] = useState(null);
   const [expandedCards, setExpandedCards] = useState({});
   const [copiedId, setCopiedId] = useState(null);
+  const [incidentOpen, setIncidentOpen] = useState(false);
+  const [incidentType, setIncidentType] = useState("Vehicle Breakdown");
+  const [incidentDesc, setIncidentDesc] = useState("");
+  const [incidentSubmitting, setIncidentSubmitting] = useState(false);
+  const [incidentError, setIncidentError] = useState("");
+
+  const handleReportIncident = async () => {
+    if (!incidentDesc.trim()) {
+      return setIncidentError("Please describe what happened (location, situation, impact).");
+    }
+    setIncidentSubmitting(true);
+    setIncidentError("");
+    try {
+      await reportIncident({ incident_type: incidentType, description: incidentDesc.trim() });
+      toast("Incident report submitted. Coordinator notified to review delivery hold.", "info");
+      setIncidentOpen(false);
+      setIncidentDesc("");
+    } catch (err) {
+      setIncidentError(err.message || "Failed to submit incident report.");
+    } finally {
+      setIncidentSubmitting(false);
+    }
+  };
 
   const toggleCard = (id) => {
     setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -406,14 +448,19 @@ export default function RiderDeliveries() {
       if (reason === "Other" && !note.trim()) return setError("Please explain the reason in the notes.");
       const result = markFailed(d.parcel_id, { reason, note: note.trim() });
       reportFailure(d, { reason, note: note.trim(), result });
-      if (result?.outcome === "return_to_hub") {
+      if (result?.outcome === "recipient_refused") {
+        toast(
+          `Failed delivery report for ${d.transaction_number} sent to Coordinator in Messages. Awaiting Return-to-Hub decision.`,
+          "info"
+        );
+      } else if (result?.outcome === "return_to_hub") {
         toast(
           `${d.transaction_number} reached the ${MAX_RESCHEDULES}-day rescheduling limit and was marked as Return to Hub. Coordinator notified.`,
           "error"
         );
       } else {
         toast(
-          `${d.transaction_number} automatically rescheduled for ${formatDay(result?.scheduledFor)} (Day ${result?.rescheduleCount} of ${MAX_RESCHEDULES}).`,
+          `${d.transaction_number} rescheduled for next day: ${formatShortDay(result?.scheduledFor)} (${result?.rescheduleCount}/${MAX_RESCHEDULES}).`,
           "info"
         );
       }
@@ -471,6 +518,13 @@ export default function RiderDeliveries() {
             )
           }
         />
+
+        {(d.delivery_hold || d.deliveryHold) && (
+          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
+          </div>
+        )}
 
         {!expanded ? (
           <>
@@ -548,6 +602,13 @@ export default function RiderDeliveries() {
             </span>
           }
         />
+
+        {(d.delivery_hold || d.deliveryHold) && (
+          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
+          </div>
+        )}
 
         {!expanded ? (
           <>
@@ -637,6 +698,13 @@ export default function RiderDeliveries() {
             )
           }
         />
+
+        {(d.delivery_hold || d.deliveryHold) && (
+          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
+          </div>
+        )}
 
         {!expanded ? (
           <>
@@ -821,15 +889,27 @@ export default function RiderDeliveries() {
   return (
     <>
       <Topbar title="Deliveries" subtitle={copy.subtitle}>
-        {stage !== STAGE.TO_DELIVER ? (
-          <Link to="/rider/parcels?report=1" className={btnGhost}>
-            <i className="fa-solid fa-file-lines" /> Generate Report
-          </Link>
-        ) : (
-          <Link to="/rider/scan" className={btnPrimary}>
-            <i className="fa-solid fa-qrcode" /> Scan QR Code
-          </Link>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              setIncidentError("");
+              setIncidentOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2 text-[13px] font-bold text-[#b45309] transition hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
+          >
+            <i className="fa-solid fa-triangle-exclamation" /> Report Incident
+          </button>
+          {stage !== STAGE.TO_DELIVER ? (
+            <Link to="/rider/parcels?report=1" className={btnGhost}>
+              <i className="fa-solid fa-file-lines" /> Generate Report
+            </Link>
+          ) : (
+            <Link to="/rider/scan" className={btnPrimary}>
+              <i className="fa-solid fa-qrcode" /> Scan QR Code
+            </Link>
+          )}
+        </div>
       </Topbar>
 
       <DeliveryTabs value={stage} onChange={switchTab} />
@@ -935,40 +1015,17 @@ export default function RiderDeliveries() {
               </div>
             ) : (
               <div>
-                <div
-                  className={`mb-4 rounded-xl border p-3.5 text-[13px] ${
-                    modalWillReturnToHub
-                      ? "border-[#d8b4fe] bg-[#f8f5ff] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]"
-                      : "border-[#fde68a] bg-[#fffbeb] text-[#92400e] dark:border-[#78350f] dark:bg-[#2d2416] dark:text-[#fcd34d]"
-                  }`}
-                >
-                  {modalWillReturnToHub ? (
-                    <>
-                      <strong className="block font-bold">
-                        <i className="fa-solid fa-warehouse mr-1.5" />
-                        3-Day Rescheduling Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Days)
-                      </strong>
-                      <p className="mt-1">
-                        This parcel has already used all {MAX_RESCHEDULES} rescheduling days. Confirming this failed
-                        delivery will automatically mark it as <strong>“Return to Hub”</strong>, remove it from your
-                        pending deliveries, and notify the Coordinator.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <strong className="block font-bold">
-                        <i className="fa-solid fa-calendar-check mr-1.5" />
-                        Automatic Rescheduling (Day {modalReschedCount + 1} of {MAX_RESCHEDULES})
-                      </strong>
-                      <p className="mt-1">
-                        This parcel will be automatically rescheduled to the next available delivery date:{" "}
-                        <strong>{formatDay(modalNextDate)}</strong> ({MAX_RESCHEDULES - (modalReschedCount + 1)}{" "}
-                        reschedule day{MAX_RESCHEDULES - (modalReschedCount + 1) === 1 ? "" : "s"} remaining before
-                        Return to Hub).
-                      </p>
-                    </>
-                  )}
-                </div>
+                {modalWillReturnToHub && (
+                  <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
+                    <strong className="block font-bold">
+                      <i className="fa-solid fa-warehouse mr-1.5" />
+                      3-Day Rescheduling Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Days)
+                    </strong>
+                    <p className="mt-1">
+                      This parcel has completed all 3 rescheduled delivery days and will be marked as Return to Hub.
+                    </p>
+                  </div>
+                )}
 
                 <label className={labelCls} htmlFor="reason">
                   Failure Reason
@@ -987,6 +1044,18 @@ export default function RiderDeliveries() {
                     <option key={r}>{r}</option>
                   ))}
                 </select>
+
+                {isRecipientRefusal(reason) && (
+                  <div className="mt-3 rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
+                    <strong className="block font-bold">
+                      <i className="fa-solid fa-shield-halved mr-1.5" />
+                      Recipient Refusal Protocol
+                    </strong>
+                    <p className="mt-1">
+                      Keep the parcel sealed. Do not collect any payment. A direct failed-delivery report will be sent to the Coordinator in Messages for Return-to-Hub review.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1024,9 +1093,11 @@ export default function RiderDeliveries() {
               <button onClick={confirm} disabled={busy} className={btnPrimary}>
                 {action.type === "delivered"
                   ? "Confirm delivered"
+                  : isRecipientRefusal(reason)
+                  ? "Send Refusal Report to Coordinator"
                   : modalWillReturnToHub
                   ? "Confirm & Mark Return to Hub"
-                  : `Reschedule to ${formatDay(modalNextDate)}`}
+                  : `Reschedule Next Day – ${formatShortDay(modalNextDate)} (${modalReschedCount + 1}/${MAX_RESCHEDULES})`}
               </button>
             </div>
           </>
@@ -1054,6 +1125,71 @@ export default function RiderDeliveries() {
             <p className="mt-2 text-[12px] text-[#999]">{formatDate(viewer.doneAt)}</p>
           </>
         )}
+      </Modal>
+
+      {/* Incident Report Modal */}
+      <Modal
+        open={incidentOpen}
+        onClose={() => setIncidentOpen(false)}
+        z="z-[3500]"
+        className="w-full max-w-[500px] p-6 dark:bg-night-panel"
+      >
+        <button
+          onClick={() => setIncidentOpen(false)}
+          aria-label="Close"
+          className="absolute right-3.5 top-3.5 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
+        >
+          <i className="fa-solid fa-xmark" />
+        </button>
+        <div className="mb-3 flex items-center gap-2.5 text-[#d97706]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fef3c7] text-[18px]">
+            <i className="fa-solid fa-triangle-exclamation" />
+          </span>
+          <h2 className="text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb]">Report Incident</h2>
+        </div>
+        <p className="mb-4 text-[13px] text-[#64748b] dark:text-[#cbd5e1]">
+          Report road incidents, vehicle breakdowns, or emergencies. The Coordinator will review and place your undelivered parcels on delivery hold (pausing the 3-day reschedule counter).
+        </p>
+
+        <label className={labelCls} htmlFor="incident-type">Incident Type</label>
+        <select
+          id="incident-type"
+          value={incidentType}
+          onChange={(e) => setIncidentType(e.target.value)}
+          className={inputCls}
+        >
+          <option value="Vehicle Breakdown">Vehicle Breakdown</option>
+          <option value="Accident / Road Incident">Accident / Road Incident</option>
+          <option value="Medical Emergency">Medical Emergency</option>
+          <option value="Severe Weather / Flooding">Severe Weather / Flooding</option>
+          <option value="Personal Emergency">Personal Emergency</option>
+          <option value="Other">Other Emergency</option>
+        </select>
+
+        <div className="mt-4">
+          <label className={labelCls} htmlFor="incident-desc">Details / Description</label>
+          <textarea
+            id="incident-desc"
+            rows={3}
+            value={incidentDesc}
+            onChange={(e) => setIncidentDesc(e.target.value)}
+            placeholder="Describe what happened, current location, condition..."
+            className={textareaCls}
+          />
+        </div>
+
+        {incidentError && (
+          <div className="mt-4">
+            <Notice tone="error" icon="fa-circle-exclamation">{incidentError}</Notice>
+          </div>
+        )}
+
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button onClick={() => setIncidentOpen(false)} className={btnGhost}>Cancel</button>
+          <button onClick={handleReportIncident} disabled={incidentSubmitting} className={btnPrimary}>
+            {incidentSubmitting ? "Submitting…" : "Submit Report"}
+          </button>
+        </div>
       </Modal>
     </>
   );

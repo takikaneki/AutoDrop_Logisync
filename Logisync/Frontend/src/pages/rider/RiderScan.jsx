@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import ScanPanel from "../../components/qr/ScanPanel.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
+import { CodBadge } from "../../components/ui.jsx";
 import RecentScans from "../../components/rider/RecentScans.jsx";
 import { DetailList, Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../../components/styles.js";
@@ -122,12 +123,18 @@ export default function RiderScan() {
             String(parcel.parcel_id).trim() !== String(parcel.transaction_number || "").trim() ? (
               <div>
                 <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Parcel ID</p>
-                <p className="font-mono text-[20px] font-bold">{parcel.parcel_id}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-mono text-[20px] font-bold">{parcel.parcel_id}</p>
+                  {(parcel.is_cod || parcel.payment_method === "COD") && <CodBadge />}
+                </div>
               </div>
             ) : (
               <div>
                 <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Transaction Number</p>
-                <p className="font-mono text-[20px] font-bold">{parcel.transaction_number || parcel.parcel_id}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-mono text-[20px] font-bold">{parcel.transaction_number || parcel.parcel_id}</p>
+                  {(parcel.is_cod || parcel.payment_method === "COD") && <CodBadge />}
+                </div>
               </div>
             )}
             <StatusBadge status={parcel.status} />
@@ -141,6 +148,7 @@ export default function RiderScan() {
           <DetailList
             rows={[
               ["Transaction number", parcel.transaction_number],
+              ["Payment method", (parcel.is_cod || parcel.payment_method === "COD") ? "Cash on Delivery (COD)" : "Prepaid (Non-COD)"],
               ["Receiver", parcel.receiver || parcel.receiver_name],
               ["Receiver contact", parcel.receiver_contact || parcel.contact],
               ["Address", parcel.address || parcel.receiver_address],

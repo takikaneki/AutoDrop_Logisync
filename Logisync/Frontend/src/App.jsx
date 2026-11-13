@@ -33,6 +33,7 @@ import MessagesPage from "./pages/shared/MessagesPage.jsx";
 import SettingsPage from "./pages/shared/SettingsPage.jsx";
 import HelpPage from "./pages/shared/HelpPage.jsx";
 import { isLoggedIn, getRole, clearSession, homePathForRole } from "./api.js";
+import { riderTypeOf } from "./components/layout/navConfig.js";
 
 // Bantay ng mga page: kailangan naka-login AT tama ang role.
 // Paalala: para sa tamang daan lang ito. Ang backend (authorizeRoles) ang
@@ -55,6 +56,11 @@ function RequireRole({ allow }) {
 }
 
 // Kapag naka-login na, huwag nang ipakita ang login page
+// LM-only na mga rider page. Ang FM rider (seller pickups) ay ibinabalik sa rider dashboard.
+// Ang backend (requireRiderType) ang totoong nagbabawal sa delivery actions.
+function RequireLastMile() {
+  return riderTypeOf() === "LM" ? <Outlet /> : <Navigate to="/rider" replace />;
+}
 function LoginRoute() {
   if (isLoggedIn()) {
     const home = homePathForRole(getRole());
@@ -95,9 +101,11 @@ export default function App() {
       <Route element={<RequireRole allow={["rider"]} />}>
         <Route path="/rider" element={<DashboardLayout role="rider" />}>
           <Route index element={<RiderDashboard />} />
-          <Route path="scan" element={<RiderScan />} />
-          <Route path="parcels" element={<RiderParcels />} />
-          <Route path="deliveries" element={<RiderDeliveries />} />
+          <Route element={<RequireLastMile />}>
+            <Route path="scan" element={<RiderScan />} />
+            <Route path="parcels" element={<RiderParcels />} />
+            <Route path="deliveries" element={<RiderDeliveries />} />
+          </Route>
           <Route path="pending" element={<Navigate to="/rider/deliveries" replace />} />
           <Route path="delivered" element={<Navigate to="/rider/deliveries?tab=delivered" replace />} />
           <Route path="failed" element={<Navigate to="/rider/deliveries?tab=failed" replace />} />

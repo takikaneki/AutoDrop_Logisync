@@ -31,8 +31,19 @@ const badgeTones = {
   Pending: "bg-[#fef3c7] text-[#d97706]",
   Verified: "bg-[#dcfce7] text-[#15803d]",
   Flagged: "bg-[#fff0f0] text-[#c94747]",
-  "Returned to Seller": "bg-[#edf4ff] text-[#4b78b5]",
+  "Delivery Hold": "bg-[#fef3c7] text-[#b45309]",
 };
+
+export function CodBadge({ className = "" }) {
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#fff0e5] text-[#ea580c] border border-[#ffcca8] tracking-wide ${className}`}
+      title="Cash on Delivery"
+    >
+      COD
+    </span>
+  );
+}
 
 export function StatusBadge({ status, icon }) {
   return (

@@ -52,9 +52,9 @@ export const PARCEL_BASE_FIELDS = [
   {
     name: "transaction_number",
     label: "Transaction number",
-    max: 11,
-    placeholder: "Enter 11-digit transaction number",
-    help: "Enter exactly 11 digits. Numbers only; no letters or symbols.",
+    max: 12,
+    placeholder: "e.g. SPX123456789",
+    help: "Enter SPX followed by exactly 9 digits (e.g. SPX123456789). Letters beyond SPX and incorrect digit counts are rejected.",
   },
   {
     name: "receiver_name",
@@ -167,6 +167,8 @@ export const EMPTY_PARCEL = {
   other_category_description: "",
   discrete_item: false,
   discreet_reason: "",
+  is_cod: false,
+  payment_method: "NON_COD",
 };
 
 const RESTRICTED_KEYWORDS = [
@@ -201,21 +203,72 @@ export function evaluateDeclarationFlags(values = {}) {
   return warnings;
 }
 
+export function isValidTransactionNumber(tx) {
+  return /^SPX\d{9}$/i.test(String(tx || "").trim());
+}
+
+export function isGibberishName(str) {
+  const s = String(str || "").trim().toLowerCase();
+  if (s.length < 2) return true;
+  const lettersOnly = s.replace(/[^a-z]/g, "");
+  if (lettersOnly.length < 2) return true;
+  if (!/[aeiouy]/.test(lettersOnly)) return true;
+  if (/[bcdfghjklmnpqrstvwxz]{5,}/.test(lettersOnly)) return true;
+  if (/(.)\1{2,}/.test(lettersOnly)) return true;
+  const mashes = ["asdf", "qwer", "zxcv", "hjkl", "ghjk", "dfgh", "wert", "xcvb", "fghj", "jklm", "whejsh"];
+  for (const m of mashes) {
+    if (lettersOnly.includes(m)) return true;
+  }
+  return false;
+}
+
+export function isMeaningfulDescription(str) {
+  const s = String(str || "").trim();
+  if (s.length < 3) return false;
+  if (!/[a-zA-Z]/.test(s)) return false;
+  const lettersOnly = s.toLowerCase().replace(/[^a-z]/g, "");
+  if (lettersOnly.length < 2) return false;
+  if (!/[aeiouy]/.test(lettersOnly)) return false;
+  const words = s.split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const cleanWord = w.toLowerCase().replace(/[^a-z]/g, "");
+    if (cleanWord.length >= 5) {
+      if (/[bcdfghjklmnpqrstvwxz]{5,}/.test(cleanWord)) return false;
+      if (/(.)\1{2,}/.test(cleanWord)) return false;
+      const mashes = ["asdf", "qwer", "zxcv", "hjkl", "ghjk", "dfgh", "wert", "xcvb", "fghj", "jklm", "whejsh"];
+      for (const m of mashes) {
+        if (cleanWord.includes(m)) return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function validateParcel(values) {
   const errors = {};
 
   // Base fields
   const tx = (values.transaction_number || "").trim();
-  if (!tx) errors.transaction_number = "Transaction number is required.";
-  else if (!/^\d{11}$/.test(tx)) errors.transaction_number = "Transaction number must contain exactly 11 digits (numbers only).";
+  if (!tx) {
+    errors.transaction_number = "Transaction number is required.";
+  } else if (!isValidTransactionNumber(tx)) {
+    errors.transaction_number = "Invalid format. Expected SPX followed by 9 digits (e.g. SPX123456789).";
+  }
 
   const name = (values.receiver_name || "").trim();
-  if (!name) errors.receiver_name = "Customer / Receiver name is required.";
-  else if (name.length > 100) errors.receiver_name = "Receiver name must be 100 characters or fewer.";
+  if (!name) {
+    errors.receiver_name = "Customer / Receiver name is required.";
+  } else if (name.length < 2) {
+    errors.receiver_name = "Customer / Receiver name must be at least 2 characters.";
+  } else if (name.length > 100) {
+    errors.receiver_name = "Receiver name must be 100 characters or fewer.";
+  } else if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'-]*[A-Za-zÀ-ÿ.]$/.test(name) || isGibberishName(name)) {
+    errors.receiver_name = "Please enter a valid customer / receiver name (meaningless or random characters are not allowed).";
+  }
 
   const contactError = validateMobileNumber(values.receiver_contact, {
     required: true,
-    label: "Contact number",
+    label: "Customer / Receiver contact number",
   });
   if (contactError) {
     errors.receiver_contact = contactError;
@@ -223,25 +276,46 @@ export function validateParcel(values) {
 
   // Structured Address fields
   const street = (values.receiver_street || "").trim();
-  if (!street) errors.receiver_street = "House / unit number and street name is required.";
-  else if (street.length > 150) errors.receiver_street = "Street must be 150 characters or fewer.";
+  if (!street) {
+    errors.receiver_street = "House / unit number and street name is required.";
+  } else if (street.length < 3) {
+    errors.receiver_street = "Please enter a complete street address (at least 3 characters).";
+  } else if (street.length > 150) {
+    errors.receiver_street = "Street must be 150 characters or fewer.";
+  }
 
   const brgy = (values.receiver_barangay || "").trim();
-  if (!brgy) errors.receiver_barangay = "Barangay is required.";
-  else if (brgy.length > 150) errors.receiver_barangay = "Barangay must be 150 characters or fewer.";
+  if (!brgy) {
+    errors.receiver_barangay = "Barangay is required. Please select or enter a barangay.";
+  } else if (brgy.length > 150) {
+    errors.receiver_barangay = "Barangay must be 150 characters or fewer.";
+  }
 
   const city = (values.receiver_city || "").trim();
-  if (!city) errors.receiver_city = "City or municipality is required.";
-  else if (city.length > 150) errors.receiver_city = "City must be 150 characters or fewer.";
+  if (!city) {
+    errors.receiver_city = "City or municipality is required.";
+  } else if (city.length > 150) {
+    errors.receiver_city = "City must be 150 characters or fewer.";
+  }
 
   const prov = (values.receiver_province || "").trim();
-  if (!prov) errors.receiver_province = "Province is required.";
-  else if (prov.length > 150) errors.receiver_province = "Province must be 150 characters or fewer.";
+  if (!prov) {
+    errors.receiver_province = "Province is required.";
+  } else if (prov.length > 150) {
+    errors.receiver_province = "Province must be 150 characters or fewer.";
+  }
 
   // Contents
   const contents = (values.contents || "").trim();
-  if (!contents) errors.contents = "Parcel item description / contents is required.";
-  else if (contents.length > 255) errors.contents = "Contents must be 255 characters or fewer.";
+  if (!contents) {
+    errors.contents = "Parcel item description / contents is required.";
+  } else if (contents.length < 3) {
+    errors.contents = "Item description must be at least 3 characters.";
+  } else if (contents.length > 255) {
+    errors.contents = "Contents must be 255 characters or fewer.";
+  } else if (!isMeaningfulDescription(contents)) {
+    errors.contents = "Please enter a meaningful parcel item description (meaningless or random characters like 'whejshsh' are not allowed).";
+  }
 
   // Category
   const category = (values.content_category || "").trim();
@@ -282,7 +356,7 @@ export function trimParcel(values) {
   const fullAddress = formatFullAddress(values);
 
   return {
-    transaction_number: (values.transaction_number || "").trim(),
+    transaction_number: (values.transaction_number || "").trim().toUpperCase(),
     receiver_name: (values.receiver_name || "").trim(),
     receiver_contact: sanitizeMobileNumber(values.receiver_contact),
     receiver_house_number: (values.receiver_house_number || "").trim(),

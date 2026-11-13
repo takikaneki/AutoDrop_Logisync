@@ -89,3 +89,13 @@ export function formatDeliveryDayLabel(value) {
     year: "numeric",
   }).format(new Date(ts));
 }
+
+// "Nov 9"
+export function formatShortDay(value) {
+  const ts = parseValidTimestamp(value) || Date.now();
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: MANILA_TZ,
+    month: "short",
+    day: "numeric",
+  }).format(new Date(ts));
+}

@@ -15,11 +15,13 @@ function friendlyError(e) {
 export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-dark" }) {
   const regionId = useRef(`qr-region-${Math.random().toString(36).slice(2)}`).current;
   const scannerRef = useRef(null);
+  const fileInputRef = useRef(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [scanningFile, setScanningFile] = useState(false);
   const [error, setError] = useState("");
 
   const stop = async () => {
@@ -34,6 +36,25 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
       }
     }
     setRunning(false);
+  };
+
+  const handleFileScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+    setScanningFile(true);
+    await stop();
+    try {
+      const scanner = new Html5Qrcode(regionId);
+      const decodedText = await scanner.scanFile(file, false);
+      try { scanner.clear(); } catch (_) {}
+      onScanRef.current?.(decodedText);
+    } catch (err) {
+      setError("No valid QR code was detected in the selected image. Please try a clearer picture or enter the transaction number manually.");
+    } finally {
+      setScanningFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const start = async () => {
@@ -90,17 +111,37 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
         </p>
       )}
 
-      <div className="mt-4 flex justify-center gap-3">
+      <div className="mt-4 flex flex-wrap justify-center items-center gap-2.5">
         {!running ? (
-          <button
-            type="button"
-            onClick={start}
-            disabled={starting}
-            className={`rounded-lg px-5 py-2.5 text-[14px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
-          >
-            <i className="fa-solid fa-camera mr-2" />
-            Start scanning
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={start}
+              disabled={starting || scanningFile}
+              className={`rounded-lg px-4 py-2 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
+            >
+              <i className="fa-solid fa-camera mr-2" />
+              {starting ? "Starting…" : "Scan with camera"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={starting || scanningFile}
+              className="inline-flex items-center gap-2 rounded-lg border border-[#ddd] bg-white px-4 py-2 text-[13.5px] font-semibold text-[#555] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+            >
+              <i className="fa-solid fa-image text-brand" />
+              {scanningFile ? "Scanning image…" : "Upload QR image"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileScan}
+              className="hidden"
+              aria-label="Upload QR code image"
+            />
+          </>
         ) : (
           <button
             type="button"
@@ -108,7 +149,7 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
             className={btnGhost}
           >
             <i className="fa-solid fa-stop mr-2" />
-            Stop
+            Stop camera
           </button>
         )}
       </div>

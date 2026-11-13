@@ -5,6 +5,7 @@ import { StatCard, StatGrid } from "../components/portal.jsx";
 import Pagination from "../components/Pagination.jsx";
 import {
   Avatar,
+  CodBadge,
   EmptyState,
   StatusBadge,
   TableSkeleton,
@@ -50,7 +51,8 @@ const REPORT_DEFAULTS = { status: "All", seller: "All", rider: "All", from: "", 
 function mapParcel(rawParcel, index) {
   const parcel = enrichParcel(rawParcel);
   const sellerName = parcel.seller_name || parcel.seller || "Unknown Seller";
-  const initials = sellerName
+  const shopName = parcel.shop_name || parcel.shop || sellerName;
+  const initials = (shopName || sellerName)
     .split(/\s+/)
     .filter(Boolean)
     .map((part) => part[0])
@@ -62,16 +64,20 @@ function mapParcel(rawParcel, index) {
   const validDate = date && !Number.isNaN(date.getTime());
   const iso = validDate ? date.toISOString().slice(0, 10) : parcel.iso || "";
 
-  let resolvedStatus = STATUS_OPTIONS.includes(parcel.status) ? parcel.status : getParcelStatus(parcel);
-  if (parcel.returnToHub) resolvedStatus = "Return to Hub";
-  else if (parcel.rescheduled && resolvedStatus !== "Delivered") resolvedStatus = "Rescheduled";
+  let resolvedStatus = getParcelStatus(parcel);
+  if (parcel.returnToHub) {
+    resolvedStatus = "Return to Hub";
+  } else if (parcel.rescheduled && resolvedStatus !== "Delivered") {
+    resolvedStatus = "Rescheduled";
+  }
 
   return {
     id: String(parcel.parcel_id ?? parcel.id ?? ""),
     transactionNumber: String(parcel.transaction_number || parcel.id || "—"),
     parcelId: parcel.parcel_id ?? parcel.id,
     seller: sellerName,
-    shop: parcel.shop || sellerName,
+    sellerCode: parcel.seller_code || "",
+    shop: shopName,
     initials: initials || "US",
     tone: parcel.tone || "orange",
     recipient: parcel.receiver_name || parcel.recipient || "—",
@@ -80,6 +86,9 @@ function mapParcel(rawParcel, index) {
     contents: parcel.contents || parcel.item || "—",
     rider: parcel.rider_name || parcel.rider || parcel.deliveryRecord?.rider_name || "Unassigned",
     status: resolvedStatus,
+    isCod: Boolean(parcel.is_cod || String(parcel.payment_method || "").toUpperCase() === "COD"),
+    deliveryHold: Boolean(parcel.delivery_hold),
+    deliveryHoldReason: parcel.delivery_hold_reason || "",
     rescheduled: Boolean(parcel.rescheduled),
     scheduledFor: parcel.scheduledFor || null,
     rescheduleCount: Number(parcel.rescheduleCount || 0),
@@ -309,7 +318,6 @@ export default function Parcels() {
       transit: count("In Transit", "Rescheduled"),
       failed,
       rate: delivered + failed ? Math.round((delivered / (delivered + failed)) * 100) : 0,
-      cod: r.filter((p) => p.status === "Delivered").reduce((n, p) => n + (p.amount || 0), 0),
     };
   }, [reportResult]);
 
@@ -556,13 +564,6 @@ export default function Parcels() {
             ))}
           </div>
 
-          {reportSummary.cod > 0 && (
-            <p className="mb-4 text-[13px] text-[#888]">
-              COD collected from delivered parcels:{" "}
-              <strong className="text-ink dark:text-[#f1eeeb]">₱{reportSummary.cod.toLocaleString()}</strong>
-            </p>
-          )}
-
           {/* Report Rows Table */}
           {reportResult.rows.length === 0 ? (
             <EmptyState
@@ -780,13 +781,16 @@ export default function Parcels() {
                     className="cursor-pointer text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head"
                   >
                     <td className={td}>
-                      <Link
-                        to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
-                        onClick={(event) => event.stopPropagation()}
-                        className="font-bold text-brand hover:underline"
-                      >
-                        {parcel.id}
-                      </Link>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Link
+                          to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
+                          onClick={(event) => event.stopPropagation()}
+                          className="font-bold text-brand hover:underline"
+                        >
+                          {parcel.id}
+                        </Link>
+                        {parcel.isCod && <CodBadge />}
+                      </div>
                     </td>
 
                     <td className={td}>
@@ -816,6 +820,12 @@ export default function Parcels() {
                         status={parcel.status}
                         icon={statusIcons[parcel.status]}
                       />
+                      {parcel.deliveryHold && (
+                        <span className="mt-1 block text-[11.5px] font-semibold text-[#b45309]">
+                          <i className="fa-solid fa-hand mr-1" />
+                          Delivery Hold{parcel.deliveryHoldReason ? ` (${parcel.deliveryHoldReason})` : ""}
+                        </span>
+                      )}
                       {parcel.rescheduled && !parcel.returnToHub && parcel.scheduledFor && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
                           Day {parcel.rescheduleCount || 1}/3 · {formatDay(parcel.scheduledFor)}
@@ -856,13 +866,16 @@ export default function Parcels() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <Link
-                      to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[15px] font-bold text-brand hover:underline"
-                    >
-                      {parcel.id}
-                    </Link>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Link
+                        to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[15px] font-bold text-brand hover:underline"
+                      >
+                        {parcel.id}
+                      </Link>
+                      {parcel.isCod && <CodBadge />}
+                    </div>
                     {parcel.transactionNumber !== "—" && (
                       <span className="block text-[11px] text-[#999]">Txn #{parcel.transactionNumber}</span>
                     )}

@@ -18,10 +18,23 @@ export async function createUser({
   zone,
   vehicle,
   plate_number,
+  pickup_address,
+  agency,
+  rider_type,
+  status,
 }) {
   const res = await api("/users", {
     method: "POST",
-    body: { name, email, password, role, phone, shop_name, zone, vehicle, plate_number },
+    body: { name, email, password, role, phone, shop_name, zone, vehicle, plate_number, pickup_address, agency, rider_type, status },
+  });
+  return res.user;
+}
+
+// PATCH /api/users/:id/profile  (coordinator lang) - i-edit ang seller account
+export async function updateSeller(userId, fields) {
+  const res = await api(`/users/${encodeURIComponent(userId)}/profile`, {
+    method: "PATCH",
+    body: fields,
   });
   return res.user;
 }

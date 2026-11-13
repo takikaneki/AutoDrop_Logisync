@@ -17,9 +17,14 @@ const {
   verifyParcel,
   rejectParcel,
   requestReupload,
-  streamVideo
+  streamVideo,
+  coordinatorInitiateReturnToHub,
+  reportRiderIncident,
+  listRiderIncidents,
+  confirmRiderIncident,
+  actionRiderIncident
 } = require("../controllers/parcelController");
-const { authenticateToken, authorizeRoles } = require("../middleware/auth");
+const { authenticateToken, authorizeRoles, requireRiderType } = require("../middleware/auth");
 const { uploadVideo: uploadVideoMiddleware } = require("../middleware/upload");
 
 const router = express.Router();
@@ -35,9 +40,9 @@ router.get("/by-transaction/:transactionNumber", authenticateToken, getParcelByT
 
 // Delivery ng rider (ilagay bago ang "/:parcelId")
 router.get("/rider/mine", authenticateToken, authorizeRoles("rider"), listRiderParcels);
-router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), riderScanParcel);
-router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), riderDelivered);
-router.post("/rider/:parcelId/failed", authenticateToken, authorizeRoles("rider"), riderFailed);
+router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderScanParcel);
+router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderDelivered);
+router.post("/rider/:parcelId/failed", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderFailed);
 
 router.post(
   "/",
@@ -93,8 +98,46 @@ router.post("/coordinator/:parcelId/request-reupload",
 
 router.get("/videos/:videoId",
   authenticateToken,
-  authorizeRoles("coordinator"),
+  authorizeRoles("coordinator", "seller"),
   streamVideo
+);
+
+// Coordinator Return to Hub Approval
+router.post("/coordinator/:parcelId/return-to-hub",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  coordinatorInitiateReturnToHub
+);
+
+// Rider Incidents & Delivery Hold
+router.post("/rider/incidents",
+  authenticateToken,
+  authorizeRoles("rider"),
+  reportRiderIncident
+);
+
+router.get("/rider/incidents",
+  authenticateToken,
+  authorizeRoles("rider"),
+  listRiderIncidents
+);
+
+router.get("/coordinator/incidents",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  listRiderIncidents
+);
+
+router.post("/coordinator/incidents/:incidentId/confirm",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  confirmRiderIncident
+);
+
+router.post("/coordinator/incidents/:incidentId/action",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  actionRiderIncident
 );
 
 module.exports = router;

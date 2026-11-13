@@ -45,11 +45,11 @@ function buildSteps({ parcel, videos = [], verification_records: records = [] })
   if (isPostVerify && s !== "VERIFIED") {
     if (s === "DELIVERED") {
       steps.push({ label: "Delivered to customer", note: "Completed", state: "done" });
-    } else if (s === "RETURN_TO_HUB") {
+    } else if (s === "RETURN_TO_HUB" || parcel.returnToHub) {
       steps.push({
-        label: parcel.returnCoordinated ? "Return to Hub · Coordinated to Seller" : "Return to Hub (3-Day Limit Reached)",
-        note: parcel.lastFailure || "Undelivered after 3 rescheduled days",
-        state: "fail",
+        label: "Return to Hub",
+        note: parcel.lastFailure || "Delivery unsuccessful · Sent back to hub",
+        state: "done",
       });
     } else if (s === "RESCHEDULED") {
       steps.push({

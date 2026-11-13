@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
-import { EmptyState, StatusBadge } from "../components/ui.jsx";
+import { EmptyState, StatusBadge, CodBadge } from "../components/ui.jsx";
 import { btnGhost, btnPrimary, inputCls, panel } from "../components/styles.js";
 import {
   decideDiscreetHandling,
   getByTransaction,
   getCoordinatorParcel,
 } from "../services/parcelService.js";
+import { getUser } from "../api.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDay } from "../utils/format.js";
 import { coordinateReturn } from "../store/failedDeliveries.js";
@@ -58,6 +59,8 @@ export default function ParcelDetails() {
   const [error, setError] = useState("");
   const [discreetRemarks, setDiscreetRemarks] = useState("");
   const [discreetBusy, setDiscreetBusy] = useState(false);
+  const user = getUser();
+  const isCoordinator = user?.role === "coordinator";
 
   const load = async () => {
     setLoading(true);
@@ -135,15 +138,23 @@ export default function ParcelDetails() {
       : parcel.content_category
     : "Unspecified";
 
+  const isCod = Boolean(parcel?.is_cod || String(parcel?.payment_method || "").toUpperCase() === "COD");
+
   const fields = [
     ["Parcel ID", parcel?.parcel_id || parcel?.id],
     ["Transaction Number", parcel?.transaction_number],
+    ["Payment Method", isCod ? "Cash on Delivery (COD)" : "Prepaid (Non-COD)"],
     ["Parcel Status", parcel?.status],
     ["Seller Name", parcel?.seller_name || parcel?.seller?.name],
+    ...(parcel?.seller_code || parcel?.seller?.code || parcel?.seller_id ? [["Seller ID", parcel?.seller_code || parcel?.seller?.code || `SEL-${parcel?.seller_id}`]] : []),
+    ...(parcel?.shop_name || parcel?.seller?.shop_name || parcel?.shop ? [["Shop Name", parcel?.shop_name || parcel?.seller?.shop_name || parcel?.shop]] : []),
     ["Assigned Rider Name", parcel?.rider_name || parcel?.assigned_rider_name || parcel?.rider?.name || parcel?.deliveryRecord?.rider_name],
     ["Parcel Creation Date", dateValue(parcel?.created_at)],
     ["Verification Status", verification],
     ["Delivery Status", delivery],
+    ...(parcel?.delivery_hold
+      ? [["Delivery Hold", `Active (${parcel.delivery_hold_reason || "Incident reported"})`]]
+      : []),
     ...(parcel?.scheduledFor && !parcel?.returnToHub
       ? [
           [
@@ -157,7 +168,16 @@ export default function ParcelDetails() {
   return (
     <>
       <Topbar
-        title={loading ? "Parcel Details" : `Parcel ${parcel?.parcel_id || parcel?.transaction_number || "Details"}`}
+        title={
+          loading ? (
+            "Parcel Details"
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <span>Parcel {parcel?.parcel_id || parcel?.transaction_number || "Details"}</span>
+              {isCod && <CodBadge />}
+            </span>
+          )
+        }
         subtitle="Parcel record, declared content category, discreet handling verification, and delivery history."
       >
         <Link to="/parcels" className={btnGhost}>
@@ -194,28 +214,18 @@ export default function ParcelDetails() {
             </section>
           )}
 
-          {parcel?.returnToHub && (
-            <section className="rounded-2xl border border-[#d8b4fe] bg-[#faf7ff] p-5 dark:border-[#5b21b6] dark:bg-[#221933]">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-[16px] font-bold text-[#6d28d9] dark:text-[#c4b5fd]">
-                    <i className="fa-solid fa-warehouse mr-2" />
-                    Return to Hub — Maximum 3-Day Rescheduling Limit Reached
-                  </h2>
-                  <p className="mt-1 text-[13px] text-[#666] dark:text-[#d1c9c2]">
-                    This parcel remained undelivered after 3 rescheduled delivery days ({parcel.lastFailure || "undelivered"}) and has been removed from the rider&apos;s pending deliveries.
-                  </p>
-                </div>
-                {parcel.returnCoordinated ? (
-                  <span className="rounded-full bg-[#eaf8ef] px-3.5 py-1.5 text-[12.5px] font-bold text-[#29945a]">
-                    <i className="fa-solid fa-circle-check mr-1.5" /> Return to Seller Coordinated
-                  </span>
-                ) : (
-                  <button onClick={handleCoordinateReturn} className={btnPrimary}>
-                    <i className="fa-solid fa-rotate-left" /> Coordinate Return to Seller
-                  </button>
-                )}
-              </div>
+          {parcel?.delivery_hold && (
+            <section
+              role="alert"
+              className="rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-900 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-200"
+            >
+              <h2 className="flex items-center gap-2 text-[16px] font-bold">
+                <i className="fa-solid fa-hand text-amber-600" />
+                Temporary Delivery Hold Active
+              </h2>
+              <p className="mt-1 text-[13.5px] leading-relaxed">
+                This parcel is currently held due to a reported rider incident ({parcel.delivery_hold_reason || "Accident/Breakdown"}). The 3-day delivery rescheduling counter is paused and will not consume days while on hold.
+              </p>
             </section>
           )}
 
