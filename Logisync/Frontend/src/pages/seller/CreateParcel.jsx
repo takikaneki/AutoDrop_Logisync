@@ -56,6 +56,16 @@ export default function CreateParcel() {
   const [created, setCreated] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!instructionsOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setInstructionsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [instructionsOpen]);
 
   // Track customer auto-fill state
   const [matchedCustomer, setMatchedCustomer] = useState(null);
@@ -395,18 +405,41 @@ export default function CreateParcel() {
   const isContactAutoFilled =
     matchedCustomer?.contact && values.receiver_contact === matchedCustomer.contact;
 
+  const generateUniqueTxn = () => {
+    let candidate = "";
+    for (let i = 0; i < 20; i++) {
+      const digits = String(Math.floor(100000000 + Math.random() * 900000000));
+      candidate = `SPX${digits}`;
+      if (!existingTxns.has(candidate)) break;
+    }
+    setValues((v) => ({ ...v, transaction_number: candidate }));
+    setErrors((e) => ({ ...e, transaction_number: "" }));
+    setScanned(false);
+  };
+
   return (
     <>
       <Topbar
         title="Create Parcel"
         subtitle="Register a parcel so the coordinator can verify it. The system generates the parcel ID."
+        actions={
+          !created && (
+            <button
+              type="button"
+              onClick={() => setInstructionsOpen(true)}
+              className={btnGhost}
+            >
+              <i className="fa-regular fa-circle-question text-brand" /> Instructions
+            </button>
+          )
+        }
       />
 
       {created ? (
         <ParcelCreated parcel={created} onReset={reset} />
       ) : (
-        <div className="grid grid-cols-[1.6fr_1fr] items-start gap-6 max-[1100px]:grid-cols-1">
-          <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-[30px] max-[600px]:p-5`}>
+        <div className="mx-auto max-w-3xl">
+          <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-6 max-[600px]:p-4`}>
             <PanelTitle icon="fa-square-plus">Parcel Details</PanelTitle>
 
             {apiError && (
@@ -426,7 +459,7 @@ export default function CreateParcel() {
                   />
                   {scanned
                     ? "Transaction number scanned from the QR code."
-                    : "Scan with camera, upload a QR image from your device, or type below."}
+                    : "Scan with camera or type below."}
                 </p>
                 <button type="button" onClick={() => setScanning((v) => !v)} className={btnGhost}>
                   {scanning ? "Close scanner" : scanned ? "Scan again" : "Open scanner"}
@@ -434,7 +467,7 @@ export default function CreateParcel() {
               </div>
               {scanning && (
                 <div className="mt-4">
-                  <QrScanner onScan={onScan} />
+                  <QrScanner onScan={onScan} allowImageUpload={false} />
                 </div>
               )}
             </div>
@@ -445,6 +478,14 @@ export default function CreateParcel() {
                 <label htmlFor="transaction_number" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
                   Transaction number <span className="text-brand">*</span>
                 </label>
+                <button
+                  type="button"
+                  onClick={generateUniqueTxn}
+                  className="text-[11.5px] font-semibold text-brand hover:underline"
+                >
+                  <i className="fa-solid fa-wand-magic-sparkles mr-1 text-[10px]" />
+                  Generate SPX#
+                </button>
               </div>
               <input
                 id="transaction_number"
@@ -452,16 +493,18 @@ export default function CreateParcel() {
                 type="text"
                 value={values.transaction_number}
                 onChange={onChange}
-                placeholder="e.g. SPX123456789"
+                placeholder="e.g. SPX272828381"
                 maxLength={12}
                 aria-invalid={!!errors.transaction_number}
                 className={`${inputCls} font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
               />
               <p className={`mt-1 min-h-[16px] text-[12px] ${errors.transaction_number ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.transaction_number || "Format: SPX followed by 9 digits (e.g. SPX123456789). Numbers only after SPX."}
+                {errors.transaction_number || "Format: SPX followed by 9 digits (e.g. SPX272828381). Numbers only after SPX."}
               </p>
             </div>
 
+            {/* 2 & 3. Customer / Receiver Name & Contact Number */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* 2. Customer / Receiver Name with Autocomplete */}
             <div ref={nameWrapRef} className="relative">
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -603,6 +646,7 @@ export default function CreateParcel() {
                 {errors.receiver_contact || "Enter an 11-digit mobile number starting with 09 (numbers only)."}
               </p>
             </div>
+            </div>
 
             {/* 4. Structured Delivery Address Section */}
             <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-4 dark:border-night-line dark:bg-night-panel">
@@ -616,7 +660,7 @@ export default function CreateParcel() {
                       Customer / Receiver Delivery Address
                     </h3>
                     <p className="text-[12px] text-slate-500 dark:text-slate-400">
-                      Covering Trece Martires City, Cavite Service Hub. Each address field is arranged vertically.
+                      Covering Trece Martires City, Cavite Service Hub.
                     </p>
                   </div>
                 </div>
@@ -627,8 +671,8 @@ export default function CreateParcel() {
                 )}
               </div>
 
-              {/* Vertical Stack: One field per row */}
               <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 {/* 1. Province (Pre-filled / Read-only) */}
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
@@ -685,6 +729,7 @@ export default function CreateParcel() {
                   <p className="mt-1 text-[11px] text-slate-400">
                     Automatically set to Trece Martires City (service hub coverage area).
                   </p>
+                </div>
                 </div>
 
                 {/* 3. Barangay (Autocomplete dropdown strictly containing Trece Martires City barangays) */}
@@ -1090,53 +1135,6 @@ export default function CreateParcel() {
               )}
             </div>
 
-            {/* Payment Method Selector (COD Indicator Only - No Payment Processing / Amount) */}
-            <div className="rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <div>
-                  <strong className="text-[14px] text-[#27364f] dark:text-[#f1eeeb] flex items-center gap-1.5">
-                    <i className="fa-solid fa-money-bill-wave text-brand" />
-                    Payment Method Tag
-                  </strong>
-                  <p className="text-[12px] text-[#777] dark:text-[#b8b0a8] mt-0.5">
-                    Identify whether this parcel is Cash on Delivery (COD) or Non-COD (Prepaid).
-                  </p>
-                </div>
-                <span className="text-[11px] font-bold text-[#ea580c] bg-[#fff0e5] px-2 py-0.5 rounded border border-[#ffcca8]">
-                  Identification Only
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                <button
-                  type="button"
-                  onClick={() => setValues((v) => ({ ...v, is_cod: false, payment_method: "NON_COD" }))}
-                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
-                    !values.is_cod
-                      ? "bg-brand text-white border-brand shadow-sm"
-                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
-                  }`}
-                >
-                  <i className="fa-solid fa-credit-card" /> Non-COD (Prepaid)
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setValues((v) => ({ ...v, is_cod: true, payment_method: "COD" }))}
-                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
-                    values.is_cod
-                      ? "bg-[#ea580c] text-white border-[#ea580c] shadow-sm"
-                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
-                  }`}
-                >
-                  <i className="fa-solid fa-hand-holding-dollar" /> Cash on Delivery (COD)
-                </button>
-              </div>
-              <small className="block mt-2 text-[11px] text-[#999]">
-                Riders verify exact COD amounts directly in the Shopee app. No payment amounts are handled inside LogiSync.
-              </small>
-            </div>
-
             {/* Live Flag Warnings */}
             {liveWarnings.length > 0 && (
               <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-[12.5px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
@@ -1157,29 +1155,63 @@ export default function CreateParcel() {
               {submitting ? "Registering parcel..." : "Register parcel"}
             </button>
           </form>
+        </div>
+      )}
 
-          {/* Right-hand Sidebar Steps Guide */}
-          <aside className="space-y-4">
-            <div className={`${panel} p-6`}>
-              <h2 className="mb-4 text-[15px] font-bold">How parcel creation works</h2>
-              <ol className="space-y-4">
-                {STEPS.map(([icon, title, desc], i) => (
-                  <li key={title} className="flex gap-3 text-[13px]">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <strong className="block text-[13.5px] leading-snug">
-                        <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
-                        {title}
-                      </strong>
-                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+      {/* Instructions Modal */}
+      {instructionsOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-parcel-instructions-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setInstructionsOpen(false);
+          }}
+        >
+          <div className={`${panel} w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 shadow-2xl max-[600px]:p-5`}>
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#eee] pb-3 dark:border-night-line">
+              <h2 id="create-parcel-instructions-title" className="text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                <i className="fa-regular fa-circle-question mr-2 text-brand" />
+                How parcel creation works
+              </h2>
+              <button
+                type="button"
+                onClick={() => setInstructionsOpen(false)}
+                aria-label="Close instructions"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#777] transition hover:bg-[#f5f5f5] hover:text-[#222] dark:text-[#b8b0a8] dark:hover:bg-night-head dark:hover:text-white"
+              >
+                <i className="fa-solid fa-xmark text-base" />
+              </button>
             </div>
-          </aside>
+
+            <ol className="space-y-4">
+              {STEPS.map(([icon, title, desc], i) => (
+                <li key={title} className="flex gap-3 text-[13px]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <strong className="block text-[13.5px] leading-snug text-[#27364f] dark:text-[#f1eeeb]">
+                      <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
+                      {title}
+                    </strong>
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-5 flex justify-end border-t border-[#eee] pt-4 dark:border-night-line">
+              <button
+                type="button"
+                onClick={() => setInstructionsOpen(false)}
+                className={btnPrimary}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

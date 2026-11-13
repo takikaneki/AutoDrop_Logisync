@@ -109,7 +109,7 @@ export default function SellerDashboard() {
                       <td className={td}>{p.contents || "—"}</td>
                       <td className={td}>
                         <StatusBadge status={p.status} />
-                        {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                        {p.rescheduled && !p.returnToHub && p.status !== "DELIVERED" && p.scheduledFor && (
                           <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
                             Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
                           </span>

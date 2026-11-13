@@ -16,6 +16,13 @@ import { getParcelAddress } from "../../store/customers.js";
 const PAGE_SIZE = 10;
 const PENDING = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
 
+function shortParcelId(id) {
+  const str = String(id || "").trim();
+  if (!str) return "—";
+  if (str.length <= 10) return str;
+  return `${str.slice(0, 2)}-${str.slice(-6)}`;
+}
+
 const FILTERS = [
   { key: "NEEDS_VIDEO", label: "Needs Video", icon: "fa-video", tone: "yellow", match: (p) => PENDING.includes(p.status) },
   { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "fa-hourglass-half", tone: "blue", match: (p) => p.status === "VIDEO_SUBMITTED" },
@@ -180,7 +187,7 @@ export default function ParcelRecords() {
                 const addr = getParcelAddress(p);
                 return (
                   <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                    <td className={`${td} whitespace-nowrap font-mono text-[12px]`}>{p.parcel_id}</td>
+                    <td className={`${td} whitespace-nowrap font-mono text-[12px]`} title={p.parcel_id}>{shortParcelId(p.parcel_id)}</td>
                     <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
                       <span className="inline-flex items-center gap-1.5 flex-wrap">
                         <span>{p.transaction_number || "—"}</span>
@@ -223,7 +230,7 @@ export default function ParcelRecords() {
                     </td>
                     <td className={td}>
                       <StatusBadge status={p.status} />
-                      {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                      {p.rescheduled && !p.returnToHub && p.status !== "DELIVERED" && p.scheduledFor && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
                           Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
                         </span>
@@ -274,17 +281,17 @@ export default function ParcelRecords() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="block font-mono text-[11px] text-[#999]">{p.parcel_id}</span>
+                      <span className="block font-mono text-[11px] text-[#999]" title={p.parcel_id}>{shortParcelId(p.parcel_id)}</span>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <strong className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                          #{p.transaction_number || p.parcel_id}
+                          #{p.transaction_number || shortParcelId(p.parcel_id)}
                         </strong>
                         {(p.is_cod || p.payment_method === "COD") && <CodBadge />}
                       </div>
                     </div>
                     <StatusBadge status={p.status} />
                   </div>
-                  {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                  {p.rescheduled && !p.returnToHub && p.status !== "DELIVERED" && p.scheduledFor && (
                     <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
                       <i className="fa-solid fa-calendar-day mr-1" />
                       Rescheduled (Day {p.rescheduleCount || 1}/3) · {formatDay(p.scheduledFor)}

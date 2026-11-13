@@ -12,7 +12,12 @@ function friendlyError(e) {
 
 // Live camera scanner. Kapag may nabasang QR, titigil ang camera at tatawagin ang onScan(text).
 // Gumagamit ng html5-qrcode (kailangan ng `npm install`).
-export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-dark" }) {
+export default function QrScanner({
+  onScan,
+  btnClass = "bg-brand hover:bg-brand-dark",
+  allowImageUpload = true,
+  windowSize = "default",
+}) {
   const regionId = useRef(`qr-region-${Math.random().toString(36).slice(2)}`).current;
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -88,9 +93,11 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
     stop();
   }, []);
 
+  const boxWidthCls = windowSize === "large" ? "max-w-[430px]" : "max-w-sm";
+
   return (
     <div>
-      <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-2xl bg-[#2a2522]">
+      <div className={`relative mx-auto aspect-square w-full ${boxWidthCls} overflow-hidden rounded-2xl bg-[#2a2522]`}>
         <div id={regionId} className="h-full w-full" />
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-slate-300">
@@ -124,23 +131,27 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
               {starting ? "Starting…" : "Scan with camera"}
             </button>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={starting || scanningFile}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#ddd] bg-white px-4 py-2 text-[13.5px] font-semibold text-[#555] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
-            >
-              <i className="fa-solid fa-image text-brand" />
-              {scanningFile ? "Scanning image…" : "Upload QR image"}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileScan}
-              className="hidden"
-              aria-label="Upload QR code image"
-            />
+            {allowImageUpload && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={starting || scanningFile}
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#ddd] bg-white px-4 py-2 text-[13.5px] font-semibold text-[#555] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+                >
+                  <i className="fa-solid fa-image text-brand" />
+                  {scanningFile ? "Scanning image…" : "Upload QR image"}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileScan}
+                  className="hidden"
+                  aria-label="Upload QR code image"
+                />
+              </>
+            )}
           </>
         ) : (
           <button

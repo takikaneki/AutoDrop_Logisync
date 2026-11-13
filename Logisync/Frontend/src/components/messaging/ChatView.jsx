@@ -46,6 +46,7 @@ export default function ChatView({
   btnClass = "bg-brand hover:bg-brand-dark",
   activeClass = "bg-brand-soft dark:bg-night-head",
   surface = "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800",
+  directMode = false,
 }) {
   const me = Number(getUser()?.user_id);
   const myRole = getRole();
@@ -168,6 +169,13 @@ return contacts
 
   const active = contacts.find((c) => Number(c.user_id) === Number(activeId)) || null;
 
+  useEffect(() => {
+    if (directMode && !activeId && (rows.length > 0 || contacts.length > 0)) {
+      const first = rows[0]?.contact || contacts[0];
+      if (first?.user_id) setActiveId(first.user_id);
+    }
+  }, [directMode, activeId, rows, contacts]);
+
   const thread = useMemo(
     () =>
       messages.filter((m) => {
@@ -223,9 +231,10 @@ return contacts
     );
 
   return (
-    <div className={`grid h-[calc(100vh-15rem)] min-h-[420px] overflow-hidden rounded-2xl border md:grid-cols-[300px_1fr] ${surface}`}>
+    <div className={`grid h-[calc(100vh-15rem)] min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "grid-cols-1" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
-      <aside className={`flex min-h-0 flex-col border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
+      {!directMode && (
+        <aside className={`flex min-h-0 flex-col border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
         <div className="space-y-3 border-b border-slate-200 p-3 dark:border-slate-700">
   {!coordinatorOnly && (
   <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-night-head">
@@ -301,20 +310,25 @@ return contacts
           ))}
         </ul>
       </aside>
+      )}
 
       {/* USAPAN */}
-      <section className={`min-h-0 flex-col ${active ? "flex" : "hidden md:flex"}`}>
+      <section className={`min-h-0 flex-col ${directMode || active ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div className="m-auto p-6 text-center text-slate-500">
             <i className="fa-regular fa-comments text-4xl opacity-50" />
-            <p className="mt-3 text-sm">Select a conversation to start messaging.</p>
+            <p className="mt-3 text-sm">
+              {directMode ? "No coordinator is available right now." : "Select a conversation to start messaging."}
+            </p>
           </div>
         ) : (
           <>
             <header className="flex items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-700">
-              <button onClick={() => setActiveId(null)} aria-label="Back" className="md:hidden">
-                <i className="fa-solid fa-arrow-left" />
-              </button>
+              {!directMode && (
+                <button onClick={() => setActiveId(null)} aria-label="Back" className="md:hidden">
+                  <i className="fa-solid fa-arrow-left" />
+                </button>
+              )}
               <strong>{active.name}</strong>
               <span className="text-xs capitalize text-slate-400">{active.role}</span>
             </header>

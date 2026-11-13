@@ -175,8 +175,8 @@ export default function ScanUpload() {
 
       {!parcel && (
         <section className={`${panel} p-[30px] max-[600px]:p-5`}>
-          <ScanPanel onValue={lookup} busy={looking} />
-          {looking && <p className="mt-4 text-[14px] text-[#999]">Looking up parcel…</p>}
+          <ScanPanel onValue={lookup} busy={looking} centered allowImageUpload={false} />
+          {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
           {lookupError && (
             <div className="mt-4">
               <Notice tone="error" icon="fa-circle-exclamation" role="alert">
