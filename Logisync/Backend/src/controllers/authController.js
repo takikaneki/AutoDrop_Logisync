@@ -1,6 +1,8 @@
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { pool, rawPool } = require("../config/database");
+const { sendPasswordResetEmail } = require("../utils/mailer");
 
 const CURRENT_POLICY_VERSION = "2026.1";
 let policySchemaReady = false;
@@ -525,4 +527,283 @@ async function logout(req, res) {
   }
 }
 
-module.exports = { register, login, logout, me, verifyPassword, changePassword };
+async function forgotPassword(req, res) {
+  try {
+    const { email } = req.body || {};
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter your email address."
+      });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address."
+      });
+    }
+
+    // Generic response message to prevent account enumeration
+    const genericResponse = {
+      success: true,
+      message: "If an account with that email exists, password reset instructions have been sent."
+    };
+
+    const [rows] = await pool.query(
+      "SELECT user_id, name, email, role, verification_status FROM users WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(?))",
+      [cleanEmail]
+    );
+
+    if (!rows.length) {
+      // Do not reveal whether an email address is registered
+      return res.json(genericResponse);
+    }
+
+    const user = rows[0];
+
+    // If account is suspended, do not generate active token
+    if (
+      (user.role === "seller" || user.role === "rider") &&
+      String(user.verification_status || "").toUpperCase() === "REJECTED"
+    ) {
+      return res.json(genericResponse);
+    }
+
+    // Invalidate any previous unused tokens for this user
+    await pool.query(
+      "UPDATE password_resets SET used = TRUE WHERE user_id = ? AND used = FALSE",
+      [user.user_id]
+    );
+
+    // Generate cryptographically secure token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+
+    await pool.query(
+      `INSERT INTO password_resets (user_id, token, expires_at)
+       VALUES (?, ?, ?)`,
+      [user.user_id, token, expiresAt]
+    );
+
+    const appUrl = (process.env.APP_URL || process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+    const resetLink = `${appUrl}/login?resetToken=${token}`;
+
+    await sendPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      resetLink
+    });
+
+    try {
+      await pool.query(
+        `INSERT INTO audit_logs
+         (actor_id, actor_name, actor_role, category, action, target, detail)
+         VALUES (?, ?, ?, 'Auth', 'Requested password reset', ?, ?)`,
+        [
+          user.user_id,
+          user.name,
+          user.role,
+          user.email,
+          "Password reset link generated and dispatched."
+        ]
+      );
+    } catch {
+      /* non-fatal */
+    }
+
+    return res.json(genericResponse);
+  } catch (error) {
+    console.error("forgotPassword error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process password recovery. Please try again later."
+    });
+  }
+}
+
+async function verifyResetToken(req, res) {
+  try {
+    const token = String(req.query.token || req.body?.token || "").trim();
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset token is required."
+      });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT r.reset_id, r.user_id, r.expires_at, r.used, u.email, u.name, u.role
+       FROM password_resets r
+       JOIN users u ON r.user_id = u.user_id
+       WHERE r.token = ?`,
+      [token]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "This password reset link is invalid or has expired."
+      });
+    }
+
+    const record = rows[0];
+    const isExpired = new Date(record.expires_at).getTime() < Date.now();
+    if (record.used || isExpired) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "This password reset link is invalid or has expired."
+      });
+    }
+
+    const email = record.email || "";
+    const maskedEmail = email.replace(
+      /^(.)(.*)(@.*)$/,
+      (_, first, mid, dom) => `${first}${"*".repeat(Math.max(mid.length, 3))}${dom}`
+    );
+
+    return res.json({
+      success: true,
+      valid: true,
+      email: maskedEmail
+    });
+  } catch (error) {
+    console.error("verifyResetToken error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to verify reset token."
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const { token, newPassword, confirmPassword } = req.body || {};
+    const cleanToken = String(token || "").trim();
+
+    if (!cleanToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Reset token is required."
+      });
+    }
+
+    if (!newPassword || typeof newPassword !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a new password."
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters."
+      });
+    }
+
+    if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match."
+      });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT r.reset_id, r.user_id, r.expires_at, r.used, u.password_hash, u.email, u.name, u.role
+       FROM password_resets r
+       JOIN users u ON r.user_id = u.user_id
+       WHERE r.token = ?`,
+      [cleanToken]
+    );
+
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "This password reset link is invalid or has expired."
+      });
+    }
+
+    const record = rows[0];
+    const isExpired = new Date(record.expires_at).getTime() < Date.now();
+    if (record.used || isExpired) {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: "This password reset link is invalid or has expired."
+      });
+    }
+
+    // Check if new password is identical to previous password
+    const isSame = await bcrypt.compare(newPassword, record.password_hash);
+    if (isSame) {
+      return res.status(400).json({
+        success: false,
+        message: "The new password must be different from your previous password."
+      });
+    }
+
+    // Securely hash new password using bcrypt
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password in database
+    await pool.query(
+      `UPDATE users
+       SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE user_id = ?`,
+      [newHash, record.user_id]
+    );
+
+    // Invalidate token immediately to prevent reuse
+    await pool.query(
+      `UPDATE password_resets
+       SET used = TRUE, used_at = CURRENT_TIMESTAMP
+       WHERE reset_id = ?`,
+      [record.reset_id]
+    );
+
+    try {
+      await pool.query(
+        `INSERT INTO audit_logs
+         (actor_id, actor_name, actor_role, category, action, target, detail)
+         VALUES (?, ?, ?, 'Auth', 'Reset password', ?, ?)`,
+        [
+          record.user_id,
+          record.name,
+          record.role,
+          record.email,
+          "User completed password reset via recovery link."
+        ]
+      );
+    } catch {
+      /* non-fatal */
+    }
+
+    return res.json({
+      success: true,
+      message: "Your password has been successfully reset. You can now sign in with your new password."
+    });
+  } catch (error) {
+    console.error("resetPassword error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to reset password. Please try again."
+    });
+  }
+}
+
+module.exports = {
+  register,
+  login,
+  logout,
+  me,
+  verifyPassword,
+  changePassword,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword
+};

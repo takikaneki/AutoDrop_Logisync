@@ -36,7 +36,10 @@ async function authenticateToken(req, res, next) {
       (dbUser.role === "seller" || dbUser.role === "rider") &&
       String(dbUser.verification_status || "").toUpperCase() === "REJECTED"
     ) {
-      return res.status(403).json({ success: false, message: "Your account has been suspended." });
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact the Coordinator."
+      });
     }
 
     // Attach verified user info with trusted database role
@@ -78,7 +81,6 @@ function requireRiderType(...allowedTypes) {
   return async (req, res, next) => {
     if (!req.user || req.user.role !== "rider") return next();
     try {
-      const { pool } = require("../config/database");
       const [rows] = await pool.query("SELECT rider_type FROM users WHERE user_id = ?", [req.user.user_id]);
       const type = String(rows[0]?.rider_type || "LM").toUpperCase();
       if (!allowedTypes.includes(type)) {
@@ -98,4 +100,3 @@ function requireRiderType(...allowedTypes) {
 }
 
 module.exports = { authenticateToken, authorizeRoles, requireRiderType };
-
