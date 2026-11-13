@@ -56,27 +56,6 @@ async function authenticateToken(req, res, next) {
     };
     next();
   }
-=======
-  req.user = decoded;
-
-  // Inactive (deactivated) sellers/riders lose access immediately, even with an existing session.
-  if (decoded.role === "seller" || decoded.role === "rider") {
-    const { pool } = require("../config/database");
-    pool
-      .query("SELECT verification_status FROM users WHERE user_id = ?", [decoded.user_id])
-      .then(([rows]) => {
-        if (rows.length && String(rows[0].verification_status).toUpperCase() === "REJECTED") {
-          return res.status(403).json({
-            success: false,
-            message: "Your account is inactive. Please contact the Coordinator."
-          });
-        }
-        next();
-      })
-      .catch(() => next());
-    return;
-  }
-  next();
 }
 
 function authorizeRoles(...allowedRoles) {
@@ -93,8 +72,6 @@ function authorizeRoles(...allowedRoles) {
   };
 }
 
-module.exports = { authenticateToken, authorizeRoles };
-=======
 // Rider classification guard. FM = First Mile (seller pickups), LM = Last Mile (buyer deliveries).
 // Binabasa ang rider_type sa database (hindi sa token) para hindi malusutan.
 function requireRiderType(...allowedTypes) {
