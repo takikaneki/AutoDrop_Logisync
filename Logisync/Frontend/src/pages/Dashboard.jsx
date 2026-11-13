@@ -208,44 +208,6 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* RTS MONITORING SUMMARY */}
-      <section className="mb-7 rounded-2xl border border-[#e5e8ee] bg-white p-5 dark:border-night-line dark:bg-night-panel">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="text-[17px] font-bold text-[#27364f] dark:text-[#f1eeeb] flex items-center gap-2">
-            <i className="fa-solid fa-truck-ramp-box text-brand" /> Return to Sender (RTS) 4-Stage Monitoring
-          </h2>
-          <Link to="/parcels?status=Failed%20/%20Return%20to%20Hub" className="text-xs font-bold text-brand hover:underline">
-            View All Return Parcels →
-          </Link>
-        </div>
-        <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[500px]:grid-cols-1 text-center">
-          <div className="rounded-xl border border-[#ede9fe] bg-[#f5f3ff] p-3.5 dark:border-night-line dark:bg-night-head">
-            <span className="block text-xs font-bold uppercase text-[#7c3aed]">Stage 1 · Return to Hub</span>
-            <strong className="mt-1 block text-2xl font-bold text-[#6d28d9] dark:text-[#c4b5fd]">
-              {v(real.filter((p) => p.status === "RETURN_TO_HUB" || p.rts_status === "RETURN_TO_HUB" || p.returnToHub).length)}
-            </strong>
-          </div>
-          <div className="rounded-xl border border-[#cffafe] bg-[#ecfeff] p-3.5 dark:border-night-line dark:bg-night-head">
-            <span className="block text-xs font-bold uppercase text-[#0e7490]">Stage 2 · Hub Verified</span>
-            <strong className="mt-1 block text-2xl font-bold text-[#0891b2] dark:text-[#67e8f9]">
-              {v(real.filter((p) => p.status === "HUB_VERIFIED" || p.rts_status === "HUB_VERIFIED").length)}
-            </strong>
-          </div>
-          <div className="rounded-xl border border-[#fef3c7] bg-[#fffbeb] p-3.5 dark:border-night-line dark:bg-night-head">
-            <span className="block text-xs font-bold uppercase text-[#b45309]">Stage 3 · RTS In Transit</span>
-            <strong className="mt-1 block text-2xl font-bold text-[#d97706] dark:text-[#fde68a]">
-              {v(real.filter((p) => p.status === "RTS_IN_TRANSIT" || p.rts_status === "RTS_IN_TRANSIT").length)}
-            </strong>
-          </div>
-          <div className="rounded-xl border border-[#dcfce7] bg-[#f0fdf4] p-3.5 dark:border-night-line dark:bg-night-head">
-            <span className="block text-xs font-bold uppercase text-[#15803d]">Stage 4 · Returned to Seller</span>
-            <strong className="mt-1 block text-2xl font-bold text-[#16a34a] dark:text-[#86efac]">
-              {v(real.filter((p) => p.status === "RETURNED_TO_SELLER" || p.rts_status === "RETURNED_TO_SELLER").length)}
-            </strong>
-          </div>
-        </div>
-      </section>
-
       {/* 2. VERIFICATION + RECENT PARCELS */}
       <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
         <div className={`${panel} flex flex-col`}>

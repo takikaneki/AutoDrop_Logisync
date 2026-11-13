@@ -19,9 +19,6 @@ const {
   requestReupload,
   streamVideo,
   coordinatorInitiateReturnToHub,
-  coordinatorHubVerify,
-  coordinatorRtsDispatch,
-  sellerConfirmReturned,
   reportRiderIncident,
   listRiderIncidents,
   confirmRiderIncident,
@@ -105,29 +102,11 @@ router.get("/videos/:videoId",
   streamVideo
 );
 
-// Return to Sender (RTS) Workflow
+// Coordinator Return to Hub Approval
 router.post("/coordinator/:parcelId/return-to-hub",
   authenticateToken,
   authorizeRoles("coordinator"),
   coordinatorInitiateReturnToHub
-);
-
-router.post("/coordinator/:parcelId/hub-verify",
-  authenticateToken,
-  authorizeRoles("coordinator"),
-  coordinatorHubVerify
-);
-
-router.post("/coordinator/:parcelId/rts-dispatch",
-  authenticateToken,
-  authorizeRoles("coordinator"),
-  coordinatorRtsDispatch
-);
-
-router.post("/seller/:parcelId/confirm-returned",
-  authenticateToken,
-  authorizeRoles("seller", "coordinator"),
-  sellerConfirmReturned
 );
 
 // Rider Incidents & Delivery Hold

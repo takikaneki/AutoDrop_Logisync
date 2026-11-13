@@ -107,13 +107,6 @@ async function ensureCustomerSchema() {
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_attempts TEXT;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS is_cod BOOLEAN NOT NULL DEFAULT FALSE;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) NOT NULL DEFAULT 'NON_COD';
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rts_status VARCHAR(40);
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS hub_verified_at TIMESTAMPTZ;
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS hub_verified_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rts_dispatched_at TIMESTAMPTZ;
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rts_dispatched_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS returned_to_seller_at TIMESTAMPTZ;
-        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS returned_received_by VARCHAR(150);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_hold BOOLEAN NOT NULL DEFAULT FALSE;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_hold_reason VARCHAR(255);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS delivery_hold_until TIMESTAMPTZ;
@@ -1787,9 +1780,6 @@ async function listParcels(req, res) {
               p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
               p.last_failure, p.delivery_attempts, p.scanned_at, p.delivered_at,
               p.is_cod, p.payment_method,
-              p.rts_status, p.hub_verified_at, p.hub_verified_by,
-              p.rts_dispatched_at, p.rts_dispatched_by,
-              p.returned_to_seller_at, p.returned_received_by,
               p.delivery_hold, p.delivery_hold_reason, p.delivery_hold_until, p.delivery_hold_at,
               u.name AS seller_name, u.email AS seller_email, u.seller_code, u.shop_name,
               r.name AS rider_name,
@@ -2100,7 +2090,7 @@ async function listRiderParcels(req, res) {
                 p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
                 p.last_failure, p.delivery_attempts,
                 p.scanned_at, p.delivered_at, p.updated_at,
-                p.is_cod, p.payment_method, p.rts_status, p.delivery_hold, p.delivery_hold_reason,
+                p.is_cod, p.payment_method, p.delivery_hold, p.delivery_hold_reason,
                 u.name AS seller_name
          FROM parcels p
          LEFT JOIN users u ON p.seller_id = u.user_id
@@ -2169,9 +2159,9 @@ async function listRiderParcels(req, res) {
   }
 }
 
-// ---------------- RETURN TO SENDER (RTS) 4-STAGE WORKFLOW ----------------
+// ---------------- RETURN TO HUB WORKFLOW ----------------
 
-// Stage 1 approval: Coordinator initiates or approves Return to Hub (e.g. from recipient refusal)
+// Coordinator initiates or approves Return to Hub (e.g. from recipient refusal)
 async function coordinatorInitiateReturnToHub(req, res) {
   try {
     await ensureCustomerSchema();
@@ -2195,7 +2185,6 @@ async function coordinatorInitiateReturnToHub(req, res) {
            return_to_hub_at = NOW(),
            delivery_status = 'FAILED',
            status = 'RETURN_TO_HUB',
-           rts_status = 'RETURN_TO_HUB',
            last_failure = ?,
            updated_at = NOW()
        WHERE parcel_id = ?`,
@@ -2213,163 +2202,13 @@ async function coordinatorInitiateReturnToHub(req, res) {
 
     res.json({
       success: true,
-      message: "Parcel marked for Return to Hub (RTS Stage 1).",
+      message: "Parcel marked for Return to Hub.",
       parcel_id: p.parcel_id,
-      rts_status: "RETURN_TO_HUB",
       status: "RETURN_TO_HUB"
     });
   } catch (error) {
     console.error("coordinatorInitiateReturnToHub error:", error);
     res.status(500).json({ success: false, message: "Failed to initiate Return to Hub." });
-  }
-}
-
-// Stage 2: Hub Verification (Coordinator verifies parcel arrival at Hub via scan or action)
-async function coordinatorHubVerify(req, res) {
-  try {
-    await ensureCustomerSchema();
-    const parcelId = String(req.params.parcelId || "").trim();
-    const [rows] = await pool.query(
-      `SELECT parcel_id, transaction_number, seller_id, return_to_hub, rts_status, delivery_status
-       FROM parcels
-       WHERE parcel_id = ? OR transaction_number = ?
-       LIMIT 1`,
-      [parcelId, parcelId]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ success: false, message: "Parcel not found." });
-    }
-    const p = rows[0];
-
-    await pool.query(
-      `UPDATE parcels
-       SET return_to_hub = TRUE,
-           rts_status = 'HUB_VERIFIED',
-           hub_verified_at = NOW(),
-           hub_verified_by = ?,
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [req.user.user_id, p.parcel_id]
-    );
-
-    await logAudit(req.user, {
-      category: "Delivery",
-      action: "Hub verified returned parcel",
-      target: p.parcel_id,
-      detail: `Coordinator verified return-to-hub arrival for parcel ${p.transaction_number || p.parcel_id}`,
-      sellerId: p.seller_id
-    });
-
-    res.json({
-      success: true,
-      message: "Parcel marked as Hub Verified.",
-      parcel_id: p.parcel_id,
-      rts_status: "HUB_VERIFIED"
-    });
-  } catch (error) {
-    console.error("coordinatorHubVerify error:", error);
-    res.status(500).json({ success: false, message: "Failed to verify hub arrival." });
-  }
-}
-
-// Stage 3: RTS Dispatch (Coordinator dispatches verified returned parcel towards Seller)
-async function coordinatorRtsDispatch(req, res) {
-  try {
-    await ensureCustomerSchema();
-    const parcelId = String(req.params.parcelId || "").trim();
-    const [rows] = await pool.query(
-      `SELECT parcel_id, transaction_number, seller_id, rts_status
-       FROM parcels
-       WHERE parcel_id = ? OR transaction_number = ?
-       LIMIT 1`,
-      [parcelId, parcelId]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ success: false, message: "Parcel not found." });
-    }
-    const p = rows[0];
-
-    await pool.query(
-      `UPDATE parcels
-       SET rts_status = 'RTS_IN_TRANSIT',
-           delivery_status = 'RTS_IN_TRANSIT',
-           rts_dispatched_at = NOW(),
-           rts_dispatched_by = ?,
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [req.user.user_id, p.parcel_id]
-    );
-
-    await logAudit(req.user, {
-      category: "Delivery",
-      action: "Dispatched parcel for return to seller",
-      target: p.parcel_id,
-      detail: `RTS dispatched towards seller for parcel ${p.transaction_number || p.parcel_id}`,
-      sellerId: p.seller_id
-    });
-
-    res.json({
-      success: true,
-      message: "Parcel dispatched towards Seller (RTS In Transit).",
-      parcel_id: p.parcel_id,
-      rts_status: "RTS_IN_TRANSIT"
-    });
-  } catch (error) {
-    console.error("coordinatorRtsDispatch error:", error);
-    res.status(500).json({ success: false, message: "Failed to dispatch RTS parcel." });
-  }
-}
-
-// Stage 4: Returned to Seller (Seller or authorized receiver confirms receipt)
-async function sellerConfirmReturned(req, res) {
-  try {
-    await ensureCustomerSchema();
-    const parcelId = String(req.params.parcelId || "").trim();
-    const isCoordinator = req.user.role === "coordinator";
-    const [rows] = await pool.query(
-      `SELECT parcel_id, transaction_number, seller_id, rts_status
-       FROM parcels
-       WHERE (parcel_id = ? OR transaction_number = ?)
-         ${isCoordinator ? "" : "AND seller_id = ?"}
-       LIMIT 1`,
-      isCoordinator ? [parcelId, parcelId] : [parcelId, parcelId, req.user.user_id]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ success: false, message: "Parcel not found or unauthorized." });
-    }
-    const p = rows[0];
-    const receiverName = req.body?.received_by || req.user.name || "Seller";
-
-    await pool.query(
-      `UPDATE parcels
-       SET rts_status = 'RETURNED_TO_SELLER',
-           status = 'RETURNED',
-           delivery_status = 'RETURNED_TO_SELLER',
-           returned_to_seller_at = NOW(),
-           returned_received_by = ?,
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [receiverName, p.parcel_id]
-    );
-
-    await logAudit(req.user, {
-      category: "Delivery",
-      action: "Confirmed receipt of returned parcel",
-      target: p.parcel_id,
-      detail: `Seller (${receiverName}) confirmed receipt of RTS parcel ${p.transaction_number || p.parcel_id}`,
-      sellerId: p.seller_id
-    });
-
-    res.json({
-      success: true,
-      message: "Returned parcel confirmed received by Seller.",
-      parcel_id: p.parcel_id,
-      rts_status: "RETURNED_TO_SELLER",
-      status: "RETURNED"
-    });
-  } catch (error) {
-    console.error("sellerConfirmReturned error:", error);
-    res.status(500).json({ success: false, message: "Failed to confirm receipt of returned parcel." });
   }
 }
 
@@ -2682,9 +2521,6 @@ module.exports = {
   requestReupload,
   streamVideo,
   coordinatorInitiateReturnToHub,
-  coordinatorHubVerify,
-  coordinatorRtsDispatch,
-  sellerConfirmReturned,
   reportRiderIncident,
   listRiderIncidents,
   confirmRiderIncident,

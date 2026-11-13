@@ -24,11 +24,6 @@ export const enrichParcel = (p) => {
     verification_status: p.verification_status || (p.status === "VERIFIED" ? "VERIFIED" : p.verification_status),
     is_cod: isCod,
     payment_method: isCod ? "COD" : "NON_COD",
-    rts_status: p.rts_status || null,
-    hub_verified_at: p.hub_verified_at || null,
-    rts_dispatched_at: p.rts_dispatched_at || null,
-    returned_to_seller_at: p.returned_to_seller_at || null,
-    returned_received_by: p.returned_received_by || null,
     delivery_hold: Boolean(p.delivery_hold),
     delivery_hold_reason: p.delivery_hold_reason || "",
     delivery_hold_until: p.delivery_hold_until || null,
@@ -46,17 +41,11 @@ export const enrichParcel = (p) => {
     }
   }
 
-  if (p.delivery_status || p.rescheduled || p.return_to_hub || p.rts_status) {
+  if (p.delivery_status || p.rescheduled || p.return_to_hub) {
     let status = next.status;
-    if (p.rts_status === "RETURNED_TO_SELLER" || p.status === "RETURNED") {
-      status = "RETURNED_TO_SELLER";
-    } else if (p.rts_status === "RTS_IN_TRANSIT") {
-      status = "RTS_IN_TRANSIT";
-    } else if (p.rts_status === "HUB_VERIFIED") {
-      status = "HUB_VERIFIED";
-    } else if (p.delivery_status === "DELIVERED" || p.delivered_at) {
+    if (p.delivery_status === "DELIVERED" || p.delivered_at) {
       status = "DELIVERED";
-    } else if (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB" || p.rts_status === "RETURN_TO_HUB") {
+    } else if (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB") {
       status = "RETURN_TO_HUB";
     } else if (p.rescheduled && p.delivery_status === "TO_DELIVER") {
       status = "RESCHEDULED";
@@ -275,26 +264,11 @@ export const decideDiscreetHandling = (parcelId, decision, remarks = "") =>
     body: { decision, remarks },
   });
 
-// Coordinator: Stage 1 Return to Hub Initiation / Approval
+// Coordinator: Return to Hub Initiation / Approval
 export const initiateReturnToHub = (parcelId, reason = "") =>
   api(`/parcels/coordinator/${enc(parcelId)}/return-to-hub`, {
     method: "POST",
     body: { reason },
-  });
-
-// Coordinator: Stage 2 Hub Verification
-export const hubVerifyParcel = (parcelId) =>
-  api(`/parcels/coordinator/${enc(parcelId)}/hub-verify`, { method: "POST" });
-
-// Coordinator: Stage 3 RTS Dispatch to Seller
-export const rtsDispatchParcel = (parcelId) =>
-  api(`/parcels/coordinator/${enc(parcelId)}/rts-dispatch`, { method: "POST" });
-
-// Seller / Coordinator: Stage 4 Confirm Returned to Seller
-export const confirmReturnedParcel = (parcelId, receivedBy = "") =>
-  api(`/parcels/seller/${enc(parcelId)}/confirm-returned`, {
-    method: "POST",
-    body: { received_by: receivedBy },
   });
 
 // Rider: Report incident

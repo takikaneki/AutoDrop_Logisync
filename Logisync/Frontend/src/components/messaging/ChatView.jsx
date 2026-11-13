@@ -94,7 +94,7 @@ export default function ChatView({
         try {
           await sendMessage(
             active.user_id,
-            `[COORDINATOR ACTION · RETURN TO HUB APPROVED]\nTracking / Txn: ${report.txn || report.parcelId}\nReason: ${report.reason}\nStatus: Approved for Return to Hub (RTS Stage 1 active). Please bring the sealed parcel back to the hub.`
+            `[COORDINATOR ACTION · RETURN TO HUB APPROVED]\nTracking / Txn: ${report.txn || report.parcelId}\nReason: ${report.reason}\nStatus: Approved for Return to Hub. Please bring the sealed parcel back to the hub.`
           );
           await load(true);
         } catch (msgErr) {
@@ -102,7 +102,7 @@ export default function ChatView({
         }
       }
 
-      toast.success(`Return to Hub approved for ${report.txn || report.parcelId}. Parcel transitioned to RTS.`);
+      toast.success(`Return to Hub approved for ${report.txn || report.parcelId}.`);
     } catch (err) {
       toast.error(err.message || "Failed to initiate Return to Hub.");
     } finally {
@@ -331,7 +331,7 @@ return contacts
                     initiatedRthSet.has(String(refusalReport.parcelId).trim()) ||
                     (() => {
                       const rec = getDeliveryRecordForParcel(refusalReport.parcelId || refusalReport.txn);
-                      return rec?.status === "return_to_hub" || rec?.stage === "rts" || rec?.rts_initiated;
+                      return rec?.status === "return_to_hub" || rec?.returnToHub;
                     })();
 
                   return (
@@ -407,7 +407,7 @@ return contacts
                             {isRthInitiated ? (
                               <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                                 <i className="fa-solid fa-circle-check" />
-                                <span>Return to Hub Approved (RTS Stage 1 Active)</span>
+                                <span>Return to Hub Approved</span>
                               </div>
                             ) : (
                               <div>
@@ -423,7 +423,7 @@ return contacts
                                     : "Initiate Return to Hub"}
                                 </button>
                                 <p className="mt-1.5 text-center text-[10.5px] text-slate-500 dark:text-slate-400">
-                                  Approve Return to Hub (RTS Stage 1). This marks the parcel for RTS dispatch.
+                                  Approve Return to Hub for this parcel.
                                 </p>
                               </div>
                             )}

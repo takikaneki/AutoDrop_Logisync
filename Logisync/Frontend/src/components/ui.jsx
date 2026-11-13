@@ -31,9 +31,6 @@ const badgeTones = {
   Pending: "bg-[#fef3c7] text-[#d97706]",
   Verified: "bg-[#dcfce7] text-[#15803d]",
   Flagged: "bg-[#fff0f0] text-[#c94747]",
-  "Returned to Seller": "bg-[#edf4ff] text-[#4b78b5]",
-  "Hub Verified": "bg-[#f2ecff] text-[#7c3aed]",
-  "RTS – In Transit": "bg-[#fff0e7] text-[#c2410c]",
   "Delivery Hold": "bg-[#fef3c7] text-[#b45309]",
 };
 

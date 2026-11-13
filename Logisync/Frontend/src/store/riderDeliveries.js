@@ -164,11 +164,6 @@ export function syncAutomaticReschedules() {
       return raw;
     }
 
-    // Huwag pakialaman kung nasa RTS stage na
-    if (d.rts_status && d.rts_status !== "RETURN_TO_HUB") {
-      return raw;
-    }
-
     // Huwag i-reschedule ang mga recipient refusal (Coordinator ang nagdedesisyon ng Return to Hub)
     if (
       d.refusal_awaiting_coordinator ||
@@ -530,7 +525,6 @@ function mapServerParcelToDelivery(row, riderId) {
     returnNote: cleanField(row.return_note),
     is_cod: Boolean(row.is_cod || String(row.payment_method || "").toUpperCase() === "COD"),
     payment_method: Boolean(row.is_cod || String(row.payment_method || "").toUpperCase() === "COD") ? "COD" : "NON_COD",
-    rts_status: row.rts_status || null,
     delivery_hold: Boolean(row.delivery_hold),
     delivery_hold_reason: cleanField(row.delivery_hold_reason),
     reason: cleanField(row.last_failure || row.delivery_note),
@@ -1423,7 +1417,6 @@ export function initiateReturnToHubLocal(parcelIdOrTxn, reason = "") {
         stage: STAGE.RETURN_TO_HUB,
         returnToHub: true,
         returnToHubAt: Date.now(),
-        rts_status: "RETURN_TO_HUB",
         refusal_awaiting_coordinator: false,
         lastFailure: reason || d.lastFailure || "Recipient Refused Parcel",
         attempts: nextAttempts,
