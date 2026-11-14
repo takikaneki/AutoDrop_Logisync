@@ -301,7 +301,7 @@ export default function Verification() {
         <section className={`${panel} p-6 max-[600px]:p-4 mb-6`}>
           <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" />
           {lookupError && (
-            <p role="alert" className="mx-auto mt-4 max-w-[560px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
+            <p role="alert" className="mx-auto mt-4 max-w-[360px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
               {lookupError}
             </p>
           )}

@@ -23,13 +23,11 @@ export default function ScanPanel({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[560px] flex-col items-center gap-5">
-      {/* 1. Centered QR Camera Scanner */}
+    <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-5">
+      {/* 1. Centered 360x360 Cube QR Camera Scanner */}
       <div className="w-full">
         <QrScanner
           btnClass={btnClass}
-          windowSize="large"
-          compactIdle
           onScan={(text) => submit(text)}
         />
       </div>
@@ -43,26 +41,26 @@ export default function ScanPanel({
         <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
       </div>
 
-      {/* 3. Manual Transaction Number Input Below */}
+      {/* 3. Manual Transaction Number Input Below (Exact 360px Width) */}
       <div className="w-full">
         <div className="mb-2.5 text-center">
           <p className="text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
             Can&apos;t scan? Type it instead
           </p>
-          <p className="mt-0.5 text-[12.5px] text-[#888] dark:text-[#b8b0a8]">
-            Enter the {label.toLowerCase()} printed on the parcel. A parcel ID also works.
+          <p className="mt-0.5 text-[12px] text-[#888] dark:text-[#b8b0a8]">
+            Enter the {label.toLowerCase()} or parcel ID printed on the parcel.
           </p>
         </div>
 
         <form
-          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          className="flex items-center gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             submit(manual);
           }}
         >
           <div className="relative min-w-0 flex-1">
-            <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[12px] text-[#999]" />
+            <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
             <input
               value={manual}
               onChange={(e) => {
@@ -70,15 +68,15 @@ export default function ScanPanel({
                 setError("");
               }}
               maxLength={100}
-              placeholder={`Enter ${label.toLowerCase()} (e.g. SPX272828381)...`}
+              placeholder={`${label}...`}
               aria-label={label}
-              className={`${inputCls} pl-8 font-mono`}
+              className={`${inputCls} pl-7 font-mono`}
             />
           </div>
           <button
             type="submit"
             disabled={busy}
-            className={`h-[42px] shrink-0 rounded-lg px-5 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
+            className={`h-[42px] shrink-0 rounded-lg px-4 text-[13px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
           >
             {busy ? "Looking…" : "Look up"}
           </button>

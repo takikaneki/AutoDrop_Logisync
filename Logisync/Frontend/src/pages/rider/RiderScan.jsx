@@ -101,7 +101,7 @@ export default function RiderScan() {
       {!parcel && (
         <section className={`${panel} mb-6 p-[30px] max-[600px]:p-5`}>
           {expect && (
-            <div className="mx-auto mb-5 max-w-[560px]">
+            <div className="mx-auto mb-5 max-w-[360px]">
               <Notice tone="info" icon="fa-qrcode">
                 Scanning for assigned parcel <strong>{expect}</strong>.{" "}
                 <button onClick={reset} className="font-bold underline">Scan any parcel instead</button>
@@ -111,7 +111,7 @@ export default function RiderScan() {
           <ScanPanel onValue={lookup} busy={looking} />
           {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
           {error && (
-            <div className="mx-auto mt-4 max-w-[560px]">
+            <div className="mx-auto mt-4 max-w-[360px]">
               <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>
             </div>
           )}

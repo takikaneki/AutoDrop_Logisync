@@ -486,22 +486,20 @@ export default function CreateParcel() {
               </Notice>
             )}
 
-            {/* Centered QR Scanner & Manual Transaction Number Lookup */}
+            {/* Centered 360x360 Cube QR Scanner & Manual Transaction Number Lookup */}
             <div className="border-b border-[#f1f1f1] pb-5 dark:border-night-line">
-              <div className="mx-auto flex w-full max-w-[560px] flex-col items-center gap-4">
+              <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-4">
                 <div className="w-full text-center">
                   <span className="block text-[14px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
                     Scan QR / Transaction Number
                   </span>
                   <span className="mt-0.5 block text-[12px] text-[#888] dark:text-[#b8b0a8]">
-                    Scan the parcel QR code or enter the transaction number manually below
+                    Scan the parcel QR code or enter the transaction number below
                   </span>
                 </div>
 
                 <QrScanner
                   onScan={onScan}
-                  compactIdle
-                  windowSize="large"
                   startLabel="Scan with camera"
                 />
 
@@ -518,25 +516,25 @@ export default function CreateParcel() {
                   <label htmlFor="transaction_number" className="sr-only">
                     Transaction number
                   </label>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-2">
                     <div className="relative min-w-0 flex-1">
-                      <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[12px] text-[#999]" />
+                      <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
                       <input
                         id="transaction_number"
                         name="transaction_number"
                         type="text"
                         value={values.transaction_number}
                         onChange={onChange}
-                        placeholder="Enter transaction number (e.g. SPX272828381)..."
+                        placeholder="Transaction number..."
                         maxLength={12}
                         aria-invalid={!!errors.transaction_number}
-                        className={`${inputCls} pl-8 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
+                        className={`${inputCls} pl-7 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
                       />
                     </div>
                     <button
                       type="button"
                       onClick={onLookUpTransaction}
-                      className={`${btnPrimary} h-[42px] shrink-0 px-5`}
+                      className={`${btnPrimary} h-[42px] shrink-0 px-4`}
                     >
                       Look Up
                     </button>

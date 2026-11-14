@@ -74,26 +74,16 @@ export default function QrScanner({
     stop();
   }, []);
 
-  const boxWidthCls = windowSize === "large" ? "max-w-[560px]" : compactIdle ? "max-w-[440px]" : "max-w-sm";
-  const boxShapeCls =
-    windowSize === "large"
-      ? compactIdle && !running
-        ? "h-[240px] sm:h-[270px]"
-        : "h-[280px] sm:h-[320px]"
-      : compactIdle && !running
-      ? "h-[200px]"
-      : "aspect-square";
-
   return (
-    <div className="mx-auto w-full max-w-[560px]">
+    <div className="mx-auto w-full max-w-[360px]">
       <div
-        className={`relative mx-auto w-full ${boxShapeCls} ${boxWidthCls} overflow-hidden rounded-2xl border border-slate-800/40 bg-gradient-to-b from-[#25211e] to-[#1c1917] shadow-inner`}
+        className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden rounded-2xl border border-slate-800/40 bg-gradient-to-b from-[#25211e] to-[#1c1917] shadow-inner"
       >
-        <div id={regionId} className="h-full w-full" />
+        <div id={regionId} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
 
         {/* Subtle QR Viewfinder Corner Brackets */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
-          <div className="relative h-full max-h-[210px] w-full max-w-[230px]">
+          <div className="relative h-[210px] w-[210px] max-h-[75%] max-w-[75%]">
             <span className="absolute top-0 left-0 h-6 w-6 rounded-tl-lg border-t-[3px] border-l-[3px] border-brand/80" />
             <span className="absolute top-0 right-0 h-6 w-6 rounded-tr-lg border-t-[3px] border-r-[3px] border-brand/80" />
             <span className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-lg border-b-[3px] border-l-[3px] border-brand/80" />
@@ -104,7 +94,7 @@ export default function QrScanner({
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-6 text-center text-slate-300">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-brand ring-1 ring-white/10">
-              <i className={`fa-solid fa-qrcode ${windowSize === "large" ? "text-3xl" : "text-2xl"}`} />
+              <i className="fa-solid fa-qrcode text-3xl" />
             </span>
             <div>
               <p className="text-[13.5px] font-semibold text-white/90">
@@ -121,7 +111,7 @@ export default function QrScanner({
       {error && (
         <p
           role="alert"
-          className="mx-auto mt-3 max-w-[560px] rounded-lg bg-[#fff0f0] px-3.5 py-2 text-center text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]"
+          className="mx-auto mt-3 max-w-[360px] rounded-lg bg-[#fff0f0] px-3.5 py-2 text-center text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]"
         >
           {error}
         </p>
