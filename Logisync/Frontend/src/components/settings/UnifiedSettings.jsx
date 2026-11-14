@@ -223,9 +223,9 @@ export default function UnifiedSettings() {
 
   return (
     <>
-      <div className="grid grid-cols-[270px_1fr] items-stretch gap-6 max-[920px]:grid-cols-1">
-        {/* LEFT SETTINGS SIDEBAR CARD */}
-        <aside className="flex flex-col rounded-2xl border-[1.5px] border-brand/35 bg-white p-4 shadow-xs dark:border-brand/30 dark:bg-night-panel min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
+      <div className="grid grid-cols-[270px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[920px]:grid-cols-1 min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
+        {/* LEFT SETTINGS SIDEBAR (Darker shaded pane like Discord) */}
+        <aside className="flex min-h-0 flex-col border-r border-brand-line bg-[#f1f5f9] p-4 dark:border-night-line dark:bg-[#1d1a17] max-[920px]:border-r-0 max-[920px]:border-b">
           {/* User Header */}
           <div className="flex shrink-0 items-center gap-3 pb-4 border-b border-brand-line dark:border-night-line">
             <UserAvatar className="h-12 w-12 shrink-0 text-[18px]" />
@@ -416,9 +416,9 @@ export default function UnifiedSettings() {
           </div>
         </aside>
 
-        {/* RIGHT SETTINGS CONTENT CARD (Fixed height + internal scroll) */}
-        <section className="flex flex-col overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
-          <div className="flex shrink-0 items-center justify-between border-b border-brand-line bg-brand-softer/35 px-7 py-3.5 dark:border-night-line dark:bg-night-head/40 max-[600px]:px-4">
+        {/* RIGHT SETTINGS CONTENT PANEL (Internal scroll inside unified container) */}
+        <section className="flex min-h-0 flex-col overflow-hidden bg-white dark:bg-night-panel">
+          <div className="flex shrink-0 items-center justify-between border-b border-brand-line bg-white px-7 py-3.5 dark:border-night-line dark:bg-night-panel max-[600px]:px-4">
             <h2 className="text-[16px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
               {activeTitle}
             </h2>
