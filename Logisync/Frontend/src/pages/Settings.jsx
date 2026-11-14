@@ -245,7 +245,7 @@ export default function Settings() {
 
       {/* DESKTOP WEB VIEW: Left-aligned expanded horizontal 4-Card Layout */}
       <div className="hidden min-[821px]:block">
-        <div className="w-[95%] max-w-[1360px] space-y-5 text-left">
+        <div className="w-full space-y-5 text-left">
           {/* A. Account Profile Card */}
           <section className="w-full rounded-2xl border border-[#e5e8ee] bg-white px-7 py-6 shadow-xs dark:border-night-line dark:bg-night-panel">
             <h2 className="mb-4 text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">

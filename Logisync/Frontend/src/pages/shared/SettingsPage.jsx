@@ -6,6 +6,7 @@ import { DetailList, PanelTitle } from "../../components/portal.jsx";
 import { btnDanger, panel } from "../../components/styles.js";
 import { getUser } from "../../api.js";
 import { setPrefs, toggleDark, usePrefs } from "../../store/prefs.js";
+import { useProfile } from "../../store/profile.js";
 import ChangePasswordForm from "../../components/ChangePasswordForm.jsx";
 
 const SIZES = [["sm", "Small"], ["md", "Medium"], ["lg", "Large"]];
@@ -15,6 +16,8 @@ export default function SettingsPage() {
   const user = getUser();
   const { dark, fontSize } = usePrefs();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profile = useProfile();
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -27,7 +30,7 @@ export default function SettingsPage() {
 
       {/* DESKTOP WEB VIEW: Left-aligned expanded horizontal 4-Card Layout */}
       <div className="hidden min-[821px]:block">
-        <div className="w-[95%] max-w-[1360px] space-y-5 text-left">
+        <div className="w-full space-y-5 text-left">
           {/* A. Account Profile Card */}
           <section className="w-full rounded-2xl border border-[#e5e8ee] bg-white px-7 py-6 shadow-xs dark:border-night-line dark:bg-night-panel">
             <h2 className="mb-4 text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
@@ -46,18 +49,34 @@ export default function SettingsPage() {
                     </span>
                   )}
                 </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
-                  <span className="inline-flex items-center rounded-full bg-brand-soft px-2.5 py-0.5 text-[12px] font-bold capitalize text-brand dark:bg-night-head">
-                    {user?.role || "Member"}
-                  </span>
-                  {user?.email && (
-                    <span className="truncate text-[13.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                      {user.email}
-                    </span>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen((v) => !v)}
+                  aria-expanded={profileOpen}
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand hover:underline"
+                >
+                  {profileOpen ? "Hide profile" : "View profile"}
+                  <i className={`fa-solid fa-chevron-down text-[10px] transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+                </button>
               </div>
             </div>
+
+            {profileOpen && (
+              <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-[#edf0f4] pt-5 dark:border-night-line">
+                {[
+                  ["Email", user?.email || profile.email || "—"],
+                  ["Contact number", profile.phone || user?.phone || user?.contact_number || "—"],
+                  ["Role", user?.role || "Member"],
+                ].map(([label, value]) => (
+                  <div key={label} className="min-w-0 rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-night-head">
+                    <dt className="text-[11.5px] font-bold uppercase tracking-wide text-[#94a3b8]">{label}</dt>
+                    <dd className="mt-1 truncate text-[14px] font-semibold text-[#27364f] dark:text-[#f1eeeb]">
+                      {label === "Role" ? <span className="capitalize">{value}</span> : value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </section>
 
           {/* B. Security & Password Card */}
