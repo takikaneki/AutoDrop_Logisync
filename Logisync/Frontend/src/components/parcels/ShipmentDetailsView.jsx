@@ -6,14 +6,6 @@ import { toast } from "../../store/toast.js";
 import { formatDate, formatDay, formatSize } from "../../utils/format.js";
 import { btnPrimary, panel } from "../styles.js";
 
-function formatOrderTimestamp(val) {
-  if (!val) return "—";
-  const d = new Date(val);
-  if (Number.isNaN(d.getTime())) return "—";
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function deriveOrderId(parcel) {
   if (parcel?.order_id) return String(parcel.order_id);
   const raw = String(parcel?.transaction_number || parcel?.parcel_id || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
@@ -35,6 +27,13 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
   const decided = ["REJECTED", "REUPLOAD_REQUESTED"].includes(s) || isPostVerify;
   const isDelivered = s === "DELIVERED" || String(parcel?.delivery_status || "").toUpperCase() === "DELIVERED" || Boolean(parcel?.delivered_at);
   const isFailedDelivery = ["RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s) || Boolean(parcel?.returnToHub);
+  const scannedAt = parcel?.scanned_at || parcel?.deliveryRecord?.scannedAt || null;
+  const hasRiderScanned = Boolean(
+    scannedAt ||
+      isDelivered ||
+      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s) ||
+      parcel?.delivery_status
+  );
 
   return [
     {
@@ -70,19 +69,81 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
       state: isPostVerify ? "done" : ["REJECTED", "REUPLOAD_REQUESTED"].includes(s) ? "fail" : "todo",
     },
     {
+      label: "Scanned by rider",
+      note: hasRiderScanned
+        ? formatDate(scannedAt || parcel?.delivered_at || parcel?.updated_at)
+        : isPostVerify
+        ? "Waiting for rider scan"
+        : "Pending",
+      state: hasRiderScanned ? "done" : isPostVerify ? "current" : "todo",
+    },
+    {
       label: "Delivered to customer",
       note: isDelivered
-        ? parcel?.delivered_at
-          ? formatDate(parcel.delivered_at)
-          : "Completed"
+        ? formatDate(parcel?.delivered_at || parcel?.deliveryRecord?.doneAt || parcel?.updated_at)
         : isFailedDelivery
         ? parcel?.lastFailure || "Delivery unsuccessful"
         : parcel?.rescheduled && parcel?.scheduledFor
         ? `Rescheduled · ${formatDay(parcel.scheduledFor)}`
-        : isPostVerify
-        ? "In transit"
+        : hasRiderScanned
+        ? "Out for delivery"
         : "Pending",
-      state: isDelivered ? "done" : isFailedDelivery ? "fail" : isPostVerify ? "current" : "todo",
+      state: isDelivered ? "done" : isFailedDelivery ? "fail" : hasRiderScanned ? "current" : "todo",
+    },
+  ];
+}
+
+function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [] }) {
+  const s = String(parcel?.status || "").toUpperCase();
+  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
+  const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
+  const decision = verificationRecords[0] || null;
+  const isDelivered =
+    s === "DELIVERED" ||
+    String(parcel?.delivery_status || "").toUpperCase() === "DELIVERED" ||
+    Boolean(parcel?.delivered_at);
+  const scannedAt = parcel?.scanned_at || parcel?.deliveryRecord?.scannedAt || null;
+  const hasRiderScanned = Boolean(
+    scannedAt ||
+      isDelivered ||
+      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s) ||
+      parcel?.delivery_status
+  );
+  const deliveredAt = parcel?.delivered_at || parcel?.deliveryRecord?.doneAt || (isDelivered ? parcel?.updated_at : null);
+
+  return [
+    {
+      label: "Parcel Created",
+      value: parcel?.created_at ? formatDate(parcel.created_at) : "—",
+      done: Boolean(parcel?.created_at),
+    },
+    {
+      label: "Video Proof Uploaded",
+      value: videos[0]?.uploaded_at
+        ? formatDate(videos[0].uploaded_at)
+        : hasVideo
+        ? formatDate(parcel?.created_at)
+        : "Pending",
+      done: Boolean(hasVideo),
+    },
+    {
+      label: "Coordinator Verified",
+      value: isPostVerify
+        ? formatDate(decision?.verified_at || scannedAt || parcel?.updated_at)
+        : "Pending",
+      done: Boolean(isPostVerify),
+    },
+    {
+      label: "Scanned by Rider",
+      value: hasRiderScanned
+        ? formatDate(scannedAt || deliveredAt || parcel?.updated_at)
+        : "Pending",
+      done: Boolean(hasRiderScanned),
+    },
+    {
+      label: "Delivered by Rider",
+      value: isDelivered && deliveredAt ? formatDate(deliveredAt) : "Pending",
+      done: Boolean(isDelivered && deliveredAt),
     },
   ];
 }
@@ -130,13 +191,13 @@ function DeliveryJourneyIllustration({ compact = false }) {
   return (
     <div
       className={`relative overflow-hidden rounded-2xl border border-[#f0e5d8] bg-gradient-to-b from-[#fdf8f2] to-[#f8efe3] ${
-        compact ? "p-3.5" : "p-4"
+        compact ? "p-3" : "p-3"
       } dark:border-night-line dark:from-night-head dark:to-night-panel`}
       aria-label="Decorative delivery journey illustration from SPX Hub to Customer"
     >
       <svg
         viewBox={compact ? "0 0 320 115" : "0 0 260 210"}
-        className="w-full h-auto select-none"
+        className={`w-full select-none ${compact ? "h-auto" : "max-h-[150px] h-auto"}`}
         role="img"
         aria-hidden="true"
       >
@@ -261,7 +322,7 @@ function DeliveryJourneyIllustration({ compact = false }) {
   );
 }
 
-function SidebarWidgets({ parcel, compactIllustration = false }) {
+function SidebarWidgets({ parcel, lifecycleTimestamps = [], compactIllustration = false }) {
   const banner = resolveDeliveryBanner(parcel);
   const receiverName = parcel?.receiver_name || parcel?.recipient_name || parcel?.receiver || "—";
   const receiverContact = parcel?.receiver_contact || parcel?.contact || "—";
@@ -279,38 +340,38 @@ function SidebarWidgets({ parcel, compactIllustration = false }) {
     "—";
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
       {/* A. Decorative Delivery Illustration */}
       <DeliveryJourneyIllustration compact={compactIllustration} />
 
       {/* B. Single Delivery Status Indicator */}
-      <div className={`flex items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 shadow-sm ${banner.bg}`}>
+      <div className={`flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-3 shadow-sm ${banner.bg}`}>
         <div className="min-w-0">
-          <p className="text-[15px] font-extrabold leading-tight">{banner.status}</p>
-          <p className="mt-0.5 truncate text-[12px] font-medium opacity-85">{banner.timestamp}</p>
+          <p className="text-[14.5px] font-extrabold leading-tight">{banner.status}</p>
+          <p className="mt-0.5 truncate text-[11.5px] font-medium opacity-85">{banner.timestamp}</p>
         </div>
-        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs shadow-sm ${banner.iconBg}`}>
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] shadow-sm ${banner.iconBg}`}>
           <i className={`fa-solid ${banner.icon}`} />
         </span>
       </div>
 
       {/* C. Receiver Information Card */}
-      <section className="rounded-2xl border border-[#eceef2] bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-panel">
-        <div className="mb-2.5 flex items-center gap-2.5">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
-            <i className="fa-solid fa-user text-xs" />
+      <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
+            <i className="fa-solid fa-user text-[11px]" />
           </span>
-          <h3 className="text-[13.5px] font-bold text-[#1e293b] dark:text-white">Receiver Information</h3>
+          <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Receiver Information</h3>
         </div>
-        <div className="space-y-2 pl-9 text-[12.5px]">
+        <div className="space-y-1.5 pl-8 text-[12px]">
           <div>
-            <span className="block text-[11px] text-[#8a94a6] dark:text-[#9c948c]">Name</span>
+            <span className="block text-[10.5px] text-[#8a94a6] dark:text-[#9c948c]">Name</span>
             <strong className="block break-words font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
               {receiverName}
             </strong>
           </div>
           <div>
-            <span className="block text-[11px] text-[#8a94a6] dark:text-[#9c948c]">Contact Number</span>
+            <span className="block text-[10.5px] text-[#8a94a6] dark:text-[#9c948c]">Contact Number</span>
             <strong className="block font-mono font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
               {receiverContact}
             </strong>
@@ -319,28 +380,66 @@ function SidebarWidgets({ parcel, compactIllustration = false }) {
       </section>
 
       {/* D. Rider Information Card */}
-      <section className="rounded-2xl border border-[#eceef2] bg-white p-4 shadow-sm dark:border-night-line dark:bg-night-panel">
-        <div className="mb-2.5 flex items-center gap-2.5">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
-            <i className="fa-solid fa-motorcycle text-xs" />
+      <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
+            <i className="fa-solid fa-motorcycle text-[11px]" />
           </span>
-          <h3 className="text-[13.5px] font-bold text-[#1e293b] dark:text-white">Rider Information</h3>
+          <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Rider Information</h3>
         </div>
-        <div className="space-y-2 pl-9 text-[12.5px]">
+        <div className="space-y-1.5 pl-8 text-[12px]">
           <div>
-            <span className="block text-[11px] text-[#8a94a6] dark:text-[#9c948c]">Name</span>
+            <span className="block text-[10.5px] text-[#8a94a6] dark:text-[#9c948c]">Name</span>
             <strong className="block break-words font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
               {riderName}
             </strong>
           </div>
           <div>
-            <span className="block text-[11px] text-[#8a94a6] dark:text-[#9c948c]">Contact Number</span>
+            <span className="block text-[10.5px] text-[#8a94a6] dark:text-[#9c948c]">Contact Number</span>
             <strong className="block font-mono font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
               {riderContact}
             </strong>
           </div>
         </div>
       </section>
+
+      {/* E. Parcel Lifecycle Timestamps Card (Created -> Scanned by Rider -> Delivered) */}
+      {lifecycleTimestamps.length > 0 && (
+        <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
+          <div className="mb-2.5 flex items-center gap-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
+              <i className="fa-regular fa-clock text-[11px]" />
+            </span>
+            <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Shipment Timestamps</h3>
+          </div>
+          <dl className="space-y-2 text-[11.5px]">
+            {lifecycleTimestamps.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-start justify-between gap-2 border-b border-[#f1f4f8] pb-1.5 last:border-b-0 last:pb-0 dark:border-night-line"
+              >
+                <dt className="flex items-center gap-1.5 text-[#64748b] dark:text-[#9c948c]">
+                  <span
+                    className={`inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
+                      item.done ? "bg-[#29945a]" : "bg-[#cbd5e1] dark:bg-night-line"
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </dt>
+                <dd
+                  className={`text-right font-mono text-[11px] ${
+                    item.done
+                      ? "font-semibold text-[#1e293b] dark:text-[#f1eeeb]"
+                      : "font-medium text-[#94a3b8] dark:text-[#7c756e]"
+                  }`}
+                >
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </div>
   );
 }
@@ -368,7 +467,7 @@ export default function ShipmentDetailsView({
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
   const milestones = buildShipmentMilestones({ parcel, videos, verificationRecords });
-  const decision = verificationRecords[0] || null;
+  const lifecycleTimestamps = buildLifecycleTimestamps({ parcel, videos, verificationRecords });
 
   const fullAddress =
     getParcelAddress(parcel) ||
@@ -407,7 +506,6 @@ export default function ShipmentDetailsView({
       : formatDay(parcel?.created_at);
 
   const orderId = deriveOrderId(parcel);
-  const isCod = Boolean(parcel?.is_cod || String(parcel?.payment_method || "").toUpperCase() === "COD");
 
   const handleCopyOrderId = async () => {
     try {
@@ -600,9 +698,13 @@ export default function ShipmentDetailsView({
                 </ol>
               </section>
 
-              {/* Mobile-only stack under Shipment tab: Illustration, Status Indicator, Receiver Info, Rider Info */}
+              {/* Mobile-only stack under Shipment tab: Illustration, Status Indicator, Receiver Info, Rider Info, Lifecycle Timestamps */}
               <div className="lg:hidden">
-                <SidebarWidgets parcel={parcel} compactIllustration />
+                <SidebarWidgets
+                  parcel={parcel}
+                  lifecycleTimestamps={lifecycleTimestamps}
+                  compactIllustration
+                />
               </div>
             </div>
           )}
@@ -697,7 +799,7 @@ export default function ShipmentDetailsView({
                   </div>
                 </div>
 
-                {/* Order ID Block inside the same continuous card */}
+                {/* Order ID & Chronological Lifecycle Timestamps inside the same continuous card */}
                 <div className="pt-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <strong className="text-[14px] font-extrabold text-[#1e293b] dark:text-white">
@@ -712,39 +814,28 @@ export default function ShipmentDetailsView({
                     </button>
                   </div>
 
-                  <dl className="space-y-2 text-[13px]">
-                    <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#64748b] dark:text-[#9c948c]">Paid by</dt>
-                      <dd className="text-right font-semibold text-[#1e293b] dark:text-white">
-                        {isCod ? "Cash on Delivery" : "Prepaid (Non-COD)"}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#64748b] dark:text-[#9c948c]">Order Time</dt>
-                      <dd className="font-mono text-right font-medium text-[#1e293b] dark:text-white">
-                        {formatOrderTimestamp(parcel?.created_at)}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#64748b] dark:text-[#9c948c]">Payment Time</dt>
-                      <dd className="font-mono text-right font-medium text-[#1e293b] dark:text-white">
-                        {formatOrderTimestamp(
-                          isCod ? parcel?.delivered_at || parcel?.updated_at || parcel?.created_at : parcel?.created_at
-                        )}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#64748b] dark:text-[#9c948c]">Ship Time</dt>
-                      <dd className="font-mono text-right font-medium text-[#1e293b] dark:text-white">
-                        {formatOrderTimestamp(parcel?.scanned_at || decision?.verified_at || parcel?.updated_at)}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#64748b] dark:text-[#9c948c]">Completed Time</dt>
-                      <dd className="font-mono text-right font-medium text-[#1e293b] dark:text-white">
-                        {isDelivered ? formatOrderTimestamp(parcel?.delivered_at || parcel?.updated_at) : "—"}
-                      </dd>
-                    </div>
+                  <dl className="space-y-2.5 text-[13px]">
+                    {lifecycleTimestamps.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-4">
+                        <dt className="flex items-center gap-2 text-[#64748b] dark:text-[#9c948c]">
+                          <span
+                            className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+                              item.done ? "bg-[#29945a]" : "bg-[#cbd5e1] dark:bg-night-line"
+                            }`}
+                          />
+                          <span>{item.label}</span>
+                        </dt>
+                        <dd
+                          className={`text-right font-mono ${
+                            item.done
+                              ? "font-semibold text-[#1e293b] dark:text-white"
+                              : "font-medium text-[#94a3b8] dark:text-[#7c756e]"
+                          }`}
+                        >
+                          {item.value}
+                        </dd>
+                      </div>
+                    ))}
                   </dl>
                 </div>
               </section>
@@ -957,7 +1048,9 @@ export default function ShipmentDetailsView({
             <i className={`fa-solid ${rightCollapsed ? "fa-angles-left" : "fa-angles-right"} text-[11px]`} />
           </button>
 
-          {!rightCollapsed && <SidebarWidgets parcel={parcel} />}
+          {!rightCollapsed && (
+            <SidebarWidgets parcel={parcel} lifecycleTimestamps={lifecycleTimestamps} />
+          )}
         </aside>
       </div>
 
@@ -1050,3 +1143,4 @@ export default function ShipmentDetailsView({
     </div>
   );
 }
+
