@@ -486,22 +486,15 @@ export default function CreateParcel() {
               </Notice>
             )}
 
-            {/* Centered 360x360 Cube QR Scanner & Manual Transaction Number Lookup */}
-            <div className="border-b border-[#f1f1f1] pb-5 dark:border-night-line">
-              <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-4">
-                <div className="w-full text-center">
-                  <span className="block text-[14px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                    Scan QR / Transaction Number
-                  </span>
-                  <span className="mt-0.5 block text-[12px] text-[#888] dark:text-[#b8b0a8]">
-                    Scan the parcel QR code or enter the transaction number below
-                  </span>
+            {/* Centered 360x360 Cube QR Scanner & Manual Transaction Number Lookup (Matching ScanPanel Format) */}
+            <div className="border-b border-[#f1f1f1] pb-6 dark:border-night-line">
+              <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-5">
+                <div className="w-full">
+                  <QrScanner
+                    onScan={onScan}
+                    startLabel="Scan with camera"
+                  />
                 </div>
-
-                <QrScanner
-                  onScan={onScan}
-                  startLabel="Scan with camera"
-                />
 
                 {/* "OR ENTER MANUALLY" Divider */}
                 <div className="relative flex w-full items-center py-0.5">
@@ -513,6 +506,15 @@ export default function CreateParcel() {
                 </div>
 
                 <div className="w-full">
+                  <div className="mb-2.5 text-center">
+                    <p className="text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                      Can&apos;t scan? Type it instead
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-[#888] dark:text-[#b8b0a8]">
+                      Enter the transaction number printed on the parcel.
+                    </p>
+                  </div>
+
                   <label htmlFor="transaction_number" className="sr-only">
                     Transaction number
                   </label>
@@ -534,25 +536,25 @@ export default function CreateParcel() {
                     <button
                       type="button"
                       onClick={onLookUpTransaction}
-                      className={`${btnPrimary} h-[42px] shrink-0 px-4`}
+                      className="h-[42px] shrink-0 rounded-lg bg-brand px-4 text-[13px] font-bold text-white transition hover:bg-brand-dark"
                     >
-                      Look Up
+                      Look up
                     </button>
                   </div>
-                  <p
-                    className={`mt-1.5 min-h-[16px] text-center text-[12px] ${
-                      errors.transaction_number
-                        ? "font-medium text-[#d94747]"
-                        : scanned || txnLookupMessage
-                        ? "font-medium text-[#1f7f4a] dark:text-[#8fd6ae]"
-                        : "text-[#999]"
-                    }`}
-                  >
-                    {errors.transaction_number ||
-                      (scanned
-                        ? `Transaction number ${values.transaction_number} scanned from QR code.`
-                        : txnLookupMessage || "Format: SPX followed by 9 digits (e.g. SPX272828381).")}
-                  </p>
+                  {(errors.transaction_number || scanned || txnLookupMessage) && (
+                    <p
+                      className={`mt-2 text-center text-[12px] font-medium ${
+                        errors.transaction_number
+                          ? "text-[#d94747]"
+                          : "text-[#1f7f4a] dark:text-[#8fd6ae]"
+                      }`}
+                    >
+                      {errors.transaction_number ||
+                        (scanned
+                          ? `Transaction number ${values.transaction_number} scanned from QR code.`
+                          : txnLookupMessage)}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

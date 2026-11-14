@@ -298,7 +298,7 @@ export default function Verification() {
       </Topbar>
 
       {scanOpen && (
-        <section className={`${panel} p-6 max-[600px]:p-4 mb-6`}>
+        <section className={`${panel} mb-6 p-[30px] max-[600px]:p-5`}>
           <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" />
           {lookupError && (
             <p role="alert" className="mx-auto mt-4 max-w-[360px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
