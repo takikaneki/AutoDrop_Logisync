@@ -243,7 +243,7 @@ export default function ParcelRecords() {
                     </td>
                     <td className={`${td} whitespace-nowrap`}>{formatDate(p.created_at)}</td>
                     <td className={`${td} whitespace-nowrap text-right`}>
-                      <Link to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
+                      <Link to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
                         {needsVideo ? "Upload video" : "View details"}
                       </Link>
                     </td>
@@ -339,7 +339,7 @@ export default function ParcelRecords() {
                   <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
                     <span className="text-[#999]">{formatDate(p.created_at)}</span>
                     <Link
-                      to={`/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
+                      to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
                       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
                           needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
                         }`}

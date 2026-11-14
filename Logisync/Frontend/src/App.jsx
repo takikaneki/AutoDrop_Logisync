@@ -82,6 +82,7 @@ export default function App() {
         <Route path="/seller" element={<DashboardLayout role="seller" />}>
           <Route index element={<SellerDashboard />} />
           <Route path="parcels" element={<ParcelRecords />} />
+          <Route path="parcels/:id" element={<ScanUpload />} />
           <Route path="reports" element={<Navigate to="/seller/parcels?report=1" replace />} />
           <Route path="create" element={<CreateParcel />} />
           <Route path="scan" element={<ScanUpload />} />
