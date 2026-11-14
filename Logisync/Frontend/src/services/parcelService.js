@@ -198,7 +198,12 @@ export async function createParcel({
 // GET /api/parcels  -> seller: sariling parcels lang | coordinator: lahat
 export async function listParcels() {
   const data = await api("/parcels");
-  const list = Array.isArray(data.parcels) ? data.parcels : [];
+  const rawList = Array.isArray(data.parcels) ? data.parcels : [];
+  const list = rawList.filter((p) => {
+    const txn = String(p?.transaction_number || "").trim();
+    const pid = String(p?.parcel_id || "").trim();
+    return /^SPX\d{9}$/i.test(txn) && pid.length > 0 && pid.length <= 10;
+  });
   syncCustomersFromParcels(list);
   return list.map(enrichParcel);
 }

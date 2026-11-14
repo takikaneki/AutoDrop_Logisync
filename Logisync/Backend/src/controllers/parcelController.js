@@ -161,6 +161,23 @@ async function ensureCustomerSchema() {
         ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
 
         CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
+
+        DELETE FROM verification_records WHERE parcel_id IN (
+          SELECT parcel_id FROM parcels
+          WHERE transaction_number IS NULL
+             OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+             OR LENGTH(BTRIM(parcel_id)) > 10
+        );
+        DELETE FROM video_proofs WHERE parcel_id IN (
+          SELECT parcel_id FROM parcels
+          WHERE transaction_number IS NULL
+             OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+             OR LENGTH(BTRIM(parcel_id)) > 10
+        );
+        DELETE FROM parcels
+        WHERE transaction_number IS NULL
+           OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+           OR LENGTH(BTRIM(parcel_id)) > 10;
       `);
       customerSchemaReady = true;
     } catch (err) {
