@@ -11,6 +11,7 @@ import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
 import { fetchUnreadComplaintCount } from "../services/complaintService.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
+import { useSidebarTooltip } from "./layout/SidebarTooltip.jsx";
 
 const groups = [
   {
@@ -55,6 +56,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
   const [unreadConversations, setUnreadConversations] = useState(0);
   const [unreadComplaints, setUnreadComplaints] = useState(0);
   const currentUserId = Number(getUser()?.user_id);
+  const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
   useEffect(() => {
     let mounted = true;
@@ -174,10 +176,19 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
               )}
               {g.links.map((l) => {
                 const count = l.badge ? badges[l.badge] : l.to === "/messages" ? unreadConversations : 0;
+                const labelText = t(l.label);
                 return (
-                  <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    onClick={onClose}
+                    className={navClass}
+                    title={labelText}
+                    aria-label={labelText}
+                    {...tipProps(labelText)}
+                  >
                     <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                    <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{t(l.label)}</span>
+                    <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                     {count > 0 && (
                       <span
                         className={`min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[11px] font-bold flex items-center justify-center ${
@@ -195,21 +206,48 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
 
           {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
           <div className="mb-2 min-[960px]:hidden">
-            <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
-              {t("Quick Links")}
-            </p>
-            {infoLinks.map((l) => (
-              <NavLink key={l.to} to={l.to} onClick={onClose} className={navClass} title={t(l.label)}>
-                <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{t(l.label)}</span>
-              </NavLink>
-            ))}
+            {collapsed ? (
+              <>
+                <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line max-[820px]:hidden" />
+                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[821px]:hidden">
+                  {t("Quick Links")}
+                </p>
+              </>
+            ) : (
+              <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
+                {t("Quick Links")}
+              </p>
+            )}
+            {infoLinks.map((l) => {
+              const labelText = t(l.label);
+              return (
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  onClick={onClose}
+                  className={navClass}
+                  title={labelText}
+                  aria-label={labelText}
+                  {...tipProps(labelText)}
+                >
+                  <i className={`fa-solid ${l.icon} w-5 text-center`} />
+                  <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
+                </NavLink>
+              );
+            })}
           </div>
         </nav>
 
         {/* Pinakababa: Settings at Logout */}
         <div className="mt-auto pt-3 border-t border-[#eee] dark:border-night-line">
-          <NavLink to="/settings" onClick={onClose} className={navClass} title={t("Settings")}>
+          <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={navClass}
+            title={t("Settings")}
+            aria-label={t("Settings")}
+            {...tipProps(t("Settings"))}
+          >
             <i className="fa-solid fa-gear w-5 text-center" />
             <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
           </NavLink>
@@ -219,6 +257,8 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
               setLogoutOpen(true);
             }}
             title={t("Logout")}
+            aria-label={t("Logout")}
+            {...tipProps(t("Logout"))}
             className={`w-full flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line ${
               collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
             }`}
@@ -228,6 +268,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
           </button>
         </div>
       </aside>
+      {Tooltip}
       <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>

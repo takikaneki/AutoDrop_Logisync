@@ -17,6 +17,9 @@ export default function QrScanner({
   btnClass = "bg-brand hover:bg-brand-dark",
   allowImageUpload = true,
   windowSize = "default",
+  compactIdle = false,
+  startLabel = "Scan with camera",
+  showHint = true,
 }) {
   const regionId = useRef(`qr-region-${Math.random().toString(36).slice(2)}`).current;
   const scannerRef = useRef(null);
@@ -93,15 +96,16 @@ export default function QrScanner({
     stop();
   }, []);
 
-  const boxWidthCls = windowSize === "large" ? "max-w-[430px]" : "max-w-sm";
+  const boxWidthCls = windowSize === "large" ? "max-w-[430px]" : compactIdle ? "max-w-[380px]" : "max-w-sm";
+  const boxShapeCls = compactIdle && !running ? "h-[176px]" : "aspect-square";
 
   return (
     <div>
-      <div className={`relative mx-auto aspect-square w-full ${boxWidthCls} overflow-hidden rounded-2xl bg-[#2a2522]`}>
+      <div className={`relative mx-auto w-full ${boxShapeCls} ${boxWidthCls} overflow-hidden rounded-2xl bg-[#2a2522]`}>
         <div id={regionId} className="h-full w-full" />
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-slate-300">
-            <i className="fa-solid fa-qrcode text-5xl opacity-60" />
+            <i className="fa-solid fa-qrcode text-4xl opacity-60" />
             <p className="text-sm">{starting ? "Starting camera…" : "Camera is off. Press Start scanning."}</p>
           </div>
         )}
@@ -128,7 +132,7 @@ export default function QrScanner({
               className={`rounded-lg px-4 py-2 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
             >
               <i className="fa-solid fa-camera mr-2" />
-              {starting ? "Starting…" : "Scan with camera"}
+              {starting ? "Starting…" : startLabel}
             </button>
 
             {allowImageUpload && (
@@ -164,9 +168,11 @@ export default function QrScanner({
           </button>
         )}
       </div>
-      <p className="mt-3 text-center text-[12px] text-[#999]">
-        Point the camera at the QR code on the parcel and keep it inside the frame.
-      </p>
+      {showHint && (
+        <p className="mt-3 text-center text-[12px] text-[#999]">
+          Point the camera at the QR code on the parcel and keep it inside the frame.
+        </p>
+      )}
     </div>
   );
 }

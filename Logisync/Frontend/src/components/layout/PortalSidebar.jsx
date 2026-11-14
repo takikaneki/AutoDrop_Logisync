@@ -4,8 +4,9 @@ import LogoutModal from "../LogoutModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { NAV, ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
+import { ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import { useSidebarTooltip } from "./SidebarTooltip.jsx";
 
 const TOP_ICONS = {
   about: "fa-circle-info",
@@ -13,12 +14,13 @@ const TOP_ICONS = {
   help: "fa-circle-question",
 };
 
-// Sidebar ng Seller/Rider. Kapareho ng itsura at galaw ng sidebar ng Coordinator.
-// Sa mobile ay nakatago hanggang buksan ng menu button.
+// Sidebar for Seller and Rider portals, matching Coordinator's responsive behavior:
+// full expanded on large desktop, icon-only on medium screens/laptops, overlay drawer on mobile.
 export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) {
   const { dark } = usePrefs();
   const profile = useProfile();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
   const navClass = ({ isActive }) =>
     `relative flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] transition ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
@@ -88,7 +90,16 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
                 <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">{g.title}</p>
               )}
               {g.links.map((l) => (
-                <NavLink key={l.path} to={toPath(role, l.path)} end={l.path === ""} onClick={onClose} className={navClass} title={l.label}>
+                <NavLink
+                  key={l.path}
+                  to={toPath(role, l.path)}
+                  end={l.path === ""}
+                  onClick={onClose}
+                  className={navClass}
+                  title={l.label}
+                  aria-label={l.label}
+                  {...tipProps(l.label)}
+                >
                   <i className={`fa-solid ${l.icon} w-5 text-center`} />
                   <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
                   {l.soon && (
@@ -101,11 +112,28 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
 
           {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
           <div className="mb-2 min-[960px]:hidden">
-            <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
-              Information
-            </p>
+            {collapsed ? (
+              <>
+                <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line max-[820px]:hidden" />
+                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[821px]:hidden">
+                  Information
+                </p>
+              </>
+            ) : (
+              <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
+                Information
+              </p>
+            )}
             {TOP_LINKS.map((l) => (
-              <NavLink key={l.path} to={toPath(role, l.path)} onClick={onClose} className={navClass} title={l.label}>
+              <NavLink
+                key={l.path}
+                to={toPath(role, l.path)}
+                onClick={onClose}
+                className={navClass}
+                title={l.label}
+                aria-label={l.label}
+                {...tipProps(l.label)}
+              >
                 <i className={`fa-solid ${TOP_ICONS[l.path] || "fa-circle-info"} w-5 text-center`} />
                 <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
               </NavLink>
@@ -114,7 +142,14 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
         </nav>
 
         <div className="mt-auto pt-3 border-t border-[#eee] dark:border-night-line">
-          <NavLink to={toPath(role, "settings")} onClick={onClose} className={navClass} title="Settings">
+          <NavLink
+            to={toPath(role, "settings")}
+            onClick={onClose}
+            className={navClass}
+            title="Settings"
+            aria-label="Settings"
+            {...tipProps("Settings")}
+          >
             <i className="fa-solid fa-gear w-5 text-center" />
             <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
           </NavLink>
@@ -124,6 +159,8 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
               setLogoutOpen(true);
             }}
             title="Logout"
+            aria-label="Logout"
+            {...tipProps("Logout")}
             className={`w-full flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
               }`}
           >
@@ -132,6 +169,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
           </button>
         </div>
       </aside>
+      {Tooltip}
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

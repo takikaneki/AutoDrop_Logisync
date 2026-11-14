@@ -14,7 +14,7 @@ const iconBtn =
 
 // Navigation bar for Seller and Rider portals directly underneath GlobalBanner.
 // Uses the identical 3-column balanced grid layout as SiteHeader so navigation links remain horizontally centered.
-export default function PortalHeader({ role, onToggleSidebar }) {
+export default function PortalHeader({ role, collapsed = false, mobileOpen = false, onToggleSidebar }) {
   const { dark } = usePrefs();
   const profile = useProfile();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,6 +35,7 @@ export default function PortalHeader({ role, onToggleSidebar }) {
             <button
               onClick={onToggleSidebar}
               aria-label="Toggle sidebar"
+              aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
               className={iconBtn}
             >

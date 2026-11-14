@@ -21,7 +21,7 @@ const iconBtn =
 // Navigation bar directly underneath the GlobalBanner.
 // Uses a balanced 3-column layout (Left: Sidebar Toggle; Center: Nav Links; Right: Controls)
 // to ensure the navigation links remain strictly horizontally centered across all screen sizes.
-export default function SiteHeader({ onToggleSidebar }) {
+export default function SiteHeader({ collapsed = false, mobileOpen = false, onToggleSidebar }) {
   const t = useT();
   const { dark } = usePrefs();
   const profile = useProfile();
@@ -54,6 +54,7 @@ export default function SiteHeader({ onToggleSidebar }) {
             <button
               onClick={onToggleSidebar}
               aria-label="Toggle sidebar"
+              aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
               className={iconBtn}
             >

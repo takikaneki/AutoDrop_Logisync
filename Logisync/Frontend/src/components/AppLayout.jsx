@@ -1,25 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
 import SiteHeader from "./SiteHeader.jsx";
 import Footer from "./Footer.jsx";
 import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
+import useResponsiveSidebar from "../hooks/useResponsiveSidebar.js";
 
 // Keyboard shortcuts: "g" tapos d/p/r/v/m/n  ·  "?" = Help
 const go = { d: "/dashboard", p: "/parcels", r: "/parcels?report=1", v: "/verification", m: "/messages", n: "/notifications" };
 
 export default function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { collapsed, mobileOpen, closeMobile, toggleSidebar } = useResponsiveSidebar();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const gPressed = useRef(0);
 
   useEffect(() => {
-    setMobileOpen(false);
+    closeMobile();
     window.scrollTo(0, 0);
-  }, [pathname]);
+  }, [pathname, closeMobile]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -27,7 +27,7 @@ export default function AppLayout() {
       if (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "Escape") {
-        setMobileOpen(false);
+        closeMobile();
         return;
       }
       if (e.key === "?") return navigate("/help");
@@ -42,18 +42,13 @@ export default function AppLayout() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate]);
-
-  const toggleSidebar = () => {
-    if (window.matchMedia("(max-width: 820px)").matches) setMobileOpen((v) => !v);
-    else setCollapsed((v) => !v);
-  };
+  }, [navigate, closeMobile]);
 
   return (
     <div className="min-h-screen max-w-[100vw] overflow-x-hidden">
-      <SiteHeader onToggleSidebar={toggleSidebar} />
+      <SiteHeader collapsed={collapsed} mobileOpen={mobileOpen} onToggleSidebar={toggleSidebar} />
       <div className="flex items-start max-w-full">
-        <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+        <Sidebar collapsed={collapsed} mobileOpen={mobileOpen} onClose={closeMobile} />
         <main className="flex min-h-[calc(100vh-56px)] min-w-0 max-w-full flex-1 flex-col overflow-x-hidden px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 max-[820px]:min-h-0 max-[820px]:px-3.5 max-[820px]:pt-3.5 max-[820px]:pb-24 max-[380px]:px-2.5 print:p-0">
           <div className="flex-1 min-w-0">
             <Outlet />
@@ -61,7 +56,7 @@ export default function AppLayout() {
           <Footer />
         </main>
       </div>
-      <MobileBottomNav role="coordinator" mobileOpen={mobileOpen} onToggleMenu={() => setMobileOpen((v) => !v)} />
+      <MobileBottomNav role="coordinator" mobileOpen={mobileOpen} onToggleMenu={toggleSidebar} />
       <Toaster />
     </div>
   );
