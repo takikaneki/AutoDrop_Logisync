@@ -23,22 +23,28 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
   const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
   const navClass = ({ isActive }) =>
-    `relative flex items-center gap-[13px] rounded-[10px] py-[11px] text-[14px] transition ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
-    } ${isActive
-      ? "bg-white text-[#ee4d2d] font-bold shadow-sm"
-      : "text-white/90 hover:bg-white hover:text-[#ee4d2d] hover:font-semibold"
+    `relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
+      isActive
+        ? "bg-white text-brand font-bold shadow-sm"
+        : "text-white/95 hover:bg-white hover:text-brand hover:font-semibold"
     }`;
 
   return (
     <>
-      {mobileOpen && <div className="fixed inset-0 z-[65] bg-black/40 backdrop-blur-[1px] min-[821px]:hidden" onClick={onClose} aria-hidden="true" />}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[65] bg-black/30 backdrop-blur-[1px] transition-opacity"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      <div className="max-[820px]:contents min-[821px]:shrink-0 min-[821px]:bg-[#ee4d2d] min-[821px]:border-r min-[821px]:border-[#d94122] print:hidden dark:min-[821px]:bg-[#c83a1d] dark:min-[821px]:border-[#a82e15]">
-        <aside
-          className={`flex shrink-0 flex-col overflow-y-auto bg-[#ee4d2d] text-white py-4 z-40 transition-[width,transform] duration-200 dark:bg-[#c83a1d] min-[821px]:sticky min-[821px]:top-14 min-[821px]:h-[calc(100vh-56px)] max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[288px] max-[820px]:max-w-[86vw] max-[820px]:border-r max-[820px]:border-[#d94122] max-[820px]:px-4 max-[820px]:pb-20 max-[820px]:shadow-2xl ${collapsed ? "min-[821px]:w-[78px] min-[821px]:px-2.5" : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:px-3.5 xl:px-[18px]"
-            } ${mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"}`}
-        >
-        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5 min-[821px]:hidden">
+      <aside
+        className={`fixed inset-y-0 left-0 z-[70] flex h-[100dvh] w-[276px] max-w-[85vw] shrink-0 flex-col overflow-y-auto border-r border-brand-dark bg-brand px-4 py-4 text-white shadow-2xl transition-transform duration-200 dark:border-[#9a3412] dark:bg-brand-dark print:hidden ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
               <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
@@ -48,13 +54,13 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
                 {ROLE_LABEL[role]}
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
                 onClick={toggleDark}
                 aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
                 title={dark ? "Switch to light mode" : "Switch to dark mode"}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-[#ee4d2d]"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand min-[821px]:hidden"
               >
                 <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
               </button>
@@ -62,13 +68,14 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
                 type="button"
                 onClick={onClose}
                 aria-label="Close sidebar"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-[#ee4d2d]"
+                title="Close sidebar"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
-                <i className="fa-solid fa-xmark text-xs" />
+                <i className="fa-solid fa-xmark text-sm" />
               </button>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 backdrop-blur-xs">
+          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 min-[821px]:hidden">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] leading-tight text-white">
@@ -164,15 +171,13 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
             title="Logout"
             aria-label="Logout"
             {...tipProps("Logout")}
-            className={`w-full flex items-center gap-[13px] rounded-[10px] py-[11px] text-[14px] text-white/90 transition hover:bg-white hover:text-[#ee4d2d] hover:font-semibold ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
-              }`}
+            className="w-full flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] text-white/95 transition hover:bg-white hover:text-brand hover:font-semibold"
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            <span className={collapsed ? "min-[821px]:hidden" : ""}>Logout</span>
+            <span>Logout</span>
           </button>
         </div>
       </aside>
-      </div>
       {Tooltip}
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>

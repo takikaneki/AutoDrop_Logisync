@@ -14,7 +14,7 @@ const tones = {
 };
 
 const cardBorders = {
-  orange: "!border-[#fed7aa] !border-t-[3px] !border-t-[#ee4d2d] dark:!border-[#9a3412]/70 dark:!border-t-[#ee4d2d]",
+  orange: "!border-brand-line !border-t-[3px] !border-t-brand dark:!border-[#9a3412]/70 dark:!border-t-brand",
   yellow: "!border-[#fde68a] !border-t-[3px] !border-t-[#f59e0b] dark:!border-[#92400e]/70 dark:!border-t-[#f59e0b]",
   green: "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]",
   red: "!border-[#fecaca] !border-t-[3px] !border-t-[#ef4444] dark:!border-[#991b1b]/70 dark:!border-t-[#ef4444]",

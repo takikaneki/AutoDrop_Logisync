@@ -56,11 +56,7 @@ export default function useResponsiveSidebar() {
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   const toggleSidebar = useCallback(() => {
-    if (getViewportTier() === "mobile") {
-      setMobileOpen((v) => !v);
-    } else {
-      setCollapsed((v) => !v);
-    }
+    setMobileOpen((v) => !v);
   }, []);
 
   return { collapsed, mobileOpen, closeMobile, toggleSidebar, setMobileOpen };
