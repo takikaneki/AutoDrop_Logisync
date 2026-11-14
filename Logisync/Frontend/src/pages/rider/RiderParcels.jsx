@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import Pagination from "../../components/Pagination.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, td, th } from "../../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, labelCls, panel, tableCard, tableHead, tableRow, tableWrap, td, th } from "../../components/styles.js";
 import { getUser } from "../../api.js";
 import { createStore } from "../../store/createStore.js";
 import { MAX_RESCHEDULES, STAGE, useAssignedParcels, useMyDeliveries } from "../../store/riderDeliveries.js";
@@ -397,7 +397,7 @@ export default function RiderParcels() {
         })}
       </div>
 
-      <section className={`${panel} overflow-hidden p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
+      <section className={`${tableCard} overflow-hidden p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         {list.length === 0 ? (
           <EmptyState
             icon="fa-box-open"
@@ -407,9 +407,9 @@ export default function RiderParcels() {
         ) : (
           <>
             {/* Desktop & Tablet Table View */}
-            <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            <div className={`hidden min-[701px]:block ${tableWrap}`}>
               <table className="w-full min-w-[760px] border-collapse">
-                <thead className="bg-[#fafafa] dark:bg-night-head">
+                <thead className={tableHead}>
                   <tr>{["Parcel", "Receiver", "Address", "Seller", "Status", "Updated", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
@@ -417,7 +417,7 @@ export default function RiderParcels() {
                     const [label, cls] = getBadgeForParcel(p);
                     const a = (ACTION[p.stage] || ACTION[STAGE.TO_DELIVER])(p);
                     return (
-                      <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
+                      <tr key={p.parcel_id} className={tableRow}>
                         <td className={`${td} whitespace-nowrap`}>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <strong className="text-[#333] dark:text-[#f1eeeb]">{p.transaction_number || p.parcel_id}</strong>

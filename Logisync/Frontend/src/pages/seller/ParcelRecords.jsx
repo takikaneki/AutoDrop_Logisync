@@ -6,7 +6,7 @@ import Pagination from "../../components/Pagination.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
-import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, tableCard, tableHead, tableRow, tableWrap, td, th } from "../../components/styles.js";
 import { listParcels } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
@@ -149,7 +149,7 @@ export default function ParcelRecords() {
         </StatGrid>
       </div>
 
-      <section className={`${panel} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
+      <section className={`${tableCard} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         <div className="mb-[18px] grid grid-cols-[1fr_190px_170px] gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative max-[900px]:col-span-2 max-[600px]:col-span-1">
             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
@@ -173,20 +173,21 @@ export default function ParcelRecords() {
           </p>
         )}
 
-        {/* Desktop & Tablet Table View */}
-        <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
-          <table className="w-full min-w-[860px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
-              <tr>
-                {["Parcel ID", "Transaction no.", "Customer / Receiver", "Address", "Category & Contents", "Status", "Created", ""].map((h) => <th key={h} className={th}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((p) => {
-                const needsVideo = PENDING.includes(p.status);
-                const addr = getParcelAddress(p);
-                return (
-                  <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
+        {/* Desktop & Tablet Table View + Create Parcel Quick Card */}
+        <div className="hidden min-[701px]:grid grid-cols-[1fr_220px] items-stretch gap-4 max-[1080px]:grid-cols-1">
+          <div className={tableWrap}>
+            <table className="w-full min-w-[860px] border-collapse">
+              <thead className={tableHead}>
+                <tr>
+                  {["Parcel ID", "Transaction no.", "Customer / Receiver", "Address", "Category & Contents", "Status", "Created", ""].map((h) => <th key={h} className={th}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((p) => {
+                  const needsVideo = PENDING.includes(p.status);
+                  const addr = getParcelAddress(p);
+                  return (
+                    <tr key={p.parcel_id} className={tableRow}>
                     <td className={`${td} whitespace-nowrap font-mono text-[12px]`} title={p.parcel_id}>{shortParcelId(p.parcel_id)}</td>
                     <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
                       <span className="inline-flex items-center gap-1.5 flex-wrap">
@@ -253,12 +254,34 @@ export default function ParcelRecords() {
             </tbody>
           </table>
           {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
-          {!loading && visible.length === 0 && (
-            <EmptyState
-              title={parcels.length ? "No parcels match your filters" : "You have no parcels yet"}
-              text={parcels.length ? "Try a different search or status." : "Create your first parcel to see it here."}
-            />
-          )}
+            {!loading && visible.length === 0 && (
+              <EmptyState
+                title={parcels.length ? "No parcels match your filters" : "You have no parcels yet"}
+                text={parcels.length ? "Try a different search or status." : "Create your first parcel to see it here."}
+              />
+            )}
+          </div>
+
+          <Link
+            to="/seller/create"
+            className="group flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#fdba74] bg-[#fffaf5] p-5 text-center transition hover:border-[#ee4d2d] hover:bg-[#fff3e8] dark:border-[#9a3412]/70 dark:bg-night-head/60 dark:hover:border-[#ee4d2d] max-[1080px]:hidden"
+          >
+            <svg viewBox="0 0 120 96" className="mb-3 h-24 w-28" fill="none" aria-hidden="true">
+              <ellipse cx="60" cy="84" rx="40" ry="7" fill="#ffedd5" />
+              <rect x="34" y="34" width="46" height="40" rx="6" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" />
+              <path d="M34 45h46M57 34v40" stroke="#94a3b8" strokeWidth="2" />
+              <rect x="20" y="22" width="26" height="19" rx="5" fill="#ee4d2d" />
+              <circle cx="33" cy="31.5" r="4.5" fill="#ffffff" />
+              <path d="M88 22c-6.6 0-12 5.4-12 12 0 8.5 12 20 12 20s12-11.5 12-20c0-6.6-5.4-12-12-12z" fill="#f97316" />
+              <circle cx="88" cy="34" r="4.5" fill="#ffffff" />
+            </svg>
+            <p className="mb-4 text-[12.5px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
+              Ready to ship a new order? Register your parcel to get started.
+            </p>
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ee4d2d] px-4 py-2 text-[13px] font-bold text-white shadow-xs transition group-hover:bg-[#d94122]">
+              <i className="fa-solid fa-plus text-[11px]" /> Create Parcel
+            </span>
+          </Link>
         </div>
 
         {/* Mobile Card View */}

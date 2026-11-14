@@ -13,12 +13,21 @@ const tones = {
   gray: "bg-[#f1f1f1] text-[#999] dark:bg-night-head",
 };
 
+const cardBorders = {
+  orange: "!border-[#fed7aa] !border-t-[3px] !border-t-[#ee4d2d] dark:!border-[#9a3412]/70 dark:!border-t-[#ee4d2d]",
+  yellow: "!border-[#fde68a] !border-t-[3px] !border-t-[#f59e0b] dark:!border-[#92400e]/70 dark:!border-t-[#f59e0b]",
+  green: "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]",
+  red: "!border-[#fecaca] !border-t-[3px] !border-t-[#ef4444] dark:!border-[#991b1b]/70 dark:!border-t-[#ef4444]",
+  blue: "!border-[#bfdbfe] !border-t-[3px] !border-t-[#3b82f6] dark:!border-[#1e40af]/70 dark:!border-t-[#3b82f6]",
+  gray: "!border-[#e2e8f0] !border-t-[3px] !border-t-[#64748b] dark:!border-night-line dark:!border-t-[#64748b]",
+};
+
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).
 export function StatCard({ label, value, icon, tone = "orange", to }) {
   const body = (
     <div
-      className={`${panel} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 transition ${
-        to ? "hover:border-brand/40 hover:shadow-sm active:scale-[0.99]" : ""
+      className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition ${
+        to ? "hover:shadow-md active:scale-[0.99]" : ""
       }`}
     >
       <div
