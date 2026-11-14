@@ -769,11 +769,12 @@ export default function Parcels() {
                 <SortTh k="rider">Rider</SortTh>
                 <SortTh k="ts">Date</SortTh>
                 <th className={th}>Status</th>
+                <th className={`${th} text-center`}>Action</th>
               </tr>
             </thead>
 
             {loading ? (
-              <TableSkeleton rows={PAGE_SIZE} cols={6} />
+              <TableSkeleton rows={PAGE_SIZE} cols={7} />
             ) : (
               <tbody>
                 {pageRows.map((parcel) => (
@@ -840,6 +841,18 @@ export default function Parcels() {
                           {parcel.returnCoordinated ? "Return Coordinated" : "3-Day Limit Reached"}
                         </span>
                       )}
+                    </td>
+
+                    <td className={`${td} text-center`}>
+                      <Link
+                        to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
+                        onClick={(event) => event.stopPropagation()}
+                        title="View full parcel details"
+                        aria-label={`View full details for ${parcel.id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand/30 bg-brand-softer text-brand transition hover:bg-brand hover:text-white dark:border-night-line dark:bg-night-head"
+                      >
+                        <i className="fa-regular fa-eye text-[13.5px]" />
+                      </Link>
                     </td>
                   </tr>
                 ))}
