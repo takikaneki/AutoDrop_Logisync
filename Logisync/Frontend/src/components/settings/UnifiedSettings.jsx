@@ -146,9 +146,43 @@ export default function UnifiedSettings() {
     [q]
   );
 
+  const notificationsOn = prefs.notificationsEnabled !== false;
+
+  const toggleMasterNotifications = () => {
+    const next = !notificationsOn;
+    if (next) {
+      setPrefs({
+        notificationsEnabled: true,
+        inAppPopups: true,
+        sound: true,
+        notifyParcel: true,
+        notifyVerification: true,
+        notifyMessages: true,
+        notifyAnnouncements: true,
+      });
+      toast("Notifications enabled.", "info");
+    } else {
+      setPrefs({
+        notificationsEnabled: false,
+        inAppPopups: false,
+        sound: false,
+        emailAlerts: false,
+        notifyParcel: false,
+        notifyVerification: false,
+        notifyMessages: false,
+        notifyAnnouncements: false,
+      });
+      toast("All notifications turned off.", "info");
+    }
+  };
+
   const togglePref = (key, label) => {
-    const next = !prefs[key];
-    setPrefs({ [key]: next });
+    const current = key === "emailAlerts" ? Boolean(prefs[key]) : prefs[key] !== false && notificationsOn;
+    const next = !current;
+    setPrefs({
+      [key]: next,
+      ...(next ? { notificationsEnabled: true } : {}),
+    });
     toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
   };
 
@@ -513,14 +547,39 @@ export default function UnifiedSettings() {
           {/* 4. NOTIFICATIONS */}
           {showNotifications && (
             <div ref={notificationsRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Notifications
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Control top-right popup alerts, sound, email updates, and which notifications appear in your bell.
-              </p>
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Notifications
+                  </h3>
+                  <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Control top-right popup alerts, sound, email updates, and which notifications appear in your bell.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2.5">
+                  <span className={`text-[12px] font-bold ${notificationsOn ? "text-brand" : "text-[#94a3b8]"}`}>
+                    {notificationsOn ? "On" : "Off"}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notificationsOn}
+                    aria-label="Enable all notifications"
+                    onClick={toggleMasterNotifications}
+                    className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${
+                      notificationsOn ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-[3px] left-[3px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                        notificationsOn ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
 
-              <div className="space-y-5">
+              <div className={`space-y-5 transition-opacity ${notificationsOn ? "opacity-100" : "opacity-55"}`}>
                 <div>
                   <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
                     Delivery Channels
@@ -531,7 +590,7 @@ export default function UnifiedSettings() {
                       ["sound", "Alert Sound", "Play a subtle chime for new announcements and urgent alerts."],
                       ["emailAlerts", "Email Alerts", "Also send critical account and parcel alerts to your email."],
                     ].map(([key, label, hint]) => {
-                      const checked = Boolean(prefs[key]);
+                      const checked = notificationsOn && (key === "emailAlerts" ? Boolean(prefs[key]) : prefs[key] !== false);
                       return (
                         <div key={key} className="flex items-center justify-between gap-4 py-3">
                           <div className="min-w-0">
@@ -571,7 +630,7 @@ export default function UnifiedSettings() {
                       ["notifyMessages", "Messages & Complaints", "Direct chat messages and complaint or request status replies."],
                       ["notifyAnnouncements", "Hub Announcements", "Important operational advisories posted by coordinators."],
                     ].map(([key, label, hint]) => {
-                      const checked = prefs[key] !== false;
+                      const checked = notificationsOn && prefs[key] !== false;
                       return (
                         <div key={key} className="flex items-center justify-between gap-4 py-3">
                           <div className="min-w-0">

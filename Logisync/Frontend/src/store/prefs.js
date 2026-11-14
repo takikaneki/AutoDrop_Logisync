@@ -14,6 +14,7 @@ const store = createStore(
     dark: legacyDark,
     lang: "en", // "en" | "fil"
     fontSize: "md", // "sm" | "md" | "lg"
+    notificationsEnabled: true,
     inAppPopups: true,
     sound: true,
     emailAlerts: false,

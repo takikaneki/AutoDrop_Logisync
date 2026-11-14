@@ -36,8 +36,9 @@ export function toast(message, type = "success") {
 
 export function notifyPopup({ title, message, icon = "fa-bell", to = "" }) {
   const prefs = getPrefs();
-  if (prefs.sound) playChime();
-  if (!prefs.inAppPopups) return;
+  if (prefs.notificationsEnabled === false) return;
+  if (prefs.sound !== false) playChime();
+  if (prefs.inAppPopups === false) return;
   const id = Date.now() + Math.random();
   popupStore.set((l) => [{ id, title, message, icon, to }, ...l].slice(0, 3));
   setTimeout(() => popupStore.set((l) => l.filter((p) => p.id !== id)), 4500);
