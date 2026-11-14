@@ -104,11 +104,11 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
                   <Link
-                    to={toPath(role, "help")}
+                    to={toPath(role, "contact")}
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
-                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Help
+                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
                   </Link>
                   <Link
                     to={`${toPath(role, "help")}#faq`}

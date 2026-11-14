@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { panel } from "../components/styles.js";
 
@@ -15,6 +15,13 @@ const keys = [["g then d", "Dashboard"], ["g then p", "Parcels"], ["g then r", "
 
 export default function Help() {
   const [open, setOpen] = useState(0);
+  const { pathname } = useLocation();
+  const contactPath = pathname.startsWith("/seller")
+    ? "/seller/contact"
+    : pathname.startsWith("/rider")
+    ? "/rider/contact"
+    : "/contact";
+
   return (
     <>
       <Topbar title="Help" subtitle="Answers to common questions and handy shortcuts." />
@@ -47,7 +54,7 @@ export default function Help() {
             <span className="w-[48px] h-[48px] mx-auto mb-3 rounded-full bg-brand-soft text-brand flex items-center justify-center dark:bg-night-line"><i className="fa-solid fa-headset" /></span>
             <h3 className="text-[16px] font-bold mb-1">Still need help?</h3>
             <p className="text-[13px] text-[#888] mb-4">Send us a message and we'll get back to you.</p>
-            <Link to="/contact" className="text-brand font-bold text-[14px] hover:underline">Contact support →</Link>
+            <Link to={contactPath} className="text-brand font-bold text-[14px] hover:underline">Contact support →</Link>
           </section>
         </div>
       </div>

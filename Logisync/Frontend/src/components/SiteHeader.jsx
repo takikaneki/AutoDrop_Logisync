@@ -126,8 +126,8 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
-                  <Link to="/help" onClick={() => setMenuOpen(false)} className={item}>
-                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Help
+                  <Link to="/contact" onClick={() => setMenuOpen(false)} className={item}>
+                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
                   </Link>
                   <Link to="/help#faq" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
