@@ -9,6 +9,9 @@ export const usePopups = popupStore.use;
 
 function playChime() {
   try {
+    const prefs = getPrefs();
+    const vol = Math.max(0, Math.min(100, prefs.soundVolume ?? 80)) / 100;
+    if (vol <= 0) return;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
@@ -17,7 +20,7 @@ function playChime() {
     osc.type = "sine";
     osc.frequency.setValueAtTime(880, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.09);
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.setValueAtTime(0.08 * vol, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
     osc.connect(gain);
     gain.connect(ctx.destination);

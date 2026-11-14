@@ -7,6 +7,7 @@ import { setPrefs, toggleDark, usePrefs } from "../../store/prefs.js";
 import { setProfile, useProfile } from "../../store/profile.js";
 import { toast } from "../../store/toast.js";
 import { getUser } from "../../api.js";
+import { previewTone } from "../../utils/sound.js";
 import {
   MOBILE_NUMBER_MAX_LENGTH,
   sanitizeMobileNumber,
@@ -58,7 +59,7 @@ export default function UnifiedSettings() {
   const user = getUser();
   const profile = useProfile();
   const prefs = usePrefs();
-  const themeMode = prefs.themeMode || (dark ? "dark" : "light");
+  const themeMode = prefs.themeMode || (prefs.dark ? "dark" : "light");
   const isSystemTheme = themeMode === "system";
 
   const [search, setSearch] = useState("");
@@ -77,10 +78,13 @@ export default function UnifiedSettings() {
 
   const accountRef = useRef(null);
   const passwordRef = useRef(null);
-  const appearanceRef = useRef(null);
   const notificationsRef = useRef(null);
-  const languageRef = useRef(null);
+  const appearanceRef = useRef(null);
   const accessibilityRef = useRef(null);
+  const readabilityRef = useRef(null);
+  const soundsRef = useRef(null);
+  const shortcutsRef = useRef(null);
+  const languageRef = useRef(null);
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -141,7 +145,7 @@ export default function UnifiedSettings() {
     [q]
   );
   const showAppearance = useMemo(
-    () => !q || "appearance display dark mode text size".includes(q),
+    () => !q || "appearance display dark light device theme".includes(q),
     [q]
   );
   const showNotifications = useMemo(
@@ -153,7 +157,11 @@ export default function UnifiedSettings() {
     [q]
   );
   const showAccessibility = useMemo(
-    () => !q || "accessibility reduced motion underline links keyboard shortcuts keybinds".includes(q),
+    () =>
+      !q ||
+      "accessibility text readability size reduced motion underline links sound volume preview keyboard shortcuts keybinds".includes(
+        q
+      ),
     [q]
   );
 
@@ -289,21 +297,8 @@ export default function UnifiedSettings() {
 
             <button
               type="button"
-              onClick={() => jumpTo("appearance", appearanceRef)}
-              className={`mt-2 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "appearance"
-                  ? "bg-brand-soft text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <i className="fa-solid fa-palette text-[13px]" />
-              <span>Appearance &amp; Display</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => jumpTo("notifications", notificationsRef)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+              className={`mt-2 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
                 activeNav === "notifications"
                   ? "bg-brand-soft text-brand dark:bg-night-head"
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
@@ -315,15 +310,15 @@ export default function UnifiedSettings() {
 
             <button
               type="button"
-              onClick={() => jumpTo("language", languageRef)}
+              onClick={() => jumpTo("appearance", appearanceRef)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "language"
+                activeNav === "appearance"
                   ? "bg-brand-soft text-brand dark:bg-night-head"
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-language text-[13px]" />
-              <span>Language &amp; Time</span>
+              <i className="fa-solid fa-palette text-[13px]" />
+              <span>Appearance &amp; Display</span>
             </button>
 
             <button
@@ -337,6 +332,40 @@ export default function UnifiedSettings() {
             >
               <i className="fa-solid fa-universal-access text-[13px]" />
               <span>Accessibility</span>
+            </button>
+
+            <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
+              {[
+                ["a11y-readability", "Text Readability", readabilityRef],
+                ["a11y-sounds", "Notification Sounds", soundsRef],
+                ["a11y-shortcuts", "Keyboard Shortcuts", shortcutsRef],
+              ].map(([navKey, navLabel, navRef]) => (
+                <button
+                  key={navKey}
+                  type="button"
+                  onClick={() => jumpTo(navKey, navRef)}
+                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
+                    activeNav === navKey
+                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
+                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                  }`}
+                >
+                  <span>{navLabel}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => jumpTo("language", languageRef)}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                activeNav === "language"
+                  ? "bg-brand-soft text-brand dark:bg-night-head"
+                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+              }`}
+            >
+              <i className="fa-solid fa-language text-[13px]" />
+              <span>Language &amp; Time</span>
             </button>
           </nav>
 
@@ -529,123 +558,7 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 3. APPEARANCE & DISPLAY */}
-          {showAppearance && (
-            <div ref={appearanceRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Appearance &amp; Display
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Choose your theme or sync automatically with your device appearance.
-              </p>
-
-              {/* Same as Device Theme */}
-              <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
-                <div className="min-w-0">
-                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                    Same as Device Theme
-                  </strong>
-                  <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                    Match your device&apos;s light or dark mode automatically.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isSystemTheme}
-                  aria-label="Same as Device Theme"
-                  onClick={() => {
-                    const nextMode = isSystemTheme ? (prefs.dark ? "dark" : "light") : "system";
-                    setPrefs({ themeMode: nextMode });
-                    toast(nextMode === "system" ? "Synced with device theme." : "Using manual theme.", "info");
-                  }}
-                  className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                    isSystemTheme ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                      isSystemTheme ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Default Themes Swatch Picker (Discord-inspired) */}
-              <div className="mb-5">
-                <span className="mb-2.5 block text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Default Themes
-                </span>
-                <div className="flex flex-wrap items-center gap-3">
-                  {[
-                    { key: "light", label: "Light", swatch: "bg-white border-[#cbd5e1]" },
-                    { key: "dark", label: "Dark", swatch: "bg-[#292522] border-[#48413c]" },
-                    { key: "system", label: "Device", swatch: "bg-gradient-to-br from-white via-[#cbd5e1] to-[#1e293b] border-[#94a3b8]", icon: "fa-arrows-rotate" },
-                  ].map((item) => {
-                    const active = themeMode === item.key;
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => {
-                          setPrefs({ themeMode: item.key });
-                          toast(`${item.label} theme applied.`, "info");
-                        }}
-                        title={`${item.label} theme`}
-                        aria-label={`${item.label} theme`}
-                        aria-pressed={active}
-                        className={`relative flex h-12 w-12 items-center justify-center rounded-xl border-2 transition ${item.swatch} ${
-                          active
-                            ? "!border-brand ring-2 ring-brand/25 scale-[1.03]"
-                            : "hover:border-brand/60"
-                        }`}
-                      >
-                        {item.icon && (
-                          <i className={`fa-solid ${item.icon} text-[14px] text-[#1e293b] drop-shadow-xs`} />
-                        )}
-                        {active && (
-                          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow-xs">
-                            <i className="fa-solid fa-check" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Text Size */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                <div>
-                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                    Text Size
-                  </strong>
-                  <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                    Adjust display scale across portals.
-                  </span>
-                </div>
-                <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-[#f8fafc] p-1 dark:border-night-line dark:bg-night-head">
-                  {SIZES.map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setPrefs({ fontSize: key })}
-                      aria-pressed={prefs.fontSize === key}
-                      className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
-                        prefs.fontSize === key
-                          ? "bg-brand text-white shadow-xs"
-                          : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 4. NOTIFICATIONS */}
+          {/* 3. NOTIFICATIONS */}
           {showNotifications && (
             <div ref={notificationsRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
               <div className="mb-4 flex items-center justify-between gap-4">
@@ -763,7 +676,293 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 5. LANGUAGE & TIME */}
+          {/* 4. APPEARANCE & DISPLAY */}
+          {showAppearance && (
+            <div ref={appearanceRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Appearance &amp; Display
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Choose your theme or sync automatically with your device appearance.
+              </p>
+
+              {/* Same as Device Theme */}
+              <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
+                <div className="min-w-0">
+                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Same as Device Theme
+                  </strong>
+                  <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Match your device&apos;s light or dark mode automatically.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isSystemTheme}
+                  aria-label="Same as Device Theme"
+                  onClick={() => {
+                    const nextMode = isSystemTheme ? (prefs.dark ? "dark" : "light") : "system";
+                    setPrefs({ themeMode: nextMode });
+                    toast(nextMode === "system" ? "Synced with device theme." : "Using manual theme.", "info");
+                  }}
+                  className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                    isSystemTheme ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                      isSystemTheme ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Default Themes Swatch Picker (Discord-inspired) */}
+              <div>
+                <span className="mb-2.5 block text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Default Themes
+                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  {[
+                    { key: "light", label: "Light", swatch: "bg-white border-[#cbd5e1]" },
+                    { key: "dark", label: "Dark", swatch: "bg-[#292522] border-[#48413c]" },
+                    { key: "system", label: "Device", swatch: "bg-gradient-to-br from-white via-[#cbd5e1] to-[#1e293b] border-[#94a3b8]", icon: "fa-arrows-rotate" },
+                  ].map((item) => {
+                    const active = themeMode === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          setPrefs({ themeMode: item.key });
+                          toast(`${item.label} theme applied.`, "info");
+                        }}
+                        title={`${item.label} theme`}
+                        aria-label={`${item.label} theme`}
+                        aria-pressed={active}
+                        className={`relative flex h-12 w-12 items-center justify-center rounded-xl border-2 transition ${item.swatch} ${
+                          active
+                            ? "!border-brand ring-2 ring-brand/25 scale-[1.03]"
+                            : "hover:border-brand/60"
+                        }`}
+                      >
+                        {item.icon && (
+                          <i className={`fa-solid ${item.icon} text-[14px] text-[#1e293b] drop-shadow-xs`} />
+                        )}
+                        {active && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow-xs">
+                            <i className="fa-solid fa-check" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. ACCESSIBILITY */}
+          {showAccessibility && (
+            <div ref={accessibilityRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Accessibility
+              </h3>
+              <p className="mb-5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Customize text readability, notification sound volume, and keyboard shortcuts.
+              </p>
+
+              {/* 5A. Text Readability */}
+              <div ref={readabilityRef} className="mb-6 scroll-mt-20">
+                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Text Readability
+                </h4>
+                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  {/* Text Size */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 py-3.5">
+                    <div>
+                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                        Text Size
+                      </strong>
+                      <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                        Adjust display font scale across portals.
+                      </span>
+                    </div>
+                    <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
+                      {SIZES.map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setPrefs({ fontSize: key })}
+                          aria-pressed={prefs.fontSize === key}
+                          className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
+                            prefs.fontSize === key
+                              ? "bg-brand text-white shadow-xs"
+                              : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {[
+                    ["reducedMotion", "Reduced Motion", "Minimize transitions and animations across the portal."],
+                    ["underlineLinks", "Always Underline Links", "Make clickable links stand out clearly inside pages."],
+                  ].map(([key, label, hint]) => {
+                    const checked = Boolean(prefs[key]);
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-4 py-3">
+                        <div className="min-w-0">
+                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                          <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={checked}
+                          aria-label={label}
+                          onClick={() => {
+                            setPrefs({ [key]: !checked });
+                            toast(`${label} ${!checked ? "enabled" : "disabled"}.`, "info");
+                          }}
+                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                            checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                              checked ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 5B. Notification Sounds & Volume (Discord Sounds-inspired) */}
+              <div ref={soundsRef} className="mb-6 scroll-mt-20">
+                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Notification Sounds &amp; Volume
+                </h4>
+                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  {/* Volume Slider */}
+                  <div className="py-3.5">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <div>
+                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                          Alert &amp; Notification Volume
+                        </strong>
+                        <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                          Adjust how loud alert chimes and notification tones play.
+                        </span>
+                      </div>
+                      <span className="rounded-md bg-brand-soft px-2 py-0.5 text-[12px] font-bold text-brand">
+                        {prefs.soundVolume ?? 80}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={prefs.soundVolume ?? 80}
+                      aria-label="Alert and notification volume"
+                      onChange={(e) => setPrefs({ soundVolume: Number(e.target.value) })}
+                      onMouseUp={(e) => previewTone("parcel", Number(e.target.value))}
+                      onTouchEnd={(e) => previewTone("parcel", Number(e.target.value))}
+                      className="h-2 w-full cursor-pointer accent-brand"
+                    />
+                  </div>
+
+                  {/* Individual Sound Rows with Preview Sound */}
+                  {[
+                    ["soundParcel", "parcel", "Parcel & Delivery Alerts"],
+                    ["soundMessages", "messages", "New Messages & Replies"],
+                    ["soundAnnouncements", "announcements", "Hub Announcements"],
+                    ["soundScan", "scan", "QR Scan & Verification"],
+                  ].map(([prefKey, toneKey, label]) => {
+                    const checked = prefs.sound !== false && prefs[prefKey] !== false;
+                    return (
+                      <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
+                        <div className="min-w-0">
+                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                            {label}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => previewTone(toneKey)}
+                            className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
+                          >
+                            Preview Sound
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={checked}
+                          aria-label={label}
+                          onClick={() => {
+                            const next = !checked;
+                            setPrefs({ [prefKey]: next, ...(next ? { sound: true } : {}) });
+                            if (next) previewTone(toneKey);
+                          }}
+                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                            checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                              checked ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 5C. Keyboard Shortcuts */}
+              <div ref={shortcutsRef} className="scroll-mt-20">
+                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Keyboard Shortcuts
+                </h4>
+                <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
+                    {[
+                      ["Dashboard", ["G", "D"]],
+                      ["Parcel Records", ["G", "P"]],
+                      ["Verification", ["G", "V"]],
+                      ["Messages", ["G", "M"]],
+                      ["Notifications", ["G", "N"]],
+                      ["Open Help", ["?"]],
+                    ].map(([action, keys]) => (
+                      <div key={action} className="flex items-center justify-between gap-2 py-1">
+                        <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
+                        <span className="flex items-center gap-1">
+                          {keys.map((k) => (
+                            <kbd
+                              key={k}
+                              className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                            >
+                              {k}
+                            </kbd>
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. LANGUAGE & TIME */}
           {showLanguage && (
             <div ref={languageRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
               <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
@@ -841,84 +1040,6 @@ export default function UnifiedSettings() {
                       </button>
                     ))}
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 6. ACCESSIBILITY & KEYBOARD SHORTCUTS */}
-          {showAccessibility && (
-            <div ref={accessibilityRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Accessibility &amp; Shortcuts
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Adjust motion, link visibility, and view quick keyboard shortcuts.
-              </p>
-
-              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                {[
-                  ["reducedMotion", "Reduced Motion", "Minimize transitions and animations across the portal."],
-                  ["underlineLinks", "Always Underline Links", "Make clickable links stand out clearly inside pages."],
-                ].map(([key, label, hint]) => {
-                  const checked = Boolean(prefs[key]);
-                  return (
-                    <div key={key} className="flex items-center justify-between gap-4 py-3">
-                      <div className="min-w-0">
-                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
-                        <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={checked}
-                        aria-label={label}
-                        onClick={() => {
-                          setPrefs({ [key]: !checked });
-                          toast(`${label} ${!checked ? "enabled" : "disabled"}.`, "info");
-                        }}
-                        className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                          checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                            checked ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
-                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Keyboard Shortcuts
-                </h4>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
-                  {[
-                    ["Dashboard", ["G", "D"]],
-                    ["Parcel Records", ["G", "P"]],
-                    ["Verification", ["G", "V"]],
-                    ["Messages", ["G", "M"]],
-                    ["Notifications", ["G", "N"]],
-                    ["Open Help", ["?"]],
-                  ].map(([action, keys]) => (
-                    <div key={action} className="flex items-center justify-between gap-2 py-1">
-                      <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
-                      <span className="flex items-center gap-1">
-                        {keys.map((k) => (
-                          <kbd
-                            key={k}
-                            className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
-                          >
-                            {k}
-                          </kbd>
-                        ))}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
