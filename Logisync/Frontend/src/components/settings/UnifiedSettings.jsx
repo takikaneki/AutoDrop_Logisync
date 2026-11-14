@@ -57,7 +57,8 @@ function resizeImage(file, max = 256) {
 export default function UnifiedSettings() {
   const user = getUser();
   const profile = useProfile();
-  const { dark, fontSize } = usePrefs();
+  const prefs = usePrefs();
+  const { dark, fontSize } = prefs;
 
   const [search, setSearch] = useState("");
   const [activeNav, setActiveNav] = useState("account-info");
@@ -76,6 +77,7 @@ export default function UnifiedSettings() {
   const accountRef = useRef(null);
   const passwordRef = useRef(null);
   const appearanceRef = useRef(null);
+  const notificationsRef = useRef(null);
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -139,6 +141,16 @@ export default function UnifiedSettings() {
     () => !q || "appearance display dark mode text size".includes(q),
     [q]
   );
+  const showNotifications = useMemo(
+    () => !q || "notifications popup sound email alerts parcel verification messages announcements".includes(q),
+    [q]
+  );
+
+  const togglePref = (key, label) => {
+    const next = !prefs[key];
+    setPrefs({ [key]: next });
+    toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
+  };
 
   return (
     <>
@@ -241,6 +253,19 @@ export default function UnifiedSettings() {
             >
               <i className="fa-solid fa-palette text-[13px]" />
               <span>Appearance &amp; Display</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => jumpTo("notifications", notificationsRef)}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                activeNav === "notifications"
+                  ? "bg-brand-soft text-brand dark:bg-night-head"
+                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+              }`}
+            >
+              <i className="fa-solid fa-bell text-[13px]" />
+              <span>Notifications</span>
             </button>
           </nav>
 
@@ -485,7 +510,100 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {!showAccount && !showSecurity && !showAppearance && (
+          {/* 4. NOTIFICATIONS */}
+          {showNotifications && (
+            <div ref={notificationsRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Notifications
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Control top-right popup alerts, sound, email updates, and which notifications appear in your bell.
+              </p>
+
+              <div className="space-y-5">
+                <div>
+                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                    Delivery Channels
+                  </h4>
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                    {[
+                      ["inAppPopups", "In-App Popup Alerts", "Show a brief top-right popup under the bell when new updates arrive."],
+                      ["sound", "Alert Sound", "Play a subtle chime for new announcements and urgent alerts."],
+                      ["emailAlerts", "Email Alerts", "Also send critical account and parcel alerts to your email."],
+                    ].map(([key, label, hint]) => {
+                      const checked = Boolean(prefs[key]);
+                      return (
+                        <div key={key} className="flex items-center justify-between gap-4 py-3">
+                          <div className="min-w-0">
+                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                            <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={checked}
+                            aria-label={label}
+                            onClick={() => togglePref(key, label)}
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                              checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                                checked ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                    Alert Categories
+                  </h4>
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                    {[
+                      ["notifyParcel", "Parcel & Delivery Updates", "Assignments, transit updates, deliveries, and return-to-hub notices."],
+                      ["notifyVerification", "Verification & Video Status", "Packing video approvals, re-upload requests, and verification flags."],
+                      ["notifyMessages", "Messages & Complaints", "Direct chat messages and complaint or request status replies."],
+                      ["notifyAnnouncements", "Hub Announcements", "Important operational advisories posted by coordinators."],
+                    ].map(([key, label, hint]) => {
+                      const checked = prefs[key] !== false;
+                      return (
+                        <div key={key} className="flex items-center justify-between gap-4 py-3">
+                          <div className="min-w-0">
+                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                            <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={checked}
+                            aria-label={label}
+                            onClick={() => togglePref(key, label)}
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                              checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                                checked ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!showAccount && !showSecurity && !showAppearance && !showNotifications && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">
               No settings match &ldquo;{search}&rdquo;.
             </p>
@@ -497,3 +615,4 @@ export default function UnifiedSettings() {
     </>
   );
 }
+

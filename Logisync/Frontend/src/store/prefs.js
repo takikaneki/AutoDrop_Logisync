@@ -14,12 +14,15 @@ const store = createStore(
     dark: legacyDark,
     lang: "en", // "en" | "fil"
     fontSize: "md", // "sm" | "md" | "lg"
+    inAppPopups: true,
     sound: true,
     emailAlerts: false,
     notifyParcel: true,
     notifyRider: true,
     notifySeller: true,
     notifyVerification: true,
+    notifyMessages: true,
+    notifyAnnouncements: true,
   },
   "pt-prefs"
 );
