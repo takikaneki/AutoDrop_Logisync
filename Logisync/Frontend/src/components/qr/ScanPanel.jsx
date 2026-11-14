@@ -3,15 +3,13 @@ import QrScanner from "./QrScanner.jsx";
 import { parseTransactionNumber } from "../../utils/qr.js";
 import { inputCls } from "../styles.js";
 
-// Scanner + manual input sa iisang panel. Kahit scan o type, tatawagin ang onValue(value).
-// busy = habang naghahanap sa backend.
+// Centered Scanner + manual Transaction Number input sa iisang panel.
+// Kahit scan o type, tatawagin ang onValue(value).
 export default function ScanPanel({
   onValue,
   busy = false,
   label = "Transaction number",
   btnClass = "bg-brand hover:bg-brand-dark",
-  allowImageUpload = true,
-  centered = false,
 }) {
   const [manual, setManual] = useState("");
   const [error, setError] = useState("");
@@ -24,21 +22,47 @@ export default function ScanPanel({
     onValue(value);
   };
 
-  if (centered) {
-    return (
-      <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6">
-        <div className="w-full border-b border-[#eee] pb-5 dark:border-night-line">
-          <p className="text-center text-[15px] font-bold">Can't scan? Type it instead</p>
-          <p className="mt-1 text-center text-[13px] text-[#999]">
+  return (
+    <div className="mx-auto flex w-full max-w-[560px] flex-col items-center gap-5">
+      {/* 1. Centered QR Camera Scanner */}
+      <div className="w-full">
+        <QrScanner
+          btnClass={btnClass}
+          windowSize="large"
+          compactIdle
+          onScan={(text) => submit(text)}
+        />
+      </div>
+
+      {/* 2. "OR ENTER MANUALLY" Divider */}
+      <div className="relative flex w-full items-center py-0.5">
+        <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+        <span className="mx-3 shrink-0 rounded-full bg-[#f8fafc] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#94a3b8] dark:bg-night-head dark:text-[#8b837d]">
+          Or enter manually
+        </span>
+        <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+      </div>
+
+      {/* 3. Manual Transaction Number Input Below */}
+      <div className="w-full">
+        <div className="mb-2.5 text-center">
+          <p className="text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            Can&apos;t scan? Type it instead
+          </p>
+          <p className="mt-0.5 text-[12.5px] text-[#888] dark:text-[#b8b0a8]">
             Enter the {label.toLowerCase()} printed on the parcel. A parcel ID also works.
           </p>
-          <form
-            className="mt-3 flex flex-col gap-2 sm:flex-row"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit(manual);
-            }}
-          >
+        </div>
+
+        <form
+          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit(manual);
+          }}
+        >
+          <div className="relative min-w-0 flex-1">
+            <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[12px] text-[#999]" />
             <input
               value={manual}
               onChange={(e) => {
@@ -46,69 +70,20 @@ export default function ScanPanel({
                 setError("");
               }}
               maxLength={100}
-              placeholder={label}
+              placeholder={`Enter ${label.toLowerCase()} (e.g. SPX272828381)...`}
               aria-label={label}
-              className={`${inputCls} min-w-0 flex-1`}
+              className={`${inputCls} pl-8 font-mono`}
             />
-            <button
-              type="submit"
-              disabled={busy}
-              className={`shrink-0 rounded-lg px-5 py-2.5 text-[14px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
-            >
-              {busy ? "Looking…" : "Look up"}
-            </button>
-          </form>
-          {error && <p className="mt-2 text-center text-[12px] text-[#d94747]">{error}</p>}
-        </div>
-
-        <div className="w-full">
-          <QrScanner
-            btnClass={btnClass}
-            allowImageUpload={allowImageUpload}
-            windowSize="large"
-            onScan={(text) => submit(text)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <QrScanner btnClass={btnClass} allowImageUpload={allowImageUpload} onScan={(text) => submit(text)} />
-
-      <div className="flex flex-col justify-center">
-        <p className="text-[15px] font-bold">Can't scan? Type it instead</p>
-        <p className="mt-1 text-[13px] text-[#999]">
-          Enter the {label.toLowerCase()} printed on the parcel. A parcel ID also works.
-        </p>
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit(manual);
-          }}
-        >
-          <input
-            value={manual}
-            onChange={(e) => {
-              setManual(e.target.value);
-              setError("");
-            }}
-            maxLength={100}
-            placeholder={label}
-            aria-label={label}
-            className={`${inputCls} min-w-0 flex-1`}
-          />
+          </div>
           <button
             type="submit"
             disabled={busy}
-            className={`rounded-lg px-4 py-2.5 text-[14px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
+            className={`h-[42px] shrink-0 rounded-lg px-5 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
           >
             {busy ? "Looking…" : "Look up"}
           </button>
         </form>
-        {error && <p className="mt-2 text-[12px] text-[#d94747]">{error}</p>}
+        {error && <p className="mt-2 text-center text-[12px] font-medium text-[#d94747]">{error}</p>}
       </div>
     </div>
   );

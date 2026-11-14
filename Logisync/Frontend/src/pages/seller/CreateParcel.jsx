@@ -487,63 +487,75 @@ export default function CreateParcel() {
             )}
 
             {/* Centered QR Scanner & Manual Transaction Number Lookup */}
-            <div className="space-y-3 border-b border-[#f1f1f1] pb-5 dark:border-night-line">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                  Scan QR / Transaction Number
-                </span>
-                <span className="text-[12px] text-[#888] dark:text-[#b8b0a8]">
-                  Scan parcel QR or enter transaction number below
-                </span>
-              </div>
-
-              <QrScanner
-                onScan={onScan}
-                allowImageUpload={false}
-                compactIdle
-                windowSize="large"
-                startLabel="Start Scanning"
-                showHint={false}
-              />
-
-              <div className="mx-auto w-full max-w-[560px] pt-1">
-                <label htmlFor="transaction_number" className="sr-only">
-                  Transaction number
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <input
-                    id="transaction_number"
-                    name="transaction_number"
-                    type="text"
-                    value={values.transaction_number}
-                    onChange={onChange}
-                    placeholder="Enter transaction number..."
-                    maxLength={12}
-                    aria-invalid={!!errors.transaction_number}
-                    className={`${inputCls} shrink-0 sm:flex-1 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={onLookUpTransaction}
-                    className={`${btnPrimary} h-[42px] shrink-0 px-5`}
-                  >
-                    Look Up
-                  </button>
+            <div className="border-b border-[#f1f1f1] pb-5 dark:border-night-line">
+              <div className="mx-auto flex w-full max-w-[560px] flex-col items-center gap-4">
+                <div className="w-full text-center">
+                  <span className="block text-[14px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Scan QR / Transaction Number
+                  </span>
+                  <span className="mt-0.5 block text-[12px] text-[#888] dark:text-[#b8b0a8]">
+                    Scan the parcel QR code or enter the transaction number manually below
+                  </span>
                 </div>
-                <p
-                  className={`mt-1.5 min-h-[16px] text-center text-[12px] ${
-                    errors.transaction_number
-                      ? "font-medium text-[#d94747]"
-                      : scanned || txnLookupMessage
-                      ? "font-medium text-[#1f7f4a] dark:text-[#8fd6ae]"
-                      : "text-[#999]"
-                  }`}
-                >
-                  {errors.transaction_number ||
-                    (scanned
-                      ? `Transaction number ${values.transaction_number} scanned from QR code.`
-                      : txnLookupMessage || "Format: SPX followed by 9 digits (e.g. SPX272828381).")}
-                </p>
+
+                <QrScanner
+                  onScan={onScan}
+                  compactIdle
+                  windowSize="large"
+                  startLabel="Scan with camera"
+                />
+
+                {/* "OR ENTER MANUALLY" Divider */}
+                <div className="relative flex w-full items-center py-0.5">
+                  <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+                  <span className="mx-3 shrink-0 rounded-full bg-[#f8fafc] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#94a3b8] dark:bg-night-head dark:text-[#8b837d]">
+                    Or enter manually
+                  </span>
+                  <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+                </div>
+
+                <div className="w-full">
+                  <label htmlFor="transaction_number" className="sr-only">
+                    Transaction number
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div className="relative min-w-0 flex-1">
+                      <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[12px] text-[#999]" />
+                      <input
+                        id="transaction_number"
+                        name="transaction_number"
+                        type="text"
+                        value={values.transaction_number}
+                        onChange={onChange}
+                        placeholder="Enter transaction number (e.g. SPX272828381)..."
+                        maxLength={12}
+                        aria-invalid={!!errors.transaction_number}
+                        className={`${inputCls} pl-8 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onLookUpTransaction}
+                      className={`${btnPrimary} h-[42px] shrink-0 px-5`}
+                    >
+                      Look Up
+                    </button>
+                  </div>
+                  <p
+                    className={`mt-1.5 min-h-[16px] text-center text-[12px] ${
+                      errors.transaction_number
+                        ? "font-medium text-[#d94747]"
+                        : scanned || txnLookupMessage
+                        ? "font-medium text-[#1f7f4a] dark:text-[#8fd6ae]"
+                        : "text-[#999]"
+                    }`}
+                  >
+                    {errors.transaction_number ||
+                      (scanned
+                        ? `Transaction number ${values.transaction_number} scanned from QR code.`
+                        : txnLookupMessage || "Format: SPX followed by 9 digits (e.g. SPX272828381).")}
+                  </p>
+                </div>
               </div>
             </div>
 

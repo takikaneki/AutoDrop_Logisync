@@ -139,10 +139,10 @@ export default function ScanUpload() {
       />
 
       <section className={`${panel} p-[30px] max-[600px]:p-5`}>
-        <ScanPanel onValue={lookup} busy={looking} centered allowImageUpload={false} />
+        <ScanPanel onValue={lookup} busy={looking} />
         {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
         {lookupError && (
-          <div className="mt-4">
+          <div className="mx-auto mt-4 max-w-[560px]">
             <Notice tone="error" icon="fa-circle-exclamation" role="alert">
               {lookupError}{" "}
               {/not found/i.test(lookupError) && (

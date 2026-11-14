@@ -299,8 +299,12 @@ export default function Verification() {
 
       {scanOpen && (
         <section className={`${panel} p-6 max-[600px]:p-4 mb-6`}>
-          <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" inputClass="focus:ring-brand/20" />
-          {lookupError && <p role="alert" className="mt-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm text-[#d94a4a]">{lookupError}</p>}
+          <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" />
+          {lookupError && (
+            <p role="alert" className="mx-auto mt-4 max-w-[560px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
+              {lookupError}
+            </p>
+          )}
         </section>
       )}
 
