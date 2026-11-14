@@ -986,31 +986,40 @@ export default function UnifiedSettings() {
               <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
                 Navigate quickly across LogiSync portals using keyboard keybinds.
               </p>
-              <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
-                  {[
-                    ["Dashboard", ["G", "D"]],
-                    ["Parcel Records", ["G", "P"]],
-                    ["Verification", ["G", "V"]],
-                    ["Messages", ["G", "M"]],
-                    ["Notifications", ["G", "N"]],
-                    ["Open Help", ["?"]],
-                  ].map(([action, keys]) => (
-                    <div key={action} className="flex items-center justify-between gap-2 py-1">
-                      <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
-                      <span className="flex items-center gap-1">
-                        {keys.map((k) => (
-                          <kbd
-                            key={k}
-                            className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
-                          >
-                            {k}
-                          </kbd>
-                        ))}
+              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                {[
+                  ["Go to Dashboard", "Open your portal overview", ["G", "D"]],
+                  ["Go to Parcel Records", "View and search all parcels", ["G", "P"]],
+                  ["Report / Filter Parcels", "Jump directly to parcel report view", ["G", "R"]],
+                  ["Go to Verification", "Open packing & QR verification", ["G", "V"]],
+                  ["Go to Messages", "Open direct chat & announcements", ["G", "M"]],
+                  ["Go to Notifications", "View all bell alerts", ["G", "N"]],
+                  ["Go to Activity Log", "Inspect recent system & parcel logs", ["G", "A"]],
+                  ["Go to Settings", "Open account and portal preferences", ["G", "S"]],
+                  ["Open Help Center", "View guides and FAQ", ["?"]],
+                  ["Close Sidebar / Modal", "Dismiss open drawers or dialogs", ["ESC"]],
+                ].map(([action, hint, keys]) => (
+                  <div key={action} className="flex items-center justify-between gap-4 py-3">
+                    <div className="min-w-0">
+                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                        {action}
+                      </strong>
+                      <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                        {hint}
                       </span>
                     </div>
-                  ))}
-                </div>
+                    <span className="flex shrink-0 items-center gap-1">
+                      {keys.map((k) => (
+                        <kbd
+                          key={k}
+                          className="rounded-md border border-[#cbd5e1] bg-white px-2.5 py-1 font-mono text-[11.5px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                        >
+                          {k}
+                        </kbd>
+                      ))}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}

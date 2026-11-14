@@ -7,8 +7,17 @@ import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
 import useResponsiveSidebar from "../hooks/useResponsiveSidebar.js";
 
-// Keyboard shortcuts: "g" tapos d/p/r/v/m/n  ·  "?" = Help
-const go = { d: "/dashboard", p: "/parcels", r: "/parcels?report=1", v: "/verification", m: "/messages", n: "/notifications" };
+// Keyboard shortcuts: "g" tapos d/p/r/v/m/n/a/s  ·  "?" = Help
+const go = {
+  d: "/dashboard",
+  p: "/parcels",
+  r: "/parcels?report=1",
+  v: "/verification",
+  m: "/messages",
+  n: "/notifications",
+  a: "/activity",
+  s: "/settings",
+};
 
 export default function AppLayout() {
   const { collapsed, mobileOpen, closeMobile, closeDesktop, toggleSidebar } = useResponsiveSidebar();

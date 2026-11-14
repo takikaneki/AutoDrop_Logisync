@@ -37,7 +37,7 @@ const store = createStore(
   "pt-prefs"
 );
 
-const zoomMap = { sm: "0.92", md: "1", lg: "1.1" };
+const fontSizeMap = { sm: "14px", md: "16px", lg: "18px" };
 
 function resolveDark(p) {
   if (p.themeMode === "system" && typeof window !== "undefined" && window.matchMedia) {
@@ -53,7 +53,8 @@ export function applyPrefs(p = store.get()) {
   document.body.classList.toggle("dark", isDark);
   root.classList.toggle("reduced-motion", Boolean(p.reducedMotion));
   root.classList.toggle("underline-links", Boolean(p.underlineLinks));
-  root.style.zoom = zoomMap[p.fontSize] || "1";
+  root.style.zoom = "";
+  root.style.fontSize = fontSizeMap[p.fontSize] || "16px";
   try {
     localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
   } catch {
