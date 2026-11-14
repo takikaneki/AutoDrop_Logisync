@@ -11,8 +11,143 @@ import {
   COPYRIGHT_OWNER,
   POLICY_VERSION,
   clearTermsRecord,
+  getTermsRecord,
   saveTermsRecord,
 } from "../data/terms.js";
+
+const REMEMBER_ACCOUNTS_KEY = "logisync_remembered_accounts";
+
+function getRememberRoleStorageKey(role) {
+  return `logisync_remember_${String(role || "").trim().toLowerCase()}`;
+}
+
+function getAccountLookupKey(role, emailStr) {
+  const r = String(role || "").trim().toLowerCase();
+  const e = String(emailStr || "").trim().toLowerCase();
+  return r && e ? `${r}:${e}` : "";
+}
+
+function readRememberedAccountsMap() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(REMEMBER_ACCOUNTS_KEY));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveRememberedAccount(role, emailStr, termsAccepted = true) {
+  const cleanRole = String(role || "").trim().toLowerCase();
+  const cleanEmail = String(emailStr || "").trim();
+  if (!cleanRole || !cleanEmail) return;
+
+  const entry = {
+    remember: true,
+    email: cleanEmail,
+    role: cleanRole,
+    termsAccepted: Boolean(termsAccepted),
+    policyVersion: POLICY_VERSION,
+    acceptedAt: new Date().toISOString(),
+  };
+
+  try {
+    localStorage.setItem(getRememberRoleStorageKey(cleanRole), JSON.stringify(entry));
+    const map = readRememberedAccountsMap();
+    const lookupKey = getAccountLookupKey(cleanRole, cleanEmail);
+    if (lookupKey) {
+      map[lookupKey] = entry;
+      localStorage.setItem(REMEMBER_ACCOUNTS_KEY, JSON.stringify(map));
+    }
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+function clearRememberedAccount(role, emailStr) {
+  const cleanRole = String(role || "").trim().toLowerCase();
+  const cleanEmail = String(emailStr || "").trim();
+  try {
+    if (cleanRole) {
+      localStorage.removeItem(getRememberRoleStorageKey(cleanRole));
+    }
+    if (cleanRole && cleanEmail) {
+      const map = readRememberedAccountsMap();
+      const lookupKey = getAccountLookupKey(cleanRole, cleanEmail);
+      if (lookupKey && map[lookupKey]) {
+        delete map[lookupKey];
+        localStorage.setItem(REMEMBER_ACCOUNTS_KEY, JSON.stringify(map));
+      }
+    }
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+function findRememberedAccount(role, emailStr) {
+  const cleanRole = String(role || "").trim().toLowerCase();
+  const cleanEmail = String(emailStr || "").trim();
+  if (!cleanRole || !cleanEmail) return null;
+
+  const lookupKey = getAccountLookupKey(cleanRole, cleanEmail);
+  const map = readRememberedAccountsMap();
+  if (lookupKey && map[lookupKey]?.remember) {
+    return map[lookupKey];
+  }
+
+  try {
+    const savedRole = JSON.parse(localStorage.getItem(getRememberRoleStorageKey(cleanRole)));
+    if (
+      savedRole &&
+      savedRole.remember &&
+      savedRole.email &&
+      String(savedRole.email).trim().toLowerCase() === cleanEmail.toLowerCase()
+    ) {
+      const accepted = savedRole.termsAccepted !== false;
+      return {
+        ...savedRole,
+        email: String(savedRole.email).trim(),
+        role: cleanRole,
+        remember: true,
+        termsAccepted: accepted,
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function getRememberedStateForRole(role) {
+  const cleanRole = String(role || "").trim().toLowerCase();
+  try {
+    const saved = JSON.parse(localStorage.getItem(getRememberRoleStorageKey(cleanRole)));
+    if (saved && saved.remember && saved.email) {
+      const cleanEmail = String(saved.email).trim();
+      const matchedAccount = findRememberedAccount(cleanRole, cleanEmail);
+      const termsAccepted =
+        saved.termsAccepted === true ||
+        matchedAccount?.termsAccepted === true ||
+        saved.termsAccepted === undefined;
+
+      if (termsAccepted && saved.termsAccepted !== true) {
+        saveRememberedAccount(cleanRole, cleanEmail, true);
+      }
+
+      return {
+        email: cleanEmail,
+        rememberMe: true,
+        agreed: Boolean(termsAccepted),
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+  return {
+    email: "",
+    rememberMe: false,
+    agreed: false,
+  };
+}
 
 /**
  * Subtle graphic & icon background inspired by the LogiSync Welcome Page
@@ -170,14 +305,16 @@ export default function Login() {
     }
   }, [portalRole, searchParams]);
 
+  const initialRemembered = getRememberedStateForRole(initialRole);
+
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialRemembered.email);
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(initialRemembered.rememberMe);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(initialRemembered.agreed);
   const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
@@ -196,21 +333,13 @@ export default function Login() {
     }
   }, [searchParams]);
 
-  // Load saved Remember Me preference whenever active portal (selectedRole) changes
+  // Load saved Remember Me preference & Terms acceptance whenever active portal (selectedRole) changes
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(`logisync_remember_${selectedRole}`));
-      if (saved && saved.remember && saved.email) {
-        setEmail(saved.email);
-        setRememberMe(true);
-      } else {
-        setRememberMe(false);
-        setEmail("");
-      }
-    } catch {
-      setRememberMe(false);
-      setEmail("");
-    }
+    const remembered = getRememberedStateForRole(selectedRole);
+    setEmail(remembered.email);
+    setRememberMe(remembered.rememberMe);
+    setAgreed(remembered.agreed);
+    setLegalDocModal(null);
     setError("");
   }, [selectedRole]);
 
@@ -218,12 +347,7 @@ export default function Login() {
     const checked = e.target.checked;
     setRememberMe(checked);
     if (!checked) {
-      localStorage.removeItem(`logisync_remember_${selectedRole}`);
-    } else if (email.trim()) {
-      localStorage.setItem(
-        `logisync_remember_${selectedRole}`,
-        JSON.stringify({ remember: true, email: email.trim() })
-      );
+      clearRememberedAccount(selectedRole, email);
     }
   };
 
@@ -290,14 +414,12 @@ export default function Login() {
         return;
       }
 
-      // Persist or remove Remember Me credentials upon successful login
+      // Persist or remove Remember Me credentials + Terms acceptance upon successful login
       if (rememberMe) {
-        localStorage.setItem(
-          `logisync_remember_${selectedRole}`,
-          JSON.stringify({ remember: true, email: email.trim() })
-        );
+        saveTermsRecord();
+        saveRememberedAccount(selectedRole, email.trim(), true);
       } else {
-        localStorage.removeItem(`logisync_remember_${selectedRole}`);
+        clearRememberedAccount(selectedRole, email.trim());
       }
 
       const home = homePathForRole(actualRole);
@@ -445,15 +567,12 @@ export default function Login() {
                     onChange={(e) => {
                       const v = e.target.value;
                       setEmail(v);
-                      if (rememberMe) {
-                        if (v.trim()) {
-                          localStorage.setItem(
-                            `logisync_remember_${selectedRole}`,
-                            JSON.stringify({ remember: true, email: v.trim() })
-                          );
-                        } else {
-                          localStorage.removeItem(`logisync_remember_${selectedRole}`);
-                        }
+                      const matched = findRememberedAccount(selectedRole, v);
+                      if (matched && matched.remember && matched.termsAccepted) {
+                        setRememberMe(true);
+                        setAgreed(true);
+                      } else {
+                        setAgreed(false);
                       }
                     }}
                     placeholder={activeRoleMeta.emailPlaceholder}
