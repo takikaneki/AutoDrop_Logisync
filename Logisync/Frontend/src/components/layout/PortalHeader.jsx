@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import LogoutModal from "../LogoutModal.jsx";
+import ContactUsModal from "../auth/ContactUsModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
@@ -17,6 +18,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
   const { dark } = usePrefs();
   const profile = useProfile();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
@@ -103,13 +105,16 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                   >
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
-                  <Link
-                    to={toPath(role, "contact")}
-                    onClick={() => setMenuOpen(false)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setContactOpen(true);
+                    }}
                     className={item}
                   >
                     <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
-                  </Link>
+                  </button>
                   <Link
                     to={`${toPath(role, "help")}#faq`}
                     onClick={() => setMenuOpen(false)}
@@ -133,6 +138,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
         </div>
       </header>
 
+      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

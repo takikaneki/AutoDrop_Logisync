@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AnnouncementModal from "./AnnouncementModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
+import ContactUsModal from "./auth/ContactUsModal.jsx";
 import LogoutModal from "./LogoutModal.jsx";
 import UserAvatar from "./Avatar.jsx";
 import { toggleDark, usePrefs } from "../store/prefs.js";
@@ -17,6 +18,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
   const profile = useProfile();
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -126,9 +128,16 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
-                  <Link to="/contact" onClick={() => setMenuOpen(false)} className={item}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setContactOpen(true);
+                    }}
+                    className={item}
+                  >
                     <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
-                  </Link>
+                  </button>
                   <Link to="/help#faq" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
                   </Link>
@@ -149,6 +158,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
       </header>
 
       <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />
+      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );
