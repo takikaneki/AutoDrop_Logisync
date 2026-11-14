@@ -34,13 +34,13 @@ const names = {
 };
 
 // Page header: breadcrumbs, title/subtitle, and action buttons on the upper-right corner.
-export default function Topbar({ title, subtitle, right, children }) {
+export default function Topbar({ title, subtitle, right, actions: actionsProp, children }) {
   const t = useT();
   const base = useBase(); // "" (Coordinator) | "/seller" | "/rider"
   const { pathname } = useLocation();
   const parts = pathname.split("/").filter(Boolean);
   const label = title ? t(title) : "";
-  const actions = children || right;
+  const actions = children || right || actionsProp;
 
   useEffect(() => {
     if (label) document.title = `${label} · LogiSync`;
@@ -57,20 +57,58 @@ export default function Topbar({ title, subtitle, right, children }) {
 
   const isHomeDashboard = title === "Dashboard";
 
-  // Dashboard without extra buttons: show clean page heading on mobile (as Home), sr-only on desktop
-  if (crumbs.length === 1 && !actions) {
+  // Remove redundant top page header block on Desktop Web View when no actions exist; preserve mobile header intact
+  if (!actions) {
+    if (crumbs.length === 1) {
+      return (
+        <header className="mb-3 min-[821px]:hidden print:hidden">
+          <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            {isHomeDashboard ? t("Home") : label}
+          </h1>
+        </header>
+      );
+    }
+
     return (
-      <header className="mb-3 min-[821px]:sr-only print:hidden">
-        <h1 className="text-[19px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-          {isHomeDashboard ? t("Home") : label}
-        </h1>
+      <header className="mb-6 flex items-start justify-between gap-3 flex-wrap min-[821px]:hidden print:hidden max-[600px]:mb-3.5 max-[600px]:gap-2.5">
+        <div className="min-w-0 flex-1">
+          {crumbs.length > 1 && (
+            <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-1.5 text-[12px] text-[#999]">
+              {crumbs.map((c, i) => (
+                <span key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <i className="fa-solid fa-chevron-right text-[9px]" />}
+                  {c.to ? (
+                    <Link to={c.to} className="hover:text-brand">{c.label}</Link>
+                  ) : (
+                    <span className="font-semibold text-[#666] dark:text-[#d1c9c2]">{c.label}</span>
+                  )}
+                </span>
+              ))}
+            </nav>
+          )}
+          <h1 className="text-[22px] max-[600px]:text-[19px] font-bold leading-tight text-[#27364f] dark:text-[#f1eeeb]">
+            {isHomeDashboard ? (
+              <>
+                <span className="max-[820px]:hidden">{label}</span>
+                <span className="hidden max-[820px]:inline">{t("Home")}</span>
+              </>
+            ) : (
+              label
+            )}
+          </h1>
+          {subtitle && (
+            <p className="mt-0.5 text-[13px] max-[600px]:text-[12px] text-[#888] leading-snug">
+              {subtitle}
+            </p>
+          )}
+        </div>
       </header>
     );
   }
 
   return (
-    <header className="mb-6 flex items-start justify-between gap-3 flex-wrap print:hidden max-[600px]:mb-3.5 max-[600px]:gap-2.5">
-      <div className="min-w-0 flex-1">
+    <header className="mb-6 min-[821px]:mb-4 flex items-start justify-between gap-3 flex-wrap print:hidden max-[600px]:mb-3.5 max-[600px]:gap-2.5">
+      <div className="min-w-0 flex-1 min-[821px]:hidden">
         {crumbs.length > 1 && (
           <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-1.5 text-[12px] text-[#999]">
             {crumbs.map((c, i) => (
@@ -102,7 +140,7 @@ export default function Topbar({ title, subtitle, right, children }) {
         )}
       </div>
       {actions && (
-        <div className="flex items-center justify-end gap-2 flex-wrap shrink-0 max-[520px]:w-full max-[520px]:justify-start">
+        <div className="flex items-center justify-end gap-2 flex-wrap shrink-0 min-[821px]:ml-auto max-[520px]:w-full max-[520px]:justify-start">
           {actions}
         </div>
       )}

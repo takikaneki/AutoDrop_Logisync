@@ -1,19 +1,18 @@
 import { useRef, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import LogoutModal from "../LogoutModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { ROLE_LABEL, TOP_LINKS, toPath } from "./navConfig.js";
+import { ROLE_LABEL, toPath } from "./navConfig.js";
 import NotificationMenu from "./NotificationMenu.jsx";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 
 const iconBtn =
   "flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
 
-// Navigation bar for Seller and Rider portals directly underneath GlobalBanner.
-// Uses the identical 3-column balanced grid layout as SiteHeader so navigation links remain horizontally centered.
+// Navigation bar for Seller and Rider portals.
 export default function PortalHeader({ role, collapsed = false, mobileOpen = false, onToggleSidebar }) {
   const { dark } = usePrefs();
   const profile = useProfile();
@@ -22,14 +21,13 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
 
-  const nav = [{ path: "", label: "Home" }, ...TOP_LINKS];
   const item =
     "w-full flex items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-[#fff3e8] dark:hover:bg-night-line";
 
   return (
     <>
       <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-3 sm:px-6 shadow-sm print:hidden dark:bg-night-panel dark:border-night-line">
-        <div className="flex h-full w-full items-center justify-between gap-2 min-[960px]:grid min-[960px]:grid-cols-[1fr_auto_1fr]">
+        <div className="flex h-full w-full items-center justify-between gap-2">
           {/* Left Column: Sidebar Toggle & Brand */}
           <div className="flex min-w-0 items-center justify-start gap-2 sm:gap-3">
             <button
@@ -52,34 +50,11 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 max-[380px]:hidden dark:text-white">
                 LogiSync
               </span>
-              <span className="hidden xl:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
+              <span className="hidden min-[821px]:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
                 {ROLE_LABEL[role]}
               </span>
             </Link>
           </div>
-
-          {/* Center Column: Perfectly Horizontally Centered Navigation Links */}
-          <nav
-            className="hidden min-[960px]:flex h-full items-stretch justify-center gap-1 lg:gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Main Navigation"
-          >
-            {nav.map((n) => (
-              <NavLink
-                key={n.label}
-                to={toPath(role, n.path)}
-                end={n.path === ""}
-                className={({ isActive }) =>
-                  `relative flex items-center justify-center whitespace-nowrap px-3 lg:px-4 text-[14px] font-semibold tracking-wide transition-all ${
-                    isActive
-                      ? "text-brand after:absolute after:bottom-0 after:inset-x-2 after:h-[3px] after:rounded-t-full after:bg-brand"
-                      : "text-[#555] hover:text-brand dark:text-[#d1c9c2]"
-                  }`
-                }
-              >
-                {n.label}
-              </NavLink>
-            ))}
-          </nav>
 
           {/* Right Column: Theme Toggle, Notifications, and Profile */}
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
@@ -133,7 +108,14 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
-                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> Help
+                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Help
+                  </Link>
+                  <Link
+                    to={`${toPath(role, "help")}#faq`}
+                    onClick={() => setMenuOpen(false)}
+                    className={item}
+                  >
+                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
