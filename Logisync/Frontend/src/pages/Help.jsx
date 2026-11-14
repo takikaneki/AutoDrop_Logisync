@@ -9,9 +9,8 @@ const faqs = [
   ["How do I generate a report?", "Open Parcel Records and click Generate Report in the upper-right corner. You can view the report details immediately, filter by status, seller, rider, or dates, and export as CSV or save as PDF."],
   ["How do I reassign a rider?", "Open a parcel from Parcels. If it is still In Transit, press Reassign, pick another rider and confirm."],
   ["Where can I see who changed what?", "The Audit Log lists verifications, reassignments, approvals, announcements and other actions."],
-  ["How do I change my photo or password?", "Open Settings from the menu under your name, then use the Profile or Password tab."],
+  ["How do I change my password?", "Open Settings from the menu under your name, then use the Security & Password section."],
 ];
-const keys = [["g then d", "Dashboard"], ["g then p", "Parcels"], ["g then r", "Reports"], ["g then v", "Verification"], ["g then m", "Messages"], ["g then n", "Notifications"], ["?", "Open this Help page"]];
 
 export default function Help() {
   const [open, setOpen] = useState(0);
@@ -21,42 +20,67 @@ export default function Help() {
     : pathname.startsWith("/rider")
     ? "/rider/contact"
     : "/contact";
+  const messagesPath = pathname.startsWith("/seller")
+    ? "/seller/messages"
+    : pathname.startsWith("/rider")
+    ? "/rider/messages"
+    : "/messages";
 
   return (
     <>
-      <Topbar title="Help" subtitle="Answers to common questions and handy shortcuts." />
-      <div className="grid grid-cols-[1.6fr_1fr] gap-6 max-[1000px]:grid-cols-1">
-        <section className={`${panel} p-3`}>
-          <h2 className="text-[17px] font-bold px-4 pt-3 pb-2">Frequently asked questions</h2>
-          {faqs.map(([q, a], i) => (
-            <div key={q} className="border-b border-[#f3f3f3] last:border-0 dark:border-night-line">
-              <button onClick={() => setOpen(open === i ? -1 : i)} aria-expanded={open === i} className="w-full flex items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-semibold hover:text-brand">
-                {q}<i className={`fa-solid fa-chevron-down text-[12px] text-[#aaa] transition-transform ${open === i ? "rotate-180" : ""}`} />
-              </button>
-              {open === i && <p className="px-4 pb-4 text-[14px] leading-relaxed text-[#777] dark:text-[#d1c9c2]">{a}</p>}
-            </div>
-          ))}
+      <Topbar title="Help" subtitle="Answers to common questions." />
+      <div id="faq" className="flex w-full flex-col gap-6">
+        <section className={`${panel} w-full p-5 sm:p-6`}>
+          <h2 className="mb-3 px-2 text-[17px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            Frequently asked questions
+          </h2>
+          <div className="divide-y divide-[#edf0f4] dark:divide-night-line">
+            {faqs.map(([q, a], i) => (
+              <div key={q}>
+                <button
+                  type="button"
+                  onClick={() => setOpen(open === i ? -1 : i)}
+                  aria-expanded={open === i}
+                  className={`flex w-full items-center justify-between gap-4 px-2 py-4 text-left text-[15px] font-semibold transition hover:text-brand ${
+                    open === i ? "text-brand" : "text-[#27364f] dark:text-[#f1eeeb]"
+                  }`}
+                >
+                  <span>{q}</span>
+                  <i
+                    className={`fa-solid fa-chevron-down shrink-0 text-[12px] text-[#aaa] transition-transform ${
+                      open === i ? "rotate-180 text-brand" : ""
+                    }`}
+                  />
+                </button>
+                {open === i && (
+                  <p className="px-2 pb-4 text-[14px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
+                    {a}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
 
-        <div className="flex flex-col gap-6">
-          <section className={`${panel} p-6`}>
-            <h2 className="text-[17px] font-bold mb-4"><i className="fa-regular fa-keyboard mr-2 text-brand" />Keyboard shortcuts</h2>
-            <ul className="space-y-2.5">
-              {keys.map(([k, d]) => (
-                <li key={k} className="flex items-center justify-between gap-3 text-[14px]">
-                  <span className="text-[#777] dark:text-[#d1c9c2]">{d}</span>
-                  <kbd className="px-2.5 py-1 rounded-md bg-[#f5f5f5] border border-[#e5e5e5] text-[12px] font-mono dark:bg-night-line dark:border-night-line">{k}</kbd>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <section className={`${panel} p-6 text-center`}>
-            <span className="w-[48px] h-[48px] mx-auto mb-3 rounded-full bg-brand-soft text-brand flex items-center justify-center dark:bg-night-line"><i className="fa-solid fa-headset" /></span>
-            <h3 className="text-[16px] font-bold mb-1">Still need help?</h3>
-            <p className="text-[13px] text-[#888] mb-4">Send us a message and we'll get back to you.</p>
-            <Link to={contactPath} className="text-brand font-bold text-[14px] hover:underline">Contact support →</Link>
-          </section>
-        </div>
+        <section className={`${panel} w-full p-6 text-center`}>
+          <span className="mx-auto mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-line">
+            <i className="fa-solid fa-headset" />
+          </span>
+          <h3 className="mb-1 text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            Still need help?
+          </h3>
+          <p className="mb-4 text-[13px] text-[#888]">
+            Send us a message and we'll get back to you.
+          </p>
+          <div className="flex justify-center gap-5 text-[14px] font-bold text-brand">
+            <Link to={messagesPath} className="hover:underline">
+              Messages →
+            </Link>
+            <Link to={contactPath} className="hover:underline">
+              Contact →
+            </Link>
+          </div>
+        </section>
       </div>
     </>
   );

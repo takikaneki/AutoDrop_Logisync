@@ -31,27 +31,56 @@ export default function HelpPage() {
   return (
     <>
       <Topbar title="Help" subtitle="Answers to common questions." />
-      <div className="grid grid-cols-[1.6fr_1fr] items-start gap-6 max-[1000px]:grid-cols-1">
-        <section className={`${panel} p-3`}>
-          <h2 className="px-4 pb-2 pt-3 text-[17px] font-bold">Frequently asked questions</h2>
-          {FAQS[role].map(([q, a], i) => (
-            <div key={q} className="border-b border-[#f3f3f3] last:border-0 dark:border-night-line">
-              <button onClick={() => setOpen(open === i ? -1 : i)} aria-expanded={open === i} className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-semibold hover:text-brand">
-                {q}
-                <i className={`fa-solid fa-chevron-down text-[12px] text-[#aaa] transition-transform ${open === i ? "rotate-180" : ""}`} />
-              </button>
-              {open === i && <p className="px-4 pb-4 text-[14px] leading-relaxed text-[#777] dark:text-[#d1c9c2]">{a}</p>}
-            </div>
-          ))}
+      <div id="faq" className="flex w-full flex-col gap-6">
+        <section className={`${panel} w-full p-5 sm:p-6`}>
+          <h2 className="mb-3 px-2 text-[17px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            Frequently asked questions
+          </h2>
+          <div className="divide-y divide-[#edf0f4] dark:divide-night-line">
+            {FAQS[role].map(([q, a], i) => (
+              <div key={q}>
+                <button
+                  type="button"
+                  onClick={() => setOpen(open === i ? -1 : i)}
+                  aria-expanded={open === i}
+                  className={`flex w-full items-center justify-between gap-4 px-2 py-4 text-left text-[15px] font-semibold transition hover:text-brand ${
+                    open === i ? "text-brand" : "text-[#27364f] dark:text-[#f1eeeb]"
+                  }`}
+                >
+                  <span>{q}</span>
+                  <i
+                    className={`fa-solid fa-chevron-down shrink-0 text-[12px] text-[#aaa] transition-transform ${
+                      open === i ? "rotate-180 text-brand" : ""
+                    }`}
+                  />
+                </button>
+                {open === i && (
+                  <p className="px-2 pb-4 text-[14px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
+                    {a}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
 
-        <section className={`${panel} p-6 text-center`}>
-          <span className="mx-auto mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-line"><i className="fa-solid fa-headset" /></span>
-          <h3 className="mb-1 text-[16px] font-bold">Still need help?</h3>
-          <p className="mb-4 text-[13px] text-[#888]">Message your coordinator or contact support.</p>
+        <section className={`${panel} w-full p-6 text-center`}>
+          <span className="mx-auto mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-line">
+            <i className="fa-solid fa-headset" />
+          </span>
+          <h3 className="mb-1 text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            Still need help?
+          </h3>
+          <p className="mb-4 text-[13px] text-[#888]">
+            Message your coordinator or contact support.
+          </p>
           <div className="flex justify-center gap-5 text-[14px] font-bold text-brand">
-            <Link to={`/${role}/messages`} className="hover:underline">Messages →</Link>
-            <Link to={`/${role}/contact`} className="hover:underline">Contact →</Link>
+            <Link to={`/${role}/messages`} className="hover:underline">
+              Messages →
+            </Link>
+            <Link to={`/${role}/contact`} className="hover:underline">
+              Contact →
+            </Link>
           </div>
         </section>
       </div>

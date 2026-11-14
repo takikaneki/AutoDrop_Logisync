@@ -118,13 +118,6 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                       {profile.email || profile.role}
                     </small>
                   </div>
-                  <Link
-                    to="/settings?tab=profile"
-                    onClick={() => setMenuOpen(false)}
-                    className={item}
-                  >
-                    <i className="fa-solid fa-user w-4 text-center text-[#888]" /> Profile
-                  </Link>
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
