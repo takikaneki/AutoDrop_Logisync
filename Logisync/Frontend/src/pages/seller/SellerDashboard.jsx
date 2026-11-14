@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
-import { LoadingRow, Notice, PanelLink, PanelTitle, StatCard, StatGrid } from "../../components/portal.jsx";
+import { LoadingRow, Notice, PanelLink, PanelTitle } from "../../components/portal.jsx";
 import { panel, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
-import DashboardShortcuts from "../../components/dashboard/DashboardShortcuts.jsx";
+import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
+import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
+import DashboardRightRail from "../../components/dashboard/DashboardRightRail.jsx";
 import { listParcels } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
@@ -42,6 +44,29 @@ export default function SellerDashboard() {
 
   const v = (n) => (loading ? "…" : n);
   const link = (p) => `/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`;
+  const verifiedOrInDelivery = count("VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED");
+  const dispatchRate = parcels.length ? `${Math.round((verifiedOrInDelivery / parcels.length) * 100)}%` : "0%";
+
+  const actionTasks = needAction.slice(0, 5).map((p) => {
+    const isReturn = p.status === "RETURN_TO_HUB" || Boolean(p.returnToHub);
+    return {
+      id: p.parcel_id,
+      title: p.transaction_number || p.parcel_id,
+      subtitle: `${p.receiver_name || "Customer"} · ${isReturn ? "Return to Hub" : "Needs Video"}`,
+      meta: formatDay(p.created_at),
+      icon: isReturn ? "fa-box-archive" : "fa-video",
+      tone: isReturn ? "danger" : "warn",
+      to: link(p),
+    };
+  });
+
+  const sellerBars = [
+    { label: "Wait", value: count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED") },
+    { label: "Review", value: count("VIDEO_SUBMITTED") },
+    { label: "Verif", value: count("VERIFIED") },
+    { label: "Out", value: count("OUT_FOR_DELIVERY", "RESCHEDULED") },
+    { label: "Done", value: count("DELIVERED") },
+  ];
 
   return (
     <>
@@ -49,111 +74,64 @@ export default function SellerDashboard() {
 
       {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
 
-      {/* SUMMARY CARDS */}
-      <DashboardShortcuts role="seller" />
-      <StatGrid>
-        <StatCard label="Total Parcels" value={v(parcels.length)} icon="fa-box" tone="orange" to="/seller/parcels" />
-        <StatCard label="Needs Video" value={v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"))} icon="fa-video" tone="yellow" to="/seller/parcels?status=NEEDS_VIDEO" />
-        <StatCard label="Under Verification" value={v(count("VIDEO_SUBMITTED"))} icon="fa-hourglass-half" tone="blue" to="/seller/parcels?status=UNDER_VERIFICATION" />
-        <StatCard label="Verified / In Delivery" value={v(count("VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"))} icon="fa-circle-check" tone="green" to="/seller/parcels?status=VERIFIED" />
-      </StatGrid>
+      {/* BENTO OVERVIEW GRID (No Maps) */}
+      <section className="mb-7 max-[820px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
+        <div className="flex flex-col gap-4">
+          <BentoKpiRow
+            cards={[
+              {
+                label: "Total Parcels",
+                value: v(parcels.length),
+                tone: "dark",
+                to: "/seller/parcels",
+                badge: "All Orders",
+                icon: "fa-box",
+                subtext: `${v(returnToHubParcels.length)} return to hub`,
+              },
+              {
+                label: "Needs Video",
+                value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
+                tone: "light",
+                to: "/seller/parcels?status=NEEDS_VIDEO",
+                badge: "Action Required",
+                icon: "fa-video",
+                subtext: `${v(count("VIDEO_SUBMITTED"))} under verification`,
+              },
+              {
+                label: "Verified / In Delivery",
+                value: v(verifiedOrInDelivery),
+                tone: "orange",
+                to: "/seller/parcels?status=VERIFIED",
+                badge: "Cleared",
+                icon: "fa-circle-check",
+                subtext: "Approved for SPX dispatch",
+              },
+            ]}
+          />
 
-      {/* ACTION NEEDED */}
-      <section className="mb-7 max-[820px]:mb-4">
-        <div className={`${panel} flex min-w-0 flex-col border-[#f5d5be] p-[28px] max-[600px]:p-4 dark:border-night-line`}>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h2 className="flex items-center gap-2 text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                <i className="fa-solid fa-bell text-brand" />
-                Action Needed
-              </h2>
-              <p className="mt-0.5 text-[13px] text-[#64748b] dark:text-[#b8b0a8]">
-                Parcels requiring seller attention
-              </p>
-            </div>
-            <span className="rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
-              {v(needAction.length)} {needAction.length === 1 ? "parcel" : "parcels"}
-            </span>
-          </div>
-
-          {/* Two Priority Categories Only: Needs Video & Return to Hub */}
-          <div className="space-y-2.5">
-            <Link
-              to="/seller/parcels?status=NEEDS_VIDEO"
-              className="flex items-center justify-between gap-3 rounded-xl border border-[#edf0f4] bg-[#fffaf7] px-4 py-3.5 transition hover:border-brand/50 hover:bg-[#fff4ed] dark:border-night-line dark:bg-night-head dark:hover:border-brand/50"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-brand dark:bg-brand/15">
-                  <i className="fa-solid fa-video" />
-                </span>
-                <div className="min-w-0">
-                  <strong className="block text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                    Needs Video
-                  </strong>
-                  <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
-                    Upload packing video proof for verification
-                  </span>
-                </div>
-              </div>
-              <span className="shrink-0 rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
-                {v(needsVideoParcels.length)} {needsVideoParcels.length === 1 ? "parcel" : "parcels"}
-              </span>
-            </Link>
-
-            <Link
-              to="/seller/parcels?status=RETURN_TO_HUB"
-              className="flex items-center justify-between gap-3 rounded-xl border border-[#edf0f4] bg-[#fffaf7] px-4 py-3.5 transition hover:border-brand/50 hover:bg-[#fff4ed] dark:border-night-line dark:bg-night-head dark:hover:border-brand/50"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-brand dark:bg-brand/15">
-                  <i className="fa-solid fa-box-archive" />
-                </span>
-                <div className="min-w-0">
-                  <strong className="block text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                    Return to Hub
-                  </strong>
-                  <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
-                    Returned parcels requiring seller attention
-                  </span>
-                </div>
-              </div>
-              <span className="shrink-0 rounded-full bg-[#fff0e5] px-3 py-1 text-[12px] font-bold text-[#c2410c] dark:bg-brand/20 dark:text-[#ffb98a]">
-                {v(returnToHubParcels.length)} {returnToHubParcels.length === 1 ? "parcel" : "parcels"}
-              </span>
-            </Link>
-          </div>
-
-          {needAction.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-[#e5e8ee] py-5 text-center text-[13.5px] text-[#888] dark:border-night-line dark:text-[#b8b0a8]">
-              {loading ? "Checking parcels…" : "No seller action is currently required. You're all set."}
-            </div>
-          ) : (
-            <ul className="mt-4 divide-y divide-[#edf0f4] rounded-xl border border-[#edf0f4] dark:divide-night-line dark:border-night-line">
-              {needAction.slice(0, 5).map((p) => (
-                <li key={p.parcel_id}>
-                  <Link
-                    to={link(p)}
-                    className="flex items-center justify-between gap-3 px-4 py-3 text-[13.5px] transition hover:bg-[#fffaf7] dark:hover:bg-night-head"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate font-bold text-brand">
-                        {p.transaction_number || p.parcel_id}
-                      </span>
-                      <span className="block truncate text-[12px] text-[#777] dark:text-[#b8b0a8]">
-                        {p.receiver_name || "Customer"} {p.contents ? `· ${p.contents}` : ""}
-                      </span>
-                    </div>
-                    <StatusBadge status={p.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <p className="mt-3 text-[12px] text-[#888] dark:text-[#b8b0a8]">
-            Only parcels requiring seller action appear here.
-          </p>
+          <PortalHeroBanner
+            role="seller"
+            pipeline={[
+              { label: "Needs Video", count: v(needsVideoParcels.length), icon: "fa-video", to: "/seller/parcels?status=NEEDS_VIDEO" },
+              { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "fa-hourglass-half", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+              { label: "Verified", count: v(count("VERIFIED")), icon: "fa-circle-check", to: "/seller/parcels?status=VERIFIED" },
+              { label: "Delivered", count: v(count("DELIVERED")), icon: "fa-truck-fast", to: "/seller/parcels" },
+            ]}
+          />
         </div>
+
+        <DashboardRightRail
+          tasksTitle="Action Needed"
+          seeAllTo="/seller/parcels?status=NEEDS_VIDEO"
+          tasks={actionTasks}
+          emptyText={loading ? "Checking parcels…" : "No seller action is currently required. You're all set."}
+          summary={{
+            label: "Dispatch Rate",
+            value: loading ? "…" : dispatchRate,
+            sublabel: `${v(verifiedOrInDelivery)} of ${v(parcels.length)} cleared`,
+            bars: sellerBars,
+          }}
+        />
       </section>
 
       {/* RECENT PARCELS */}
