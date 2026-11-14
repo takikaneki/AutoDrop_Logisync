@@ -4,7 +4,12 @@ import { getUser } from "../api.js";
 // Talaan ng mga na-scan ng rider SA DEVICE NA ITO (naka-save sa browser).
 // Hindi ito galing sa backend: wala pang endpoint para sa delivery history ng rider.
 const MAX = 30;
-const store = createStore([], "pt-rider-scans");
+try {
+  localStorage.removeItem("pt-rider-scans");
+} catch {
+  /* ignore */
+}
+const store = createStore([], "pt-rider-scans-v2");
 
 export const getRiderScans = () => {
   const all = store.get();

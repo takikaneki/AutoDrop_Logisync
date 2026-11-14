@@ -6,6 +6,13 @@ import { toast } from "../../store/toast.js";
 import { formatDate, formatDay, formatSize } from "../../utils/format.js";
 import { btnPrimary, panel } from "../styles.js";
 
+function shortParcelId(id) {
+  const str = String(id || "").trim();
+  if (!str) return "—";
+  if (str.length <= 10) return str;
+  return `${str.slice(0, 2)}-${str.slice(-6)}`;
+}
+
 function deriveOrderId(parcel) {
   if (parcel?.order_id) return String(parcel.order_id);
   const raw = String(parcel?.transaction_number || parcel?.parcel_id || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
@@ -725,8 +732,11 @@ export default function ShipmentDetailsView({
                 <div className="grid grid-cols-1 gap-4 border-b border-[#edf0f4] pb-4 sm:grid-cols-2 dark:border-night-line">
                   <div className="min-w-0">
                     <span className="block text-[12px] text-[#64748b] dark:text-[#9c948c]">Parcel ID</span>
-                    <strong className="mt-0.5 block break-all font-mono text-[13.5px] font-bold text-[#1e293b] dark:text-white">
-                      {parcel?.parcel_id || parcel?.id || "—"}
+                    <strong
+                      className="mt-0.5 block break-all font-mono text-[13.5px] font-bold text-[#1e293b] dark:text-white"
+                      title={parcel?.parcel_id || parcel?.id || ""}
+                    >
+                      {shortParcelId(parcel?.parcel_id || parcel?.id)}
                     </strong>
                   </div>
                   <div className="min-w-0">

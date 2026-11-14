@@ -661,7 +661,21 @@ async function createParcel(req, res) {
       });
     }
 
-    const parcelId = `SL${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    let parcelId = "";
+    for (let attempt = 0; attempt < 15; attempt++) {
+      const candidate = `SL-${Math.floor(100000 + Math.random() * 900000)}`;
+      const [idCheck] = await pool.query(
+        "SELECT 1 FROM parcels WHERE UPPER(parcel_id) = ? LIMIT 1",
+        [candidate]
+      );
+      if (!idCheck.length) {
+        parcelId = candidate;
+        break;
+      }
+    }
+    if (!parcelId) {
+      parcelId = `SL-${String(Date.now()).slice(-6)}`;
+    }
 
     await pool.query(
       `INSERT INTO parcels

@@ -1,7 +1,12 @@
 import { createStore } from "./createStore.js";
 import { parcels, sellers, riders, complaints, reportHistory } from "../data/records.js";
 
-const parcelStore = createStore(parcels, "pt-parcels");
+try {
+  localStorage.removeItem("pt-parcels");
+} catch {
+  /* ignore */
+}
+const parcelStore = createStore(parcels, "pt-parcels-v2");
 export const useParcels = parcelStore.use;
 export const getParcels = parcelStore.get;
 export const assignRider = (id, rider) =>
