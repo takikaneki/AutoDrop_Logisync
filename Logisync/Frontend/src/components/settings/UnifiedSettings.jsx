@@ -136,34 +136,50 @@ export default function UnifiedSettings() {
   };
 
   const q = search.trim().toLowerCase();
-  const showAccount = useMemo(
-    () => !q || "account info username email phone profile".includes(q),
-    [q]
-  );
-  const showSecurity = useMemo(
-    () => !q || "password security change password".includes(q),
-    [q]
-  );
-  const showAppearance = useMemo(
-    () => !q || "appearance display dark light device theme".includes(q),
-    [q]
-  );
-  const showNotifications = useMemo(
-    () => !q || "notifications popup sound email alerts parcel verification messages announcements".includes(q),
-    [q]
-  );
-  const showLanguage = useMemo(
-    () => !q || "language filipino english time format 12 hour 24 hour".includes(q),
-    [q]
-  );
-  const showAccessibility = useMemo(
-    () =>
-      !q ||
-      "accessibility text readability size reduced motion underline links sound volume preview keyboard shortcuts keybinds".includes(
-        q
-      ),
-    [q]
-  );
+  const isSearching = Boolean(q);
+  const isAccountActive =
+    activeNav === "account-info" || activeNav === "password" || activeNav === "status";
+  const isA11yActive =
+    activeNav === "a11y-readability" || activeNav === "a11y-sounds" || activeNav === "a11y-shortcuts";
+
+  const showAccount = isSearching
+    ? "account info username email phone profile status verified".includes(q)
+    : activeNav === "account-info" || activeNav === "status";
+  const showSecurity = isSearching
+    ? "password security change password".includes(q)
+    : activeNav === "password";
+  const showNotifications = isSearching
+    ? "notifications popup sound email alerts parcel verification messages announcements".includes(q)
+    : activeNav === "notifications";
+  const showAppearance = isSearching
+    ? "appearance display dark light device theme".includes(q)
+    : activeNav === "appearance";
+  const showReadability = isSearching
+    ? "accessibility text readability size reduced motion underline links".includes(q)
+    : activeNav === "a11y-readability";
+  const showSounds = isSearching
+    ? "accessibility notification sounds volume preview parcel messages announcements scan".includes(q)
+    : activeNav === "a11y-sounds";
+  const showShortcuts = isSearching
+    ? "accessibility keyboard shortcuts keybinds".includes(q)
+    : activeNav === "a11y-shortcuts";
+  const showLanguage = isSearching
+    ? "language filipino english time format 12 hour 24 hour".includes(q)
+    : activeNav === "language";
+
+  const activeTitle = isSearching
+    ? "Search Results"
+    : {
+        "account-info": "Account Info",
+        password: "Password & Security",
+        status: "Account Status",
+        notifications: "Notifications",
+        appearance: "Appearance & Display",
+        "a11y-readability": "Accessibility · Text Readability",
+        "a11y-sounds": "Accessibility · Notification Sounds",
+        "a11y-shortcuts": "Accessibility · Keyboard Shortcuts",
+        language: "Language & Time",
+      }[activeNav] || "Settings";
 
   const notificationsOn = prefs.notificationsEnabled !== false;
 
@@ -207,11 +223,11 @@ export default function UnifiedSettings() {
 
   return (
     <>
-      <div className="grid grid-cols-[270px_1fr] items-start gap-6 max-[920px]:grid-cols-1">
+      <div className="grid grid-cols-[270px_1fr] items-stretch gap-6 max-[920px]:grid-cols-1">
         {/* LEFT SETTINGS SIDEBAR CARD */}
-        <aside className="flex flex-col rounded-2xl border-[1.5px] border-brand/35 bg-white p-4 shadow-xs dark:border-brand/30 dark:bg-night-panel">
+        <aside className="flex flex-col rounded-2xl border-[1.5px] border-brand/35 bg-white p-4 shadow-xs dark:border-brand/30 dark:bg-night-panel min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
           {/* User Header */}
-          <div className="flex items-center gap-3 pb-4 border-b border-brand-line dark:border-night-line">
+          <div className="flex shrink-0 items-center gap-3 pb-4 border-b border-brand-line dark:border-night-line">
             <UserAvatar className="h-12 w-12 shrink-0 text-[18px]" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -233,7 +249,7 @@ export default function UnifiedSettings() {
           </div>
 
           {/* Search Settings */}
-          <div className="relative my-3.5">
+          <div className="relative my-3.5 shrink-0">
             <i className="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#94a3b8]" />
             <input
               value={search}
@@ -245,60 +261,73 @@ export default function UnifiedSettings() {
           </div>
 
           {/* Navigation Groups */}
-          <nav className="space-y-1 text-[13.5px]" aria-label="Settings sections">
-            <div className="flex items-center gap-2.5 px-2.5 py-1.5 font-bold text-[#1e293b] dark:text-[#f1eeeb]">
-              <i className="fa-solid fa-user text-[13px] text-[#334155] dark:text-[#d1c9c2]" />
-              <span>Account</span>
-            </div>
+          <nav className="flex-1 space-y-1 overflow-y-auto pr-1 text-[13.5px]" aria-label="Settings sections">
+            <button
+              type="button"
+              onClick={() => jumpTo("account-info", accountRef)}
+              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                isAccountActive
+                  ? "bg-brand-soft/60 text-brand dark:bg-night-head"
+                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <i className="fa-solid fa-user text-[13px]" />
+                <span>Account</span>
+              </span>
+              <i className={`fa-solid fa-chevron-${isAccountActive ? "down" : "right"} text-[10px] opacity-70`} />
+            </button>
 
-            <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
-              <button
-                type="button"
-                onClick={() => jumpTo("account-info", accountRef)}
-                className={`relative flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition ${
-                  activeNav === "account-info"
-                    ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                    : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                }`}
-              >
-                <span>Account Info</span>
-              </button>
+            {(isAccountActive || isSearching) && (
+              <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
+                <button
+                  type="button"
+                  onClick={() => jumpTo("account-info", accountRef)}
+                  className={`relative flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
+                    activeNav === "account-info"
+                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
+                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                  }`}
+                >
+                  <span>Account Info</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setPasswordOpen(true);
-                  jumpTo("password", passwordRef);
-                }}
-                className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition ${
-                  activeNav === "password"
-                    ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                    : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                }`}
-              >
-                <span>Password &amp; Security</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPasswordOpen(true);
+                    jumpTo("password", passwordRef);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
+                    activeNav === "password"
+                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
+                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                  }`}
+                >
+                  <span>Password &amp; Security</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => jumpTo("status", accountRef)}
-                className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition ${
-                  activeNav === "status"
-                    ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                    : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                }`}
-              >
-                <span>Account Status</span>
-                <span className="rounded bg-brand-soft px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand">
-                  Verified
-                </span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => jumpTo("status", accountRef)}
+                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
+                    activeNav === "status"
+                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
+                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                  }`}
+                >
+                  <span>Account Status</span>
+                  <span className="rounded bg-brand-soft px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand">
+                    Verified
+                  </span>
+                </button>
+              </div>
+            )}
 
             <button
               type="button"
               onClick={() => jumpTo("notifications", notificationsRef)}
-              className={`mt-2 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+              className={`mt-1 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
                 activeNav === "notifications"
                   ? "bg-brand-soft text-brand dark:bg-night-head"
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
@@ -323,37 +352,42 @@ export default function UnifiedSettings() {
 
             <button
               type="button"
-              onClick={() => jumpTo("accessibility", accessibilityRef)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "accessibility"
-                  ? "bg-brand-soft text-brand dark:bg-night-head"
+              onClick={() => jumpTo("a11y-readability", readabilityRef)}
+              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                isA11yActive
+                  ? "bg-brand-soft/60 text-brand dark:bg-night-head"
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-universal-access text-[13px]" />
-              <span>Accessibility</span>
+              <span className="flex items-center gap-2.5">
+                <i className="fa-solid fa-universal-access text-[13px]" />
+                <span>Accessibility</span>
+              </span>
+              <i className={`fa-solid fa-chevron-${isA11yActive ? "down" : "right"} text-[10px] opacity-70`} />
             </button>
 
-            <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
-              {[
-                ["a11y-readability", "Text Readability", readabilityRef],
-                ["a11y-sounds", "Notification Sounds", soundsRef],
-                ["a11y-shortcuts", "Keyboard Shortcuts", shortcutsRef],
-              ].map(([navKey, navLabel, navRef]) => (
-                <button
-                  key={navKey}
-                  type="button"
-                  onClick={() => jumpTo(navKey, navRef)}
-                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
-                    activeNav === navKey
-                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                  }`}
-                >
-                  <span>{navLabel}</span>
-                </button>
-              ))}
-            </div>
+            {(isA11yActive || isSearching) && (
+              <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
+                {[
+                  ["a11y-readability", "Text Readability", readabilityRef],
+                  ["a11y-sounds", "Notification Sounds", soundsRef],
+                  ["a11y-shortcuts", "Keyboard Shortcuts", shortcutsRef],
+                ].map(([navKey, navLabel, navRef]) => (
+                  <button
+                    key={navKey}
+                    type="button"
+                    onClick={() => jumpTo(navKey, navRef)}
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
+                      activeNav === navKey
+                        ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
+                        : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                    }`}
+                  >
+                    <span>{navLabel}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <button
               type="button"
@@ -370,7 +404,7 @@ export default function UnifiedSettings() {
           </nav>
 
           {/* Log Out Footer */}
-          <div className="mt-6 border-t border-brand-line pt-3 dark:border-night-line">
+          <div className="mt-4 shrink-0 border-t border-brand-line pt-3 dark:border-night-line">
             <button
               type="button"
               onClick={() => setLogoutOpen(true)}
@@ -382,8 +416,24 @@ export default function UnifiedSettings() {
           </div>
         </aside>
 
-        {/* RIGHT SETTINGS CONTENT CARD */}
-        <section className="rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white p-7 shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[600px]:p-4">
+        {/* RIGHT SETTINGS CONTENT CARD (Fixed height + internal scroll) */}
+        <section className="flex flex-col overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
+          <div className="flex shrink-0 items-center justify-between border-b border-brand-line bg-brand-softer/35 px-7 py-3.5 dark:border-night-line dark:bg-night-head/40 max-[600px]:px-4">
+            <h2 className="text-[16px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+              {activeTitle}
+            </h2>
+            {isSearching && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="text-[12px] font-semibold text-brand hover:underline"
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-7 max-[600px]:p-4">
           {/* 1. ACCOUNT INFO */}
           {showAccount && (
             <div ref={accountRef} className="scroll-mt-20">
@@ -529,7 +579,7 @@ export default function UnifiedSettings() {
 
           {/* 2. PASSWORD & SECURITY (No Multi-Factor / Google Auth) */}
           {showSecurity && (
-            <div ref={passwordRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+            <div ref={passwordRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-3 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Password &amp; Security
               </h3>
@@ -560,7 +610,7 @@ export default function UnifiedSettings() {
 
           {/* 3. NOTIFICATIONS */}
           {showNotifications && (
-            <div ref={notificationsRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+            <div ref={notificationsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
                   <h3 className="text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
@@ -678,7 +728,7 @@ export default function UnifiedSettings() {
 
           {/* 4. APPEARANCE & DISPLAY */}
           {showAppearance && (
-            <div ref={appearanceRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+            <div ref={appearanceRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Appearance &amp; Display
               </h3>
@@ -763,200 +813,203 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 5. ACCESSIBILITY */}
-          {showAccessibility && (
-            <div ref={accessibilityRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+          {/* 5A. TEXT READABILITY */}
+          {showReadability && (
+            <div ref={readabilityRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Accessibility
+                Text Readability
               </h3>
-              <p className="mb-5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Customize text readability, notification sound volume, and keyboard shortcuts.
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Adjust display font size, motion, and link visibility across portals.
               </p>
-
-              {/* 5A. Text Readability */}
-              <div ref={readabilityRef} className="mb-6 scroll-mt-20">
-                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Text Readability
-                </h4>
-                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                  {/* Text Size */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 py-3.5">
-                    <div>
-                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                        Text Size
-                      </strong>
-                      <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                        Adjust display font scale across portals.
-                      </span>
-                    </div>
-                    <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
-                      {SIZES.map(([key, label]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setPrefs({ fontSize: key })}
-                          aria-pressed={prefs.fontSize === key}
-                          className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
-                            prefs.fontSize === key
-                              ? "bg-brand text-white shadow-xs"
-                              : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
+              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                {/* Text Size */}
+                <div className="flex flex-wrap items-center justify-between gap-3 py-3.5">
+                  <div>
+                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                      Text Size
+                    </strong>
+                    <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                      Adjust display font scale across portals.
+                    </span>
                   </div>
-
-                  {[
-                    ["reducedMotion", "Reduced Motion", "Minimize transitions and animations across the portal."],
-                    ["underlineLinks", "Always Underline Links", "Make clickable links stand out clearly inside pages."],
-                  ].map(([key, label, hint]) => {
-                    const checked = Boolean(prefs[key]);
-                    return (
-                      <div key={key} className="flex items-center justify-between gap-4 py-3">
-                        <div className="min-w-0">
-                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
-                          <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={checked}
-                          aria-label={label}
-                          onClick={() => {
-                            setPrefs({ [key]: !checked });
-                            toast(`${label} ${!checked ? "enabled" : "disabled"}.`, "info");
-                          }}
-                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                            checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                              checked ? "translate-x-5" : "translate-x-0"
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 5B. Notification Sounds & Volume (Discord Sounds-inspired) */}
-              <div ref={soundsRef} className="mb-6 scroll-mt-20">
-                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Notification Sounds &amp; Volume
-                </h4>
-                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                  {/* Volume Slider */}
-                  <div className="py-3.5">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <div>
-                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                          Alert &amp; Notification Volume
-                        </strong>
-                        <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                          Adjust how loud alert chimes and notification tones play.
-                        </span>
-                      </div>
-                      <span className="rounded-md bg-brand-soft px-2 py-0.5 text-[12px] font-bold text-brand">
-                        {prefs.soundVolume ?? 80}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={prefs.soundVolume ?? 80}
-                      aria-label="Alert and notification volume"
-                      onChange={(e) => setPrefs({ soundVolume: Number(e.target.value) })}
-                      onMouseUp={(e) => previewTone("parcel", Number(e.target.value))}
-                      onTouchEnd={(e) => previewTone("parcel", Number(e.target.value))}
-                      className="h-2 w-full cursor-pointer accent-brand"
-                    />
-                  </div>
-
-                  {/* Individual Sound Rows with Preview Sound */}
-                  {[
-                    ["soundParcel", "parcel", "Parcel & Delivery Alerts"],
-                    ["soundMessages", "messages", "New Messages & Replies"],
-                    ["soundAnnouncements", "announcements", "Hub Announcements"],
-                    ["soundScan", "scan", "QR Scan & Verification"],
-                  ].map(([prefKey, toneKey, label]) => {
-                    const checked = prefs.sound !== false && prefs[prefKey] !== false;
-                    return (
-                      <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
-                        <div className="min-w-0">
-                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                            {label}
-                          </strong>
-                          <button
-                            type="button"
-                            onClick={() => previewTone(toneKey)}
-                            className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
-                          >
-                            Preview Sound
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={checked}
-                          aria-label={label}
-                          onClick={() => {
-                            const next = !checked;
-                            setPrefs({ [prefKey]: next, ...(next ? { sound: true } : {}) });
-                            if (next) previewTone(toneKey);
-                          }}
-                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                            checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                              checked ? "translate-x-5" : "translate-x-0"
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 5C. Keyboard Shortcuts */}
-              <div ref={shortcutsRef} className="scroll-mt-20">
-                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Keyboard Shortcuts
-                </h4>
-                <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
-                    {[
-                      ["Dashboard", ["G", "D"]],
-                      ["Parcel Records", ["G", "P"]],
-                      ["Verification", ["G", "V"]],
-                      ["Messages", ["G", "M"]],
-                      ["Notifications", ["G", "N"]],
-                      ["Open Help", ["?"]],
-                    ].map(([action, keys]) => (
-                      <div key={action} className="flex items-center justify-between gap-2 py-1">
-                        <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
-                        <span className="flex items-center gap-1">
-                          {keys.map((k) => (
-                            <kbd
-                              key={k}
-                              className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
-                            >
-                              {k}
-                            </kbd>
-                          ))}
-                        </span>
-                      </div>
+                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
+                    {SIZES.map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setPrefs({ fontSize: key })}
+                        aria-pressed={prefs.fontSize === key}
+                        className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
+                          prefs.fontSize === key
+                            ? "bg-brand text-white shadow-xs"
+                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                        }`}
+                      >
+                        {label}
+                      </button>
                     ))}
                   </div>
+                </div>
+
+                {[
+                  ["reducedMotion", "Reduced Motion", "Minimize transitions and animations across the portal."],
+                  ["underlineLinks", "Always Underline Links", "Make clickable links stand out clearly inside pages."],
+                ].map(([key, label, hint]) => {
+                  const checked = Boolean(prefs[key]);
+                  return (
+                    <div key={key} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                        <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={checked}
+                        aria-label={label}
+                        onClick={() => {
+                          setPrefs({ [key]: !checked });
+                          toast(`${label} ${!checked ? "enabled" : "disabled"}.`, "info");
+                        }}
+                        className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                          checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                            checked ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 5B. NOTIFICATION SOUNDS & VOLUME */}
+          {showSounds && (
+            <div ref={soundsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Notification Sounds &amp; Volume
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Control sound volume and preview or toggle individual alert chimes.
+              </p>
+              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                {/* Volume Slider */}
+                <div className="py-3.5">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                        Alert &amp; Notification Volume
+                      </strong>
+                      <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                        Adjust how loud alert chimes and notification tones play.
+                      </span>
+                    </div>
+                    <span className="rounded-md bg-brand-soft px-2 py-0.5 text-[12px] font-bold text-brand">
+                      {prefs.soundVolume ?? 80}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={prefs.soundVolume ?? 80}
+                    aria-label="Alert and notification volume"
+                    onChange={(e) => setPrefs({ soundVolume: Number(e.target.value) })}
+                    onMouseUp={(e) => previewTone("parcel", Number(e.target.value))}
+                    onTouchEnd={(e) => previewTone("parcel", Number(e.target.value))}
+                    className="h-2 w-full cursor-pointer accent-brand"
+                  />
+                </div>
+
+                {/* Individual Sound Rows with Preview Sound */}
+                {[
+                  ["soundParcel", "parcel", "Parcel & Delivery Alerts"],
+                  ["soundMessages", "messages", "New Messages & Replies"],
+                  ["soundAnnouncements", "announcements", "Hub Announcements"],
+                  ["soundScan", "scan", "QR Scan & Verification"],
+                ].map(([prefKey, toneKey, label]) => {
+                  const checked = prefs.sound !== false && prefs[prefKey] !== false;
+                  return (
+                    <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                          {label}
+                        </strong>
+                        <button
+                          type="button"
+                          onClick={() => previewTone(toneKey)}
+                          className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
+                        >
+                          Preview Sound
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={checked}
+                        aria-label={label}
+                        onClick={() => {
+                          const next = !checked;
+                          setPrefs({ [prefKey]: next, ...(next ? { sound: true } : {}) });
+                          if (next) previewTone(toneKey);
+                        }}
+                        className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                          checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                            checked ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 5C. KEYBOARD SHORTCUTS */}
+          {showShortcuts && (
+            <div ref={shortcutsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Keyboard Shortcuts
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Navigate quickly across LogiSync portals using keyboard keybinds.
+              </p>
+              <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
+                  {[
+                    ["Dashboard", ["G", "D"]],
+                    ["Parcel Records", ["G", "P"]],
+                    ["Verification", ["G", "V"]],
+                    ["Messages", ["G", "M"]],
+                    ["Notifications", ["G", "N"]],
+                    ["Open Help", ["?"]],
+                  ].map(([action, keys]) => (
+                    <div key={action} className="flex items-center justify-between gap-2 py-1">
+                      <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
+                      <span className="flex items-center gap-1">
+                        {keys.map((k) => (
+                          <kbd
+                            key={k}
+                            className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                          >
+                            {k}
+                          </kbd>
+                        ))}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -964,7 +1017,7 @@ export default function UnifiedSettings() {
 
           {/* 6. LANGUAGE & TIME */}
           {showLanguage && (
-            <div ref={languageRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+            <div ref={languageRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Language &amp; Time
               </h3>
@@ -1045,11 +1098,19 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {!showAccount && !showSecurity && !showAppearance && !showNotifications && !showLanguage && !showAccessibility && (
+          {!showAccount &&
+            !showSecurity &&
+            !showAppearance &&
+            !showNotifications &&
+            !showReadability &&
+            !showSounds &&
+            !showShortcuts &&
+            !showLanguage && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">
               No settings match &ldquo;{search}&rdquo;.
             </p>
           )}
+          </div>
         </section>
       </div>
 
