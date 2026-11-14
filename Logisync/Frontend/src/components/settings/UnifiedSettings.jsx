@@ -79,6 +79,8 @@ export default function UnifiedSettings() {
   const passwordRef = useRef(null);
   const appearanceRef = useRef(null);
   const notificationsRef = useRef(null);
+  const languageRef = useRef(null);
+  const accessibilityRef = useRef(null);
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -144,6 +146,14 @@ export default function UnifiedSettings() {
   );
   const showNotifications = useMemo(
     () => !q || "notifications popup sound email alerts parcel verification messages announcements".includes(q),
+    [q]
+  );
+  const showLanguage = useMemo(
+    () => !q || "language filipino english time format 12 hour 24 hour".includes(q),
+    [q]
+  );
+  const showAccessibility = useMemo(
+    () => !q || "accessibility reduced motion underline links keyboard shortcuts keybinds".includes(q),
     [q]
   );
 
@@ -301,6 +311,32 @@ export default function UnifiedSettings() {
             >
               <i className="fa-solid fa-bell text-[13px]" />
               <span>Notifications</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => jumpTo("language", languageRef)}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                activeNav === "language"
+                  ? "bg-brand-soft text-brand dark:bg-night-head"
+                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+              }`}
+            >
+              <i className="fa-solid fa-language text-[13px]" />
+              <span>Language &amp; Time</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => jumpTo("accessibility", accessibilityRef)}
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                activeNav === "accessibility"
+                  ? "bg-brand-soft text-brand dark:bg-night-head"
+                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+              }`}
+            >
+              <i className="fa-solid fa-universal-access text-[13px]" />
+              <span>Accessibility</span>
             </button>
           </nav>
 
@@ -727,7 +763,168 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {!showAccount && !showSecurity && !showAppearance && !showNotifications && (
+          {/* 5. LANGUAGE & TIME */}
+          {showLanguage && (
+            <div ref={languageRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Language &amp; Time
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Choose your preferred display language and time format.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
+                  <div>
+                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                      Select a Language
+                    </strong>
+                    <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                      Switch navigation and portal labels between English and Filipino.
+                    </span>
+                  </div>
+                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
+                    {[
+                      ["en", "English"],
+                      ["fil", "Filipino"],
+                    ].map(([code, label]) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => {
+                          setPrefs({ lang: code });
+                          toast(`Language set to ${label}.`, "info");
+                        }}
+                        aria-pressed={(prefs.lang || "en") === code}
+                        className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
+                          (prefs.lang || "en") === code
+                            ? "bg-brand text-white shadow-xs"
+                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
+                  <div>
+                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                      Time Format
+                    </strong>
+                    <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                      Choose 12-hour or 24-hour timestamps across tables and logs.
+                    </span>
+                  </div>
+                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
+                    {[
+                      ["auto", "Auto"],
+                      ["12h", "12-hour"],
+                      ["24h", "24-hour"],
+                    ].map(([tf, label]) => (
+                      <button
+                        key={tf}
+                        type="button"
+                        onClick={() => {
+                          setPrefs({ timeFormat: tf });
+                          toast(`Time format set to ${label}.`, "info");
+                        }}
+                        aria-pressed={(prefs.timeFormat || "auto") === tf}
+                        className={`rounded-lg px-3 py-1 text-[12.5px] font-semibold transition ${
+                          (prefs.timeFormat || "auto") === tf
+                            ? "bg-brand text-white shadow-xs"
+                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. ACCESSIBILITY & KEYBOARD SHORTCUTS */}
+          {showAccessibility && (
+            <div ref={accessibilityRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                Accessibility &amp; Shortcuts
+              </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Adjust motion, link visibility, and view quick keyboard shortcuts.
+              </p>
+
+              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                {[
+                  ["reducedMotion", "Reduced Motion", "Minimize transitions and animations across the portal."],
+                  ["underlineLinks", "Always Underline Links", "Make clickable links stand out clearly inside pages."],
+                ].map(([key, label, hint]) => {
+                  const checked = Boolean(prefs[key]);
+                  return (
+                    <div key={key} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                        <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={checked}
+                        aria-label={label}
+                        onClick={() => {
+                          setPrefs({ [key]: !checked });
+                          toast(`${label} ${!checked ? "enabled" : "disabled"}.`, "info");
+                        }}
+                        className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                          checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                            checked ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-head/40">
+                <h4 className="mb-2.5 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Keyboard Shortcuts
+                </h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[12.5px] max-[640px]:grid-cols-1">
+                  {[
+                    ["Dashboard", ["G", "D"]],
+                    ["Parcel Records", ["G", "P"]],
+                    ["Verification", ["G", "V"]],
+                    ["Messages", ["G", "M"]],
+                    ["Notifications", ["G", "N"]],
+                    ["Open Help", ["?"]],
+                  ].map(([action, keys]) => (
+                    <div key={action} className="flex items-center justify-between gap-2 py-1">
+                      <span className="text-[#475569] dark:text-[#d1c9c2]">{action}</span>
+                      <span className="flex items-center gap-1">
+                        {keys.map((k) => (
+                          <kbd
+                            key={k}
+                            className="rounded border border-[#cbd5e1] bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                          >
+                            {k}
+                          </kbd>
+                        ))}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!showAccount && !showSecurity && !showAppearance && !showNotifications && !showLanguage && !showAccessibility && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">
               No settings match &ldquo;{search}&rdquo;.
             </p>

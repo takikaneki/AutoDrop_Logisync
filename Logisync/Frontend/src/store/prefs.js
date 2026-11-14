@@ -14,7 +14,10 @@ const store = createStore(
     dark: legacyDark,
     themeMode: legacyDark ? "dark" : "light", // "light" | "dark" | "system"
     lang: "en", // "en" | "fil"
+    timeFormat: "auto", // "auto" | "12h" | "24h"
     fontSize: "md", // "sm" | "md" | "lg"
+    reducedMotion: false,
+    underlineLinks: false,
     notificationsEnabled: true,
     inAppPopups: true,
     sound: true,
@@ -43,6 +46,8 @@ export function applyPrefs(p = store.get()) {
   const isDark = resolveDark(p);
   root.classList.toggle("dark", isDark);
   document.body.classList.toggle("dark", isDark);
+  root.classList.toggle("reduced-motion", Boolean(p.reducedMotion));
+  root.classList.toggle("underline-links", Boolean(p.underlineLinks));
   root.style.zoom = zoomMap[p.fontSize] || "1";
   try {
     localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
