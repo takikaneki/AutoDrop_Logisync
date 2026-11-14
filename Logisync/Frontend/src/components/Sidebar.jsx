@@ -47,7 +47,7 @@ const infoLinks = [
   { to: "/help", icon: "fa-circle-question", label: "Help" },
 ];
 
-export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
+export default function Sidebar({ collapsed, mobileOpen = false, onClose, onCloseDesktop }) {
   const t = useT();
   const { dark } = usePrefs();
   const profile = useProfile();
@@ -97,18 +97,22 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[65] bg-black/30 backdrop-blur-[1px] transition-opacity"
+          className="fixed inset-0 z-[65] bg-black/30 backdrop-blur-[1px] transition-opacity min-[821px]:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[70] flex h-[100dvh] w-[276px] max-w-[85vw] shrink-0 flex-col overflow-y-auto border-r border-brand-dark bg-brand px-4 py-4 text-white shadow-2xl transition-transform duration-200 dark:border-[#9a3412] dark:bg-brand-dark print:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        className={`flex shrink-0 flex-col overflow-y-auto bg-brand text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
+          mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
+        } min-[821px]:sticky min-[821px]:top-14 min-[821px]:z-40 min-[821px]:h-[calc(100vh-56px)] min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
+          collapsed
+            ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0 min-[821px]:px-0"
+            : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:border-r min-[821px]:px-3.5 xl:px-[18px]"
         }`}
       >
-        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5">
+        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5 min-[821px]:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
               <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
@@ -124,7 +128,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
                 onClick={toggleDark}
                 aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
                 title={dark ? "Switch to light mode" : "Switch to dark mode"}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand min-[821px]:hidden"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
                 <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
               </button>
@@ -136,13 +140,16 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
                 }}
                 aria-label="Send announcement"
                 title="Send announcement"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-brand transition hover:bg-white/90 min-[821px]:hidden"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-brand transition hover:bg-white/90"
               >
                 <i className="fa-solid fa-bullhorn text-xs" />
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  onClose?.();
+                  onCloseDesktop?.();
+                }}
                 aria-label="Close sidebar"
                 title="Close sidebar"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
@@ -151,7 +158,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose }) {
               </button>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 min-[821px]:hidden">
+          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] leading-tight text-white">
