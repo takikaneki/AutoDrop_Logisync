@@ -56,8 +56,8 @@ export default function ChangePasswordForm({ desktopSplit = false }) {
 
   if (desktopSplit) {
     return (
-      <form onSubmit={submit} noValidate className="grid grid-cols-[35%_65%] gap-6 items-start">
-        {/* Left section (35%) */}
+      <form onSubmit={submit} noValidate className="grid w-full grid-cols-[minmax(220px,34%)_minmax(0,1fr)] gap-8 items-start text-left">
+        {/* Left section */}
         <div>
           <h3 className="text-[14px] font-bold text-[#27364f] dark:text-[#f1eeeb]">Change Password</h3>
           <p className="mt-1 text-[12.5px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
@@ -65,10 +65,10 @@ export default function ChangePasswordForm({ desktopSplit = false }) {
           </p>
         </div>
 
-        {/* Right section (65%) */}
+        {/* Right section */}
         <div className="min-w-0">
           {/* First row: Current Password and New Password side by side */}
-          <div className="grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls} htmlFor="pw-split-cur">Current password</label>
               <input

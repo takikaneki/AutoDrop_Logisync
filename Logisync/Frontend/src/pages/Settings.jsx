@@ -243,11 +243,11 @@ export default function Settings() {
     <>
       <Topbar title="Settings" subtitle="Manage your profile, security and how LogiSync looks and notifies you." />
 
-      {/* DESKTOP WEB VIEW: Centered 820px Single-Column 4-Card Layout */}
+      {/* DESKTOP WEB VIEW: Left-aligned expanded horizontal 4-Card Layout */}
       <div className="hidden min-[821px]:block">
-        <div className="mx-auto w-full max-w-[820px] space-y-5">
+        <div className="w-[95%] max-w-[1360px] space-y-5 text-left">
           {/* A. Account Profile Card */}
-          <section className="rounded-2xl border border-[#e5e8ee] bg-white p-6 shadow-xs dark:border-night-line dark:bg-night-panel">
+          <section className="w-full rounded-2xl border border-[#e5e8ee] bg-white px-7 py-6 shadow-xs dark:border-night-line dark:bg-night-panel">
             <h2 className="mb-4 text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Account Profile
             </h2>
@@ -279,7 +279,7 @@ export default function Settings() {
           </section>
 
           {/* B. Security & Password Card */}
-          <section className="rounded-2xl border border-[#e5e8ee] bg-white p-6 shadow-xs dark:border-night-line dark:bg-night-panel">
+          <section className="w-full rounded-2xl border border-[#e5e8ee] bg-white px-7 py-6 shadow-xs dark:border-night-line dark:bg-night-panel">
             <h2 className="mb-4 text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Security &amp; Password
             </h2>
@@ -287,7 +287,7 @@ export default function Settings() {
           </section>
 
           {/* C. Appearance & Display Card */}
-          <section className="rounded-2xl border border-[#e5e8ee] bg-white p-6 shadow-xs dark:border-night-line dark:bg-night-panel">
+          <section className="w-full rounded-2xl border border-[#e5e8ee] bg-white px-7 py-6 shadow-xs dark:border-night-line dark:bg-night-panel">
             <h2 className="mb-4 text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Appearance &amp; Display
             </h2>
@@ -352,7 +352,7 @@ export default function Settings() {
           </section>
 
           {/* D. Account Session Card */}
-          <section className="flex items-center justify-between gap-4 rounded-2xl border border-[#e5e8ee] bg-white px-6 py-4 shadow-xs dark:border-night-line dark:bg-night-panel">
+          <section className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#e5e8ee] bg-white px-7 py-5 shadow-xs dark:border-night-line dark:bg-night-panel">
             <div>
               <h2 className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
                 Account Session
