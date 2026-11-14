@@ -58,7 +58,8 @@ export default function UnifiedSettings() {
   const user = getUser();
   const profile = useProfile();
   const prefs = usePrefs();
-  const { dark, fontSize } = prefs;
+  const themeMode = prefs.themeMode || (dark ? "dark" : "light");
+  const isSystemTheme = themeMode === "system";
 
   const [search, setSearch] = useState("");
   const [activeNav, setActiveNav] = useState("account-info");
@@ -495,50 +496,114 @@ export default function UnifiedSettings() {
           {/* 3. APPEARANCE & DISPLAY */}
           {showAppearance && (
             <div ref={appearanceRef} className="mt-6 border-t border-brand-line pt-6 scroll-mt-20 dark:border-night-line">
-              <h3 className="mb-3 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Appearance &amp; Display
               </h3>
+              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                Choose your theme or sync automatically with your device appearance.
+              </p>
 
-              <div className="flex flex-wrap items-center justify-between gap-6 py-2">
-                <div className="flex items-center gap-4">
-                  <span className="text-[14px] font-medium text-[#475569] dark:text-[#b8b0a8]">Dark Mode</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={dark}
-                    aria-label="Dark Mode"
-                    onClick={toggleDark}
-                    className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${
-                      dark ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-[3px] left-[3px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                        dark ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
+              {/* Same as Device Theme */}
+              <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
+                <div className="min-w-0">
+                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Same as Device Theme
+                  </strong>
+                  <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Match your device&apos;s light or dark mode automatically.
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isSystemTheme}
+                  aria-label="Same as Device Theme"
+                  onClick={() => {
+                    const nextMode = isSystemTheme ? (prefs.dark ? "dark" : "light") : "system";
+                    setPrefs({ themeMode: nextMode });
+                    toast(nextMode === "system" ? "Synced with device theme." : "Using manual theme.", "info");
+                  }}
+                  className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                    isSystemTheme ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                      isSystemTheme ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-[14px] font-medium text-[#475569] dark:text-[#b8b0a8]">Text Size</span>
-                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-[#f8fafc] p-1 dark:border-night-line dark:bg-night-head">
-                    {SIZES.map(([key, label]) => (
+              {/* Default Themes Swatch Picker (Discord-inspired) */}
+              <div className="mb-5">
+                <span className="mb-2.5 block text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Default Themes
+                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  {[
+                    { key: "light", label: "Light", swatch: "bg-white border-[#cbd5e1]" },
+                    { key: "dark", label: "Dark", swatch: "bg-[#292522] border-[#48413c]" },
+                    { key: "system", label: "Device", swatch: "bg-gradient-to-br from-white via-[#cbd5e1] to-[#1e293b] border-[#94a3b8]", icon: "fa-arrows-rotate" },
+                  ].map((item) => {
+                    const active = themeMode === item.key;
+                    return (
                       <button
-                        key={key}
+                        key={item.key}
                         type="button"
-                        onClick={() => setPrefs({ fontSize: key })}
-                        aria-pressed={fontSize === key}
-                        className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
-                          fontSize === key
-                            ? "bg-brand text-white shadow-xs"
-                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                        onClick={() => {
+                          setPrefs({ themeMode: item.key });
+                          toast(`${item.label} theme applied.`, "info");
+                        }}
+                        title={`${item.label} theme`}
+                        aria-label={`${item.label} theme`}
+                        aria-pressed={active}
+                        className={`relative flex h-12 w-12 items-center justify-center rounded-xl border-2 transition ${item.swatch} ${
+                          active
+                            ? "!border-brand ring-2 ring-brand/25 scale-[1.03]"
+                            : "hover:border-brand/60"
                         }`}
                       >
-                        {label}
+                        {item.icon && (
+                          <i className={`fa-solid ${item.icon} text-[14px] text-[#1e293b] drop-shadow-xs`} />
+                        )}
+                        {active && (
+                          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-[10px] text-white shadow-xs">
+                            <i className="fa-solid fa-check" />
+                          </span>
+                        )}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Text Size */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div>
+                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Text Size
+                  </strong>
+                  <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Adjust display scale across portals.
+                  </span>
+                </div>
+                <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-[#f8fafc] p-1 dark:border-night-line dark:bg-night-head">
+                  {SIZES.map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setPrefs({ fontSize: key })}
+                      aria-pressed={prefs.fontSize === key}
+                      className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
+                        prefs.fontSize === key
+                          ? "bg-brand text-white shadow-xs"
+                          : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
