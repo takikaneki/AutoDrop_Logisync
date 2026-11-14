@@ -33,10 +33,11 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
     <>
       {mobileOpen && <div className="fixed inset-0 z-[65] bg-black/40 backdrop-blur-[1px] min-[821px]:hidden" onClick={onClose} aria-hidden="true" />}
 
-      <aside
-        className={`flex shrink-0 flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line min-[821px]:sticky min-[821px]:top-14 min-[821px]:h-[calc(100vh-56px)] min-[821px]:self-start max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[288px] max-[820px]:max-w-[86vw] max-[820px]:px-4 max-[820px]:pb-20 max-[820px]:shadow-2xl ${collapsed ? "min-[821px]:w-[78px] min-[821px]:px-2.5" : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:px-3.5 xl:px-[18px]"
-          } ${mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"}`}
-      >
+      <div className="max-[820px]:contents min-[821px]:shrink-0 min-[821px]:bg-white min-[821px]:border-r min-[821px]:border-[#eee] print:hidden dark:min-[821px]:bg-night-panel dark:min-[821px]:border-night-line">
+        <aside
+          className={`flex shrink-0 flex-col overflow-y-auto bg-white py-4 z-40 transition-[width,transform] duration-200 dark:bg-night-panel min-[821px]:sticky min-[821px]:top-14 min-[821px]:h-[calc(100vh-56px)] max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[288px] max-[820px]:max-w-[86vw] max-[820px]:border-r max-[820px]:border-[#eee] dark:max-[820px]:border-night-line max-[820px]:px-4 max-[820px]:pb-20 max-[820px]:shadow-2xl ${collapsed ? "min-[821px]:w-[78px] min-[821px]:px-2.5" : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:px-3.5 xl:px-[18px]"
+            } ${mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"}`}
+        >
         <div className="mb-3.5 border-b border-[#f1f1f1] px-1 pb-3.5 min-[821px]:hidden dark:border-night-line">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
@@ -169,6 +170,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
           </button>
         </div>
       </aside>
+      </div>
       {Tooltip}
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
