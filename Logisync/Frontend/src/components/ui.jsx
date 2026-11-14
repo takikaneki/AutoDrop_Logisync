@@ -114,7 +114,7 @@ function EmptyFigure({ icon }) {
 
 export function EmptyState({ icon = "fa-box-open", title = "Nothing here yet", text = "" }) {
   return (
-    <div className="py-12 text-center text-[#999]">
+    <div className="flex min-h-[420px] max-[600px]:min-h-[300px] flex-col items-center justify-center px-4 py-14 text-center text-[#999]">
       <EmptyFigure icon={icon} />
       <strong className="block text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{title}</strong>
       {text && <p className="text-[13px] mt-1 text-[#64748b] dark:text-[#b8b0a8]">{text}</p>}
