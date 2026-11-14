@@ -313,24 +313,31 @@ export default function WelcomeIntro({ onComplete }) {
   const [faqCategory, setFaqCategory] = useState("All");
   const [demoTracking, setDemoTracking] = useState("TXN-2026-SPX-00184");
   const [demoTracked, setDemoTracked] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
   const [heroStepReveal, setHeroStepReveal] = useState(-1);
 
-  const [aboutPhotoRef, aboutPhotoShown] = useRevealOnce(0.18);
+  const [aboutPhotoRef, aboutPhotoShown] = useRevealOnce(0.15);
+  const [aboutTextRef, aboutTextShown] = useRevealOnce(0.15);
   const [aboutMetricsRef, aboutMetricsShown] = useRevealOnce(0.2);
+  const [waybillRef, waybillShown] = useRevealOnce(0.18);
   const [servicesGridRef, servicesGridShown] = useRevealOnce(0.12);
   const [workflowGridRef, workflowGridShown] = useRevealOnce(0.12);
 
-  const pctCount = useCountUpOnce(100, aboutMetricsShown, 950);
-  const daysCount = useCountUpOnce(3, aboutMetricsShown, 700);
-  const rolesCount = useCountUpOnce(3, aboutMetricsShown, 700);
+  const pctCount = useCountUpOnce(100, aboutMetricsShown, 1300);
+  const daysCount = useCountUpOnce(3, aboutMetricsShown, 1000);
+  const rolesCount = useCountUpOnce(3, aboutMetricsShown, 1000);
 
-  // One-time sequential highlight for the 4-Step Hero Tracker right after AirshipLoader finishes
+  // Start Hero entrance right as AirshipLoader clears so none of the motion is hidden behind the loader
   useEffect(() => {
     if (!loaderDone) return;
-    const timers = HERO_STEPS.map((_, idx) =>
-      setTimeout(() => setHeroStepReveal(idx), 240 + idx * 210)
+    const readyTimer = setTimeout(() => setHeroReady(true), 80);
+    const stepTimers = HERO_STEPS.map((_, idx) =>
+      setTimeout(() => setHeroStepReveal(idx), 680 + idx * 320)
     );
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      clearTimeout(readyTimer);
+      stepTimers.forEach(clearTimeout);
+    };
   }, [loaderDone]);
 
   // Short, smooth Airship Express loading animation (~1.0s total)
@@ -555,12 +562,12 @@ export default function WelcomeIntro({ onComplete }) {
 
         {/* Floating Decorative UI Card - Left (Desktop XL) */}
         <div
-          className={`pointer-events-none absolute top-14 left-6 hidden w-52 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
-            loaderDone
+          className={`pointer-events-none absolute top-14 left-6 hidden w-52 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
+            heroReady
               ? "translate-x-0 translate-y-0 -rotate-3 scale-100 opacity-100"
-              : "-translate-x-10 translate-y-6 -rotate-6 scale-95 opacity-0"
+              : "-translate-x-16 translate-y-8 -rotate-6 scale-95 opacity-0"
           }`}
-          style={{ transitionDelay: "280ms" }}
+          style={{ transitionDelay: "480ms" }}
           aria-hidden="true"
         >
           <div className="mb-3 flex items-center gap-1.5">
@@ -581,12 +588,12 @@ export default function WelcomeIntro({ onComplete }) {
 
         {/* Floating Decorative UI Card - Bottom Right (Desktop XL) */}
         <div
-          className={`pointer-events-none absolute right-8 bottom-12 hidden w-56 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
-            loaderDone
+          className={`pointer-events-none absolute right-8 bottom-12 hidden w-56 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
+            heroReady
               ? "translate-x-0 translate-y-0 rotate-2 scale-100 opacity-100"
-              : "translate-x-10 translate-y-6 rotate-6 scale-95 opacity-0"
+              : "translate-x-16 translate-y-8 rotate-6 scale-95 opacity-0"
           }`}
-          style={{ transitionDelay: "380ms" }}
+          style={{ transitionDelay: "620ms" }}
           aria-hidden="true"
         >
           <div className="mb-2.5 flex items-center gap-1.5">
@@ -606,8 +613,8 @@ export default function WelcomeIntro({ onComplete }) {
         <div className="relative z-10 mx-auto max-w-5xl px-4 text-center sm:px-8">
           {/* Top Pill Tag */}
           <div
-            className={`inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:px-4 sm:text-xs ${
-              loaderDone ? "translate-y-0 scale-100 opacity-100" : "translate-y-4 scale-95 opacity-0"
+            className={`inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:px-4 sm:text-xs ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-5 scale-95 opacity-0"
             }`}
           >
             <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
@@ -616,17 +623,17 @@ export default function WelcomeIntro({ onComplete }) {
 
           {/* Main Airship Express–Style Headline with Inline Pill */}
           <h1
-            className={`mt-5 text-3xl font-black leading-[1.16] tracking-tight text-slate-900 transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-5xl lg:text-6xl ${
-              loaderDone ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-[0.96] opacity-0"
+            className={`mt-5 text-3xl font-black leading-[1.16] tracking-tight text-slate-900 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-5xl lg:text-6xl ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-8 scale-[0.96] opacity-0"
             }`}
-            style={{ transitionDelay: "90ms" }}
+            style={{ transitionDelay: "140ms" }}
           >
             <span>We Verify &amp; Deliver </span>
             <span
-              className={`mx-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xl font-extrabold text-white shadow-lg shadow-orange-500/25 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:mx-1.5 sm:gap-2 sm:px-6 sm:py-2 sm:text-3xl lg:text-4xl ${
-                loaderDone ? "-translate-y-0.5 scale-100 opacity-100 sm:-translate-y-1" : "translate-y-2 scale-75 opacity-0"
+              className={`mx-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xl font-extrabold text-white shadow-lg shadow-orange-500/25 transition-all duration-[900ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:mx-1.5 sm:gap-2 sm:px-6 sm:py-2 sm:text-3xl lg:text-4xl ${
+                heroReady ? "-translate-y-0.5 scale-100 opacity-100 sm:-translate-y-1" : "translate-y-3 scale-75 opacity-0"
               }`}
-              style={{ transitionDelay: "220ms" }}
+              style={{ transitionDelay: "360ms" }}
             >
               <i className="fa-regular fa-clock text-base sm:text-2xl lg:text-3xl" />
               <span>On-Time</span>
@@ -636,10 +643,10 @@ export default function WelcomeIntro({ onComplete }) {
 
           {/* Supporting Description */}
           <p
-            className={`mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-lg ${
-              loaderDone ? "translate-y-0 opacity-100" : "translate-y-5 opacity-0"
+            className={`mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-lg ${
+              heroReady ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
             }`}
-            style={{ transitionDelay: "180ms" }}
+            style={{ transitionDelay: "300ms" }}
           >
             LogiSync gets your parcels where they need to go quickly and securely—combining pre-dispatch video
             verification, QR code scanning, and real-time rider coordination every step of the way.
@@ -647,10 +654,10 @@ export default function WelcomeIntro({ onComplete }) {
 
           {/* Hero CTA Buttons (Full-width stacked on small mobile, side-by-side on sm+) */}
           <div
-            className={`mt-7 flex flex-col items-stretch justify-center gap-3 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:flex-row sm:items-center sm:gap-4 ${
-              loaderDone ? "translate-y-0 scale-100 opacity-100" : "translate-y-5 scale-95 opacity-0"
+            className={`mt-7 flex flex-col items-stretch justify-center gap-3 transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:flex-row sm:items-center sm:gap-4 ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-95 opacity-0"
             }`}
-            style={{ transitionDelay: "260ms" }}
+            style={{ transitionDelay: "460ms" }}
           >
             <button
               type="button"
@@ -672,10 +679,10 @@ export default function WelcomeIntro({ onComplete }) {
 
           {/* 4-Step Horizontal Connected Tracker Card */}
           <div
-            className={`mx-auto mt-10 max-w-3xl rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.07)] transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-12 sm:px-10 sm:py-7 ${
-              loaderDone ? "translate-y-0 scale-100 opacity-100" : "translate-y-8 scale-[0.97] opacity-0"
+            className={`mx-auto mt-10 max-w-3xl rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.07)] transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-12 sm:px-10 sm:py-7 ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.97] opacity-0"
             }`}
-            style={{ transitionDelay: "320ms" }}
+            style={{ transitionDelay: "560ms" }}
           >
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 sm:gap-4">
               {HERO_STEPS.map((s, idx) => {
@@ -683,8 +690,8 @@ export default function WelcomeIntro({ onComplete }) {
                 return (
                   <div
                     key={s.label}
-                    className={`relative flex flex-col items-center text-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                      stepVisible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
+                    className={`relative flex flex-col items-center text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      stepVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                     }`}
                   >
                     {idx < HERO_STEPS.length - 1 && (
@@ -693,7 +700,7 @@ export default function WelcomeIntro({ onComplete }) {
                         aria-hidden="true"
                       >
                         <div
-                          className={`h-full origin-left bg-gradient-to-r from-brand to-orange-400 transition-transform duration-500 ease-out ${
+                          className={`h-full origin-left bg-gradient-to-r from-brand to-orange-400 transition-transform duration-700 ease-out ${
                             heroStepReveal > idx ? "scale-x-100" : "scale-x-0"
                           }`}
                         />
@@ -727,15 +734,15 @@ export default function WelcomeIntro({ onComplete }) {
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-14">
             <div
               ref={aboutPhotoRef}
-              className={`lg:col-span-6 transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                aboutPhotoShown ? "translate-x-0 scale-100 opacity-100" : "-translate-x-8 scale-[0.97] opacity-0"
+              className={`lg:col-span-6 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                aboutPhotoShown ? "translate-x-0 scale-100 opacity-100" : "-translate-x-12 scale-[0.96] opacity-0"
               }`}
             >
               <div className="relative overflow-hidden rounded-[24px] bg-slate-900 shadow-2xl sm:rounded-[28px]">
                 <img
                   src="/images/spx-truck-road.jpg"
                   alt="SPX Express delivery truck on the road"
-                  className={`aspect-[4/3] w-full object-cover object-center transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] ${
+                  className={`aspect-[4/3] w-full object-cover object-center transition-transform duration-[1300ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] ${
                     aboutPhotoShown ? "scale-100" : "scale-110"
                   }`}
                 />
@@ -756,7 +763,13 @@ export default function WelcomeIntro({ onComplete }) {
               </div>
             </div>
 
-            <div className="lg:col-span-6">
+            <div
+              ref={aboutTextRef}
+              className={`lg:col-span-6 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                aboutTextShown ? "translate-x-0 opacity-100" : "translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "160ms" }}
+            >
               <div className="mb-3 flex items-center gap-3">
                 <span className="h-1 w-10 rounded-full bg-brand sm:w-12" />
                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 sm:text-xs">
@@ -918,7 +931,12 @@ export default function WelcomeIntro({ onComplete }) {
           </div>
 
           {/* AP Cargo–Style Waybill Verification Preview Box */}
-          <div className="mx-auto mt-7 max-w-2xl rounded-3xl bg-white p-4 text-left text-slate-900 shadow-2xl sm:mt-8 sm:p-6">
+          <div
+            ref={waybillRef}
+            className={`mx-auto mt-7 max-w-2xl rounded-3xl bg-white p-4 text-left text-slate-900 shadow-2xl transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:p-6 ${
+              waybillShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.96] opacity-0"
+            }`}
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <i className="fa-solid fa-barcode text-lg text-brand" />
@@ -971,17 +989,17 @@ export default function WelcomeIntro({ onComplete }) {
                     handleGoToSignIn();
                   }
                 }}
-                style={{ transitionDelay: `${idx * 140}ms` }}
-                className={`group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white text-slate-900 shadow-xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:shadow-2xl ${
-                  servicesGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.95] opacity-0"
+                style={{ transitionDelay: `${idx * 220}ms` }}
+                className={`group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white text-slate-900 shadow-xl transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:shadow-2xl ${
+                  servicesGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-[0.94] opacity-0"
                 }`}
               >
                 <div className="relative h-52 w-full overflow-hidden bg-slate-900 sm:h-56">
                   <img
                     src={card.image}
                     alt={card.title}
-                    style={{ transitionDelay: `${idx * 140}ms` }}
-                    className={`h-full w-full object-cover object-center transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 ${
+                    style={{ transitionDelay: `${idx * 220}ms` }}
+                    className={`h-full w-full object-cover object-center transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 ${
                       servicesGridShown ? "scale-100" : "scale-110"
                     }`}
                   />
@@ -1033,7 +1051,7 @@ export default function WelcomeIntro({ onComplete }) {
               aria-hidden="true"
             >
               <div
-                className={`h-full origin-left bg-gradient-to-r from-brand via-orange-400 to-brand transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`h-full origin-left bg-gradient-to-r from-brand via-orange-400 to-brand transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   workflowGridShown ? "scale-x-100" : "scale-x-0"
                 }`}
               />
@@ -1042,24 +1060,24 @@ export default function WelcomeIntro({ onComplete }) {
             {VERIFICATION_STEPS.map((item, idx) => (
               <div
                 key={item.step}
-                style={{ transitionDelay: `${idx * 140}ms` }}
-                className={`relative z-10 flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-lg ${
-                  workflowGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.95] opacity-0"
+                style={{ transitionDelay: `${idx * 220}ms` }}
+                className={`relative z-10 flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-lg ${
+                  workflowGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-[0.94] opacity-0"
                 }`}
               >
                 <div className="relative h-52 w-full overflow-hidden bg-slate-900">
                   <img
                     src={item.image}
                     alt={item.title}
-                    style={{ transitionDelay: `${idx * 140}ms` }}
-                    className={`h-full w-full object-cover object-center transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                    style={{ transitionDelay: `${idx * 220}ms` }}
+                    className={`h-full w-full object-cover object-center transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       workflowGridShown ? "scale-100" : "scale-110"
                     }`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
                   <span
-                    style={{ transitionDelay: `${idx * 140 + 180}ms` }}
-                    className={`absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-sm font-black text-white shadow-md transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                    style={{ transitionDelay: `${idx * 220 + 260}ms` }}
+                    className={`absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-sm font-black text-white shadow-md transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                       workflowGridShown ? "scale-100" : "scale-50"
                     }`}
                   >
@@ -1198,7 +1216,7 @@ export default function WelcomeIntro({ onComplete }) {
                     </span>
                   </button>
                   <div
-                    className={`grid transition-all duration-300 ease-out ${
+                    className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                       isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                     }`}
                   >
