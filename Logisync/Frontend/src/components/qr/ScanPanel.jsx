@@ -34,11 +34,11 @@ export default function ScanPanel({
 
       {/* 2. "OR ENTER MANUALLY" Divider */}
       <div className="relative flex w-full items-center py-0.5">
-        <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
-        <span className="mx-3 shrink-0 rounded-full bg-[#f8fafc] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#94a3b8] dark:bg-night-head dark:text-[#8b837d]">
+        <div className="flex-grow border-t border-brand-line dark:border-night-line" />
+        <span className="mx-3 shrink-0 rounded-full bg-[#1e293b] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white dark:bg-night-head dark:text-[#d1c9c2]">
           Or enter manually
         </span>
-        <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+        <div className="flex-grow border-t border-brand-line dark:border-night-line" />
       </div>
 
       {/* 3. Manual Transaction Number Input Below (Exact 360px Width) */}
@@ -82,6 +82,20 @@ export default function ScanPanel({
           </button>
         </form>
         {error && <p className="mt-2 text-center text-[12px] font-medium text-[#d94747]">{error}</p>}
+      </div>
+
+      {/* Subtle QR + Parcel Figure */}
+      <div className="flex items-center justify-center pt-1">
+        <svg viewBox="0 0 110 72" className="h-14 w-24 opacity-95" fill="none" aria-hidden="true">
+          <rect x="14" y="14" width="32" height="32" rx="6" fill="#fff8f3" stroke="#1e293b" strokeWidth="2" />
+          <rect x="20" y="20" width="8" height="8" rx="1.5" stroke="#ff6818" strokeWidth="2" />
+          <rect x="32" y="20" width="8" height="8" rx="1.5" stroke="#1e293b" strokeWidth="2" />
+          <rect x="20" y="32" width="8" height="8" rx="1.5" stroke="#1e293b" strokeWidth="2" />
+          <rect x="33" y="33" width="6" height="6" rx="1" fill="#ff6818" />
+          <rect x="54" y="24" width="36" height="34" rx="6" fill="#ff6818" stroke="#1e293b" strokeWidth="2" />
+          <path d="M54 35h36M72 24v34" stroke="#fff8f3" strokeWidth="2" />
+          <circle cx="92" cy="20" r="4" fill="#fff0e7" stroke="#ff6818" strokeWidth="1.5" />
+        </svg>
       </div>
     </div>
   );

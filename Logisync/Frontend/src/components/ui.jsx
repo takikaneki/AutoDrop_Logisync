@@ -74,12 +74,50 @@ export function Modal({ open, onClose, children, z = "z-[1000]", className = "" 
 
 // ---- Shared pieces para sa mga bagong page ----
 
+function EmptyFigure({ icon }) {
+  const name = String(icon || "");
+  if (name.includes("bell") || name.includes("envelope")) {
+    return (
+      <svg viewBox="0 0 120 96" className="mx-auto mb-3 h-24 w-28" fill="none" aria-hidden="true">
+        <ellipse cx="60" cy="84" rx="38" ry="6" fill="#fff0e7" />
+        <path d="M28 52h64l-6 26H34l-6-26z" fill="#fff8f3" stroke="#1e293b" strokeWidth="2.2" strokeLinejoin="round" />
+        <path d="M28 52l14-14h36l14 14" stroke="#1e293b" strokeWidth="2.2" strokeLinejoin="round" />
+        <path d="M60 22c-9 0-15 6.5-15 15v9l-5 6h40l-5-6v-9c0-8.5-6-15-15-15z" fill="#ff6818" stroke="#1e293b" strokeWidth="2.2" strokeLinejoin="round" />
+        <circle cx="84" cy="30" r="10" fill="#ffffff" stroke="#ff6818" strokeWidth="2" />
+        <path d="M79.5 30l3 3 6-6" stroke="#ff6818" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M22 25h8l-8 9h8M16 17h6l-6 7h6" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (name.includes("file") || name.includes("clipboard") || name.includes("headset") || name.includes("comment") || name.includes("triangle") || name.includes("bullhorn")) {
+    return (
+      <svg viewBox="0 0 120 96" className="mx-auto mb-3 h-24 w-28" fill="none" aria-hidden="true">
+        <ellipse cx="60" cy="84" rx="36" ry="6" fill="#fff0e7" />
+        <rect x="34" y="18" width="44" height="58" rx="6" fill="#ffffff" stroke="#1e293b" strokeWidth="2.2" />
+        <path d="M43 32h26M43 42h20M43 52h14" stroke="#ff6818" strokeWidth="2.4" strokeLinecap="round" />
+        <circle cx="72" cy="56" r="13" fill="#fff8f3" stroke="#1e293b" strokeWidth="2.2" />
+        <path d="M81 65l10 10" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
+        <path d="M68 54h7l-7 7h7" stroke="#ff6818" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 120 96" className="mx-auto mb-3 h-24 w-28" fill="none" aria-hidden="true">
+      <ellipse cx="60" cy="84" rx="38" ry="6" fill="#fff0e7" />
+      <rect x="32" y="34" width="50" height="42" rx="7" fill="#fff8f3" stroke="#1e293b" strokeWidth="2.2" />
+      <path d="M32 46h50M57 34v42" stroke="#ff6818" strokeWidth="2.2" />
+      <circle cx="84" cy="30" r="10" fill="#ff6818" />
+      <path d="M80 30l3 3 5.5-5.5" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function EmptyState({ icon = "fa-box-open", title = "Nothing here yet", text = "" }) {
   return (
-    <div className="py-14 text-center text-[#999]">
-      <i className={`fa-solid ${icon} text-[30px] mb-3 block opacity-60`} />
-      <strong className="block text-[15px] text-[#666] dark:text-[#d1c9c2]">{title}</strong>
-      {text && <p className="text-[13px] mt-1">{text}</p>}
+    <div className="py-12 text-center text-[#999]">
+      <EmptyFigure icon={icon} />
+      <strong className="block text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{title}</strong>
+      {text && <p className="text-[13px] mt-1 text-[#64748b] dark:text-[#b8b0a8]">{text}</p>}
     </div>
   );
 }
