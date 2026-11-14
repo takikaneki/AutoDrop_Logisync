@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { Notice } from "../../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, panel } from "../../components/styles.js";
+import { btnPrimary, inputCls, panel } from "../../components/styles.js";
 import { createParcel, fetchSellerCustomers, listParcels } from "../../services/parcelService.js";
 import {
   CONTENT_CATEGORIES,
@@ -56,16 +56,6 @@ export default function CreateParcel() {
   const [created, setCreated] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [txnLookupMessage, setTxnLookupMessage] = useState("");
-  const [instructionsOpen, setInstructionsOpen] = useState(false);
-
-  useEffect(() => {
-    if (!instructionsOpen) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") setInstructionsOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [instructionsOpen]);
 
   // Track customer auto-fill state
   const [matchedCustomer, setMatchedCustomer] = useState(null);
@@ -443,71 +433,63 @@ export default function CreateParcel() {
     matchedCustomer?.contact && values.receiver_contact === matchedCustomer.contact;
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="w-full">
       <Topbar
         title="Create Parcel"
         subtitle="Register a parcel so the coordinator can verify it. The system generates the parcel ID."
-        right={
-          !created && (
-            <button
-              type="button"
-              onClick={() => setInstructionsOpen(true)}
-              className={`${btnGhost} !border-[#f1d5c4] !bg-[#fffaf7] !text-brand shadow-xs hover:!border-brand hover:!bg-[#fff2ea] dark:!border-night-line dark:!bg-night-head dark:!text-[#ffb58a] max-[520px]:ml-auto`}
-            >
-              <i className="fa-regular fa-circle-question text-brand" /> Instructions
-            </button>
-          )
-        }
       />
 
       {created ? (
         <ParcelCreated parcel={created} onReset={reset} />
       ) : (
-        <form onSubmit={onSubmit} noValidate className={`${panel} shadow-sm dark:shadow-none`}>
-          {/* Parcel Details Card Header */}
-          <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-[#f3e4da] bg-[#fff5ee] px-6 py-3.5 dark:border-night-line dark:bg-night-head max-[600px]:px-4">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand text-[12px] text-white">
-                <i className="fa-solid fa-plus" />
-              </span>
-              <h2 className="text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                Parcel Details
-              </h2>
-            </div>
-            {scanned && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
-                <i className="fa-solid fa-circle-check text-[10px]" /> QR Scanned
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-5 p-6 max-[600px]:p-4">
-            {apiError && (
-              <Notice tone="error" icon="fa-circle-exclamation" role="alert">
-                {apiError}
-              </Notice>
-            )}
-
-            {/* Centered QR Scanner & Manual Transaction Number Lookup */}
-            <div className="space-y-3 border-b border-[#f1f1f1] pb-5 dark:border-night-line">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                  Scan QR / Transaction Number
+        <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
+          {/* LEFT (70%) - Parcel Details Card */}
+          <form onSubmit={onSubmit} noValidate className={`${panel} w-full shadow-sm dark:shadow-none`}>
+            {/* Parcel Details Card Header */}
+            <div className="flex items-center justify-between gap-3 rounded-t-2xl border-b border-[#f3e4da] bg-[#fff5ee] px-6 py-3.5 dark:border-night-line dark:bg-night-head max-[600px]:px-4">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand text-[12px] text-white">
+                  <i className="fa-solid fa-plus" />
                 </span>
-                <span className="text-[12px] text-[#888] dark:text-[#b8b0a8]">
-                  Scan parcel QR or enter transaction number below
-                </span>
+                <h2 className="text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                  Parcel Details
+                </h2>
               </div>
+              {scanned && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
+                  <i className="fa-solid fa-circle-check text-[10px]" /> QR Scanned
+                </span>
+              )}
+            </div>
 
-              <QrScanner
-                onScan={onScan}
-                allowImageUpload={false}
-                compactIdle
-                startLabel="Start Scanning"
-                showHint={false}
-              />
+            <div className="space-y-5 p-6 max-[600px]:p-4">
+              {apiError && (
+                <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+                  {apiError}
+                </Notice>
+              )}
 
-              <div className="mx-auto w-full max-w-md pt-1">
+              {/* Centered QR Scanner & Manual Transaction Number Lookup */}
+              <div className="space-y-3 border-b border-[#f1f1f1] pb-5 dark:border-night-line">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Scan QR / Transaction Number
+                  </span>
+                  <span className="text-[12px] text-[#888] dark:text-[#b8b0a8]">
+                    Scan parcel QR or enter transaction number below
+                  </span>
+                </div>
+
+                <QrScanner
+                  onScan={onScan}
+                  allowImageUpload={false}
+                  compactIdle
+                  windowSize="large"
+                  startLabel="Start Scanning"
+                  showHint={false}
+                />
+
+                <div className="mx-auto w-full max-w-[560px] pt-1">
                 <label htmlFor="transaction_number" className="sr-only">
                   Transaction number
                 </label>
@@ -1209,62 +1191,42 @@ export default function CreateParcel() {
             </button>
           </div>
         </form>
-      )}
 
-      {/* Instructions Modal */}
-      {instructionsOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="create-parcel-instructions-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setInstructionsOpen(false);
-          }}
-        >
-          <div className={`${panel} w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 shadow-2xl max-[600px]:p-5`}>
-            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#eee] pb-3 dark:border-night-line">
-              <h2 id="create-parcel-instructions-title" className="text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                <i className="fa-regular fa-circle-question mr-2 text-brand" />
+          {/* TOP-RIGHT (30%) - Instructions Card */}
+          <aside className={`${panel} w-full shadow-sm dark:shadow-none`}>
+            <div className="flex items-center gap-2.5 rounded-t-2xl border-b border-[#f3e4da] bg-[#fff5ee] px-5 py-3.5 dark:border-night-line dark:bg-night-head">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand/15 text-[12px] text-brand">
+                <i className="fa-regular fa-circle-question" />
+              </span>
+              <div>
+                <h2 className="text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                  Instructions
+                </h2>
+              </div>
+            </div>
+
+            <div className="p-5">
+              <p className="mb-4 text-[12.5px] font-semibold text-[#64748b] dark:text-[#b8b0a8]">
                 How parcel creation works
-              </h2>
-              <button
-                type="button"
-                onClick={() => setInstructionsOpen(false)}
-                aria-label="Close instructions"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#777] transition hover:bg-[#f5f5f5] hover:text-[#222] dark:text-[#b8b0a8] dark:hover:bg-night-head dark:hover:text-white"
-              >
-                <i className="fa-solid fa-xmark text-base" />
-              </button>
+              </p>
+              <ol className="space-y-4">
+                {STEPS.map(([icon, title, desc], i) => (
+                  <li key={title} className="flex gap-3 text-[13px]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <strong className="block text-[13px] leading-snug text-[#27364f] dark:text-[#f1eeeb]">
+                        <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
+                        {title}
+                      </strong>
+                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-
-            <ol className="space-y-4">
-              {STEPS.map(([icon, title, desc], i) => (
-                <li key={title} className="flex gap-3 text-[13px]">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <strong className="block text-[13.5px] leading-snug text-[#27364f] dark:text-[#f1eeeb]">
-                      <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
-                      {title}
-                    </strong>
-                    <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-
-            <div className="mt-5 flex justify-end border-t border-[#eee] pt-4 dark:border-night-line">
-              <button
-                type="button"
-                onClick={() => setInstructionsOpen(false)}
-                className={btnPrimary}
-              >
-                Got it
-              </button>
-            </div>
-          </div>
+          </aside>
         </div>
       )}
     </div>

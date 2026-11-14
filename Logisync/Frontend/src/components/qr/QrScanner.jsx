@@ -96,16 +96,23 @@ export default function QrScanner({
     stop();
   }, []);
 
-  const boxWidthCls = windowSize === "large" ? "max-w-[430px]" : compactIdle ? "max-w-[380px]" : "max-w-sm";
-  const boxShapeCls = compactIdle && !running ? "h-[176px]" : "aspect-square";
+  const boxWidthCls = windowSize === "large" ? "max-w-[560px]" : compactIdle ? "max-w-[380px]" : "max-w-sm";
+  const boxShapeCls =
+    windowSize === "large"
+      ? compactIdle && !running
+        ? "h-[260px] sm:h-[300px]"
+        : "h-[320px] sm:h-[360px]"
+      : compactIdle && !running
+      ? "h-[176px]"
+      : "aspect-square";
 
   return (
     <div>
       <div className={`relative mx-auto w-full ${boxShapeCls} ${boxWidthCls} overflow-hidden rounded-2xl bg-[#2a2522]`}>
         <div id={regionId} className="h-full w-full" />
         {!running && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-slate-300">
-            <i className="fa-solid fa-qrcode text-4xl opacity-60" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-6 text-center text-slate-300">
+            <i className={`fa-solid fa-qrcode ${windowSize === "large" ? "text-5xl" : "text-4xl"} opacity-60`} />
             <p className="text-sm">{starting ? "Starting camera…" : "Camera is off. Press Start scanning."}</p>
           </div>
         )}
