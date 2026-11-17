@@ -395,13 +395,6 @@ export default function Login() {
         clearRememberedAccount(selectedRole, email.trim());
       }
 
-      const home = homePathForRole(actualRole);
-      if (!home) {
-        clearSession();
-        setError("Your account role is not supported.");
-        return;
-      }
-
       saveSession(data);
       navigate(home, { replace: true });
     } catch (err) {
