@@ -7,7 +7,7 @@ export default function LogoutModal({ open, onClose }) {
 
   const handleLogout = async () => {
     await logoutUser();
-    navigate("/login", { replace: true });
+    navigate("/login", { replace: true, state: { fromLogout: true } });
   };
 
   return (

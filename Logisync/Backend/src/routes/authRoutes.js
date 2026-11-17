@@ -18,11 +18,11 @@ const router = express.Router();
 // Public registration: authController forces role = seller
 router.post("/register", register);
 
-// Dedicated login portal endpoints & unified login endpoint
+// Unified login endpoint & backward-compatible portal aliases
 router.post("/login", login);
-router.post("/login/seller", (req, res, next) => { req.body.portal = "seller"; next(); }, login);
-router.post("/login/rider", (req, res, next) => { req.body.portal = "rider"; next(); }, login);
-router.post("/login/coordinator", (req, res, next) => { req.body.portal = "coordinator"; next(); }, login);
+router.post("/login/seller", login);
+router.post("/login/rider", login);
+router.post("/login/coordinator", login);
 
 // Password Recovery & Reset
 router.post("/forgot-password", forgotPassword);
