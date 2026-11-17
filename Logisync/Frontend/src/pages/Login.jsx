@@ -632,8 +632,8 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   </button>
                 </div>
 
-                {/* Remember me & Forgot password */}
-                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                {/* Remember me */}
+                <div className="mt-2.5 flex items-center text-xs">
                   <label className="flex cursor-pointer select-none items-center gap-2 text-slate-600 transition-colors hover:text-slate-800">
                     <input
                       id="remember-me"
@@ -645,13 +645,6 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                     />
                     <span className="font-medium">Remember me</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setForgotOpen(true)}
-                    className="font-bold text-brand transition-colors hover:text-brand-dark"
-                  >
-                    Forgot password?
-                  </button>
                 </div>
               </div>
 
@@ -738,6 +731,17 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   </>
                 )}
               </button>
+
+              {/* Forgot password */}
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="text-xs font-bold text-brand transition-colors hover:text-brand-dark"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </form>
 
             {/* Information notice + SPX Express Branding + Footer */}
