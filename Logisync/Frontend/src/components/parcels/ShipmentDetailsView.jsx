@@ -945,9 +945,20 @@ export default function ShipmentDetailsView({
                         </p>
                       )}
                       {uploadProps.file && (
-                        <p className="mt-1.5 text-[12px] text-[#64748b]">
-                          <strong>{uploadProps.file.name}</strong> · {formatSize(uploadProps.file.size)}
-                        </p>
+                        <div className="mt-1.5 flex items-center justify-between text-[12px] text-[#64748b]">
+                          <p>
+                            <strong>{uploadProps.file.name}</strong> · {formatSize(uploadProps.file.size)}
+                          </p>
+                          {uploadProps.onClear && !uploadProps.uploading && (
+                            <button
+                              type="button"
+                              onClick={uploadProps.onClear}
+                              className="text-[11px] font-semibold text-[#d94747] hover:underline"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
                       )}
                       {uploadProps.uploading && (
                         <div className="mt-2">

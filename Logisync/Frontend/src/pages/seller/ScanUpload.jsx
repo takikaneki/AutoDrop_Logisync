@@ -62,13 +62,19 @@ export default function ScanUpload() {
 
   const onPick = (e) => {
     const f = e.target.files?.[0];
-    clearFile();
-    if (!f) return;
+    if (!f) {
+      clearFile();
+      return;
+    }
+    setFileError("");
+    setProgress(0);
     if (!ALLOWED.includes(f.type)) {
+      clearFile();
       setFileError("Unsupported file. Use MP4, WebM, MOV, AVI or MPEG.");
       return;
     }
     if (f.size > MAX_MB * 1024 * 1024) {
+      clearFile();
       setFileError(`File is too large (${formatSize(f.size)}). Maximum is ${MAX_MB} MB.`);
       return;
     }
@@ -118,6 +124,7 @@ export default function ScanUpload() {
           inputRef,
           onPick,
           onUpload,
+          onClear: clearFile,
         }}
       />
     );
