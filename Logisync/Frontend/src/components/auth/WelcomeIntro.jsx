@@ -388,7 +388,7 @@ export default function WelcomeIntro({ onComplete }) {
 
   return (
     <div
-      className={`min-h-[100dvh] w-full overflow-x-hidden bg-white text-slate-900 transition-opacity duration-300 ${
+      className={`min-h-[100dvh] w-full overflow-x-clip bg-white text-slate-900 transition-opacity duration-300 ${
         leavingToSignIn ? "opacity-0" : "opacity-100"
       }`}
     >
@@ -425,7 +425,7 @@ export default function WelcomeIntro({ onComplete }) {
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3.5 py-3 sm:px-8 sm:py-3.5">
           {/* Brand Logo */}
           <a
@@ -1061,7 +1061,7 @@ export default function WelcomeIntro({ onComplete }) {
               <div
                 key={item.step}
                 style={{ transitionDelay: `${idx * 220}ms` }}
-                className={`relative z-10 flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-lg ${
+                className={`relative z-10 flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   workflowGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-[0.94] opacity-0"
                 }`}
               >
@@ -1126,7 +1126,7 @@ export default function WelcomeIntro({ onComplete }) {
             {FEATURES_LIST.map((feat) => (
               <div
                 key={feat.title}
-                className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm transition hover:border-brand/40 hover:shadow-md sm:p-6"
+                className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm sm:p-6"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-xl text-brand">
                   <i className={`fa-solid ${feat.icon}`} />
@@ -1257,7 +1257,7 @@ export default function WelcomeIntro({ onComplete }) {
       </section>
 
       {/* 9. FOOTER SECTION */}
-      <footer className="bg-slate-950 text-white">
+      <footer className="hidden bg-slate-950 text-white lg:block">
         {/* Top CTA Banner inside Footer */}
         <div className="border-b border-white/10">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 py-10 text-center sm:px-8 sm:py-12 lg:flex-row lg:text-left">
