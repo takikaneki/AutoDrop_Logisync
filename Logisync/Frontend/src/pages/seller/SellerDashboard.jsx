@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
-import { LoadingRow, Notice, PanelLink, PanelTitle, StatCard, StatGrid } from "../../components/portal.jsx";
+import { LoadingRow, Notice, PanelLink, PanelTitle } from "../../components/portal.jsx";
 import { panel, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
-import DashboardShortcuts from "../../components/dashboard/DashboardShortcuts.jsx";
+import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
+import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
+import DashboardRightRail from "../../components/dashboard/DashboardRightRail.jsx";
 import { listParcels } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
@@ -28,10 +30,43 @@ export default function SellerDashboard() {
   }, []);
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
-  const needAction = parcels.filter((p) => ["REUPLOAD_REQUESTED", "REJECTED", "RETURN_TO_HUB"].includes(p.status));
+  const needsVideoParcels = parcels.filter(
+    (p) =>
+      p.status !== "DELIVERED" &&
+      !p.returnToHub &&
+      p.status !== "RETURN_TO_HUB" &&
+      ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"].includes(p.status)
+  );
+  const returnToHubParcels = parcels.filter(
+    (p) => p.status !== "DELIVERED" && (p.status === "RETURN_TO_HUB" || Boolean(p.returnToHub))
+  );
+  const needAction = [...needsVideoParcels, ...returnToHubParcels];
 
   const v = (n) => (loading ? "…" : n);
   const link = (p) => `/seller/scan?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`;
+  const verifiedOrInDelivery = count("VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED");
+  const dispatchRate = parcels.length ? `${Math.round((verifiedOrInDelivery / parcels.length) * 100)}%` : "0%";
+
+  const actionTasks = needAction.slice(0, 5).map((p) => {
+    const isReturn = p.status === "RETURN_TO_HUB" || Boolean(p.returnToHub);
+    return {
+      id: p.parcel_id,
+      title: p.transaction_number || p.parcel_id,
+      subtitle: `${p.receiver_name || "Customer"} · ${isReturn ? "Return to Hub" : "Needs Video"}`,
+      meta: formatDay(p.created_at),
+      icon: isReturn ? "fa-box-archive" : "fa-video",
+      tone: isReturn ? "danger" : "warn",
+      to: link(p),
+    };
+  });
+
+  const sellerBars = [
+    { label: "Wait", value: count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED") },
+    { label: "Review", value: count("VIDEO_SUBMITTED") },
+    { label: "Verif", value: count("VERIFIED") },
+    { label: "Out", value: count("OUT_FOR_DELIVERY", "RESCHEDULED") },
+    { label: "Done", value: count("DELIVERED") },
+  ];
 
   return (
     <>
@@ -39,44 +74,64 @@ export default function SellerDashboard() {
 
       {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
 
-      {/* SUMMARY CARDS */}
-      <DashboardShortcuts role="seller" />
-      <StatGrid>
-        <StatCard label="Total Parcels" value={v(parcels.length)} icon="fa-box" tone="orange" to="/seller/parcels" />
-        <StatCard label="Needs Video" value={v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"))} icon="fa-video" tone="yellow" to="/seller/parcels?status=NEEDS_VIDEO" />
-        <StatCard label="Under Verification" value={v(count("VIDEO_SUBMITTED"))} icon="fa-hourglass-half" tone="blue" to="/seller/parcels?status=UNDER_VERIFICATION" />
-        <StatCard label="Verified / In Delivery" value={v(count("VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"))} icon="fa-circle-check" tone="green" to="/seller/parcels?status=VERIFIED" />
-      </StatGrid>
+      {/* BENTO OVERVIEW GRID (No Maps) */}
+      <section className="mb-7 max-[820px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
+        <div className="flex flex-col gap-4">
+          <BentoKpiRow
+            cards={[
+              {
+                label: "Total Parcels",
+                value: v(parcels.length),
+                tone: "dark",
+                to: "/seller/parcels",
+                badge: "All Orders",
+                icon: "fa-box",
+                subtext: `${v(returnToHubParcels.length)} return to hub`,
+              },
+              {
+                label: "Needs Video",
+                value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
+                tone: "light",
+                to: "/seller/parcels?status=NEEDS_VIDEO",
+                badge: "Action Required",
+                icon: "fa-video",
+                subtext: `${v(count("VIDEO_SUBMITTED"))} under verification`,
+              },
+              {
+                label: "Verified / In Delivery",
+                value: v(verifiedOrInDelivery),
+                tone: "orange",
+                to: "/seller/parcels?status=VERIFIED",
+                badge: "Cleared",
+                icon: "fa-circle-check",
+                subtext: "Approved for SPX dispatch",
+              },
+            ]}
+          />
 
-      {/* ACTION NEEDED */}
-      <section className="mb-7 max-[820px]:mb-4">
-        <div className={`${panel} flex min-w-0 flex-col p-[30px] max-[600px]:p-4`}>
-          <PanelTitle icon="fa-bell">Action Needed</PanelTitle>
-          <div className="mb-4 max-[600px]:mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 max-[600px]:p-4 dark:bg-night-head">
-            <div className="flex h-[56px] w-[56px] max-[600px]:h-[44px] max-[600px]:w-[44px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] max-[600px]:text-[19px] text-orange-500">
-              <i className="fa-solid fa-triangle-exclamation" />
-            </div>
-            <div>
-              <h2 className="text-[32px] max-[600px]:text-[24px] font-bold leading-tight text-orange-500">
-                {v(needAction.length)} <small className="text-base max-[600px]:text-sm font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
-              </h2>
-              <p className="text-sm max-[600px]:text-xs text-[#64748b]">need your attention (reupload, rejected, or Return to Hub).</p>
-            </div>
-          </div>
-
-          {needAction.length === 0 ? (
-            <p className="py-6 max-[600px]:py-4 text-center text-[14px] text-[#999]">{loading ? "" : "Nothing to fix. You're all set."}</p>
-          ) : (
-            <ul className="flex-1">
-              {needAction.slice(0, 5).map((p) => (
-                <li key={p.parcel_id} className="flex items-center justify-between gap-3 border-b border-[#edf0f4] py-3 text-[14px] last:border-b-0 dark:border-night-line">
-                  <Link to={link(p)} className="truncate font-semibold text-brand hover:underline">{p.transaction_number || p.parcel_id}</Link>
-                  <StatusBadge status={p.status} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <PortalHeroBanner
+            role="seller"
+            pipeline={[
+              { label: "Needs Video", count: v(needsVideoParcels.length), icon: "fa-video", to: "/seller/parcels?status=NEEDS_VIDEO" },
+              { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "fa-hourglass-half", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+              { label: "Verified", count: v(count("VERIFIED")), icon: "fa-circle-check", to: "/seller/parcels?status=VERIFIED" },
+              { label: "Delivered", count: v(count("DELIVERED")), icon: "fa-truck-fast", to: "/seller/parcels" },
+            ]}
+          />
         </div>
+
+        <DashboardRightRail
+          tasksTitle="Action Needed"
+          seeAllTo="/seller/parcels?status=NEEDS_VIDEO"
+          tasks={actionTasks}
+          emptyText={loading ? "Checking parcels…" : "No seller action is currently required. You're all set."}
+          summary={{
+            label: "Dispatch Rate",
+            value: loading ? "…" : dispatchRate,
+            sublabel: `${v(verifiedOrInDelivery)} of ${v(parcels.length)} cleared`,
+            bars: sellerBars,
+          }}
+        />
       </section>
 
       {/* RECENT PARCELS */}
@@ -109,7 +164,7 @@ export default function SellerDashboard() {
                       <td className={td}>{p.contents || "—"}</td>
                       <td className={td}>
                         <StatusBadge status={p.status} />
-                        {p.rescheduled && !p.returnToHub && p.scheduledFor && (
+                        {p.rescheduled && !p.returnToHub && p.status !== "DELIVERED" && p.scheduledFor && (
                           <span className="mt-1 block text-[11.5px] font-semibold text-[#c98200]">
                             Day {p.rescheduleCount || 1}/3 · {formatDay(p.scheduledFor)}
                           </span>

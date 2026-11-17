@@ -4,8 +4,9 @@ import LogoutModal from "../LogoutModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { NAV, ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
+import { ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import { useSidebarTooltip } from "./SidebarTooltip.jsx";
 
 const TOP_ICONS = {
   about: "fa-circle-info",
@@ -13,63 +14,81 @@ const TOP_ICONS = {
   help: "fa-circle-question",
 };
 
-// Sidebar ng Seller/Rider. Kapareho ng itsura at galaw ng sidebar ng Coordinator.
-// Sa mobile ay nakatago hanggang buksan ng menu button.
-export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) {
+// Sidebar for Seller and Rider portals, matching Coordinator's responsive behavior:
+// full expanded on large desktop, icon-only on medium screens/laptops, overlay drawer on mobile.
+export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, onCloseDesktop }) {
   const { dark } = usePrefs();
   const profile = useProfile();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
   const navClass = ({ isActive }) =>
-    `relative flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] transition ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
-    } ${isActive
-      ? "bg-brand-soft text-brand font-semibold dark:bg-night-line"
-      : "text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line"
+    `relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
+      isActive
+        ? "bg-white text-brand font-bold shadow-sm"
+        : "text-white/95 hover:bg-white hover:text-brand hover:font-semibold"
     }`;
 
   return (
     <>
-      {mobileOpen && <div className="fixed inset-0 z-[65] bg-black/40 backdrop-blur-[1px] min-[821px]:hidden" onClick={onClose} aria-hidden="true" />}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[65] bg-black/30 backdrop-blur-[1px] transition-opacity min-[821px]:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       <aside
-        className={`flex shrink-0 flex-col overflow-y-auto bg-white border-r border-[#eee] py-4 z-40 transition-[width,transform] duration-200 print:hidden dark:bg-night-panel dark:border-night-line min-[821px]:sticky min-[821px]:top-14 min-[821px]:h-[calc(100vh-56px)] min-[821px]:self-start max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[288px] max-[820px]:max-w-[86vw] max-[820px]:px-4 max-[820px]:pb-20 max-[820px]:shadow-2xl ${collapsed ? "min-[821px]:w-[78px] min-[821px]:px-2.5" : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:px-3.5 xl:px-[18px]"
-          } ${mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"}`}
+        className={`flex shrink-0 flex-col overflow-y-auto bg-brand text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
+          mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
+        } min-[821px]:sticky min-[821px]:top-14 min-[821px]:z-40 min-[821px]:h-[calc(100vh-56px)] min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
+          collapsed
+            ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0 min-[821px]:px-0"
+            : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:border-r min-[821px]:px-3.5 xl:px-[18px]"
+        }`}
       >
-        <div className="mb-3.5 border-b border-[#f1f1f1] px-1 pb-3.5 min-[821px]:hidden dark:border-night-line">
+        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5 min-[821px]:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
-              <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-5 w-auto shrink-0 object-contain" />
-              <span className="block truncate text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-brand">
+              <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
+                <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-4 w-auto shrink-0 object-contain" />
+              </span>
+              <span className="block truncate text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-white/95">
                 {ROLE_LABEL[role]}
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
                 onClick={toggleDark}
                 aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
                 title={dark ? "Switch to light mode" : "Switch to dark mode"}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] transition hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
                 <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  onClose?.();
+                  onCloseDesktop?.();
+                }}
                 aria-label="Close sidebar"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] transition hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
+                title="Close sidebar"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
-                <i className="fa-solid fa-xmark text-xs" />
+                <i className="fa-solid fa-xmark text-sm" />
               </button>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-[#f0f0f0] bg-[#fafafa] px-3 py-2.5 dark:border-night-line dark:bg-night-head">
+          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
-              <strong className="block truncate text-[13px] leading-tight text-slate-800 dark:text-white">
+              <strong className="block truncate text-[13px] leading-tight text-white">
                 {profile.name}
               </strong>
-              <small className="mt-0.5 block truncate text-[11px] text-[#888]">
+              <small className="mt-0.5 block truncate text-[11px] text-white/80">
                 {profile.email || profile.role}
               </small>
             </div>
@@ -81,14 +100,23 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
             <div key={g.title} className="mb-2">
               {collapsed ? (
                 <>
-                  <div className="mx-3 my-2 border-t border-[#eee] dark:border-night-line first:hidden max-[820px]:hidden" />
-                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5] min-[821px]:hidden">{g.title}</p>
+                  <div className="mx-3 my-2 border-t border-white/20 first:hidden max-[820px]:hidden" />
+                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">{g.title}</p>
                 </>
               ) : (
-                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">{g.title}</p>
+                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">{g.title}</p>
               )}
               {g.links.map((l) => (
-                <NavLink key={l.path} to={toPath(role, l.path)} end={l.path === ""} onClick={onClose} className={navClass} title={l.label}>
+                <NavLink
+                  key={l.path}
+                  to={toPath(role, l.path)}
+                  end={l.path === ""}
+                  onClick={onClose}
+                  className={navClass}
+                  title={l.label}
+                  aria-label={l.label}
+                  {...tipProps(l.label)}
+                >
                   <i className={`fa-solid ${l.icon} w-5 text-center`} />
                   <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
                   {l.soon && (
@@ -101,11 +129,28 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
 
           {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
           <div className="mb-2 min-[960px]:hidden">
-            <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-[#b5b5b5]">
-              Information
-            </p>
+            {collapsed ? (
+              <>
+                <div className="mx-3 my-2 border-t border-white/20 max-[820px]:hidden" />
+                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">
+                  Information
+                </p>
+              </>
+            ) : (
+              <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">
+                Information
+              </p>
+            )}
             {TOP_LINKS.map((l) => (
-              <NavLink key={l.path} to={toPath(role, l.path)} onClick={onClose} className={navClass} title={l.label}>
+              <NavLink
+                key={l.path}
+                to={toPath(role, l.path)}
+                onClick={onClose}
+                className={navClass}
+                title={l.label}
+                aria-label={l.label}
+                {...tipProps(l.label)}
+              >
                 <i className={`fa-solid ${TOP_ICONS[l.path] || "fa-circle-info"} w-5 text-center`} />
                 <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
               </NavLink>
@@ -113,8 +158,15 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
           </div>
         </nav>
 
-        <div className="mt-auto pt-3 border-t border-[#eee] dark:border-night-line">
-          <NavLink to={toPath(role, "settings")} onClick={onClose} className={navClass} title="Settings">
+        <div className="mt-auto pt-3 border-t border-white/20">
+          <NavLink
+            to={toPath(role, "settings")}
+            onClick={onClose}
+            className={navClass}
+            title="Settings"
+            aria-label="Settings"
+            {...tipProps("Settings")}
+          >
             <i className="fa-solid fa-gear w-5 text-center" />
             <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
           </NavLink>
@@ -124,14 +176,16 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose }) 
               setLogoutOpen(true);
             }}
             title="Logout"
-            className={`w-full flex items-center gap-[13px] rounded-[9px] py-[11px] text-[14px] text-[#777] hover:bg-[#fff3eb] hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-line ${collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-3.5" : "px-3.5"
-              }`}
+            aria-label="Logout"
+            {...tipProps("Logout")}
+            className="w-full flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] text-white/95 transition hover:bg-white hover:text-brand hover:font-semibold"
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            <span className={collapsed ? "min-[821px]:hidden" : ""}>Logout</span>
+            <span>Logout</span>
           </button>
         </div>
       </aside>
+      {Tooltip}
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

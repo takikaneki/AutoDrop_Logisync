@@ -1,6 +1,67 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import ContactUsModal from "./ContactUsModal.jsx";
+
+// One-time scroll reveal hook: animates an element once when it enters the viewport and never repeats.
+function useRevealOnce(threshold = 0.15) {
+  const ref = useRef(null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    if (revealed) return;
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+      setRevealed(true);
+      return;
+    }
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setRevealed(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          observer.disconnect();
+        }
+      },
+      { threshold, rootMargin: "0px 0px -40px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [revealed, threshold]);
+
+  return [ref, revealed];
+}
+
+// One-time number count-up hook for key metrics when scrolled into view
+function useCountUpOnce(target, active, duration = 900) {
+  const [value, setValue] = useState(0);
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (!active || doneRef.current) return;
+    doneRef.current = true;
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) {
+      setValue(target);
+      return;
+    }
+    let frame;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(target * eased));
+      if (t < 1) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [active, target, duration]);
+
+  return value;
+}
 
 // LogiSync Public-Facing Website & Welcome Experience
 // Combines design inspiration from:
@@ -252,6 +313,32 @@ export default function WelcomeIntro({ onComplete }) {
   const [faqCategory, setFaqCategory] = useState("All");
   const [demoTracking, setDemoTracking] = useState("TXN-2026-SPX-00184");
   const [demoTracked, setDemoTracked] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const [heroStepReveal, setHeroStepReveal] = useState(-1);
+
+  const [aboutPhotoRef, aboutPhotoShown] = useRevealOnce(0.15);
+  const [aboutTextRef, aboutTextShown] = useRevealOnce(0.15);
+  const [aboutMetricsRef, aboutMetricsShown] = useRevealOnce(0.2);
+  const [waybillRef, waybillShown] = useRevealOnce(0.18);
+  const [servicesGridRef, servicesGridShown] = useRevealOnce(0.12);
+  const [workflowGridRef, workflowGridShown] = useRevealOnce(0.12);
+
+  const pctCount = useCountUpOnce(100, aboutMetricsShown, 1300);
+  const daysCount = useCountUpOnce(3, aboutMetricsShown, 1000);
+  const rolesCount = useCountUpOnce(3, aboutMetricsShown, 1000);
+
+  // Start Hero entrance right as AirshipLoader clears so none of the motion is hidden behind the loader
+  useEffect(() => {
+    if (!loaderDone) return;
+    const readyTimer = setTimeout(() => setHeroReady(true), 80);
+    const stepTimers = HERO_STEPS.map((_, idx) =>
+      setTimeout(() => setHeroStepReveal(idx), 680 + idx * 320)
+    );
+    return () => {
+      clearTimeout(readyTimer);
+      stepTimers.forEach(clearTimeout);
+    };
+  }, [loaderDone]);
 
   // Short, smooth Airship Express loading animation (~1.0s total)
   useEffect(() => {
@@ -475,7 +562,12 @@ export default function WelcomeIntro({ onComplete }) {
 
         {/* Floating Decorative UI Card - Left (Desktop XL) */}
         <div
-          className="pointer-events-none absolute top-14 left-6 hidden w-52 -rotate-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] xl:block"
+          className={`pointer-events-none absolute top-14 left-6 hidden w-52 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
+            heroReady
+              ? "translate-x-0 translate-y-0 -rotate-3 scale-100 opacity-100"
+              : "-translate-x-16 translate-y-8 -rotate-6 scale-95 opacity-0"
+          }`}
+          style={{ transitionDelay: "480ms" }}
           aria-hidden="true"
         >
           <div className="mb-3 flex items-center gap-1.5">
@@ -496,7 +588,12 @@ export default function WelcomeIntro({ onComplete }) {
 
         {/* Floating Decorative UI Card - Bottom Right (Desktop XL) */}
         <div
-          className="pointer-events-none absolute right-8 bottom-12 hidden w-56 rotate-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] xl:block"
+          className={`pointer-events-none absolute right-8 bottom-12 hidden w-56 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)] transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] xl:block ${
+            heroReady
+              ? "translate-x-0 translate-y-0 rotate-2 scale-100 opacity-100"
+              : "translate-x-16 translate-y-8 rotate-6 scale-95 opacity-0"
+          }`}
+          style={{ transitionDelay: "620ms" }}
           aria-hidden="true"
         >
           <div className="mb-2.5 flex items-center gap-1.5">
@@ -515,15 +612,29 @@ export default function WelcomeIntro({ onComplete }) {
 
         <div className="relative z-10 mx-auto max-w-5xl px-4 text-center sm:px-8">
           {/* Top Pill Tag */}
-          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm sm:px-4 sm:text-xs">
+          <div
+            className={`inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 py-1.5 text-[11px] font-semibold text-slate-600 shadow-sm transition-all duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:px-4 sm:text-xs ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-5 scale-95 opacity-0"
+            }`}
+          >
             <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
             <span className="truncate">For online sellers, hub coordinators &amp; SPX Express riders</span>
           </div>
 
           {/* Main Airship Express–Style Headline with Inline Pill */}
-          <h1 className="mt-5 text-3xl font-black leading-[1.16] tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1
+            className={`mt-5 text-3xl font-black leading-[1.16] tracking-tight text-slate-900 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-5xl lg:text-6xl ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-8 scale-[0.96] opacity-0"
+            }`}
+            style={{ transitionDelay: "140ms" }}
+          >
             <span>We Verify &amp; Deliver </span>
-            <span className="mx-1 inline-flex -translate-y-0.5 items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xl font-extrabold text-white shadow-lg shadow-orange-500/25 sm:mx-1.5 sm:-translate-y-1 sm:gap-2 sm:px-6 sm:py-2 sm:text-3xl lg:text-4xl">
+            <span
+              className={`mx-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xl font-extrabold text-white shadow-lg shadow-orange-500/25 transition-all duration-[900ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:mx-1.5 sm:gap-2 sm:px-6 sm:py-2 sm:text-3xl lg:text-4xl ${
+                heroReady ? "-translate-y-0.5 scale-100 opacity-100 sm:-translate-y-1" : "translate-y-3 scale-75 opacity-0"
+              }`}
+              style={{ transitionDelay: "360ms" }}
+            >
               <i className="fa-regular fa-clock text-base sm:text-2xl lg:text-3xl" />
               <span>On-Time</span>
             </span>
@@ -531,25 +642,35 @@ export default function WelcomeIntro({ onComplete }) {
           </h1>
 
           {/* Supporting Description */}
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 sm:mt-6 sm:text-lg">
+          <p
+            className={`mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-6 sm:text-lg ${
+              heroReady ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+            }`}
+            style={{ transitionDelay: "300ms" }}
+          >
             LogiSync gets your parcels where they need to go quickly and securely—combining pre-dispatch video
             verification, QR code scanning, and real-time rider coordination every step of the way.
           </p>
 
           {/* Hero CTA Buttons (Full-width stacked on small mobile, side-by-side on sm+) */}
-          <div className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:items-center sm:gap-4">
+          <div
+            className={`mt-7 flex flex-col items-stretch justify-center gap-3 transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:flex-row sm:items-center sm:gap-4 ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-95 opacity-0"
+            }`}
+            style={{ transitionDelay: "460ms" }}
+          >
             <button
               type="button"
               onClick={handleGoToSignIn}
-              className="inline-flex items-center justify-center gap-2.5 rounded-full bg-brand px-8 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-500/30 transition hover:bg-brand-dark active:scale-[0.98] sm:py-4 sm:text-base"
+              className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-brand px-8 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-xl hover:shadow-orange-500/35 active:scale-[0.98] sm:py-4 sm:text-base"
             >
               <span>Let&apos;s Get Started</span>
-              <i className="fa-solid fa-arrow-right text-xs" />
+              <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1" />
             </button>
             <a
               href="#verification"
               onClick={(e) => scrollToSection(e, "#verification")}
-              className="inline-flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-brand hover:text-brand sm:py-4 sm:text-base"
+              className="inline-flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand hover:text-brand sm:py-4 sm:text-base"
             >
               <i className="fa-solid fa-location-dot text-brand" />
               <span>How LogiSync Works</span>
@@ -557,31 +678,50 @@ export default function WelcomeIntro({ onComplete }) {
           </div>
 
           {/* 4-Step Horizontal Connected Tracker Card */}
-          <div className="mx-auto mt-10 max-w-3xl rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.07)] sm:mt-12 sm:px-10 sm:py-7">
+          <div
+            className={`mx-auto mt-10 max-w-3xl rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.07)] transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-12 sm:px-10 sm:py-7 ${
+              heroReady ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.97] opacity-0"
+            }`}
+            style={{ transitionDelay: "560ms" }}
+          >
             <div className="grid grid-cols-2 gap-5 sm:grid-cols-4 sm:gap-4">
-              {HERO_STEPS.map((s, idx) => (
-                <div key={s.label} className="relative flex flex-col items-center text-center">
-                  {idx < HERO_STEPS.length - 1 && (
-                    <div
-                      className="pointer-events-none absolute top-6 left-[62%] hidden h-[2px] w-[76%] bg-slate-200 sm:block"
-                      aria-hidden="true"
-                    />
-                  )}
+              {HERO_STEPS.map((s, idx) => {
+                const stepVisible = heroStepReveal >= idx;
+                return (
                   <div
-                    className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full text-sm shadow-md transition sm:h-12 sm:w-12 sm:text-base ${
-                      s.active
-                        ? "bg-brand text-white ring-4 ring-orange-100"
-                        : "bg-slate-900 text-white"
+                    key={s.label}
+                    className={`relative flex flex-col items-center text-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      stepVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                     }`}
                   >
-                    <i className={`fa-solid ${s.icon}`} />
+                    {idx < HERO_STEPS.length - 1 && (
+                      <div
+                        className="pointer-events-none absolute top-6 left-[62%] hidden h-[2.5px] w-[76%] overflow-hidden rounded-full bg-slate-200 sm:block"
+                        aria-hidden="true"
+                      >
+                        <div
+                          className={`h-full origin-left bg-gradient-to-r from-brand to-orange-400 transition-transform duration-700 ease-out ${
+                            heroStepReveal > idx ? "scale-x-100" : "scale-x-0"
+                          }`}
+                        />
+                      </div>
+                    )}
+                    <div
+                      className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full text-sm shadow-md transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] sm:h-12 sm:w-12 sm:text-base ${
+                        s.active
+                          ? "bg-brand text-white ring-4 ring-orange-100"
+                          : "bg-slate-900 text-white"
+                      } ${stepVisible ? "scale-100" : "scale-50"}`}
+                    >
+                      <i className={`fa-solid ${s.icon}`} />
+                    </div>
+                    <span className="mt-2.5 text-xs font-extrabold text-slate-900 sm:mt-3 sm:text-sm">
+                      {s.label}
+                    </span>
+                    <span className="mt-0.5 text-[11px] leading-tight text-slate-400">{s.sub}</span>
                   </div>
-                  <span className="mt-2.5 text-xs font-extrabold text-slate-900 sm:mt-3 sm:text-sm">
-                    {s.label}
-                  </span>
-                  <span className="mt-0.5 text-[11px] leading-tight text-slate-400">{s.sub}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -592,12 +732,19 @@ export default function WelcomeIntro({ onComplete }) {
         <div className="mx-auto max-w-7xl px-4 sm:px-8">
           {/* Row 1: Haulx PH Asymmetric Split */}
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-14">
-            <div className="lg:col-span-6">
+            <div
+              ref={aboutPhotoRef}
+              className={`lg:col-span-6 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                aboutPhotoShown ? "translate-x-0 scale-100 opacity-100" : "-translate-x-12 scale-[0.96] opacity-0"
+              }`}
+            >
               <div className="relative overflow-hidden rounded-[24px] bg-slate-900 shadow-2xl sm:rounded-[28px]">
                 <img
                   src="/images/spx-truck-road.jpg"
                   alt="SPX Express delivery truck on the road"
-                  className="aspect-[4/3] w-full object-cover object-center transition duration-500 hover:scale-[1.02]"
+                  className={`aspect-[4/3] w-full object-cover object-center transition-transform duration-[1300ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] ${
+                    aboutPhotoShown ? "scale-100" : "scale-110"
+                  }`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2 text-white sm:bottom-5 sm:left-5 sm:right-5">
@@ -616,7 +763,13 @@ export default function WelcomeIntro({ onComplete }) {
               </div>
             </div>
 
-            <div className="lg:col-span-6">
+            <div
+              ref={aboutTextRef}
+              className={`lg:col-span-6 transition-all duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                aboutTextShown ? "translate-x-0 opacity-100" : "translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "160ms" }}
+            >
               <div className="mb-3 flex items-center gap-3">
                 <span className="h-1 w-10 rounded-full bg-brand sm:w-12" />
                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 sm:text-xs">
@@ -645,17 +798,22 @@ export default function WelcomeIntro({ onComplete }) {
               </p>
 
               {/* Key Metrics */}
-              <div className="mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-sm sm:mt-8 sm:gap-4 sm:p-5 sm:text-left">
+              <div
+                ref={aboutMetricsRef}
+                className={`mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-sm transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:gap-4 sm:p-5 sm:text-left ${
+                  aboutMetricsShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-6 scale-[0.97] opacity-0"
+                }`}
+              >
                 <div>
-                  <div className="text-xl font-black text-brand sm:text-3xl">100%</div>
+                  <div className="text-xl font-black text-brand sm:text-3xl">{pctCount}%</div>
                   <div className="mt-0.5 text-[11px] font-bold text-slate-500 sm:text-xs">QR &amp; Video Verified</div>
                 </div>
                 <div className="border-x border-slate-100 px-2 sm:px-4">
-                  <div className="text-xl font-black text-slate-900 sm:text-3xl">3-Day</div>
+                  <div className="text-xl font-black text-slate-900 sm:text-3xl">{daysCount}-Day</div>
                   <div className="mt-0.5 text-[11px] font-bold text-slate-500 sm:text-xs">Reschedule Limit</div>
                 </div>
                 <div>
-                  <div className="text-xl font-black text-brand sm:text-3xl">3 Roles</div>
+                  <div className="text-xl font-black text-brand sm:text-3xl">{rolesCount} Roles</div>
                   <div className="mt-0.5 text-[11px] font-bold text-slate-500 sm:text-xs">Seller • Hub • Rider</div>
                 </div>
               </div>
@@ -773,7 +931,12 @@ export default function WelcomeIntro({ onComplete }) {
           </div>
 
           {/* AP Cargo–Style Waybill Verification Preview Box */}
-          <div className="mx-auto mt-7 max-w-2xl rounded-3xl bg-white p-4 text-left text-slate-900 shadow-2xl sm:mt-8 sm:p-6">
+          <div
+            ref={waybillRef}
+            className={`mx-auto mt-7 max-w-2xl rounded-3xl bg-white p-4 text-left text-slate-900 shadow-2xl transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] sm:mt-8 sm:p-6 ${
+              waybillShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-[0.96] opacity-0"
+            }`}
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                 <i className="fa-solid fa-barcode text-lg text-brand" />
@@ -804,7 +967,7 @@ export default function WelcomeIntro({ onComplete }) {
                 <span>The transaction number &amp; QR code are located on the upper-right of your LogiSync Waybill.</span>
               </span>
               {demoTracked && (
-                <span className="inline-flex items-center gap-1.5 font-bold text-emerald-600">
+                <span className="inline-flex animate-popup items-center gap-1.5 font-bold text-emerald-600">
                   <i className="fa-solid fa-circle-check shrink-0" />
                   <span>Verified at SPX Hub • Ready for Rider Dispatch</span>
                 </span>
@@ -813,26 +976,51 @@ export default function WelcomeIntro({ onComplete }) {
           </div>
 
           {/* 3 Large SPX Express Service Photo Cards */}
-          <div className="mt-10 grid grid-cols-1 gap-6 text-left sm:mt-12 md:grid-cols-3">
-            {SERVICES_CARDS.map((card) => (
+          <div ref={servicesGridRef} className="mt-10 grid grid-cols-1 gap-6 text-left sm:mt-12 md:grid-cols-3">
+            {SERVICES_CARDS.map((card, idx) => (
               <div
                 key={card.title}
-                className="group overflow-hidden rounded-3xl bg-white text-slate-900 shadow-xl transition duration-300 hover:-translate-y-1"
+                onClick={handleGoToSignIn}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleGoToSignIn();
+                  }
+                }}
+                style={{ transitionDelay: `${idx * 220}ms` }}
+                className={`group flex cursor-pointer flex-col overflow-hidden rounded-3xl bg-white text-slate-900 shadow-xl transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:shadow-2xl ${
+                  servicesGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-[0.94] opacity-0"
+                }`}
               >
                 <div className="relative h-52 w-full overflow-hidden bg-slate-900 sm:h-56">
                   <img
                     src={card.image}
                     alt={card.title}
-                    className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
+                    style={{ transitionDelay: `${idx * 220}ms` }}
+                    className={`h-full w-full object-cover object-center transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 ${
+                      servicesGridShown ? "scale-100" : "scale-110"
+                    }`}
                   />
                   <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-sm">
                     <i className={`fa-solid ${card.icon} text-brand`} />
                     {card.category}
                   </span>
                 </div>
-                <div className="p-5 sm:p-6">
-                  <h3 className="text-lg font-extrabold text-slate-900">{card.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{card.description}</p>
+                <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
+                  <div>
+                    <h3 className="text-lg font-extrabold text-slate-900">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{card.description}</p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between pt-2">
+                    <span className="text-xs font-bold text-slate-400 transition-colors group-hover:text-brand">
+                      Explore portal
+                    </span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
+                      <i className="fa-solid fa-arrow-right -rotate-45 text-xs transition-transform duration-300 group-hover:rotate-0" />
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -856,20 +1044,43 @@ export default function WelcomeIntro({ onComplete }) {
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:mt-12 sm:gap-8 lg:grid-cols-3">
-            {VERIFICATION_STEPS.map((item) => (
+          <div ref={workflowGridRef} className="relative mt-10 grid grid-cols-1 gap-6 sm:mt-12 sm:gap-8 lg:grid-cols-3">
+            {/* One-time animated route line behind the 3 workflow cards on desktop */}
+            <div
+              className="pointer-events-none absolute top-26 right-[16%] left-[16%] hidden h-[3px] overflow-hidden rounded-full bg-slate-100 lg:block"
+              aria-hidden="true"
+            >
+              <div
+                className={`h-full origin-left bg-gradient-to-r from-brand via-orange-400 to-brand transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  workflowGridShown ? "scale-x-100" : "scale-x-0"
+                }`}
+              />
+            </div>
+
+            {VERIFICATION_STEPS.map((item, idx) => (
               <div
                 key={item.step}
-                className="flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition hover:shadow-md"
+                style={{ transitionDelay: `${idx * 220}ms` }}
+                className={`relative z-10 flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-[#f8fafc] shadow-sm transition-all duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-lg ${
+                  workflowGridShown ? "translate-y-0 scale-100 opacity-100" : "translate-y-12 scale-[0.94] opacity-0"
+                }`}
               >
                 <div className="relative h-52 w-full overflow-hidden bg-slate-900">
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="h-full w-full object-cover object-center"
+                    style={{ transitionDelay: `${idx * 220}ms` }}
+                    className={`h-full w-full object-cover object-center transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      workflowGridShown ? "scale-100" : "scale-110"
+                    }`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent" />
-                  <span className="absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-sm font-black text-white shadow-md">
+                  <span
+                    style={{ transitionDelay: `${idx * 220 + 260}ms` }}
+                    className={`absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-brand text-sm font-black text-white shadow-md transition-transform duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+                      workflowGridShown ? "scale-100" : "scale-50"
+                    }`}
+                  >
                     {item.step}
                   </span>
                   <span className="absolute bottom-3 left-4 rounded-full bg-white/95 px-3 py-1 text-[11px] font-extrabold text-slate-900">
@@ -1004,11 +1215,17 @@ export default function WelcomeIntro({ onComplete }) {
                       <i className="fa-solid fa-chevron-down text-xs" />
                     </span>
                   </button>
-                  {isOpen && (
-                    <div className="border-t border-slate-200/60 px-5 pt-3.5 pb-5 text-sm leading-relaxed text-slate-600 sm:px-6 sm:pl-15">
-                      {item.answer}
+                  <div
+                    className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="border-t border-slate-200/60 px-5 pt-3.5 pb-5 text-sm leading-relaxed text-slate-600 sm:px-6 sm:pl-15">
+                        {item.answer}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

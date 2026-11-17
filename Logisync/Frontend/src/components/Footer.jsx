@@ -20,8 +20,8 @@ export default function Footer() {
   const col = "text-[13px] text-[#888] hover:text-brand";
 
   return (
-    <footer className="mt-10 max-[800px]:mt-5 w-full shrink-0 border-t border-[#e9e9e9] pt-6 max-[800px]:pt-4 print:hidden dark:border-night-line">
-      <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-5 max-[800px]:flex-col max-[800px]:gap-y-3">
+    <footer className="w-full shrink-0 border-t border-[#e9e9e9] pt-7 max-[800px]:pt-5 print:hidden dark:border-night-line">
+      <div className="flex flex-wrap items-start justify-between gap-x-12 gap-y-6 max-[800px]:flex-col max-[800px]:gap-y-3">
         <div className="max-w-[300px] max-[800px]:max-w-none">
           <div className="mb-2 max-[800px]:mb-1.5 flex items-center gap-3 max-[800px]:gap-2.5">
             <img
@@ -38,7 +38,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <nav className="flex flex-wrap gap-x-12 gap-y-5 max-[800px]:w-full" aria-label="Footer">
+        <nav className="flex flex-wrap items-start gap-x-14 gap-y-5 max-[800px]:w-full" aria-label="Footer">
           <div className="max-[800px]:hidden">
             <h4 className="mb-2 text-[12px] font-bold uppercase tracking-wide">{t("Quick Links")}</h4>
             <ul className="space-y-1.5">
@@ -58,11 +58,11 @@ export default function Footer() {
           <div className="max-[800px]:w-full">
             <h4 className="mb-2 text-[12px] font-bold uppercase tracking-wide max-[800px]:hidden">{t("Contact")}</h4>
             <ul className="space-y-1.5 text-[13px] text-[#888] max-[800px]:flex max-[800px]:flex-wrap max-[800px]:items-center max-[800px]:gap-x-5 max-[800px]:gap-y-1.5 max-[800px]:space-y-0 max-[800px]:text-[12px]">
-              <li className="inline-flex items-center gap-1.5">
+              <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
                 <i className="fa-solid fa-envelope w-4 text-center text-brand" />
                 <span>support@logisync.example</span>
               </li>
-              <li className="inline-flex items-center gap-1.5">
+              <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
                 <i className="fa-solid fa-phone w-4 text-center text-brand" />
                 <span>(02) 8123 4567</span>
               </li>

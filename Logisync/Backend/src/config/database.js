@@ -369,6 +369,23 @@ async function ensureSchema() {
       CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
       CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
 
+      DELETE FROM verification_records WHERE parcel_id IN (
+        SELECT parcel_id FROM parcels
+        WHERE transaction_number IS NULL
+           OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+           OR LENGTH(BTRIM(parcel_id)) > 10
+      );
+      DELETE FROM video_proofs WHERE parcel_id IN (
+        SELECT parcel_id FROM parcels
+        WHERE transaction_number IS NULL
+           OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+           OR LENGTH(BTRIM(parcel_id)) > 10
+      );
+      DELETE FROM parcels
+      WHERE transaction_number IS NULL
+         OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+         OR LENGTH(BTRIM(parcel_id)) > 10;
+
       CREATE OR REPLACE FUNCTION update_updated_at()
       RETURNS TRIGGER AS $$
       BEGIN

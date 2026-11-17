@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
-import { Notice, PanelTitle } from "../../components/portal.jsx";
+import { Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, panel } from "../../components/styles.js";
 import { createParcel, fetchSellerCustomers, listParcels } from "../../services/parcelService.js";
 import {
@@ -54,8 +54,18 @@ export default function CreateParcel() {
   const [apiError, setApiError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState(null);
-  const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
+  const [txnLookupMessage, setTxnLookupMessage] = useState("");
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!instructionsOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setInstructionsOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [instructionsOpen]);
 
   // Track customer auto-fill state
   const [matchedCustomer, setMatchedCustomer] = useState(null);
@@ -193,6 +203,8 @@ export default function CreateParcel() {
     }
 
     if (name === "transaction_number") {
+      setScanned(false);
+      setTxnLookupMessage("");
       setValues((v) => ({ ...v, transaction_number: nextValue }));
       if (existingTxns.has(nextValue)) {
         setErrors((er) => ({
@@ -340,22 +352,56 @@ export default function CreateParcel() {
     }
   };
 
-  const onScan = (text) => {
-    const rawTxn = parseTransactionNumber(text).toUpperCase();
-    setScanning(false);
+  const onLookUpTransaction = () => {
+    const rawTxn = parseTransactionNumber(values.transaction_number || "").toUpperCase();
     if (!rawTxn) {
-      setApiError("The QR code was empty. Try again or type the number.");
-      return;
-    }
-    if (!isValidTransactionNumber(rawTxn)) {
-      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow SPX123456789 (SPX followed by exactly 9 digits).`);
+      setTxnLookupMessage("");
       setErrors((er) => ({
         ...er,
-        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX123456789).`
+        transaction_number: "Enter a transaction number first (e.g. SPX272828381).",
+      }));
+      return;
+    }
+    setValues((v) => ({ ...v, transaction_number: rawTxn }));
+    if (!isValidTransactionNumber(rawTxn)) {
+      setTxnLookupMessage("");
+      setErrors((er) => ({
+        ...er,
+        transaction_number: `Invalid format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX272828381).`,
       }));
       return;
     }
     if (existingTxns.has(rawTxn)) {
+      setTxnLookupMessage("");
+      setErrors((er) => ({
+        ...er,
+        transaction_number: `You have already registered a parcel with this transaction number (${rawTxn}). Duplicate submissions are not allowed.`,
+      }));
+      return;
+    }
+    setErrors((er) => ({ ...er, transaction_number: undefined }));
+    setApiError("");
+    setTxnLookupMessage(`Transaction number ${rawTxn} is valid and ready to register.`);
+  };
+
+  const onScan = (text) => {
+    const rawTxn = parseTransactionNumber(text).toUpperCase();
+    if (!rawTxn) {
+      setTxnLookupMessage("");
+      setApiError("The QR code was empty. Try again or type the number.");
+      return;
+    }
+    if (!isValidTransactionNumber(rawTxn)) {
+      setTxnLookupMessage("");
+      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow SPX123456789 (SPX followed by exactly 9 digits).`);
+      setErrors((er) => ({
+        ...er,
+        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX272828381).`
+      }));
+      return;
+    }
+    if (existingTxns.has(rawTxn)) {
+      setTxnLookupMessage("");
       setApiError(`You have already registered a parcel with this transaction number (${rawTxn}).`);
       setErrors((er) => ({
         ...er,
@@ -366,12 +412,13 @@ export default function CreateParcel() {
     setValues((v) => ({ ...v, transaction_number: rawTxn }));
     setErrors((er) => ({ ...er, transaction_number: undefined }));
     setApiError("");
+    setTxnLookupMessage("");
     setScanned(true);
   };
 
   const reset = () => {
-    setScanning(false);
     setScanned(false);
+    setTxnLookupMessage("");
     setMatchedCustomer(null);
     setSuggestOpen(false);
     setCategoryOpen(false);
@@ -396,7 +443,7 @@ export default function CreateParcel() {
     matchedCustomer?.contact && values.receiver_contact === matchedCustomer.contact;
 
   return (
-    <>
+    <div className="w-full">
       <Topbar
         title="Create Parcel"
         subtitle="Register a parcel so the coordinator can verify it. The system generates the parcel ID."
@@ -405,63 +452,115 @@ export default function CreateParcel() {
       {created ? (
         <ParcelCreated parcel={created} onReset={reset} />
       ) : (
-        <div className="grid grid-cols-[1.6fr_1fr] items-start gap-6 max-[1100px]:grid-cols-1">
-          <form onSubmit={onSubmit} noValidate className={`${panel} space-y-5 p-[30px] max-[600px]:p-5`}>
-            <PanelTitle icon="fa-square-plus">Parcel Details</PanelTitle>
+        <form onSubmit={onSubmit} noValidate className={`${panel} w-full shadow-sm dark:shadow-none`}>
+          {/* Parcel Details Card Header (with Instructions button aligned on the right) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-2xl border-b border-[#f3e4da] bg-[#fff5ee] px-6 py-3.5 dark:border-night-line dark:bg-night-head max-[600px]:px-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand text-[12px] text-white">
+                <i className="fa-solid fa-plus" />
+              </span>
+              <h2 className="text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                Parcel Details
+              </h2>
+            </div>
+            <div className="flex items-center gap-2.5">
+              {scanned && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
+                  <i className="fa-solid fa-circle-check text-[10px]" /> QR Scanned
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setInstructionsOpen(true)}
+                className={`${btnGhost} !border-[#f1d5c4] !bg-[#fffaf7] !px-3 !py-1.5 !text-[12.5px] !text-brand shadow-xs hover:!border-brand hover:!bg-[#fff2ea] dark:!border-night-line dark:!bg-night-head dark:!text-[#ffb58a]`}
+              >
+                <i className="fa-regular fa-circle-question text-brand" /> Instructions
+              </button>
+            </div>
+          </div>
 
+          <div className="space-y-5 p-6 max-[600px]:p-4">
             {apiError && (
               <Notice tone="error" icon="fa-circle-exclamation" role="alert">
                 {apiError}
               </Notice>
             )}
 
-            {/* QR Scanner bar */}
-            <div className="rounded-xl border border-dashed border-[#e0d3ca] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-[14px]">
-                  <i
-                    className={`fa-solid ${
-                      scanned ? "fa-circle-check text-[#29945a]" : "fa-qrcode text-brand"
-                    } mr-2`}
+            {/* Centered 360x360 Cube QR Scanner & Manual Transaction Number Lookup (Matching ScanPanel Format) */}
+            <div className="border-b border-[#f1f1f1] pb-6 dark:border-night-line">
+              <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-5">
+                <div className="w-full">
+                  <QrScanner
+                    onScan={onScan}
+                    startLabel="Scan with camera"
                   />
-                  {scanned
-                    ? "Transaction number scanned from the QR code."
-                    : "Scan with camera, upload a QR image from your device, or type below."}
-                </p>
-                <button type="button" onClick={() => setScanning((v) => !v)} className={btnGhost}>
-                  {scanning ? "Close scanner" : scanned ? "Scan again" : "Open scanner"}
-                </button>
-              </div>
-              {scanning && (
-                <div className="mt-4">
-                  <QrScanner onScan={onScan} />
                 </div>
-              )}
-            </div>
 
-            {/* 1. Transaction Number */}
-            <div className="relative">
-              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                <label htmlFor="transaction_number" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                  Transaction number <span className="text-brand">*</span>
-                </label>
+                {/* "OR ENTER MANUALLY" Divider */}
+                <div className="relative flex w-full items-center py-0.5">
+                  <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+                  <span className="mx-3 shrink-0 rounded-full bg-[#f8fafc] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#94a3b8] dark:bg-night-head dark:text-[#8b837d]">
+                    Or enter manually
+                  </span>
+                  <div className="flex-grow border-t border-[#eaeaea] dark:border-night-line" />
+                </div>
+
+                <div className="w-full">
+                  <div className="mb-2.5 text-center">
+                    <p className="text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                      Can&apos;t scan? Type it instead
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-[#888] dark:text-[#b8b0a8]">
+                      Enter the transaction number printed on the parcel.
+                    </p>
+                  </div>
+
+                  <label htmlFor="transaction_number" className="sr-only">
+                    Transaction number
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
+                      <input
+                        id="transaction_number"
+                        name="transaction_number"
+                        type="text"
+                        value={values.transaction_number}
+                        onChange={onChange}
+                        placeholder="Transaction number..."
+                        maxLength={12}
+                        aria-invalid={!!errors.transaction_number}
+                        className={`${inputCls} pl-7 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onLookUpTransaction}
+                      className="h-[42px] shrink-0 rounded-lg bg-brand px-4 text-[13px] font-bold text-white transition hover:bg-brand-dark"
+                    >
+                      Look up
+                    </button>
+                  </div>
+                  {(errors.transaction_number || scanned || txnLookupMessage) && (
+                    <p
+                      className={`mt-2 text-center text-[12px] font-medium ${
+                        errors.transaction_number
+                          ? "text-[#d94747]"
+                          : "text-[#1f7f4a] dark:text-[#8fd6ae]"
+                      }`}
+                    >
+                      {errors.transaction_number ||
+                        (scanned
+                          ? `Transaction number ${values.transaction_number} scanned from QR code.`
+                          : txnLookupMessage)}
+                    </p>
+                  )}
+                </div>
               </div>
-              <input
-                id="transaction_number"
-                name="transaction_number"
-                type="text"
-                value={values.transaction_number}
-                onChange={onChange}
-                placeholder="e.g. SPX123456789"
-                maxLength={12}
-                aria-invalid={!!errors.transaction_number}
-                className={`${inputCls} font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
-              />
-              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.transaction_number ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.transaction_number || "Format: SPX followed by 9 digits (e.g. SPX123456789). Numbers only after SPX."}
-              </p>
             </div>
 
+            {/* Receiver Name & Contact Number side by side */}
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
             {/* 2. Customer / Receiver Name with Autocomplete */}
             <div ref={nameWrapRef} className="relative">
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -603,6 +702,7 @@ export default function CreateParcel() {
                 {errors.receiver_contact || "Enter an 11-digit mobile number starting with 09 (numbers only)."}
               </p>
             </div>
+            </div>
 
             {/* 4. Structured Delivery Address Section */}
             <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm space-y-4 dark:border-night-line dark:bg-night-panel">
@@ -616,7 +716,7 @@ export default function CreateParcel() {
                       Customer / Receiver Delivery Address
                     </h3>
                     <p className="text-[12px] text-slate-500 dark:text-slate-400">
-                      Covering Trece Martires City, Cavite Service Hub. Each address field is arranged vertically.
+                      Covering Trece Martires City, Cavite Service Hub.
                     </p>
                   </div>
                 </div>
@@ -627,8 +727,8 @@ export default function CreateParcel() {
                 )}
               </div>
 
-              {/* Vertical Stack: One field per row */}
               <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 {/* 1. Province (Pre-filled / Read-only) */}
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
@@ -686,7 +786,10 @@ export default function CreateParcel() {
                     Automatically set to Trece Martires City (service hub coverage area).
                   </p>
                 </div>
+                </div>
 
+                {/* 3 & 4. Barangay and House/Unit + Street side by side */}
+                <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-2">
                 {/* 3. Barangay (Autocomplete dropdown strictly containing Trece Martires City barangays) */}
                 <div ref={barangayWrapRef} className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
@@ -815,6 +918,7 @@ export default function CreateParcel() {
                     {errors.receiver_street || "Enter the complete house or unit number, building, subdivision, and street name."}
                   </p>
                 </div>
+                </div>
               </div>
 
               {/* Complete Delivery Address Preview Box */}
@@ -846,6 +950,8 @@ export default function CreateParcel() {
               </div>
             </div>
 
+            {/* 5 & 6. Item Description & Content Category side by side */}
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
             {/* 5. Parcel Item Description / Contents */}
             <div className="relative">
               <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -870,22 +976,7 @@ export default function CreateParcel() {
             </div>
 
             {/* 6. Parcel Content Category Declaration */}
-            <div className="space-y-4 rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-5 dark:border-night-line dark:bg-night-head">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <strong className="flex items-center gap-2 text-[14.5px] text-[#27364f] dark:text-[#f1eeeb]">
-                    <i className="fa-solid fa-clipboard-list text-brand" />
-                    Parcel Content Category Declaration
-                  </strong>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">
-                    Select the actual category of the parcel contents. Accurate declaration is required for Coordinator verification.
-                  </p>
-                </div>
-                <span className="rounded-full bg-[#fff0df] px-2.5 py-0.5 text-[11px] font-semibold text-[#a84d0b] dark:bg-brand/20 dark:text-[#ffb58a]">
-                  Required
-                </span>
-              </div>
-
+            <div className="space-y-3">
               <div ref={categoryWrapRef} className="relative">
                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                   <label
@@ -893,7 +984,7 @@ export default function CreateParcel() {
                     htmlFor="content_category"
                     className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]"
                   >
-                    Declared content category <span className="text-brand">*</span>
+                    Parcel content category declaration <span className="text-brand">*</span>
                   </label>
                 </div>
 
@@ -1008,133 +1099,104 @@ export default function CreateParcel() {
                   </p>
                 </div>
               )}
-
-              {/* Discreet Handling Option */}
-              {canRequestDiscreet && (
-                <div className="space-y-3 border-t border-[#eadfd8] pt-4 dark:border-night-line">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                        Does this parcel require discreet handling?
-                      </span>
-                      <small className="text-[12px] text-[#777] dark:text-[#b8b0a8]">
-                        Discreet handling masks sensitive item descriptions on rider delivery views after Coordinator approval.
-                      </small>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setDiscreetOption(false)}
-                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
-                        !values.discrete_item
-                          ? "bg-slate-700 text-white shadow-sm dark:bg-slate-600"
-                          : "border border-[#e0d3ca] bg-white text-[#666] hover:bg-[#fff6ef] dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
-                      }`}
-                    >
-                      <i className="fa-solid fa-box" /> No (Standard)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDiscreetOption(true)}
-                      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
-                        values.discrete_item
-                          ? "bg-brand text-white shadow-sm"
-                          : "border border-[#e0d3ca] bg-white text-[#666] hover:bg-[#fff6ef] dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
-                      }`}
-                    >
-                      <i className="fa-solid fa-user-shield" /> Yes (Discreet)
-                    </button>
-                  </div>
-
-                  {values.discrete_item && (
-                    <div className="space-y-3 rounded-xl border border-brand/30 bg-[#fff5ee] p-4 animate-popup dark:border-brand/40 dark:bg-brand/10">
-                      <div>
-                        <label htmlFor="discreet_reason" className="block text-[12px] font-bold text-brand">
-                          Reason for requesting discreet handling <span className="text-brand">*</span>
-                        </label>
-                        <p className="mt-0.5 text-[11.5px] text-[#888] dark:text-[#c4b9b0]">
-                          Explain why this parcel requires recipient privacy (e.g. personal health/intimate product, surprise gift). Vague or evasive answers will be rejected by the Coordinator.
-                        </p>
-                      </div>
-
-                      <textarea
-                        id="discreet_reason"
-                        name="discreet_reason"
-                        rows={3}
-                        value={values.discreet_reason}
-                        onChange={onChange}
-                        placeholder="e.g. Contains sensitive personal health/intimate hygiene items. Recipient requested discrete packaging and masked descriptions on delivery."
-                        maxLength={500}
-                        aria-invalid={!!errors.discreet_reason}
-                        className={`w-full rounded-xl border bg-white p-3 text-[13px] text-ink outline-none transition focus:border-brand focus:ring-[3px] focus:ring-brand/10 dark:bg-night-head dark:text-[#f1eeeb] ${
-                          errors.discreet_reason ? "!border-[#d94747]" : "border-brand/30 dark:border-night-line"
-                        }`}
-                      />
-
-                      <div className="flex items-center justify-between text-[11px] text-[#999]">
-                        <span className={errors.discreet_reason ? "text-[#d94747] font-semibold" : ""}>
-                          {errors.discreet_reason || "Minimum 10 characters required."}
-                        </span>
-                        <span>{values.discreet_reason.length}/500</span>
-                      </div>
-
-                      <div className="rounded-lg border border-amber-300/80 bg-amber-50 p-2.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                        <i className="fa-solid fa-shield-halved mr-1.5 text-amber-600" />
-                        <strong>Coordinator Inspection Notice:</strong> Discreet handling only masks item names from rider view. You must still provide a complete packaging video proof. If contents conflict with the declaration, the parcel will be rejected.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            </div>
             </div>
 
-            {/* Payment Method Selector (COD Indicator Only - No Payment Processing / Amount) */}
-            <div className="rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            {/* 7. Discreet Handling Section */}
+            <div className="space-y-3 border-t border-[#f1f1f1] pt-4 dark:border-night-line">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <strong className="text-[14px] text-[#27364f] dark:text-[#f1eeeb] flex items-center gap-1.5">
-                    <i className="fa-solid fa-money-bill-wave text-brand" />
-                    Payment Method Tag
-                  </strong>
-                  <p className="text-[12px] text-[#777] dark:text-[#b8b0a8] mt-0.5">
-                    Identify whether this parcel is Cash on Delivery (COD) or Non-COD (Prepaid).
-                  </p>
+                  <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Discreet Handling Requested
+                  </span>
+                  <small className="text-[12px] text-[#777] dark:text-[#b8b0a8]">
+                    {canRequestDiscreet
+                      ? "Discreet handling masks sensitive item descriptions on rider delivery views after Coordinator approval."
+                      : "Available for Clothing and Accessories or Personal / Intimate Products categories."}
+                  </small>
                 </div>
-                <span className="text-[11px] font-bold text-[#ea580c] bg-[#fff0e5] px-2 py-0.5 rounded border border-[#ffcca8]">
-                  Identification Only
-                </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setValues((v) => ({ ...v, is_cod: false, payment_method: "NON_COD" }))}
-                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
-                    !values.is_cod
-                      ? "bg-brand text-white border-brand shadow-sm"
-                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
+                  onClick={() => setDiscreetOption(false)}
+                  aria-pressed={!values.discrete_item}
+                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition ${
+                    !values.discrete_item
+                      ? "border border-brand bg-[#fff5ee] text-brand dark:bg-brand/15 dark:text-[#ffb58a]"
+                      : "border border-[#e5e5e5] bg-white text-[#666] hover:border-brand/50 dark:border-night-line dark:bg-night-head dark:text-[#d1c9c2]"
                   }`}
                 >
-                  <i className="fa-solid fa-credit-card" /> Non-COD (Prepaid)
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                      !values.discrete_item ? "border-brand bg-brand text-white" : "border-[#ccc]"
+                    }`}
+                  >
+                    {!values.discrete_item && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                  </span>
+                  No
                 </button>
-
                 <button
                   type="button"
-                  onClick={() => setValues((v) => ({ ...v, is_cod: true, payment_method: "COD" }))}
-                  className={`flex items-center justify-center gap-2 rounded-xl py-2.5 px-3 text-[13px] font-bold border transition ${
-                    values.is_cod
-                      ? "bg-[#ea580c] text-white border-[#ea580c] shadow-sm"
-                      : "bg-white text-[#666] border-[#e0d3ca] hover:bg-[#fff6ef] dark:bg-night-panel dark:text-[#d1c9c2] dark:border-night-line"
+                  disabled={!canRequestDiscreet}
+                  onClick={() => canRequestDiscreet && setDiscreetOption(true)}
+                  aria-pressed={values.discrete_item}
+                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    values.discrete_item
+                      ? "border border-brand bg-brand text-white shadow-sm"
+                      : "border border-[#e5e5e5] bg-white text-[#666] hover:border-brand/50 dark:border-night-line dark:bg-night-head dark:text-[#d1c9c2]"
                   }`}
                 >
-                  <i className="fa-solid fa-hand-holding-dollar" /> Cash on Delivery (COD)
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                      values.discrete_item ? "border-white bg-white text-brand" : "border-[#ccc]"
+                    }`}
+                  >
+                    {values.discrete_item && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
+                  </span>
+                  Yes
                 </button>
               </div>
-              <small className="block mt-2 text-[11px] text-[#999]">
-                Riders verify exact COD amounts directly in the Shopee app. No payment amounts are handled inside LogiSync.
-              </small>
+
+              {canRequestDiscreet && values.discrete_item && (
+                <div className="space-y-3 rounded-xl border border-brand/30 bg-[#fff5ee] p-4 animate-popup dark:border-brand/40 dark:bg-brand/10">
+                  <div>
+                    <label htmlFor="discreet_reason" className="block text-[12px] font-bold text-brand">
+                      Reason for requesting discreet handling <span className="text-brand">*</span>
+                    </label>
+                    <p className="mt-0.5 text-[11.5px] text-[#888] dark:text-[#c4b9b0]">
+                      Explain why this parcel requires recipient privacy (e.g. personal health/intimate product, surprise gift). Vague or evasive answers will be rejected by the Coordinator.
+                    </p>
+                  </div>
+
+                  <textarea
+                    id="discreet_reason"
+                    name="discreet_reason"
+                    rows={3}
+                    value={values.discreet_reason}
+                    onChange={onChange}
+                    placeholder="e.g. Contains sensitive personal health/intimate hygiene items. Recipient requested discrete packaging and masked descriptions on delivery."
+                    maxLength={500}
+                    aria-invalid={!!errors.discreet_reason}
+                    className={`w-full rounded-xl border bg-white p-3 text-[13px] text-ink outline-none transition focus:border-brand focus:ring-[3px] focus:ring-brand/10 dark:bg-night-head dark:text-[#f1eeeb] ${
+                      errors.discreet_reason ? "!border-[#d94747]" : "border-brand/30 dark:border-night-line"
+                    }`}
+                  />
+
+                  <div className="flex items-center justify-between text-[11px] text-[#999]">
+                    <span className={errors.discreet_reason ? "text-[#d94747] font-semibold" : ""}>
+                      {errors.discreet_reason || "Minimum 10 characters required."}
+                    </span>
+                    <span>{values.discreet_reason.length}/500</span>
+                  </div>
+
+                  <div className="rounded-lg border border-amber-300/80 bg-amber-50 p-2.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                    <i className="fa-solid fa-shield-halved mr-1.5 text-amber-600" />
+                    <strong>Coordinator Inspection Notice:</strong> Discreet handling only masks item names from rider view. You must still provide a complete packaging video proof. If contents conflict with the declaration, the parcel will be rejected.
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Live Flag Warnings */}
@@ -1154,34 +1216,68 @@ export default function CreateParcel() {
 
             <button type="submit" disabled={submitting} className={`${btnPrimary} w-full py-3 text-[14px]`}>
               <i className="fa-solid fa-check" />
-              {submitting ? "Registering parcel..." : "Register parcel"}
+              {submitting ? "Registering parcel..." : "Register Parcel"}
             </button>
-          </form>
+          </div>
+        </form>
+      )}
 
-          {/* Right-hand Sidebar Steps Guide */}
-          <aside className="space-y-4">
-            <div className={`${panel} p-6`}>
-              <h2 className="mb-4 text-[15px] font-bold">How parcel creation works</h2>
-              <ol className="space-y-4">
-                {STEPS.map(([icon, title, desc], i) => (
-                  <li key={title} className="flex gap-3 text-[13px]">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <strong className="block text-[13.5px] leading-snug">
-                        <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
-                        {title}
-                      </strong>
-                      <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+      {/* Instructions Modal */}
+      {instructionsOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-parcel-instructions-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[1px]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setInstructionsOpen(false);
+          }}
+        >
+          <div className={`${panel} w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 shadow-2xl max-[600px]:p-5`}>
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#eee] pb-3 dark:border-night-line">
+              <h2 id="create-parcel-instructions-title" className="text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                <i className="fa-regular fa-circle-question mr-2 text-brand" />
+                How parcel creation works
+              </h2>
+              <button
+                type="button"
+                onClick={() => setInstructionsOpen(false)}
+                aria-label="Close instructions"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-[#777] transition hover:bg-[#f5f5f5] hover:text-[#222] dark:text-[#b8b0a8] dark:hover:bg-night-head dark:hover:text-white"
+              >
+                <i className="fa-solid fa-xmark text-base" />
+              </button>
             </div>
-          </aside>
+
+            <ol className="space-y-4">
+              {STEPS.map(([icon, title, desc], i) => (
+                <li key={title} className="flex gap-3 text-[13px]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft font-mono text-[12px] font-bold text-brand dark:bg-night-head">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <strong className="block text-[13.5px] leading-snug text-[#27364f] dark:text-[#f1eeeb]">
+                      <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
+                      {title}
+                    </strong>
+                    <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-5 flex justify-end border-t border-[#eee] pt-4 dark:border-night-line">
+              <button
+                type="button"
+                onClick={() => setInstructionsOpen(false)}
+                className={btnPrimary}
+              >
+                Got it
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

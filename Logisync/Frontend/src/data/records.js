@@ -24,66 +24,8 @@ export const sellers = [
   { id: "S-08", name: "Ben Ocampo", shop: "Gadget Hub", email: "ben@gadgethub.ph", phone: "0918 444 0208", status: "Active", joined: "Oct 10, 2026", initials: "BO", tone: "purple" },
 ];
 
-const recipients = [
-  "Juan Dela Cruz", "Mark Garcia", "Sofia Ramos", "Anna Lopez", "Daniel Tan", "Grace Villanueva", "Paul Mercado",
-  "Nina Castillo", "Joel Fernandez", "Trisha Domingo", "Ian Salvador", "Bea Aguilar", "Ron Pascual", "Mae Soriano",
-  "Vince Delos Reyes", "Kath Manalo", "Noel Padilla", "Hazel Cortez", "Ken Rivera", "Lyka Santiago",
-];
-const cities = ["Quezon City", "Makati", "Pasig", "Taguig", "Mandaluyong", "Caloocan", "Marikina", "Parañaque", "Las Piñas", "Manila"];
-const items = ["Wireless Earbuds", "Phone Case", "Kitchen Organizer", "Beauty Organizer", "Desk Lamp", "Storage Box", "Sneakers", "Backpack", "Power Bank", "Skincare Set", "Water Bottle", "Mini Fan"];
-
-// deterministic "random" para laging pareho ang data
-let seed = 7;
-const rnd = () => {
-  seed = (seed * 1664525 + 1013904223) % 4294967296;
-  return seed / 4294967296;
-};
-const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
-
-const statuses = [
-  ...Array(156).fill("In Transit"),
-  ...Array(82).fill("Delivered"),
-  ...Array(10).fill("Failed Delivery"),
-];
-for (let i = statuses.length - 1; i > 0; i--) {
-  const j = Math.floor(rnd() * (i + 1));
-  [statuses[i], statuses[j]] = [statuses[j], statuses[i]];
-}
-
-const pad = (n, l = 3) => String(n).padStart(l, "0");
-const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-export const parcels = statuses.map((status, i) => {
-  const n = i + 1;
-  const seller = sellers[i % 6]; // unang 6 lang ang may parcels (hindi pa approved ang iba)
-  const rider = riders[(i * 3 + 1) % riders.length];
-  const day = 27 - Math.floor((i / statuses.length) * 26); // Sep 27 → Sep 1
-  const date = new Date(2026, 8, day, 7 + Math.floor(rnd() * 11), Math.floor(rnd() * 60));
-  const verification =
-    status === "Failed Delivery" ? (rnd() > 0.5 ? "Flagged" : "Verified") : rnd() > 0.2 ? "Verified" : "Pending";
-  return {
-    id: `PT-${pad(n)}`,
-    seller: seller.name,
-    shop: seller.shop,
-    initials: seller.initials,
-    tone: seller.tone,
-    recipient: pick(recipients),
-    address: `${Math.floor(rnd() * 400) + 1} ${pick(["Rizal St.", "Mabini Ave.", "Bonifacio St.", "Luna St.", "Del Pilar St."])}, ${pick(cities)}`,
-    item: pick(items),
-    rider: rider.name,
-    amount: Math.round((200 + rnd() * 2800) / 10) * 10,
-    hours: Math.round((4 + rnd() * 44) * 10) / 10,
-    status,
-    verification,
-    iso: date.toISOString().slice(0, 10),
-    dateLabel: fmt(date),
-    ts: date.getTime(),
-  };
-});
+export const parcels = [];
 
 export const complaints = [];
 
-export const reportHistory = [
-  { id: "Report-2026-10-09-001", ts: new Date(2026, 9, 9, 14, 20).getTime(), name: "Delivered parcels", filters: "Status: Delivered · Sep 1 – Sep 27", rows: 82, by: "Coordinator", query: { status: "Delivered", seller: "All", rider: "All", from: "2026-09-01", to: "2026-09-27" } },
-  { id: "Report-2026-10-05-001", ts: new Date(2026, 9, 5, 9, 5).getTime(), name: "Failed deliveries", filters: "Status: Failed Delivery · Sep 1 – Sep 27", rows: 10, by: "Coordinator", query: { status: "Failed Delivery", seller: "All", rider: "All", from: "2026-09-01", to: "2026-09-27" } },
-];
+export const reportHistory = [];

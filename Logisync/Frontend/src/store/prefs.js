@@ -12,27 +12,51 @@ const legacyDark = (() => {
 const store = createStore(
   {
     dark: legacyDark,
+    themeMode: legacyDark ? "dark" : "light", // "light" | "dark" | "system"
     lang: "en", // "en" | "fil"
+    timeFormat: "auto", // "auto" | "12h" | "24h"
     fontSize: "md", // "sm" | "md" | "lg"
+    reducedMotion: false,
+    underlineLinks: false,
+    notificationsEnabled: true,
+    inAppPopups: true,
     sound: true,
+    soundVolume: 80,
+    soundParcel: true,
+    soundMessages: true,
+    soundAnnouncements: true,
+    soundScan: true,
     emailAlerts: false,
     notifyParcel: true,
     notifyRider: true,
     notifySeller: true,
     notifyVerification: true,
+    notifyMessages: true,
+    notifyAnnouncements: true,
   },
   "pt-prefs"
 );
 
-const zoomMap = { sm: "0.92", md: "1", lg: "1.1" };
+const fontSizeMap = { sm: "14px", md: "16px", lg: "18px" };
+
+function resolveDark(p) {
+  if (p.themeMode === "system" && typeof window !== "undefined" && window.matchMedia) {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  return Boolean(p.dark);
+}
 
 export function applyPrefs(p = store.get()) {
   const root = document.documentElement;
-  root.classList.toggle("dark", p.dark);
-  document.body.classList.toggle("dark", p.dark);
-  root.style.zoom = zoomMap[p.fontSize] || "1";
+  const isDark = resolveDark(p);
+  root.classList.toggle("dark", isDark);
+  document.body.classList.toggle("dark", isDark);
+  root.classList.toggle("reduced-motion", Boolean(p.reducedMotion));
+  root.classList.toggle("underline-links", Boolean(p.underlineLinks));
+  root.style.zoom = "";
+  root.style.fontSize = fontSizeMap[p.fontSize] || "16px";
   try {
-    localStorage.setItem("darkMode", p.dark ? "enabled" : "disabled");
+    localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
   } catch {
     /* ignore */
   }
@@ -41,10 +65,31 @@ export function applyPrefs(p = store.get()) {
 export const usePrefs = store.use;
 export const getPrefs = store.get;
 export const setPrefs = (patch) => {
-  store.set((s) => ({ ...s, ...patch }));
+  store.set((s) => {
+    const next = { ...s, ...patch };
+    if (patch.themeMode === "light") next.dark = false;
+    else if (patch.themeMode === "dark") next.dark = true;
+    else if (patch.themeMode === "system") next.dark = resolveDark(next);
+    return next;
+  });
   applyPrefs();
 };
-export const toggleDark = () => setPrefs({ dark: !store.get().dark });
+export const toggleDark = () => {
+  const nextDark = !resolveDark(store.get());
+  setPrefs({ dark: nextDark, themeMode: nextDark ? "dark" : "light" });
+};
+
+if (typeof window !== "undefined" && window.matchMedia) {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onChange = () => {
+    if (store.get().themeMode === "system") {
+      store.set((s) => ({ ...s, dark: mq.matches }));
+      applyPrefs();
+    }
+  };
+  if (mq.addEventListener) mq.addEventListener("change", onChange);
+  else if (mq.addListener) mq.addListener(onChange);
+}
 
 applyPrefs();
 

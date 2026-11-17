@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { markAllPortalRead, markPortalRead, usePortalNotifications } from "../../store/portalNotifications.js";
 import { timeAgo } from "../../store/notifications.js";
+import { usePrefs } from "../../store/prefs.js";
+import { notifyPopup } from "../../store/toast.js";
 import { toPath } from "./navConfig.js";
 
 const iconBtn =
@@ -12,9 +14,49 @@ const iconBtn =
 export default function NotificationMenu({ role }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const seenIdsRef = useRef(null);
   const navigate = useNavigate();
-  const { items, announcements, notifications, unread, reload } = usePortalNotifications(role);
+  const prefs = usePrefs();
+  const { items: rawItems, announcements: rawAnnouncements, notifications: rawNotifications, reload } = usePortalNotifications(role);
   useClickOutside(ref, () => setOpen(false), open);
+
+  const allowItem = (n, isAnnouncement = false) => {
+    if (isAnnouncement) return prefs.notifyAnnouncements !== false;
+    const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
+    if (txt.includes("message") || txt.includes("complaint") || txt.includes("reply")) return prefs.notifyMessages !== false;
+    if (txt.includes("video") || txt.includes("verif")) return prefs.notifyVerification !== false;
+    return prefs.notifyParcel !== false;
+  };
+
+  const announcements = useMemo(
+    () => rawAnnouncements.filter((n) => allowItem(n, true)),
+    [rawAnnouncements, prefs.notifyAnnouncements]
+  );
+  const notifications = useMemo(
+    () => rawNotifications.filter((n) => allowItem(n, false)),
+    [rawNotifications, prefs.notifyMessages, prefs.notifyVerification, prefs.notifyParcel]
+  );
+  const items = useMemo(() => [...announcements, ...notifications], [announcements, notifications]);
+  const unread = items.filter((n) => !n.read).length;
+
+  useEffect(() => {
+    const ids = new Set(items.map((n) => n.id));
+    if (seenIdsRef.current === null) {
+      seenIdsRef.current = ids;
+      return;
+    }
+    const fresh = items.filter((n) => !n.read && !seenIdsRef.current.has(n.id));
+    seenIdsRef.current = ids;
+    if (fresh.length > 0) {
+      const n = fresh[0];
+      notifyPopup({
+        title: n.title,
+        message: n.text,
+        icon: n.icon || "fa-bell",
+        to: n.to || toPath(role, "notifications"),
+      });
+    }
+  }, [items, role]);
 
   const go = (n) => {
     markPortalRead(n.id);

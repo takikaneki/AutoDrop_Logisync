@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
+import { usePrefs } from "../store/prefs.js";
+import { notifyPopup } from "../store/toast.js";
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#ff6818]",
@@ -20,8 +22,34 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("all");
   const wrapRef = useRef(null);
+  const seenIdsRef = useRef(null);
   const navigate = useNavigate();
-  const notifications = useNotifications();
+  const rawNotifications = useNotifications();
+  const prefs = usePrefs();
+
+  const notifications = useMemo(() => {
+    return rawNotifications.filter((n) => {
+      const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
+      if (n.kind === "announcement" || txt.includes("announcement")) return prefs.notifyAnnouncements !== false;
+      if (txt.includes("message") || txt.includes("complaint") || txt.includes("reply")) return prefs.notifyMessages !== false;
+      if (txt.includes("video") || txt.includes("verif")) return prefs.notifyVerification !== false;
+      return prefs.notifyParcel !== false;
+    });
+  }, [rawNotifications, prefs.notifyAnnouncements, prefs.notifyMessages, prefs.notifyVerification, prefs.notifyParcel]);
+
+  useEffect(() => {
+    const ids = new Set(notifications.map((n) => n.id));
+    if (seenIdsRef.current === null) {
+      seenIdsRef.current = ids;
+      return;
+    }
+    const fresh = notifications.filter((n) => !n.read && !seenIdsRef.current.has(n.id));
+    seenIdsRef.current = ids;
+    if (fresh.length > 0) {
+      const n = fresh[0];
+      notifyPopup({ title: n.title, message: n.text, icon: n.icon || "fa-bell", to: n.to || "/notifications" });
+    }
+  }, [notifications]);
 
   const unread = notifications.filter((n) => !n.read).length;
   const list = useMemo(

@@ -37,7 +37,12 @@ function resolveParcelAddress(parcel) {
 // Assigned -> (na-scan) To Be Delivered -> Rescheduled (max 3 days) -> Delivered / Return to Hub.
 // Naka-save sa browser (localStorage) para gumana kahit walang bagong backend endpoint.
 
-const store = createStore([], "pt-rider-deliveries");
+try {
+  localStorage.removeItem("pt-rider-deliveries");
+} catch {
+  /* ignore */
+}
+const store = createStore([], "pt-rider-deliveries-v2");
 const me = () => Number(getUser()?.user_id);
 
 function isSameRider(d, riderId = me()) {

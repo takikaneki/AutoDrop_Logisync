@@ -12,16 +12,21 @@ function friendlyError(e) {
 
 // Live camera scanner. Kapag may nabasang QR, titigil ang camera at tatawagin ang onScan(text).
 // Gumagamit ng html5-qrcode (kailangan ng `npm install`).
-export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-dark" }) {
+export default function QrScanner({
+  onScan,
+  btnClass = "bg-brand hover:bg-brand-dark",
+  windowSize = "default",
+  compactIdle = false,
+  startLabel = "Scan with camera",
+  showHint = true,
+}) {
   const regionId = useRef(`qr-region-${Math.random().toString(36).slice(2)}`).current;
   const scannerRef = useRef(null);
-  const fileInputRef = useRef(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
-  const [scanningFile, setScanningFile] = useState(false);
   const [error, setError] = useState("");
 
   const stop = async () => {
@@ -36,25 +41,6 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
       }
     }
     setRunning(false);
-  };
-
-  const handleFileScan = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError("");
-    setScanningFile(true);
-    await stop();
-    try {
-      const scanner = new Html5Qrcode(regionId);
-      const decodedText = await scanner.scanFile(file, false);
-      try { scanner.clear(); } catch (_) {}
-      onScanRef.current?.(decodedText);
-    } catch (err) {
-      setError("No valid QR code was detected in the selected image. Please try a clearer picture or enter the transaction number manually.");
-    } finally {
-      setScanningFile(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
   };
 
   const start = async () => {
@@ -89,73 +75,72 @@ export default function QrScanner({ onScan, btnClass = "bg-brand hover:bg-brand-
   }, []);
 
   return (
-    <div>
-      <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-2xl bg-[#2a2522]">
-        <div id={regionId} className="h-full w-full" />
-        {!running && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center text-slate-300">
-            <i className="fa-solid fa-qrcode text-5xl opacity-60" />
-            <p className="text-sm">{starting ? "Starting camera…" : "Camera is off. Press Start scanning."}</p>
+    <div className="mx-auto w-full max-w-[360px]">
+      <div
+        className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden rounded-2xl border border-slate-800/40 bg-gradient-to-b from-[#25211e] to-[#1c1917] shadow-inner"
+      >
+        <div id={regionId} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
+
+        {/* Subtle QR Viewfinder Corner Brackets */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+          <div className="relative h-[210px] w-[210px] max-h-[75%] max-w-[75%]">
+            <span className="absolute top-0 left-0 h-6 w-6 rounded-tl-lg border-t-[3px] border-l-[3px] border-brand/80" />
+            <span className="absolute top-0 right-0 h-6 w-6 rounded-tr-lg border-t-[3px] border-r-[3px] border-brand/80" />
+            <span className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-lg border-b-[3px] border-l-[3px] border-brand/80" />
+            <span className="absolute right-0 bottom-0 h-6 w-6 rounded-br-lg border-r-[3px] border-b-[3px] border-brand/80" />
           </div>
-        )}
-        {running && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="h-[240px] w-[240px] max-w-[80%] rounded-xl border-2 border-white/80" />
+        </div>
+
+        {!running && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-6 text-center text-slate-300">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-brand ring-1 ring-white/10">
+              <i className="fa-solid fa-qrcode text-3xl" />
+            </span>
+            <div>
+              <p className="text-[13.5px] font-semibold text-white/90">
+                {starting ? "Starting camera…" : "Camera is off"}
+              </p>
+              <p className="mt-0.5 text-[12px] text-slate-400">
+                Press <strong className="font-semibold text-slate-200">{startLabel}</strong> below to scan the parcel QR code.
+              </p>
+            </div>
           </div>
         )}
       </div>
 
       {error && (
-        <p role="alert" className="mx-auto mt-3 max-w-sm rounded-lg bg-[#fff0f0] px-3 py-2 text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]">
+        <p
+          role="alert"
+          className="mx-auto mt-3 max-w-[360px] rounded-lg bg-[#fff0f0] px-3.5 py-2 text-center text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]"
+        >
           {error}
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap justify-center items-center gap-2.5">
+      <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2.5">
         {!running ? (
-          <>
-            <button
-              type="button"
-              onClick={start}
-              disabled={starting || scanningFile}
-              className={`rounded-lg px-4 py-2 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
-            >
-              <i className="fa-solid fa-camera mr-2" />
-              {starting ? "Starting…" : "Scan with camera"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={starting || scanningFile}
-              className="inline-flex items-center gap-2 rounded-lg border border-[#ddd] bg-white px-4 py-2 text-[13.5px] font-semibold text-[#555] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
-            >
-              <i className="fa-solid fa-image text-brand" />
-              {scanningFile ? "Scanning image…" : "Upload QR image"}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileScan}
-              className="hidden"
-              aria-label="Upload QR code image"
-            />
-          </>
-        ) : (
           <button
             type="button"
-            onClick={stop}
-            className={btnGhost}
+            onClick={start}
+            disabled={starting}
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[13.5px] font-bold text-white shadow-xs transition disabled:opacity-60 ${btnClass}`}
           >
-            <i className="fa-solid fa-stop mr-2" />
+            <i className="fa-solid fa-camera" />
+            <span>{starting ? "Starting…" : startLabel}</span>
+          </button>
+        ) : (
+          <button type="button" onClick={stop} className={btnGhost}>
+            <i className="fa-solid fa-stop mr-1.5" />
             Stop camera
           </button>
         )}
       </div>
-      <p className="mt-3 text-center text-[12px] text-[#999]">
-        Point the camera at the QR code on the parcel and keep it inside the frame.
-      </p>
+
+      {showHint && (
+        <p className="mt-2.5 text-center text-[12px] text-[#999]">
+          Point the camera at the QR code on the parcel and keep it inside the frame.
+        </p>
+      )}
     </div>
   );
 }

@@ -27,6 +27,14 @@ export function formatDate(value) {
   const ts = parseValidTimestamp(value);
   if (!ts) return "—";
   const d = new Date(ts);
+  let hour12;
+  try {
+    const tf = JSON.parse(localStorage.getItem("pt-prefs") || "{}").timeFormat;
+    if (tf === "12h") hour12 = true;
+    else if (tf === "24h") hour12 = false;
+  } catch {
+    /* ignore */
+  }
   return d.toLocaleString("en-US", {
     timeZone: MANILA_TZ,
     month: "short",
@@ -34,6 +42,7 @@ export function formatDate(value) {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    ...(hour12 !== undefined ? { hour12 } : {}),
   });
 }
 

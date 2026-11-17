@@ -16,6 +16,10 @@ import {
   inputCls,
   labelCls,
   panel,
+  tableCard,
+  tableHead,
+  tableRow,
+  tableWrap,
   td,
   th,
 } from "../components/styles.js";
@@ -701,7 +705,7 @@ export default function Parcels() {
       </div>
 
       {/* PARCEL RECORDS LIST */}
-      <section className={`${panel} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
+      <section className={`${tableCard} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         <div className="mb-[18px]">
           <h2 className="text-[19px] font-bold mb-[5px]">
             Parcel Records
@@ -755,9 +759,9 @@ export default function Parcels() {
         </div>
 
         {/* Desktop & Tablet Table View */}
-        <div className="hidden min-[701px]:block w-full overflow-x-auto border border-[#eee] rounded-[10px] dark:border-night-line">
+        <div className={`hidden min-[701px]:block ${tableWrap}`}>
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={tableHead}>
               <tr>
                 <SortTh k="id">Tracking ID</SortTh>
                 <SortTh k="seller">Seller</SortTh>
@@ -765,11 +769,12 @@ export default function Parcels() {
                 <SortTh k="rider">Rider</SortTh>
                 <SortTh k="ts">Date</SortTh>
                 <th className={th}>Status</th>
+                <th className={`${th} text-center`}>Action</th>
               </tr>
             </thead>
 
             {loading ? (
-              <TableSkeleton rows={PAGE_SIZE} cols={6} />
+              <TableSkeleton rows={PAGE_SIZE} cols={7} />
             ) : (
               <tbody>
                 {pageRows.map((parcel) => (
@@ -778,7 +783,7 @@ export default function Parcels() {
                     onClick={() =>
                       navigate(`/parcels/${encodeURIComponent(parcel.parcelId)}`)
                     }
-                    className="cursor-pointer text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                    className={`cursor-pointer ${tableRow}`}
                   >
                     <td className={td}>
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -836,6 +841,18 @@ export default function Parcels() {
                           {parcel.returnCoordinated ? "Return Coordinated" : "3-Day Limit Reached"}
                         </span>
                       )}
+                    </td>
+
+                    <td className={`${td} text-center`}>
+                      <Link
+                        to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
+                        onClick={(event) => event.stopPropagation()}
+                        title="View full parcel details"
+                        aria-label={`View full details for ${parcel.id}`}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand/30 bg-brand-softer text-brand transition hover:bg-brand hover:text-white dark:border-night-line dark:bg-night-head"
+                      >
+                        <i className="fa-regular fa-eye text-[13.5px]" />
+                      </Link>
                     </td>
                   </tr>
                 ))}

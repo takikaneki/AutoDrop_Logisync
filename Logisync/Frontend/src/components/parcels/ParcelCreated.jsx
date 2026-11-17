@@ -40,7 +40,11 @@ export default function ParcelCreated({ parcel, onReset }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[12px] font-semibold uppercase tracking-[.3px] text-[#999]">Parcel ID</p>
-          <p className="font-mono text-[20px] font-bold">{parcel.parcel_id}</p>
+          <p className="font-mono text-[20px] font-bold" title={parcel.parcel_id}>
+            {parcel.parcel_id && parcel.parcel_id.length > 10
+              ? `${parcel.parcel_id.slice(0, 2)}-${parcel.parcel_id.slice(-6)}`
+              : parcel.parcel_id}
+          </p>
         </div>
         <StatusBadge status={parcel.status} />
       </div>

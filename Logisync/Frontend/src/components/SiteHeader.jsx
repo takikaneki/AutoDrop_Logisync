@@ -1,32 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import AnnouncementModal from "./AnnouncementModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
+import ContactUsModal from "./auth/ContactUsModal.jsx";
 import LogoutModal from "./LogoutModal.jsx";
 import UserAvatar from "./Avatar.jsx";
-import { toggleDark, usePrefs, useT } from "../store/prefs.js";
+import { toggleDark, usePrefs } from "../store/prefs.js";
 import { useProfile } from "../store/profile.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
-
-const nav = [
-  { to: "/dashboard", label: "Home" },
-  { to: "/about", label: "About Us" },
-  { to: "/contact", label: "Contact" },
-  { to: "/help", label: "Help" },
-];
 
 const iconBtn =
   "flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
 
-// Navigation bar directly underneath the GlobalBanner.
-// Uses a balanced 3-column layout (Left: Sidebar Toggle; Center: Nav Links; Right: Controls)
-// to ensure the navigation links remain strictly horizontally centered across all screen sizes.
-export default function SiteHeader({ onToggleSidebar }) {
-  const t = useT();
+// Navigation bar for Coordinator portal.
+export default function SiteHeader({ collapsed = false, mobileOpen = false, onToggleSidebar }) {
   const { dark } = usePrefs();
   const profile = useProfile();
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -48,12 +40,13 @@ export default function SiteHeader({ onToggleSidebar }) {
   return (
     <>
       <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-3 sm:px-6 shadow-sm print:hidden dark:bg-night-panel dark:border-night-line">
-        <div className="flex h-full w-full items-center justify-between gap-2 min-[960px]:grid min-[960px]:grid-cols-[1fr_auto_1fr]">
+        <div className="flex h-full w-full items-center justify-between gap-2">
           {/* Left Column: Sidebar toggle & Brand */}
           <div className="flex min-w-0 items-center justify-start gap-2 sm:gap-3">
             <button
               onClick={onToggleSidebar}
               aria-label="Toggle sidebar"
+              aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
               className={iconBtn}
             >
@@ -70,34 +63,11 @@ export default function SiteHeader({ onToggleSidebar }) {
               <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 max-[380px]:hidden dark:text-white">
                 LogiSync
               </span>
-              <span className="hidden xl:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
+              <span className="hidden min-[821px]:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
                 Coordinator Hub
               </span>
             </Link>
           </div>
-
-          {/* Center Column: Perfectly Horizontally Centered Navigation Links */}
-          <nav
-            className="hidden min-[960px]:flex h-full items-stretch justify-center gap-1 lg:gap-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Main Navigation"
-          >
-            {nav.map((n) => (
-              <NavLink
-                key={n.to}
-                to={n.to}
-                end={n.to === "/dashboard"}
-                className={({ isActive }) =>
-                  `relative flex items-center justify-center whitespace-nowrap px-3 lg:px-4 text-[14px] font-semibold tracking-wide transition-all ${
-                    isActive
-                      ? "text-brand after:absolute after:bottom-0 after:inset-x-2 after:h-[3px] after:rounded-t-full after:bg-brand"
-                      : "text-[#555] hover:text-brand dark:text-[#d1c9c2]"
-                  }`
-                }
-              >
-                {t(n.label)}
-              </NavLink>
-            ))}
-          </nav>
 
           {/* Right Column: Theme Toggle, Announcement, Notifications, and Profile */}
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
@@ -148,18 +118,21 @@ export default function SiteHeader({ onToggleSidebar }) {
                       {profile.email || profile.role}
                     </small>
                   </div>
-                  <Link
-                    to="/settings?tab=profile"
-                    onClick={() => setMenuOpen(false)}
-                    className={item}
-                  >
-                    <i className="fa-solid fa-user w-4 text-center text-[#888]" /> Profile
-                  </Link>
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
                     <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
                   </Link>
-                  <Link to="/help" onClick={() => setMenuOpen(false)} className={item}>
-                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> Help
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setContactOpen(true);
+                    }}
+                    className={item}
+                  >
+                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
+                  </button>
+                  <Link to="/help#faq" onClick={() => setMenuOpen(false)} className={item}>
+                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
@@ -178,6 +151,7 @@ export default function SiteHeader({ onToggleSidebar }) {
       </header>
 
       <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />
+      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

@@ -4,7 +4,7 @@
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 
@@ -96,4 +96,17 @@ body.dark {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2rem;
   }
+}
+
+.reduced-motion *,
+.reduced-motion *::before,
+.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.underline-links main a {
+  text-decoration: underline;
 }

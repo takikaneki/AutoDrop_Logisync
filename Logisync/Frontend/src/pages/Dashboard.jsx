@@ -3,8 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState, Modal, StatusBadge } from "../components/ui.jsx";
-import { StatCard, StatGrid } from "../components/portal.jsx";
-import DashboardShortcuts from "../components/dashboard/DashboardShortcuts.jsx";
+import BentoKpiRow from "../components/dashboard/BentoKpiRow.jsx";
+import PortalHeroBanner from "../components/dashboard/PortalHeroBanner.jsx";
+import DashboardRightRail from "../components/dashboard/DashboardRightRail.jsx";
 import RecentActivity from "../components/audit/RecentActivity.jsx";
 import { btnGhost, btnPrimary, inputCls } from "../components/styles.js";
 import {
@@ -125,18 +126,123 @@ export default function Dashboard() {
     }));
   }, [real]);
 
+  const verifiedTotal = useMemo(
+    () => real.filter((p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status)).length,
+    [real]
+  );
+
+  const verificationRate = real.length ? `${Math.round((verifiedTotal / real.length) * 100)}%` : "0%";
+
+  const actionQueue = useMemo(() => {
+    const activeIncidents = incidents
+      .filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED")
+      .slice(0, 2)
+      .map((inc) => ({
+        id: `inc-${inc.incident_id}`,
+        title: inc.rider_name || `Rider #${inc.rider_id}`,
+        subtitle: `${inc.incident_type} · ${inc.status === "CONFIRMED" ? "Hold Confirmed" : "Awaiting Hold"}`,
+        meta: formatDate(inc.created_at),
+        icon: "fa-triangle-exclamation",
+        tone: "danger",
+        to: "/verification",
+      }));
+
+    const pendingReviews = real
+      .filter((p) => p.status === "VIDEO_SUBMITTED")
+      .slice(0, 5 - activeIncidents.length)
+      .map((p) => ({
+        id: p.parcel_id,
+        title: p.transaction_number || p.parcel_id,
+        subtitle: `${p.seller_name || p.seller || "Seller"} · Needs verification`,
+        meta: formatDate(p.created_at),
+        icon: "fa-video",
+        tone: "warn",
+        to: `/verification?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`,
+      }));
+
+    return [...activeIncidents, ...pendingReviews];
+  }, [incidents, real]);
+
+  const miniBars = useMemo(() => {
+    const pts = Array.isArray(series) ? series.slice(-6) : [];
+    if (pts.length > 0 && pts.some((d) => (d.Delivered || 0) + (d.Pending || 0) + (d.Flagged || 0) > 0)) {
+      return pts.map((d) => ({
+        label: String(d.label || d.name || "").slice(0, 3),
+        value: (d.Delivered || 0) + (d.Pending || 0) + (d.Flagged || 0),
+      }));
+    }
+    return [
+      { label: "Wait", value: countStatus("WAITING_FOR_VIDEO") },
+      { label: "Video", value: countStatus("VIDEO_SUBMITTED") },
+      { label: "Verif", value: countStatus("VERIFIED") },
+      { label: "Out", value: countStatus("OUT_FOR_DELIVERY") },
+      { label: "Done", value: countStatus("DELIVERED") },
+    ];
+  }, [series, real]);
+
   return (
     <>
       <Topbar title="Dashboard" />
 
-      {/* 1. SUMMARY CARDS */}
-      <DashboardShortcuts role="coordinator" />
-      <StatGrid>
-        <StatCard label="Total Parcels" value={v(stats.total)} icon="fa-box" tone="orange" to="/parcels" />
-        <StatCard label="Needs Verification" value={v(stats.flagged)} icon="fa-hourglass-half" tone="blue" to="/verification?status=VIDEO_SUBMITTED" />
-        <StatCard label="Verified Parcels" value={v(stats.pending)} icon="fa-circle-check" tone="green" to="/verification?status=VERIFIED" />
-        <StatCard label="Failed / Return to Hub" value={v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length || stats.delivered)} icon="fa-warehouse" tone="red" to="/parcels?status=Failed%20/%20Return%20to%20Hub" />
-      </StatGrid>
+      {/* 1. BENTO OVERVIEW GRID (No Maps) */}
+      <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
+        <div className="flex flex-col gap-4">
+          <BentoKpiRow
+            cards={[
+              {
+                label: "Total Parcels",
+                value: v(stats.total),
+                tone: "dark",
+                to: "/parcels",
+                badge: "All Shipments",
+                icon: "fa-box",
+                subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
+              },
+              {
+                label: "Needs Verification",
+                value: v(stats.flagged),
+                tone: "light",
+                to: "/verification?status=VIDEO_SUBMITTED",
+                badge: "Pending Review",
+                icon: "fa-hourglass-half",
+                subtext: "Awaiting hub approval",
+              },
+              {
+                label: "Verified Parcels",
+                value: v(stats.pending),
+                tone: "orange",
+                to: "/verification?status=VERIFIED",
+                badge: "Cleared",
+                icon: "fa-circle-check",
+                subtext: "Ready for rider dispatch",
+              },
+            ]}
+          />
+
+          <PortalHeroBanner
+            role="coordinator"
+            pipeline={[
+              { label: "Awaiting Video", count: v(countStatus("WAITING_FOR_VIDEO")), icon: "fa-clock", to: "/parcels" },
+              { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "fa-video", to: "/verification?status=VIDEO_SUBMITTED" },
+              { label: "Verified", count: v(countStatus("VERIFIED")), icon: "fa-circle-check", to: "/verification?status=VERIFIED" },
+              { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "fa-truck-fast", to: "/parcels" },
+            ]}
+          />
+        </div>
+
+        <DashboardRightRail
+          tasksTitle="Action Queue"
+          seeAllTo="/verification"
+          tasks={actionQueue}
+          emptyText="No pending verification proofs or rider incidents right now."
+          summary={{
+            label: "Verification Rate",
+            value: loadingStats ? "…" : verificationRate,
+            sublabel: `${v(verifiedTotal)} of ${v(real.length)} cleared`,
+            bars: miniBars,
+          }}
+        />
+      </section>
 
       {/* RIDER INCIDENT MANAGEMENT / DELIVERY HOLD */}
       {incidents.filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED").length > 0 && (

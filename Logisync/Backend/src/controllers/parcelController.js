@@ -161,6 +161,23 @@ async function ensureCustomerSchema() {
         ALTER TABLE seller_customers ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150) NOT NULL DEFAULT '';
 
         CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
+
+        DELETE FROM verification_records WHERE parcel_id IN (
+          SELECT parcel_id FROM parcels
+          WHERE transaction_number IS NULL
+             OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+             OR LENGTH(BTRIM(parcel_id)) > 10
+        );
+        DELETE FROM video_proofs WHERE parcel_id IN (
+          SELECT parcel_id FROM parcels
+          WHERE transaction_number IS NULL
+             OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+             OR LENGTH(BTRIM(parcel_id)) > 10
+        );
+        DELETE FROM parcels
+        WHERE transaction_number IS NULL
+           OR BTRIM(transaction_number) !~* '^SPX[0-9]{9}$'
+           OR LENGTH(BTRIM(parcel_id)) > 10;
       `);
       customerSchemaReady = true;
     } catch (err) {
@@ -661,7 +678,21 @@ async function createParcel(req, res) {
       });
     }
 
-    const parcelId = `SL${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    let parcelId = "";
+    for (let attempt = 0; attempt < 15; attempt++) {
+      const candidate = `SL-${Math.floor(100000 + Math.random() * 900000)}`;
+      const [idCheck] = await pool.query(
+        "SELECT 1 FROM parcels WHERE UPPER(parcel_id) = ? LIMIT 1",
+        [candidate]
+      );
+      if (!idCheck.length) {
+        parcelId = candidate;
+        break;
+      }
+    }
+    if (!parcelId) {
+      parcelId = `SL-${String(Date.now()).slice(-6)}`;
+    }
 
     await pool.query(
       `INSERT INTO parcels
@@ -970,9 +1001,11 @@ async function getSellerParcel(req, res) {
     const [rows] = await pool.query(
       `SELECT p.*, u.name AS seller_name, u.email AS seller_email,
               u.seller_code, u.shop_name,
+              r.name AS rider_name, r.phone AS rider_contact,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
+       LEFT JOIN users r ON p.rider_id = r.user_id
        LEFT JOIN users dr ON p.discreet_reviewed_by = dr.user_id
        WHERE p.parcel_id = ? AND p.seller_id = ?`,
       [req.params.parcelId, req.user.user_id]
@@ -981,7 +1014,7 @@ async function getSellerParcel(req, res) {
     if (!rows.length) return res.status(404).json({ success: false, message: "Parcel not found." });
 
     const [videos] = await pool.query(
-      `SELECT video_id, file_name, file_size, mime_type, uploaded_at
+      `SELECT video_id, file_name, file_path, file_size, mime_type, uploaded_at
        FROM video_proofs WHERE parcel_id = ? ORDER BY uploaded_at DESC`,
       [req.params.parcelId]
     );
@@ -1151,9 +1184,11 @@ async function getCoordinatorParcel(req, res) {
     const [parcelRows] = await pool.query(
       `SELECT p.*, u.name AS seller_name, u.email AS seller_email,
               u.seller_code, u.shop_name,
+              r.name AS rider_name, r.phone AS rider_contact,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
+       LEFT JOIN users r ON p.rider_id = r.user_id
        LEFT JOIN users dr ON p.discreet_reviewed_by = dr.user_id
        WHERE p.parcel_id = ?`,
       [req.params.parcelId]
@@ -1790,7 +1825,7 @@ async function listParcels(req, res) {
               p.is_cod, p.payment_method,
               p.delivery_hold, p.delivery_hold_reason, p.delivery_hold_until, p.delivery_hold_at,
               u.name AS seller_name, u.email AS seller_email, u.seller_code, u.shop_name,
-              r.name AS rider_name,
+              r.name AS rider_name, r.phone AS rider_contact,
               dr.name AS discreet_reviewer_name
        FROM parcels p
        JOIN users u ON p.seller_id = u.user_id
