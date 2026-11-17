@@ -154,21 +154,13 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     await ensurePolicySchema();
-    const { email, password, portal, role, loginRole, termsAccepted, policyVersion } = req.body;
+    const { email, password, username, termsAccepted, policyVersion } = req.body;
 
-    if (!email || !password) {
+    const identifier = String(email || username || req.body?.identifier || "").trim();
+    if (!identifier || !password) {
       return res
         .status(400)
-        .json({ success: false, message: "Email and password are required." });
-    }
-
-    const selectedPortal = String(portal || role || loginRole || "").trim().toLowerCase();
-    const VALID_PORTALS = ["seller", "rider", "coordinator"];
-    if (!selectedPortal || !VALID_PORTALS.includes(selectedPortal)) {
-      return res.status(400).json({
-        success: false,
-        message: "A valid login portal (seller, rider, or coordinator) must be specified."
-      });
+        .json({ success: false, message: "Email or username and password are required." });
     }
 
     if (!termsAccepted) {
@@ -182,8 +174,10 @@ async function login(req, res) {
     const [rows] = await pool.query(
       `SELECT user_id, name, email, password_hash, role, verification_status
        FROM users
-       WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(?))`,
-      [email.trim().toLowerCase()]
+       WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(?))
+          OR LOWER(BTRIM(name)) = LOWER(BTRIM(?))
+       LIMIT 1`,
+      [identifier, identifier]
     );
 
     if (!rows.length) {
@@ -201,26 +195,32 @@ async function login(req, res) {
         .json({ success: false, message: "Invalid email or password." });
     }
 
-    // STRICT ROLE-BASED LOGIN RESTRICTION:
-    // Compare selected portal with the user's actual database role.
-    // Allow login only if both roles match. Reject authentication if they do not match.
-    // Do not create an authenticated session or issue an authentication token when role validation fails.
+    // AUTOMATIC ROLE DETECTION:
+    // Determine the user's registered role directly from the authenticated database record.
+    // Never trust or require a client-submitted role value.
+    const VALID_ROLES = ["seller", "rider", "coordinator"];
     const actualRole = String(user.role || "").trim().toLowerCase();
-    if (actualRole !== selectedPortal) {
+
+    if (!actualRole || !VALID_ROLES.includes(actualRole)) {
       return res.status(403).json({
         success: false,
-        message: "Your account is not authorized to access this login portal. Please use the correct login option."
+        message: "Your account does not have an authorized role. Please contact support."
       });
     }
 
-    if (
-      (user.role === "seller" || user.role === "rider") &&
-      String(user.verification_status || "").toUpperCase() === "REJECTED"
-    ) {
+    // Inactive / suspended / pending checks
+    const verificationStatus = String(user.verification_status || "").toUpperCase();
+    if (verificationStatus === "REJECTED") {
       return res.status(403).json({
         success: false,
-        message:
-          "Your account has been suspended. Please contact the Coordinator.",
+        message: "Your account is inactive or disabled. Please contact the Coordinator.",
+      });
+    }
+
+    if (verificationStatus === "PENDING" && (actualRole === "seller" || actualRole === "rider")) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is pending Coordinator approval.",
       });
     }
 
@@ -248,7 +248,7 @@ async function login(req, res) {
       `INSERT INTO user_policy_acceptances
        (user_id, user_role, terms_accepted, privacy_accepted, policy_version, accepted_at)
        VALUES (?, ?, TRUE, TRUE, ?, CURRENT_TIMESTAMP)`,
-      [user.user_id, user.role, appliedVersion]
+      [user.user_id, actualRole, appliedVersion]
     );
 
     // Record acceptance in system audit logs for compliance traceability
@@ -260,7 +260,7 @@ async function login(req, res) {
         [
           user.user_id,
           user.name,
-          user.role,
+          actualRole,
           user.email,
           `Accepted Terms and Conditions & Privacy Policy (${appliedVersion}) upon sign-in.`,
         ]
@@ -271,7 +271,7 @@ async function login(req, res) {
 
     // Rider classification (FM / LM) para sa role-based access sa frontend.
     let riderInfo = {};
-    if (user.role === "rider") {
+    if (actualRole === "rider") {
       try {
         const [rr] = await pool.query(
           "SELECT rider_type, rider_code, agency FROM users WHERE user_id = ?",
@@ -287,11 +287,13 @@ async function login(req, res) {
       }
     }
 
+    const home = actualRole === "seller" ? "/seller" : actualRole === "rider" ? "/rider" : "/dashboard";
+
     const safeUser = {
       user_id: user.user_id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: actualRole,
       ...riderInfo,
       terms_accepted: true,
       privacy_accepted: true,
@@ -304,6 +306,7 @@ async function login(req, res) {
       message: "Login successful.",
       token: createToken(safeUser),
       user: safeUser,
+      redirectUrl: home,
     });
   } catch (error) {
     console.error(error);

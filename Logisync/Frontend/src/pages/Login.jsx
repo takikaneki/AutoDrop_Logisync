@@ -124,47 +124,12 @@ function LogisticsGraphicBackground() {
   );
 }
 
-const LOGIN_ROLES = [
-  {
-    key: "coordinator",
-    label: "Coordinator",
-    icon: "fa-building-shield",
-    subtitle: "Sign in to manage and coordinate your parcels",
-    emailPlaceholder: "example@gmail.com",
-    helperText: "Seller and Rider accounts are created by the Coordinator. Ask them for access.",
-  },
-  {
-    key: "seller",
-    label: "Seller",
-    icon: "fa-store",
-    subtitle: "Sign in to register parcels, upload packing videos, and track status",
-    emailPlaceholder: "seller@example.com",
-    helperText: "Seller accounts are created by the Coordinator. Ask your hub coordinator if you need access.",
-  },
-  {
-    key: "rider",
-    label: "Rider",
-    icon: "fa-motorcycle",
-    subtitle: "Sign in to scan assigned parcels and update delivery status",
-    emailPlaceholder: "rider@example.com",
-    helperText: "Rider accounts are created by the Coordinator. Ask your hub coordinator if you need access.",
-  },
-];
-
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { portalRole } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const urlRole = String(
-    portalRole || searchParams.get("role") || searchParams.get("portal") || ""
-  ).toLowerCase();
-  const initialRole = LOGIN_ROLES.some((r) => r.key === urlRole)
-    ? urlRole
-    : "coordinator";
-
-  // Welcome screen muna; kung galing sa logout, may direct param, o nabisita na sa session na ito, deretso sa sign-in
+  // Welcome screen muna; kung galing sa logout o nabisita na sa session na ito, deretso sa sign-in
   const [showIntro, setShowIntro] = useState(() => {
     try {
       if (location.state?.fromLogout || sessionStorage.getItem("logisync_intro_seen") === "true") {
@@ -174,24 +139,11 @@ export default function Login() {
       /* ignore */
     }
     const hasParam = Boolean(
-      portalRole ||
-      searchParams.get("role") ||
-      searchParams.get("portal") ||
       searchParams.get("resetToken") ||
       searchParams.get("token")
     );
     return !hasParam;
   });
-  const [selectedRole, setSelectedRole] = useState(initialRole);
-
-  useEffect(() => {
-    const roleFromParam = String(
-      portalRole || searchParams.get("role") || searchParams.get("portal") || ""
-    ).toLowerCase();
-    if (LOGIN_ROLES.some((r) => r.key === roleFromParam)) {
-      setSelectedRole(roleFromParam);
-    }
-  }, [portalRole, searchParams]);
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -219,10 +171,10 @@ export default function Login() {
     }
   }, [searchParams]);
 
-  // Load saved Remember Me preference whenever active portal (selectedRole) changes
+  // Load saved Remember Me preference on unified login
   useEffect(() => {
     let isCurrent = true;
-    getRememberedCredentials(selectedRole)
+    getRememberedCredentials()
       .then((saved) => {
         if (!isCurrent) return;
         if (saved && saved.remember && saved.email) {
@@ -231,29 +183,25 @@ export default function Login() {
           setRememberMe(true);
         } else {
           setRememberMe(false);
-          setEmail("");
-          setPassword("");
         }
       })
       .catch(() => {
         if (!isCurrent) return;
         setRememberMe(false);
-        setEmail("");
-        setPassword("");
       });
     setError("");
     return () => {
       isCurrent = false;
     };
-  }, [selectedRole]);
+  }, []);
 
   const handleRememberMeChange = (e) => {
     const checked = e.target.checked;
     setRememberMe(checked);
     if (!checked) {
-      clearRememberedCredentials(selectedRole);
+      clearRememberedCredentials();
     } else if (email.trim() && password) {
-      saveRememberedCredentials(selectedRole, email.trim(), password);
+      saveRememberedCredentials(email.trim(), password);
     }
   };
 
@@ -267,9 +215,6 @@ export default function Login() {
     setSuccessMessage(msg || "Your password has been reset successfully. Please sign in with your new password.");
     setError("");
   };
-
-  const activeRoleMeta =
-    LOGIN_ROLES.find((r) => r.key === selectedRole) || LOGIN_ROLES[0];
 
   const handleCheckboxChange = (e) => {
     const checked = e.target.checked;
@@ -304,34 +249,26 @@ export default function Login() {
         body: {
           email: email.trim(),
           password,
-          portal: selectedRole,
-          role: selectedRole,
           termsAccepted: true,
           policyVersion: POLICY_VERSION,
         },
       });
 
+      // AUTOMATIC ROLE DETECTION:
+      // The backend detects the verified account role from the database.
       const actualRole = String(data?.user?.role || "").toLowerCase();
-      if (!actualRole || actualRole !== selectedRole) {
+      const home = data?.redirectUrl || homePathForRole(actualRole);
+      if (!home) {
         clearSession();
-        setError(
-          "Your account is not authorized to access this login portal. Please use the correct login option."
-        );
+        setError("Your account does not have an authorized role. Please contact support.");
         return;
       }
 
       // Persist or remove Remember Me credentials upon successful login
       if (rememberMe) {
-        await saveRememberedCredentials(selectedRole, email.trim(), password);
+        await saveRememberedCredentials(email.trim(), password);
       } else {
-        clearRememberedCredentials(selectedRole);
-      }
-
-      const home = homePathForRole(actualRole);
-      if (!home) {
-        clearSession();
-        setError("Your account role is not supported.");
-        return;
+        clearRememberedCredentials();
       }
 
       saveSession(data);
@@ -419,7 +356,7 @@ export default function Login() {
           <div className="h-1.5 w-full bg-gradient-to-r from-[#f97316] via-amber-500 to-[#ea580c]" />
 
           <div className="px-5 py-6 sm:px-10 sm:py-8">
-            {/* Logo + title + interactive role selector */}
+            {/* Logo + title */}
             <div className="mb-6 text-center">
               <img
                 src={SPX_LOGO_DATA_URL}
@@ -428,54 +365,21 @@ export default function Login() {
                 className="mx-auto mb-3 h-11 w-auto object-contain sm:h-12"
               />
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">LogiSync</h1>
-              <p className="mt-1 text-sm text-slate-500">{activeRoleMeta.subtitle}</p>
-
-              {/* Interactive Role Selector (Coordinator, Seller, Rider) */}
-              <div
-                role="tablist"
-                aria-label="Select account role"
-                className="mt-4 inline-grid w-full max-w-[340px] grid-cols-3 items-center gap-1 rounded-full border border-slate-200/90 bg-slate-100/80 p-1 text-xs font-bold"
-              >
-                {LOGIN_ROLES.map((roleOption) => {
-                  const isActive = selectedRole === roleOption.key;
-                  return (
-                    <button
-                      key={roleOption.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => {
-                        setSelectedRole(roleOption.key);
-                        setError("");
-                      }}
-                      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11.5px] font-bold transition-all ${isActive
-                        ? "bg-white text-[#ea580c] shadow-sm ring-1 ring-orange-200/90"
-                        : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
-                        }`}
-                    >
-                      <i
-                        className={`fa-solid ${roleOption.icon} text-[10px] ${isActive ? "text-[#ea580c]" : "text-slate-400"
-                          }`}
-                      />
-                      <span>{roleOption.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="mt-1 text-sm text-slate-500">Sign in to access your LogiSync account</p>
             </div>
 
             <form onSubmit={handleSubmit} noValidate name="login" method="POST" action="#">
-              {/* Email field */}
+              {/* Email / Username field */}
               <div className="mb-4">
                 <label htmlFor="email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
-                  Email Address
+                  Email / Username
                 </label>
                 <div className={inputWrap}>
                   <i className="fa-regular fa-envelope shrink-0 text-base text-slate-400" />
                   <input
                     id="email"
                     name="email"
-                    type="email"
+                    type="text"
                     inputMode="email"
                     autoComplete="username"
                     required
@@ -485,13 +389,13 @@ export default function Login() {
                       setEmail(v);
                       if (rememberMe) {
                         if (v.trim()) {
-                          saveRememberedCredentials(selectedRole, v.trim(), password);
+                          saveRememberedCredentials(v.trim(), password);
                         } else {
-                          clearRememberedCredentials(selectedRole);
+                          clearRememberedCredentials();
                         }
                       }
                     }}
-                    placeholder={activeRoleMeta.emailPlaceholder}
+                    placeholder="Enter your email or username"
                     className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 sm:text-[15px]"
                   />
                 </div>
@@ -515,7 +419,7 @@ export default function Login() {
                       const p = e.target.value;
                       setPassword(p);
                       if (rememberMe && email.trim()) {
-                        saveRememberedCredentials(selectedRole, email.trim(), p);
+                        saveRememberedCredentials(email.trim(), p);
                       }
                     }}
                     placeholder="Enter your password"
@@ -639,11 +543,11 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Coordinator notice + SPX Express Branding + Footer */}
+            {/* Information notice + SPX Express Branding + Footer */}
             <div className="mt-6 border-t border-slate-100 pt-4">
               <p className="mb-3 flex items-start gap-2 text-xs leading-snug text-slate-500">
                 <i className="fa-solid fa-circle-info mt-0.5 shrink-0 text-sm text-brand" />
-                <span>{activeRoleMeta.helperText}</span>
+                <span>Seller and Rider accounts are created and managed by the Hub Coordinator.</span>
               </p>
 
               {/* "Developed for: SPX Express" branding below the sign-in form */}

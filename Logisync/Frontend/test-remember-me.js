@@ -1,9 +1,9 @@
 /**
- * Automated Test: Remember-Me Login -> Logout -> Return -> Prefill -> Sign In Flow
+ * Automated Test: Unified Login Remember-Me Flow
  */
 
 async function run() {
-  console.log("=== RUNNING REMEMBER-ME INTEGRATION TEST ===");
+  console.log("=== RUNNING UNIFIED LOGIN REMEMBER-ME TEST ===");
 
   const storageMap = new Map();
   globalThis.localStorage = {
@@ -57,16 +57,15 @@ async function run() {
     }
   }
 
-  // --- Step 1: User logs in with Remember Me checked ---
-  console.log("\n--- STEP 1: Login with Remember Me enabled ---");
-  const testEmail = "seller@example.com";
-  const testPassword = "MySecretPassword123!";
-  const testRole = "seller";
+  // --- Step 1: User logs in on unified login with Remember Me checked ---
+  console.log("\n--- STEP 1: Unified login with Remember Me enabled ---");
+  const testEmail = "coordinator@example.com";
+  const testPassword = "AdminSecurePassword123!";
 
-  await saveRememberedCredentials(testRole, testEmail, testPassword);
-  assert(storageMap.has("logisync_remember_seller"), "Stored entry for 'seller' role");
+  await saveRememberedCredentials(testEmail, testPassword);
+  assert(storageMap.has("logisync_remember_user"), "Stored entry for unified login");
 
-  const rawSaved = storageMap.get("logisync_remember_seller");
+  const rawSaved = storageMap.get("logisync_remember_user");
   console.log("  Raw LocalStorage content:", rawSaved);
 
   // Security test: Plain text password MUST NOT exist in storage
@@ -80,32 +79,25 @@ async function run() {
   localStorage.removeItem("user");
   sessionStorage.clear();
 
-  assert(storageMap.has("logisync_remember_seller"), "Remember-Me data remains intact after logout");
+  assert(storageMap.has("logisync_remember_user"), "Remember-Me data remains intact after logout");
 
-  // --- Step 3: User returns to Login Page ---
-  console.log("\n--- STEP 3: User returns to Login Page ---");
-  const restored = await getRememberedCredentials(testRole);
+  // --- Step 3: User returns to Unified Login Page ---
+  console.log("\n--- STEP 3: User returns to Unified Login Page ---");
+  const restored = await getRememberedCredentials();
   assert(restored !== null, "Credentials retrieved on return");
   assert(restored.remember === true, "Remember Me checkbox state is true");
   assert(restored.email === testEmail, "Email address correctly populated");
   assert(restored.password === testPassword, "Password correctly decrypted and populated");
 
-  // --- Step 4: Role Isolation Test ---
-  console.log("\n--- STEP 4: Portal / Role Isolation ---");
-  const riderRestored = await getRememberedCredentials("rider");
-  const coordRestored = await getRememberedCredentials("coordinator");
-  assert(riderRestored === null, "Seller credentials do not leak into Rider portal");
-  assert(coordRestored === null, "Seller credentials do not leak into Coordinator portal");
-
-  // --- Step 5: User unchecks Remember Me ---
-  console.log("\n--- STEP 5: User unchecks Remember Me ---");
-  clearRememberedCredentials(testRole);
-  const afterUncheck = await getRememberedCredentials(testRole);
+  // --- Step 4: User unchecks Remember Me ---
+  console.log("\n--- STEP 4: User unchecks Remember Me ---");
+  clearRememberedCredentials();
+  const afterUncheck = await getRememberedCredentials();
   assert(afterUncheck === null, "Saved credentials removed when Remember Me is unchecked");
 
-  // --- Step 6: Login without Remember Me ---
-  console.log("\n--- STEP 6: Returning to login without Remember Me ---");
-  const emptyCheck = await getRememberedCredentials(testRole);
+  // --- Step 5: Returning to unified login without Remember Me ---
+  console.log("\n--- STEP 5: Returning to login without Remember Me ---");
+  const emptyCheck = await getRememberedCredentials();
   assert(emptyCheck === null, "Email and password remain empty when Remember Me was not checked");
 
   console.log("\n==========================================");
@@ -119,4 +111,3 @@ run().catch((err) => {
   console.error("Test failed:", err);
   process.exit(1);
 });
-

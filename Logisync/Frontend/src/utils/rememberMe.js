@@ -140,66 +140,103 @@ async function decryptSecret(cipherRecord, role) {
   return "";
 }
 
+const UNIFIED_KEY = "logisync_remember_user";
+
 /**
- * Save remembered credentials for a specific portal role.
+ * Save remembered credentials for the unified login.
  * Passwords are encrypted before being written to localStorage.
  */
-export async function saveRememberedCredentials(role, email, password) {
-  const normRole = String(role || "coordinator").toLowerCase().trim();
+export async function saveRememberedCredentials(arg1, arg2, arg3) {
+  let role = "unified";
+  let email = "";
+  let password = "";
+
+  if (arguments.length >= 3) {
+    role = arg1 || "unified";
+    email = arg2;
+    password = arg3;
+  } else {
+    email = arg1;
+    password = arg2;
+  }
+
   const cleanEmail = String(email || "").trim();
   if (!cleanEmail) {
-    clearRememberedCredentials(normRole);
+    clearRememberedCredentials();
     return;
   }
 
   try {
-    const cipher = password ? await encryptSecret(password, normRole) : null;
+    const cipher = password ? await encryptSecret(password, "unified") : null;
     const record = {
       remember: true,
       email: cleanEmail,
       cipher,
       savedAt: Date.now()
     };
-    localStorage.setItem(`${STORAGE_PREFIX}${normRole}`, JSON.stringify(record));
+    localStorage.setItem(UNIFIED_KEY, JSON.stringify(record));
+    if (role && role !== "unified") {
+      localStorage.setItem(`${STORAGE_PREFIX}${role}`, JSON.stringify(record));
+    }
   } catch {
     /* ignore storage write failures in private browsing */
   }
 }
 
 /**
- * Retrieve remembered credentials for a specific portal role.
+ * Retrieve remembered credentials for the unified login.
  * Decrypts password on the fly into state; returns null if not remembered.
  */
-export async function getRememberedCredentials(role) {
-  const normRole = String(role || "coordinator").toLowerCase().trim();
-  try {
-    const raw = localStorage.getItem(`${STORAGE_PREFIX}${normRole}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.remember || !parsed.email) return null;
-
-    let decryptedPassword = "";
-    if (parsed.cipher) {
-      decryptedPassword = await decryptSecret(parsed.cipher, normRole);
-    }
-
-    return {
-      remember: true,
-      email: parsed.email,
-      password: decryptedPassword
-    };
-  } catch {
-    return null;
+export async function getRememberedCredentials(preferredRole) {
+  const keysToTry = [];
+  if (preferredRole && preferredRole !== "unified" && preferredRole !== "user") {
+    keysToTry.push(`${STORAGE_PREFIX}${preferredRole}`);
   }
+  keysToTry.push(UNIFIED_KEY);
+  keysToTry.push(`${STORAGE_PREFIX}coordinator`);
+  keysToTry.push(`${STORAGE_PREFIX}seller`);
+  keysToTry.push(`${STORAGE_PREFIX}rider`);
+
+  for (const key of keysToTry) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.remember || !parsed.email) continue;
+
+      let decryptedPassword = "";
+      if (parsed.cipher) {
+        const cipherRole = key.replace(STORAGE_PREFIX, "") || "unified";
+        decryptedPassword = await decryptSecret(parsed.cipher, "unified");
+        if (!decryptedPassword && cipherRole !== "unified") {
+          decryptedPassword = await decryptSecret(parsed.cipher, cipherRole);
+        }
+      }
+
+      return {
+        remember: true,
+        email: parsed.email,
+        password: decryptedPassword
+      };
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 /**
- * Remove remembered credentials for a specific portal role.
+ * Remove remembered credentials.
  */
 export function clearRememberedCredentials(role) {
-  const normRole = String(role || "coordinator").toLowerCase().trim();
   try {
-    localStorage.removeItem(`${STORAGE_PREFIX}${normRole}`);
+    localStorage.removeItem(UNIFIED_KEY);
+    localStorage.removeItem(`${STORAGE_PREFIX}coordinator`);
+    localStorage.removeItem(`${STORAGE_PREFIX}seller`);
+    localStorage.removeItem(`${STORAGE_PREFIX}rider`);
+    if (role) {
+      localStorage.removeItem(`${STORAGE_PREFIX}${role}`);
+    }
   } catch {
     /* ignore */
   }
