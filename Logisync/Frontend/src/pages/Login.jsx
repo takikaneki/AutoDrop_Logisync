@@ -258,12 +258,61 @@ function LogisticsGraphicBackground() {
   );
 }
 
-export default function Login() {
+const VALID_PORTAL_ROLES = ["coordinator", "seller", "rider"];
+
+function determineInitialRole(paramRole, searchParams) {
+  const cleanParam = String(paramRole || "").trim().toLowerCase();
+  if (VALID_PORTAL_ROLES.includes(cleanParam)) {
+    return cleanParam;
+  }
+
+  const queryRole = String(
+    searchParams?.get?.("role") || searchParams?.get?.("portal") || ""
+  ).trim().toLowerCase();
+  if (VALID_PORTAL_ROLES.includes(queryRole)) {
+    return queryRole;
+  }
+
+  try {
+    const activeStored = String(localStorage.getItem("logisync_active_portal") || "").trim().toLowerCase();
+    if (VALID_PORTAL_ROLES.includes(activeStored)) {
+      return activeStored;
+    }
+
+    const accountsMap = readRememberedAccountsMap();
+    for (const key of Object.keys(accountsMap)) {
+      const entry = accountsMap[key];
+      if (entry?.remember && entry?.role && VALID_PORTAL_ROLES.includes(entry.role)) {
+        return entry.role;
+      }
+    }
+
+    for (const r of VALID_PORTAL_ROLES) {
+      const raw = localStorage.getItem(getRememberRoleStorageKey(r));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.remember && parsed?.email) {
+          return r;
+        }
+      }
+    }
+  } catch {
+    /* ignore storage read errors */
+  }
+
+  return "coordinator";
+}
+
+export default function Login({ portalRole: propPortalRole } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  const routeParams = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Welcome screen muna; kung galing sa logout o nabisita na sa session na ito, deretso sa sign-in
+  const portalRole = propPortalRole || routeParams?.portalRole;
+  const initialRole = determineInitialRole(portalRole, searchParams);
+
+  // Welcome screen muna; kung galing sa logout o may direct param, deretso sa sign-in
   const [showIntro, setShowIntro] = useState(() => {
     try {
       if (location.state?.fromLogout || sessionStorage.getItem("logisync_intro_seen") === "true") {
@@ -273,11 +322,33 @@ export default function Login() {
       /* ignore */
     }
     const hasParam = Boolean(
+      portalRole ||
+      searchParams.get("role") ||
+      searchParams.get("portal") ||
       searchParams.get("resetToken") ||
       searchParams.get("token")
     );
     return !hasParam;
   });
+
+  const [selectedRole, setSelectedRole] = useState(initialRole);
+
+  useEffect(() => {
+    const cleanParam = String(portalRole || "").trim().toLowerCase();
+    const queryRole = String(
+      searchParams.get("role") || searchParams.get("portal") || ""
+    ).trim().toLowerCase();
+
+    const targetRole = VALID_PORTAL_ROLES.includes(cleanParam)
+      ? cleanParam
+      : VALID_PORTAL_ROLES.includes(queryRole)
+      ? queryRole
+      : null;
+
+    if (targetRole && targetRole !== selectedRole) {
+      setSelectedRole(targetRole);
+    }
+  }, [portalRole, searchParams, selectedRole]);
 
   const initialRemembered = getRememberedStateForRole(initialRole);
 
@@ -309,16 +380,18 @@ export default function Login() {
 
   // Load saved Remember Me preference & Terms acceptance whenever active portal (selectedRole) changes
   useEffect(() => {
+    try {
+      localStorage.setItem("logisync_active_portal", selectedRole);
+    } catch {
+      /* ignore */
+    }
     const remembered = getRememberedStateForRole(selectedRole);
     setEmail(remembered.email);
     setRememberMe(remembered.rememberMe);
     setAgreed(remembered.agreed);
     setLegalDocModal(null);
     setError("");
-    return () => {
-      isCurrent = false;
-    };
-  }, []);
+  }, [selectedRole]);
 
   const handleRememberMeChange = (e) => {
     const checked = e.target.checked;

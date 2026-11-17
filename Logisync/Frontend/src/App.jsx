@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useParams } from "react-router-dom";
 import AppLayout from "./components/AppLayout.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -62,12 +62,13 @@ function RequireLastMile() {
   return riderTypeOf() === "LM" ? <Outlet /> : <Navigate to="/rider" replace />;
 }
 function LoginRoute() {
+  const { portalRole } = useParams();
   if (isLoggedIn()) {
     const home = homePathForRole(getRole());
     if (home) return <Navigate to={home} replace />;
     clearSession();
   }
-  return <Login />;
+  return <Login portalRole={portalRole} />;
 }
 
 export default function App() {
