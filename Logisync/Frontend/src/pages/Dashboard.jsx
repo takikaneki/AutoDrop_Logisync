@@ -314,98 +314,7 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* 2. VERIFICATION + RECENT PARCELS */}
-      <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1fr_2fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
-        <div className={`${panel} flex flex-col`}>
-          <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
-            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-regular fa-bell mr-2 text-orange-500" />Verification Needed</h2>
-            <Link to="/verification" className="whitespace-nowrap text-sm text-orange-500">View All →</Link>
-          </div>
-          <div className="mb-4 max-[600px]:mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#fff4ed] p-5 max-[600px]:p-4 dark:bg-[#3b3531]">
-            <div className="flex h-[56px] w-[56px] max-[600px]:h-[44px] max-[600px]:w-[44px] items-center justify-center rounded-full bg-[#fff0e5] text-[24px] max-[600px]:text-[19px] text-orange-500"><i className="fa-solid fa-box" /></div>
-            <div>
-              <h2 className="text-[32px] max-[600px]:text-[24px] font-bold leading-tight text-orange-500">
-                {v(countStatus("VIDEO_SUBMITTED"))} <small className="text-base max-[600px]:text-sm font-normal text-[#26344d] dark:text-[#f1eeeb]">parcels</small>
-              </h2>
-              <p className="mt-1 max-[600px]:mt-0.5 text-sm max-[600px]:text-xs text-[#64748b]">need verification.</p>
-            </div>
-          </div>
-          <div className="flex flex-1 flex-col">
-            {[
-              ["fa-triangle-exclamation", "Flagged / Return to Hub", stats.flagged],
-              ["fa-circle-play", "Awaiting Seller Video", countStatus("WAITING_FOR_VIDEO")],
-            ].map(([icon, label, n]) => (
-              <div key={label} className="flex flex-1 items-center justify-between border-b border-[#edf0f4] py-4 max-[600px]:py-3 text-[16px] max-[600px]:text-[14px] text-[#52627a] last:border-b-0 dark:border-night-line dark:text-[#d1c9c2]">
-                <span><i className={`fa-solid ${icon} w-6`} /> {label}</span>
-                <strong className="text-lg max-[600px]:text-base text-orange-500">{v(n)}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* RECENT PARCELS */}
-        <div className={`${panel} min-h-[420px] max-[820px]:min-h-0 overflow-hidden`}>
-          <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
-            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
-            <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
-          </div>
-          <div className="hidden min-[701px]:block overflow-x-auto">
-            <table className="w-full min-w-[580px] border-collapse">
-              <thead>
-                <tr className="bg-[#f5f6f9] text-left text-sm text-[#65748b] dark:bg-night-head dark:text-[#ddd7d2]">
-                  {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
-                    <th key={h} className="px-4 py-3.5 font-normal">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {recentRows.map((p) => {
-                  const cell = "px-4 py-3.5 border-b border-[#edf0f4] dark:border-night-line";
-                  return (
-                    <tr key={p.id} className="text-sm text-[#52627a] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                      <td className={`${cell} whitespace-nowrap font-semibold text-[#27364f] dark:text-[#f1eeeb]`}>
-                        {p.parcelId ? <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="text-brand hover:underline">{p.id}</Link> : p.id}
-                      </td>
-                      <td className={`${cell} whitespace-nowrap`}>{p.seller}</td>
-                      <td className={cell}><StatusBadge status={p.status} /></td>
-                      <td className={cell}><StatusBadge status={p.verification} /></td>
-                      <td className={`${cell} whitespace-nowrap`}>{p.date}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="min-[701px]:hidden space-y-2.5">
-            {recentRows.map((p) => (
-              <div
-                key={p.id}
-                className="rounded-xl border border-[#edf0f4] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    {p.parcelId ? (
-                      <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="block truncate text-[14px] font-bold text-brand hover:underline">
-                        {p.id}
-                      </Link>
-                    ) : (
-                      <strong className="block truncate text-[14px] text-[#27364f] dark:text-[#f1eeeb]">{p.id}</strong>
-                    )}
-                    <span className="text-[12px] text-[#888]">{p.seller} · {p.date}</span>
-                  </div>
-                  <StatusBadge status={p.status} />
-                </div>
-                <div className="mt-2 flex items-center justify-between border-t border-[#f1f3f7] pt-2 text-[12px] text-[#777] dark:border-night-line">
-                  <span>Verification</span>
-                  <StatusBadge status={p.verification} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. ANALYTICS */}
+      {/* 2. ANALYTICS */}
       <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-chart-line mr-2 text-orange-500" />Analytics</h2>
 
       <section className="mb-6 max-[600px]:mb-4 grid grid-cols-[2.2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
@@ -507,6 +416,69 @@ export default function Dashboard() {
                 />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. RECENT PARCELS */}
+      <section className="mb-6 max-[600px]:mb-4">
+        <div className={`${panel} overflow-hidden`}>
+          <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
+            <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
+          </div>
+          <div className="hidden min-[701px]:block overflow-x-auto">
+            <table className="w-full min-w-[580px] border-collapse">
+              <thead>
+                <tr className="bg-[#f5f6f9] text-left text-sm text-[#65748b] dark:bg-night-head dark:text-[#ddd7d2]">
+                  {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
+                    <th key={h} className="px-4 py-3.5 font-normal">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recentRows.map((p) => {
+                  const cell = "px-4 py-3.5 border-b border-[#edf0f4] dark:border-night-line";
+                  return (
+                    <tr key={p.id} className="text-sm text-[#52627a] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
+                      <td className={`${cell} whitespace-nowrap font-semibold text-[#27364f] dark:text-[#f1eeeb]`}>
+                        {p.parcelId ? <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="text-brand hover:underline">{p.id}</Link> : p.id}
+                      </td>
+                      <td className={`${cell} whitespace-nowrap`}>{p.seller}</td>
+                      <td className={cell}><StatusBadge status={p.status} /></td>
+                      <td className={cell}><StatusBadge status={p.verification} /></td>
+                      <td className={`${cell} whitespace-nowrap`}>{p.date}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="min-[701px]:hidden space-y-2.5">
+            {recentRows.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-[#edf0f4] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    {p.parcelId ? (
+                      <Link to={`/parcels/${encodeURIComponent(p.parcelId)}`} className="block truncate text-[14px] font-bold text-brand hover:underline">
+                        {p.id}
+                      </Link>
+                    ) : (
+                      <strong className="block truncate text-[14px] text-[#27364f] dark:text-[#f1eeeb]">{p.id}</strong>
+                    )}
+                    <span className="text-[12px] text-[#888]">{p.seller} · {p.date}</span>
+                  </div>
+                  <StatusBadge status={p.status} />
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-[#f1f3f7] pt-2 text-[12px] text-[#777] dark:border-night-line">
+                  <span>Verification</span>
+                  <StatusBadge status={p.verification} />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
