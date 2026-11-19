@@ -38,46 +38,50 @@ export default function PortalNotifications() {
 
   return (
     <>
-      <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread update${unread > 1 ? "s" : ""}, including announcements.` : "You're all caught up."}>
-        <button onClick={() => markAllPortalRead(items.map((n) => n.id))} disabled={!unread} className={`${btnGhost} disabled:opacity-50`}>
-          <i className="fa-solid fa-check-double" /> Mark all as read
-        </button>
-      </Topbar>
+      <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread update${unread > 1 ? "s" : ""}, including announcements.` : "You're all caught up."} />
 
       {/* ANNOUNCEMENTS NG COORDINATOR (laging nasa itaas) */}
       <AnnouncementsPanel items={announcements} onOpen={(a) => markPortalRead(a.id)} />
 
       {/* REGULAR NA NOTIFICATIONS */}
-      <h2 className="mb-3 text-[17px] font-bold"><i className="fa-regular fa-bell mr-2 text-orange-500" />Notifications</h2>
-      <div className="mb-4 flex flex-wrap gap-2">
-        {tabs.map(([k, l]) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white" : "border border-[#eee] bg-white text-[#777] hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"}`}
-          >
-            {l}{k === "unread" && notifications.filter((n) => !n.read).length > 0 ? ` (${notifications.filter((n) => !n.read).length})` : ""}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map(([k, l]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white shadow-xs" : "border border-[#e5e8ee] bg-white text-[#64748b] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"}`}
+            >
+              {l}{k === "unread" && notifications.filter((n) => !n.read).length > 0 ? ` (${notifications.filter((n) => !n.read).length})` : ""}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => markAllPortalRead(items.map((n) => n.id))} disabled={!unread} className={`${btnGhost} !py-2 disabled:opacity-50`}>
+          <i className="fa-solid fa-check-double" /> Mark all as read
+        </button>
       </div>
 
-      <section className={`${panel} overflow-hidden`}>
+      <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
         {list.length === 0 ? (
-          <EmptyState icon="fa-bell-slash" title="No notifications here" />
+          <div className="flex h-full items-center justify-center">
+            <EmptyState icon="fa-bell-slash" title="No notifications here" />
+          </div>
         ) : (
           list.map((n) => (
             <button
               key={n.id}
               onClick={() => { markPortalRead(n.id); if (n.to) navigate(n.to); }}
-              className={`flex w-full items-start gap-4 border-b border-[#f3f3f3] px-6 py-4 text-left last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`}
+              className={`flex w-full items-center gap-4 border-b border-[#edf0f4] px-5 py-3.5 text-left last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
             >
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
               <span className="min-w-0 flex-1">
-                <strong className="block text-[14px]">{n.title}</strong>
-                <span className="mt-0.5 block text-[13px] text-[#888]">{n.text}</span>
-                <small className="mt-1 block text-[12px] text-[#aaa]">{timeAgo(n.ts)}</small>
+                <span className="flex items-center justify-between gap-2">
+                  <strong className="truncate text-[14px]">{n.title}</strong>
+                  <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
+                </span>
+                <span className="mt-0.5 block truncate text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">{n.text}</span>
               </span>
-              {!n.read && <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
+              {!n.read && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
             </button>
           ))
         )}
