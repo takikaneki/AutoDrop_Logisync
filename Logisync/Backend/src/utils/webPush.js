@@ -1,14 +1,26 @@
-const webpush = require("web-push");
 const { pool, rawPool } = require("../config/database");
 
-let activePushClient = webpush;
+let webpushPromise = null;
+let overridePushClient = null;
 let vapidConfigured = false;
 
 function setPushClientForTesting(client) {
-  activePushClient = client || webpush;
+  overridePushClient = client || null;
 }
 
-function ensureVapidConfigured(client = activePushClient) {
+async function resolvePushClient(explicitClient) {
+  if (explicitClient) return explicitClient;
+  if (overridePushClient) return overridePushClient;
+  if (!webpushPromise) {
+    webpushPromise = import("web-push").then((mod) =>
+      mod.default && typeof mod.default.sendNotification === "function" ? mod.default : mod
+    );
+  }
+  return webpushPromise;
+}
+
+async function ensureVapidConfigured(client) {
+  const targetClient = client || (await resolvePushClient());
   const subject = process.env.VAPID_SUBJECT || "mailto:no-reply@logisync.example";
   const publicKey = String(process.env.VAPID_PUBLIC_KEY || "").trim();
   const privateKey = String(process.env.VAPID_PRIVATE_KEY || "").trim();
@@ -18,9 +30,9 @@ function ensureVapidConfigured(client = activePushClient) {
     return false;
   }
 
-  if (!vapidConfigured || client !== webpush) {
-    client.setVapidDetails(subject, publicKey, privateKey);
-    if (client === webpush) vapidConfigured = true;
+  if (!vapidConfigured || overridePushClient || (client && client !== targetClient)) {
+    targetClient.setVapidDetails(subject, publicKey, privateKey);
+    if (!overridePushClient) vapidConfigured = true;
   }
   return true;
 }
@@ -61,7 +73,7 @@ function buildAnnouncementPushPayload(announcement, role) {
  * Respects role-based visibility (to_riders / to_sellers), user notification
  * preferences, duplicate prevention, and deactivates 404/410 expired endpoints.
  */
-async function sendAnnouncementPush(announcement, { pushClient = activePushClient, skipVapidInit = false } = {}) {
+async function sendAnnouncementPush(announcement, { pushClient = null, skipVapidInit = false } = {}) {
   const summary = {
     configured: true,
     attempted: 0,
@@ -75,7 +87,9 @@ async function sendAnnouncementPush(announcement, { pushClient = activePushClien
     return summary;
   }
 
-  if (!skipVapidInit && !ensureVapidConfigured(pushClient)) {
+  const client = await resolvePushClient(pushClient);
+
+  if (!skipVapidInit && !(await ensureVapidConfigured(client))) {
     summary.configured = false;
     return summary;
   }
@@ -144,7 +158,7 @@ async function sendAnnouncementPush(announcement, { pushClient = activePushClien
     summary.attempted += 1;
 
     try {
-      await pushClient.sendNotification(
+      await client.sendNotification(
         {
           endpoint: sub.endpoint,
           keys: {

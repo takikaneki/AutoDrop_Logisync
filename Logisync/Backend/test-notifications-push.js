@@ -2,7 +2,6 @@ const assert = require("assert");
 const crypto = require("crypto");
 const http = require("http");
 const jwt = require("jsonwebtoken");
-const webpush = require("web-push");
 
 function makeSubKeys() {
   const ecdh = crypto.createECDH("prime256v1");
@@ -14,10 +13,7 @@ function makeSubKeys() {
 }
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-jwt-secret-key-12345";
-const testKeys = webpush.generateVAPIDKeys();
 process.env.VAPID_SUBJECT = "mailto:test@logisync.example";
-process.env.VAPID_PUBLIC_KEY = testKeys.publicKey;
-process.env.VAPID_PRIVATE_KEY = testKeys.privateKey;
 
 const { pool, rawPool, testConnection } = require("./src/config/database");
 const { setPushClientForTesting } = require("./src/utils/webPush");
@@ -229,6 +225,12 @@ function req(server, method, path, token, body) {
 }
 
 (async () => {
+  const webpushMod = await import("web-push");
+  const webpush = webpushMod.default || webpushMod;
+  const testKeys = webpush.generateVAPIDKeys();
+  process.env.VAPID_PUBLIC_KEY = testKeys.publicKey;
+  process.env.VAPID_PRIVATE_KEY = testKeys.privateKey;
+
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 
