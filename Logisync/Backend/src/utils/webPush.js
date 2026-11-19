@@ -152,7 +152,8 @@ async function sendAnnouncementPush(announcement, { pushClient = activePushClien
             auth: sub.auth,
           },
         },
-        buildAnnouncementPushPayload(announcement, sub.role)
+        buildAnnouncementPushPayload(announcement, sub.role),
+        { timeout: 5000 }
       );
 
       await pool.query(
