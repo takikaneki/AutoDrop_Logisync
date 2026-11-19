@@ -222,10 +222,10 @@ export default function Dashboard() {
           <PortalHeroBanner
             role="coordinator"
             pipeline={[
-              { label: "Awaiting Video", count: v(countStatus("WAITING_FOR_VIDEO")), icon: "fa-clock", to: "/parcels" },
               { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "fa-video", to: "/verification?status=VIDEO_SUBMITTED" },
               { label: "Verified", count: v(countStatus("VERIFIED")), icon: "fa-circle-check", to: "/verification?status=VERIFIED" },
               { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "fa-truck-fast", to: "/parcels" },
+              { label: "Failed / Return", count: v(stats.flagged), icon: "fa-triangle-exclamation", to: "/parcels" },
             ]}
           />
         </div>
