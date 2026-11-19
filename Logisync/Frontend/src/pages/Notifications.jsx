@@ -18,14 +18,19 @@ const tones = {
 const tabs = [
   ["all", "All"],
   ["unread", "Unread"],
-  ["rider", "Riders"],
-  ["seller", "Sellers"],
-  ["delivery", "Deliveries"],
-  ["parcel", "Parcels"],
   ["rescheduled", "Rescheduled"],
   ["return_to_hub", "Return to Hub"],
+  ["delivery", "Deliveries"],
+  ["parcel", "Parcels"],
   ["system", "System"],
 ];
+
+function compactNotifText(text = "") {
+  return String(text || "")
+    .replace(/\s*\(\[object Object\]\)/g, "")
+    .replace(/remained undelivered after the \d+-day rescheduling limit and must be returned to the hub\.?/i, "3-day limit reached · Return to Hub")
+    .trim();
+}
 
 export default function Notifications() {
   const items = useNotifications();
@@ -52,9 +57,7 @@ export default function Notifications() {
 
   return (
     <>
-      <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread notification${unread > 1 ? "s" : ""}.` : "You're all caught up."}>
-        <button onClick={markAllRead} disabled={!unread} className={`${btnGhost} disabled:opacity-50`}><i className="fa-solid fa-check-double" /> Mark all as read</button>
-      </Topbar>
+      <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread notification${unread > 1 ? "s" : ""}.` : "You're all caught up."} />
 
       {/* Announcements (nasa itaas ng notification table). Dito rin ang link papunta sa pamamahala nito. */}
       {announcements.length > 0 && (
@@ -73,36 +76,45 @@ export default function Notifications() {
         />
       )}
 
-      <div className="flex gap-2 flex-wrap mb-5">
-        {tabs.map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white" : "bg-white border border-[#eee] text-[#777] hover:text-brand dark:bg-night-panel dark:border-night-line dark:text-[#d1c9c2]"}`}>
-            {l}{k === "unread" && unread > 0 ? ` (${unread})` : ""}
-          </button>
-        ))}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-2 flex-wrap">
+          {tabs.map(([k, l]) => (
+            <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white shadow-xs" : "bg-white border border-[#e5e8ee] text-[#64748b] hover:border-brand hover:text-brand dark:bg-night-panel dark:border-night-line dark:text-[#d1c9c2]"}`}>
+              {l}{k === "unread" && unread > 0 ? ` (${unread})` : ""}
+            </button>
+          ))}
+        </div>
+        <button onClick={markAllRead} disabled={!unread} className={`${btnGhost} !py-2 disabled:opacity-50`}>
+          <i className="fa-solid fa-check-double" /> Mark all as read
+        </button>
       </div>
 
       {/* Rescheduled & Return-to-Hub review panel (only shown under their dedicated filter tabs) */}
       {(tab === "rescheduled" || tab === "return_to_hub") && <FailedDeliveryReview mode={tab} />}
 
-      <section className={`${panel} overflow-hidden`}>
+      <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
         {list.length === 0 ? (
-          <EmptyState icon="fa-bell-slash" title="No notifications here" />
+          <div className="flex h-full items-center justify-center">
+            <EmptyState icon="fa-bell-slash" title="No notifications here" />
+          </div>
         ) : (
           list.map((n) => (
             <button
               key={n.id}
               onClick={() => { markRead(n.id); if (n.to) navigate(n.to); }}
-              className={`w-full flex items-start gap-4 px-6 py-4 text-left border-b border-[#f3f3f3] last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`}
+              className={`w-full flex items-center gap-4 px-5 py-3.5 text-left border-b border-[#edf0f4] last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
             >
-              <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
+              <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
               <span className="flex-1 min-w-0">
-                <strong className="block text-[14px]">{n.title}</strong>
-                <span className="block text-[13px] text-[#888] mt-0.5">
-                  {String(n.text || "").replace(/\s*\(\[object Object\]\)/g, "")}
+                <span className="flex items-center justify-between gap-2">
+                  <strong className="truncate text-[14px]">{n.title}</strong>
+                  <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
                 </span>
-                <small className="block text-[12px] text-[#aaa] mt-1">{timeAgo(n.ts)}</small>
+                <span className="block truncate text-[12.5px] text-[#64748b] dark:text-[#b8b0a8] mt-0.5">
+                  {compactNotifText(n.text)}
+                </span>
               </span>
-              {!n.read && <span className="mt-2 w-2.5 h-2.5 rounded-full bg-brand shrink-0" aria-label="Unread" />}
+              {!n.read && <span className="w-2.5 h-2.5 rounded-full bg-brand shrink-0" aria-label="Unread" />}
             </button>
           ))
         )}
