@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import UserAvatar from "../Avatar.jsx";
 import LogoutModal from "../LogoutModal.jsx";
 import ChangePasswordForm from "../ChangePasswordForm.jsx";
@@ -9,6 +9,12 @@ import { toast } from "../../store/toast.js";
 import { getUser } from "../../api.js";
 import { previewTone } from "../../utils/sound.js";
 import { riderTypeOf } from "../layout/navConfig.js";
+import {
+  disableDesktopWebPush,
+  enableDesktopWebPush,
+  inspectPushState,
+  resolvePushStatusDisplay,
+} from "../../utils/webPush.js";
 import {
   MOBILE_NUMBER_MAX_LENGTH,
   sanitizeMobileNumber,
@@ -68,6 +74,22 @@ export default function UnifiedSettings() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [pushState, setPushState] = useState(() => ({
+    supported: true,
+    permission: typeof Notification !== "undefined" ? Notification.permission : "default",
+    subscribed: false,
+    loading: false,
+  }));
+
+  useEffect(() => {
+    let alive = true;
+    inspectPushState().then((s) => {
+      if (alive) setPushState((prev) => ({ ...prev, ...s }));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [user?.user_id]);
 
   // Inline profile edit state
   const [name, setName] = useState(profile.name === "Guest" ? "" : profile.name);
@@ -143,7 +165,9 @@ export default function UnifiedSettings() {
     ? "password security change password".includes(q)
     : activeNav === "password";
   const showNotifications = isSearching
-    ? "notifications popup sound volume preview parcel verification messages complaints announcements".includes(q)
+    ? "notifications channels in-app popup browser push permission sound volume preview parcel verification messages complaints announcements".includes(
+        q
+      )
     : activeNav === "notifications";
   const showAppearance = isSearching
     ? "appearance display dark light system default device theme text size small medium large".includes(q)
@@ -170,6 +194,7 @@ export default function UnifiedSettings() {
     if (next) {
       setPrefs({
         notificationsEnabled: true,
+        inAppNotifications: true,
         inAppPopups: true,
         sound: true,
         notifyParcel: true,
@@ -181,14 +206,11 @@ export default function UnifiedSettings() {
     } else {
       setPrefs({
         notificationsEnabled: false,
+        inAppNotifications: false,
         inAppPopups: false,
         sound: false,
-        notifyParcel: false,
-        notifyVerification: false,
-        notifyMessages: false,
-        notifyAnnouncements: false,
       });
-      toast("All notifications turned off.", "info");
+      toast("All notifications and sounds turned off.", "info");
     }
   };
 
@@ -200,6 +222,52 @@ export default function UnifiedSettings() {
       ...(next ? { notificationsEnabled: true } : {}),
     });
     toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
+  };
+
+  const pushDisplay = resolvePushStatusDisplay({
+    supported: pushState.supported,
+    permission: pushState.permission,
+    subscribed: pushState.subscribed && prefs.browserPushEnabled !== false,
+  });
+  const isBrowserPushOn = notificationsOn && pushDisplay.key === "granted";
+
+  const handleToggleBrowserPush = async () => {
+    if (pushState.loading) return;
+    setPushState((s) => ({ ...s, loading: true }));
+    try {
+      if (isBrowserPushOn) {
+        const res = await disableDesktopWebPush();
+        setPushState((s) => ({ ...s, ...res, loading: false }));
+        toast("Browser push notifications disabled.", "info");
+      } else {
+        const res = await enableDesktopWebPush();
+        if (res.ok) {
+          setPushState((s) => ({
+            ...s,
+            supported: true,
+            permission: "granted",
+            subscribed: true,
+            loading: false,
+          }));
+          if (!notificationsOn) setPrefs({ notificationsEnabled: true });
+          toast("Browser push enabled for Hub Announcements.");
+        } else {
+          const inspected = await inspectPushState();
+          setPushState((s) => ({ ...s, ...inspected, loading: false }));
+          if (res.reason === "denied") {
+            toast("Browser notification permission is denied. Enable it in browser settings.", "error");
+          } else if (res.reason === "unsupported") {
+            toast("Desktop browser push notifications are not supported in this browser.", "error");
+          } else {
+            toast("Notification permission was not granted.", "info");
+          }
+        }
+      }
+    } catch (err) {
+      const inspected = await inspectPushState();
+      setPushState((s) => ({ ...s, ...inspected, loading: false }));
+      toast(err?.message || "Could not update browser push settings.", "error");
+    }
   };
 
   const roleKey = String(profile.role || user?.role || "coordinator").toLowerCase();
@@ -602,16 +670,16 @@ export default function UnifiedSettings() {
           {/* 3. NOTIFICATIONS */}
           {showNotifications && (
             <div ref={notificationsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
-              <div className="mb-4 flex items-center justify-between gap-4">
+              <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                  <h3 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                     Notifications
                   </h3>
                   <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                    Control top-right popup alerts, sound, email updates, and which notifications appear in your bell.
+                    Manage how you receive LOGISYNC updates.
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2.5">
+                <div className="flex shrink-0 items-center gap-2.5 pt-1">
                   <span className={`text-[12px] font-bold ${notificationsOn ? "text-brand" : "text-[#94a3b8]"}`}>
                     {notificationsOn ? "On" : "Off"}
                   </span>
@@ -634,20 +702,32 @@ export default function UnifiedSettings() {
                 </div>
               </div>
 
-              <div className={`space-y-5 transition-opacity ${notificationsOn ? "opacity-100" : "opacity-55 pointer-events-none"}`}>
+              <div className={`space-y-6 transition-opacity ${notificationsOn ? "opacity-100" : "opacity-55"}`}>
+                {/* A. Notification Channels */}
                 <div>
-                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                    General Notification Controls
+                  <h4 className="mb-2.5 text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
+                    1. Notification Channels
                   </h4>
-                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/25 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
                     {[
-                      ["inAppPopups", "In-App Popup Alerts", "Show a brief top-right popup under the bell when new updates arrive."],
+                      [
+                        "inAppNotifications",
+                        "In-App Notifications",
+                        "Controls alerts shown in the LOGISYNC notification bell while preserving notification history.",
+                      ],
+                      [
+                        "inAppPopups",
+                        "In-App Popup Alerts",
+                        "Show floating banner alerts while you are actively using LOGISYNC.",
+                      ],
                     ].map(([key, label, hint]) => {
                       const checked = notificationsOn && prefs[key] !== false;
                       return (
-                        <div key={key} className="flex items-center justify-between gap-4 py-3">
+                        <div key={key} className="flex items-center justify-between gap-4 py-3.5">
                           <div className="min-w-0">
-                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
+                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                              {label}
+                            </strong>
                             <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
                           </div>
                           <button
@@ -657,7 +737,136 @@ export default function UnifiedSettings() {
                             aria-label={label}
                             disabled={!notificationsOn}
                             onClick={() => togglePref(key, label)}
-                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed ${
+                              checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                                checked ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {/* Browser Push Notifications (Exclusively for Hub Announcements) */}
+                    <div className="py-3.5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                              Browser Push Notifications
+                            </strong>
+                            <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-bold text-brand">
+                              Announcements only
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
+                                pushDisplay.key === "granted"
+                                  ? "bg-[#eaf8ef] text-[#1f7a47] dark:bg-emerald-950/50 dark:text-emerald-300"
+                                  : pushDisplay.key === "denied"
+                                    ? "bg-[#fff0f0] text-[#c23a3a] dark:bg-red-950/50 dark:text-red-300"
+                                    : "bg-[#f1f5f9] text-[#64748b] dark:bg-night-panel dark:text-[#b8b0a8]"
+                              }`}
+                            >
+                              {pushDisplay.label}
+                            </span>
+                          </div>
+                          <span className="mt-0.5 block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                            Receive desktop browser push alerts exclusively when a Coordinator publishes a Hub Announcement.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={isBrowserPushOn}
+                          aria-label="Browser Push Notifications"
+                          disabled={
+                            !notificationsOn ||
+                            pushState.loading ||
+                            pushDisplay.key === "unsupported"
+                          }
+                          onClick={handleToggleBrowserPush}
+                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                            isBrowserPushOn ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                              isBrowserPushOn ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {pushDisplay.key === "denied" && (
+                        <p className="mt-2.5 rounded-lg border border-[#fed7aa] bg-[#fff7ed] px-3 py-2 text-[11.5px] text-[#9a3412] dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+                          Browser permission is blocked. Click the lock or site-settings icon beside the address bar, set Notifications to <strong>Allow</strong>, and refresh this page.
+                        </p>
+                      )}
+                      {pushDisplay.key === "unsupported" && (
+                        <p className="mt-2.5 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2 text-[11.5px] text-[#64748b] dark:border-night-line dark:bg-night-panel dark:text-[#b8b0a8]">
+                          Desktop Browser Push requires a supported desktop browser with Service Worker and Notification support over HTTPS or localhost.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* B. Notification Categories */}
+                <div className="border-t border-brand-line pt-5 dark:border-night-line">
+                  <h4 className="text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
+                    2. Notification Categories
+                  </h4>
+                  <p className="mt-0.5 mb-2.5 text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Choose which types of updates you want to receive.
+                  </p>
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/25 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                    {[
+                      [
+                        "notifyParcel",
+                        "Parcel & Delivery Updates",
+                        roleKey === "rider" && !isLmRider
+                          ? "Seller pickup assignments and dispatch updates."
+                          : "Assignments, transit updates, deliveries, and return-to-hub notices.",
+                      ],
+                      [
+                        "notifyVerification",
+                        "Verification & Video Status",
+                        roleKey === "rider"
+                          ? "Parcel clearance and dispatch verification readiness."
+                          : "Packing video approvals, re-upload requests, and verification flags.",
+                      ],
+                      [
+                        "notifyMessages",
+                        "Messages & Complaints",
+                        "Direct chat messages and complaint or request status replies.",
+                      ],
+                      [
+                        "notifyAnnouncements",
+                        "Hub Announcements",
+                        "Important operational advisories posted by coordinators.",
+                      ],
+                    ].map(([key, label, hint]) => {
+                      const checked = notificationsOn && prefs[key] !== false;
+                      return (
+                        <div key={key} className="flex items-center justify-between gap-4 py-3">
+                          <div className="min-w-0">
+                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                              {label}
+                            </strong>
+                            <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={checked}
+                            aria-label={label}
+                            disabled={!notificationsOn}
+                            onClick={() => togglePref(key, label)}
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed ${
                               checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
                             }`}
                           >
@@ -673,52 +882,15 @@ export default function UnifiedSettings() {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                    Alert Categories
+                {/* C. Sound Preferences */}
+                <div className="border-t border-brand-line pt-5 dark:border-night-line">
+                  <h4 className="text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
+                    3. Sound Preferences
                   </h4>
-                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                    {[
-                      ["notifyParcel", "Parcel & Delivery Updates", "Assignments, transit updates, deliveries, and return-to-hub notices."],
-                      ["notifyVerification", "Verification & Video Status", "Packing video approvals, re-upload requests, and verification flags."],
-                      ["notifyMessages", "Messages & Complaints", "Direct chat messages and complaint or request status replies."],
-                      ["notifyAnnouncements", "Hub Announcements", "Important operational advisories posted by coordinators."],
-                    ].map(([key, label, hint]) => {
-                      const checked = notificationsOn && prefs[key] !== false;
-                      return (
-                        <div key={key} className="flex items-center justify-between gap-4 py-3">
-                          <div className="min-w-0">
-                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">{label}</strong>
-                            <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
-                          </div>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={checked}
-                            aria-label={label}
-                            disabled={!notificationsOn}
-                            onClick={() => togglePref(key, label)}
-                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                              checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                                checked ? "translate-x-5" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                    Sound Preferences
-                  </h4>
-                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  <p className="mt-0.5 mb-2.5 text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Manage sounds for selected notification categories.
+                  </p>
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/25 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
                     <div className="py-3.5">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <div>
@@ -749,37 +921,45 @@ export default function UnifiedSettings() {
                     </div>
 
                     {[
-                      ["soundMessages", "messages", "Messages & Complaints Sound"],
-                      ["soundAnnouncements", "announcements", "Hub Announcements Sound"],
-                    ].map(([prefKey, toneKey, label]) => {
-                      const checked = notificationsOn && prefs.sound !== false && prefs[prefKey] !== false;
+                      ["soundMessages", "notifyMessages", "messages", "Messages & Complaints"],
+                      ["soundAnnouncements", "notifyAnnouncements", "announcements", "Hub Announcements"],
+                    ].map(([soundKey, catKey, toneKey, label]) => {
+                      const categoryActive = notificationsOn && prefs[catKey] !== false;
+                      const checked = categoryActive && prefs.sound !== false && prefs[soundKey] !== false;
                       return (
-                        <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
+                        <div key={soundKey} className="flex items-center justify-between gap-4 py-3">
                           <div className="min-w-0">
                             <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
                               {label}
                             </strong>
-                            <button
-                              type="button"
-                              disabled={!notificationsOn}
-                              onClick={() => previewTone(toneKey)}
-                              className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
-                            >
-                              Preview Sound
-                            </button>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={!categoryActive}
+                                onClick={() => previewTone(toneKey)}
+                                className="text-[12px] font-semibold text-brand hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Preview Sound
+                              </button>
+                              {!categoryActive && (
+                                <span className="text-[11px] text-[#94a3b8]">
+                                  (Disabled because {label} notifications are off)
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={checked}
-                            aria-label={label}
-                            disabled={!notificationsOn}
+                            aria-label={`${label} sound`}
+                            disabled={!categoryActive}
                             onClick={() => {
                               const next = !checked;
-                              setPrefs({ [prefKey]: next, ...(next ? { sound: true, notificationsEnabled: true } : {}) });
+                              setPrefs({ [soundKey]: next, ...(next ? { sound: true, notificationsEnabled: true } : {}) });
                               if (next) previewTone(toneKey);
                             }}
-                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-55 ${
                               checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
                             }`}
                           >
@@ -793,9 +973,6 @@ export default function UnifiedSettings() {
                       );
                     })}
                   </div>
-                  <p className="mt-2 text-[11.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                    Parcel &amp; Delivery Updates and Verification &amp; Video Status remain silent.
-                  </p>
                 </div>
               </div>
             </div>

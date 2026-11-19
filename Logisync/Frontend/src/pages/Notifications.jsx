@@ -1,11 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { btnGhost, panel } from "../components/styles.js";
 import AnnouncementsPanel from "../components/AnnouncementsPanel.jsx";
 import FailedDeliveryReview from "../components/delivery/FailedDeliveryReview.jsx";
-import { useAnnouncements } from "../store/announcements.js";
+import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
 import { markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
 
 const tones = {
@@ -22,6 +22,10 @@ export default function Notifications() {
   const announcements = useAnnouncements();
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
+
+  useEffect(() => {
+    syncAnnouncementsFromServer();
+  }, []);
   const unread = items.filter((n) => !n.read).length;
 
   const list = useMemo(

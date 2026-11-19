@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
+import { classifyNotification, markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
 import { usePrefs } from "../store/prefs.js";
 import { notifyPopup } from "../store/toast.js";
 
@@ -27,12 +27,14 @@ export default function NotificationBell() {
   const rawNotifications = useNotifications();
   const prefs = usePrefs();
 
+  const bellEnabled = prefs.notificationsEnabled !== false && prefs.inAppNotifications !== false;
+
   const notifications = useMemo(() => {
     return rawNotifications.filter((n) => {
-      const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
-      if (n.kind === "announcement" || txt.includes("announcement")) return prefs.notifyAnnouncements !== false;
-      if (txt.includes("message") || txt.includes("complaint") || txt.includes("reply")) return prefs.notifyMessages !== false;
-      if (txt.includes("video") || txt.includes("verif")) return prefs.notifyVerification !== false;
+      const cat = classifyNotification(n);
+      if (cat === "announcements") return prefs.notifyAnnouncements !== false;
+      if (cat === "messages") return prefs.notifyMessages !== false;
+      if (cat === "verification") return prefs.notifyVerification !== false;
       return prefs.notifyParcel !== false;
     });
   }, [rawNotifications, prefs.notifyAnnouncements, prefs.notifyMessages, prefs.notifyVerification, prefs.notifyParcel]);
@@ -47,20 +49,17 @@ export default function NotificationBell() {
     seenIdsRef.current = ids;
     if (fresh.length > 0) {
       const n = fresh[0];
-      const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
-      const category =
-        n.kind === "announcement" || txt.includes("announcement")
-          ? "announcements"
-          : txt.includes("message") || txt.includes("complaint") || txt.includes("reply")
-            ? "messages"
-            : txt.includes("video") || txt.includes("verif")
-              ? "verification"
-              : "parcel";
-      notifyPopup({ title: n.title, message: n.text, icon: n.icon || "fa-bell", to: n.to || "/notifications", category });
+      notifyPopup({
+        title: n.title,
+        message: n.text,
+        icon: n.icon || "fa-bell",
+        to: n.to || "/notifications",
+        category: classifyNotification(n),
+      });
     }
   }, [notifications]);
 
-  const unread = notifications.filter((n) => !n.read).length;
+  const unread = bellEnabled ? notifications.filter((n) => !n.read).length : 0;
   const list = useMemo(
     () => (tab === "all" ? notifications : notifications.filter((n) => n.kind === tab)),
     [notifications, tab]
@@ -141,7 +140,12 @@ export default function NotificationBell() {
           </div>
 
           <div className="max-h-[360px] overflow-y-auto border-t border-[#f1f1f1] dark:border-night-line">
-            {list.length === 0 ? (
+            {!bellEnabled ? (
+              <div className="px-5 py-9 text-center text-[12.5px] text-[#888]">
+                <i className="fa-regular fa-bell-slash mb-2 block text-[22px] text-[#bbb]" />
+                In-App Notifications in the header bell are turned off. Existing history is preserved.
+              </div>
+            ) : list.length === 0 ? (
               <div className="py-10 text-center text-[12px] text-[#aaa]">
                 <i className="fa-regular fa-bell-slash mb-2 block text-[22px]" />
                 No notifications here yet.

@@ -9,6 +9,7 @@ import useResponsiveSidebar from "../../hooks/useResponsiveSidebar.js";
 import { riderTypeOf, toPath } from "./navConfig.js";
 import { syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 import RiderFloatingCallButton from "../rider/RiderFloatingCallButton.jsx";
+import { syncPrefsFromServer } from "../../store/prefs.js";
 
 // Shared responsive layout shell for Seller and Rider portals.
 // role = "seller" | "rider". Page content renders inside <Outlet />.
@@ -17,6 +18,10 @@ export default function DashboardLayout({ role }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const gPressed = useRef(0);
+
+  useEffect(() => {
+    syncPrefsFromServer();
+  }, []);
 
   useEffect(() => {
     closeMobile();

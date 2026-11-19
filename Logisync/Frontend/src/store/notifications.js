@@ -20,6 +20,19 @@ export function addNotification(n) {
   });
 }
 
+export function classifyNotification(n, isAnnouncement = false) {
+  if (isAnnouncement) return "announcements";
+  const txt = `${n?.title || ""} ${n?.text || ""}`.toLowerCase();
+  if (n?.kind === "announcement" || txt.includes("announcement")) return "announcements";
+  if (n?.kind === "message" || n?.kind === "complaint" || txt.includes("message") || txt.includes("complaint") || txt.includes("reply")) {
+    return "messages";
+  }
+  if (txt.includes("video") || txt.includes("verif") || txt.includes("reupload") || txt.includes("rejected")) {
+    return "verification";
+  }
+  return "parcel";
+}
+
 export function timeAgo(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
   if (s < 60) return "Just now";

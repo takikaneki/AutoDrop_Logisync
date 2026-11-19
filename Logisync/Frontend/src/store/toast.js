@@ -12,11 +12,11 @@ function playNotificationCategorySound(category) {
   const prefs = getPrefs();
   if (prefs.notificationsEnabled === false || prefs.sound === false) return;
   if (category === "messages") {
-    if (prefs.soundMessages !== false) previewTone("messages");
+    if (prefs.notifyMessages !== false && prefs.soundMessages !== false) previewTone("messages");
     return;
   }
   if (category === "announcements") {
-    if (prefs.soundAnnouncements !== false) previewTone("announcements");
+    if (prefs.notifyAnnouncements !== false && prefs.soundAnnouncements !== false) previewTone("announcements");
   }
   // Parcel & Delivery Updates and Verification & Video Status must remain silent.
 }

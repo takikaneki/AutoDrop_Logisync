@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { markAllPortalRead, markPortalRead, usePortalNotifications } from "../../store/portalNotifications.js";
-import { timeAgo } from "../../store/notifications.js";
+import { classifyNotification, timeAgo } from "../../store/notifications.js";
 import { usePrefs } from "../../store/prefs.js";
 import { notifyPopup } from "../../store/toast.js";
 import { toPath } from "./navConfig.js";
@@ -20,11 +20,13 @@ export default function NotificationMenu({ role }) {
   const { items: rawItems, announcements: rawAnnouncements, notifications: rawNotifications, reload } = usePortalNotifications(role);
   useClickOutside(ref, () => setOpen(false), open);
 
+  const bellEnabled = prefs.notificationsEnabled !== false && prefs.inAppNotifications !== false;
+
   const allowItem = (n, isAnnouncement = false) => {
-    if (isAnnouncement) return prefs.notifyAnnouncements !== false;
-    const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
-    if (txt.includes("message") || txt.includes("complaint") || txt.includes("reply")) return prefs.notifyMessages !== false;
-    if (txt.includes("video") || txt.includes("verif")) return prefs.notifyVerification !== false;
+    const cat = classifyNotification(n, isAnnouncement);
+    if (cat === "announcements") return prefs.notifyAnnouncements !== false;
+    if (cat === "messages") return prefs.notifyMessages !== false;
+    if (cat === "verification") return prefs.notifyVerification !== false;
     return prefs.notifyParcel !== false;
   };
 
@@ -37,7 +39,7 @@ export default function NotificationMenu({ role }) {
     [rawNotifications, prefs.notifyMessages, prefs.notifyVerification, prefs.notifyParcel]
   );
   const items = useMemo(() => [...announcements, ...notifications], [announcements, notifications]);
-  const unread = items.filter((n) => !n.read).length;
+  const unread = bellEnabled ? items.filter((n) => !n.read).length : 0;
 
   useEffect(() => {
     const ids = new Set(items.map((n) => n.id));
@@ -49,21 +51,12 @@ export default function NotificationMenu({ role }) {
     seenIdsRef.current = ids;
     if (fresh.length > 0) {
       const n = fresh[0];
-      const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
-      const category =
-        n.kind === "announcement" || txt.includes("announcement")
-          ? "announcements"
-          : txt.includes("message") || txt.includes("complaint") || txt.includes("reply")
-            ? "messages"
-            : txt.includes("video") || txt.includes("verif")
-              ? "verification"
-              : "parcel";
       notifyPopup({
         title: n.title,
         message: n.text,
         icon: n.icon || "fa-bell",
         to: n.to || toPath(role, "notifications"),
-        category,
+        category: classifyNotification(n, n.kind === "announcement"),
       });
     }
   }, [items, role]);
@@ -103,7 +96,11 @@ export default function NotificationMenu({ role }) {
               </button>
             )}
           </div>
-          {items.length === 0 ? (
+          {!bellEnabled ? (
+            <p className="px-5 py-8 text-center text-[13px] text-[#888]">
+              In-App Notifications in the header bell are turned off. Existing history is preserved below.
+            </p>
+          ) : items.length === 0 ? (
             <p className="p-8 text-center text-[14px] text-[#999]">You're all caught up.</p>
           ) : (
             <ul className="max-h-80 overflow-y-auto">

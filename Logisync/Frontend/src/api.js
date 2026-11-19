@@ -1,7 +1,7 @@
 // Isang lugar para sa lahat ng usapan sa Express backend.
 // Ang /api ay naka-proxy ng Vite papunta sa http://127.0.0.1:5000 (tingnan ang vite.config.js).
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+export const API_BASE_URL = import.meta?.env?.VITE_API_URL || "/api";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
@@ -32,6 +32,7 @@ export function getUser() {
 export function saveSession({ token, user }) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new CustomEvent("logisync-auth-changed", { detail: { user } }));
 }
 
 export function clearSession() {
@@ -42,6 +43,7 @@ export function clearSession() {
   } catch {
     /* ignore */
   }
+  window.dispatchEvent(new CustomEvent("logisync-auth-changed", { detail: { user: null } }));
 }
 
 // Ang role ay galing sa cryptographically signed JWT token payload

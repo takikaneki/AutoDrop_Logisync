@@ -6,6 +6,8 @@ import Footer from "./Footer.jsx";
 import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
 import useResponsiveSidebar from "../hooks/useResponsiveSidebar.js";
+import { syncPrefsFromServer } from "../store/prefs.js";
+import { syncAnnouncementsFromServer } from "../store/announcements.js";
 
 // Keyboard shortcuts: "g" tapos d/p/r/v/m/n/a/s  ·  "?" = Help
 const go = {
@@ -24,6 +26,11 @@ export default function AppLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const gPressed = useRef(0);
+
+  useEffect(() => {
+    syncPrefsFromServer();
+    syncAnnouncementsFromServer();
+  }, []);
 
   useEffect(() => {
     closeMobile();

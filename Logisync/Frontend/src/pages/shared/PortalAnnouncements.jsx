@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { EmptyState } from "../../components/ui.jsx";
 import { panel } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
-import { useAnnouncements } from "../../store/announcements.js";
+import { syncAnnouncementsFromServer, useAnnouncements } from "../../store/announcements.js";
 
 const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -10,6 +11,10 @@ const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day:
 export default function PortalAnnouncements() {
   const role = useBase().slice(1); // "seller" | "rider"
   const list = useAnnouncements().filter((a) => (role === "rider" ? a.toRiders : a.toSellers));
+
+  useEffect(() => {
+    syncAnnouncementsFromServer();
+  }, []);
 
   return (
     <>

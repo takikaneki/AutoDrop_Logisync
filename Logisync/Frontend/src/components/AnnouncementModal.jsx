@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { addNotification } from "../store/notifications.js";
 import { playAlertSound } from "../utils/sound.js";
-import { addAnnouncement } from "../store/announcements.js";
+import { publishAnnouncement } from "../store/announcements.js";
 import { logAction } from "../store/audit.js";
 import { getPrefs } from "../store/prefs.js";
 import { toast } from "../store/toast.js";
@@ -28,32 +28,42 @@ export default function AnnouncementModal({ open, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const send = () => {
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
+    if (sending) return;
     if (!message.trim()) return setError("Please type the announcement message.");
     if (!toRiders && !toSellers) return setError("Please select at least one recipient.");
 
     const recipients = [toRiders && "Riders", toSellers && "Sellers"].filter(Boolean).join(" and ");
     const finalTitle = title.trim() || "Delivery Announcement";
 
-    // TODO: POST /api/announcements { title, message, toRiders, toSellers }
-    addAnnouncement({ title: finalTitle, message: message.trim(), toRiders, toSellers });
-    logAction({ category: "Announcements", action: "Sent announcement", target: recipients, detail: finalTitle });
-    toast("Announcement sent.");
-    addNotification({
-      kind: "system",
-      icon: "fa-bullhorn",
-      tone: "orange",
-      title: `Announcement sent: ${finalTitle}`,
-      text: `Sent to ${recipients}.`,
-      to: null,
-    });
+    setSending(true);
+    try {
+      await publishAnnouncement({ title: finalTitle, message: message.trim(), toRiders, toSellers });
+      logAction({ category: "Announcements", action: "Sent announcement", target: recipients, detail: finalTitle });
+      toast("Announcement sent.");
+      addNotification({
+        kind: "system",
+        icon: "fa-bullhorn",
+        tone: "orange",
+        title: `Announcement sent: ${finalTitle}`,
+        text: `Sent to ${recipients}.`,
+        to: null,
+      });
 
-    setPopup({ title: finalTitle, message: message.trim(), recipients: `Sent to: ${recipients}` });
-    if (getPrefs().sound) playAlertSound();
-    setTitle("");
-    setMessage("");
-    setError("");
-    onClose();
+      setPopup({ title: finalTitle, message: message.trim(), recipients: `Sent to: ${recipients}` });
+      const prefs = getPrefs();
+      if (prefs.notificationsEnabled !== false && prefs.sound !== false && prefs.notifyAnnouncements !== false && prefs.soundAnnouncements !== false) {
+        playAlertSound();
+      }
+      setTitle("");
+      setMessage("");
+      setError("");
+      onClose();
+    } finally {
+      setSending(false);
+    }
   };
 
   if (!open && !popup) return null;
@@ -126,8 +136,12 @@ export default function AnnouncementModal({ open, onClose }) {
                     <input type="checkbox" checked={toSellers} onChange={(e) => setToSellers(e.target.checked)} className="accent-brand" /> Sellers
                   </label>
                 </div>
-                <button onClick={send} className="px-[15px] py-2.5 rounded-lg bg-brand text-white text-[12px] font-bold hover:bg-brand-dark">
-                  <i className="fa-solid fa-paper-plane" /> Send Alert
+                <button
+                  onClick={send}
+                  disabled={sending}
+                  className="px-[15px] py-2.5 rounded-lg bg-brand text-white text-[12px] font-bold hover:bg-brand-dark disabled:opacity-60"
+                >
+                  <i className="fa-solid fa-paper-plane" /> {sending ? "Sending..." : "Send Alert"}
                 </button>
               </div>
             </div>

@@ -10,6 +10,8 @@ const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const announcementRoutes = require("./routes/announcementRoutes");
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use(["/api/messages", "/messages"], messageRoutes);
 app.use(["/api/users", "/users"], userRoutes);
 app.use(["/api/audit-logs", "/audit-logs"], auditRoutes);
 app.use(["/api/complaints", "/complaints"], complaintRoutes);
+app.use(["/api/notifications", "/notifications"], notificationRoutes);
+app.use(["/api/announcements", "/announcements"], announcementRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

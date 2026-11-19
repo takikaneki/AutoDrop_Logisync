@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Topbar from "../components/Topbar.jsx";
 import AnnouncementModal from "../components/AnnouncementModal.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { btnPrimary, panel } from "../components/styles.js";
-import { useAnnouncements } from "../store/announcements.js";
+import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
 
 const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 export default function Announcements() {
   const list = useAnnouncements();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    syncAnnouncementsFromServer();
+  }, []);
 
   return (
     <>

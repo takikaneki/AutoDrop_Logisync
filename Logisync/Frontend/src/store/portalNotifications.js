@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
 import { listParcels } from "../services/parcelService.js";
-import { useAnnouncements } from "./announcements.js";
+import { syncAnnouncementsFromServer, useAnnouncements } from "./announcements.js";
 import { useComplaints } from "./records.js";
 import { MAX_RESCHEDULES, STAGE, useAllDeliveries, useAssignedParcels, useMyDeliveries } from "./riderDeliveries.js";
 import { useFailedDeliveries } from "./failedDeliveries.js";
@@ -37,6 +37,7 @@ export function usePortalNotifications(role) {
   const load = useCallback(async () => {
     const next = [];
     try {
+      await syncAnnouncementsFromServer();
       const messages = await listMessages();
       messages
         .filter((m) => Number(m.receiver_id) === me && !m.is_read)
