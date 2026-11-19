@@ -38,6 +38,7 @@ export default function DashboardLayout({ role }) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "Escape") {
         closeMobile();
+        closeDesktop();
         return;
       }
       if (e.key === "?") return navigate(toPath(role, "help"));
@@ -67,7 +68,7 @@ export default function DashboardLayout({ role }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate, role, closeMobile]);
+  }, [navigate, role, closeMobile, closeDesktop]);
 
   useEffect(() => {
     if (role !== "rider") return;
