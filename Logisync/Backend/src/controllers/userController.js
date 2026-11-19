@@ -77,11 +77,11 @@ async function listContacts(req, res) {
 
     const [rows] = isCoordinator
       ? await pool.query(
-          `SELECT user_id, name, email, role FROM users
+          `SELECT user_id, name, email, role, phone FROM users
            WHERE role IN ('seller', 'rider') ORDER BY name ASC`
         )
       : await pool.query(
-          `SELECT user_id, name, role FROM users
+          `SELECT user_id, name, role, phone FROM users
            WHERE role = 'coordinator' ORDER BY name ASC`
         );
 
