@@ -20,7 +20,7 @@ function getViewportTier() {
 export default function useResponsiveSidebar() {
   const initialTier = getViewportTier();
   const prevTierRef = useRef(initialTier);
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(() => initialTier !== "desktop");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -31,6 +31,8 @@ export default function useResponsiveSidebar() {
       prevTierRef.current = nextTier;
 
       setMobileOpen(false);
+      if (nextTier === "medium") setCollapsed(true);
+      if (nextTier === "desktop") setCollapsed(false);
     };
 
     window.addEventListener("resize", syncTier, { passive: true });

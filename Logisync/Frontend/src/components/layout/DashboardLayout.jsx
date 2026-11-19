@@ -38,7 +38,6 @@ export default function DashboardLayout({ role }) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "Escape") {
         closeMobile();
-        closeDesktop();
         return;
       }
       if (e.key === "?") return navigate(toPath(role, "help"));
@@ -68,7 +67,7 @@ export default function DashboardLayout({ role }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate, role, closeMobile, closeDesktop]);
+  }, [navigate, role, closeMobile]);
 
   useEffect(() => {
     if (role !== "rider") return;
@@ -83,7 +82,7 @@ export default function DashboardLayout({ role }) {
 
   return (
     <div className="flex min-h-screen max-w-[100vw] overflow-x-clip">
-      <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={closeMobile} onCloseDesktop={closeDesktop} />
+      <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={closeMobile} onCloseDesktop={closeDesktop} onToggleSidebar={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
         <PortalHeader role={role} collapsed={collapsed} mobileOpen={mobileOpen} onToggleSidebar={toggleSidebar} />
         <main className="flex min-w-0 max-w-full flex-1 flex-col overflow-x-clip px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 max-[820px]:px-3.5 max-[820px]:pt-3.5 max-[820px]:pb-24 max-[380px]:px-2.5 print:p-0">

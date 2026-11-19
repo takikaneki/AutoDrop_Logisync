@@ -30,18 +30,18 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
     <>
       <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-3 sm:px-6 shadow-sm print:hidden dark:bg-night-panel dark:border-night-line">
         <div className="flex h-full w-full items-center justify-between gap-2">
-          {/* Left Column: Sidebar Toggle & Brand */}
+          {/* Left Column: Mobile Drawer Toggle & Portal Identity */}
           <div className="flex min-w-0 items-center justify-start gap-2 sm:gap-3">
             <button
               onClick={onToggleSidebar}
               aria-label="Toggle sidebar"
-              aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
+              aria-expanded={mobileOpen}
               title="Toggle sidebar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line min-[821px]:hidden"
             >
               <i className="fa-solid fa-bars text-[18px]" />
             </button>
-            <Link to={toPath(role, "")} className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <Link to={toPath(role, "")} className="flex min-w-0 items-center gap-2 sm:gap-2.5 min-[821px]:hidden">
               <img
                 src={SPX_LOGO_DATA_URL}
                 alt="SPX Express"
@@ -52,10 +52,11 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 max-[380px]:hidden dark:text-white">
                 LogiSync
               </span>
-              <span className="hidden min-[821px]:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
-                {ROLE_LABEL[role]}
-              </span>
             </Link>
+            <span className="hidden min-[821px]:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+              {ROLE_LABEL[role]}
+            </span>
           </div>
 
           {/* Right Column: Theme Toggle, Notifications, and Profile */}

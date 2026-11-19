@@ -16,20 +16,16 @@ const TOP_ICONS = {
 
 // Sidebar for Seller and Rider portals, matching Coordinator's responsive behavior:
 // full expanded on large desktop, icon-only on medium screens/laptops, overlay drawer on mobile.
-export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, onCloseDesktop }) {
+export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, onCloseDesktop, onToggleSidebar }) {
   const { dark } = usePrefs();
   const profile = useProfile();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
-  const isOpen = mobileOpen || !collapsed;
-  const closeAll = () => {
-    onClose?.();
-    onCloseDesktop?.();
-  };
-
   const navClass = ({ isActive }) =>
-    `group relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
+    `group relative flex items-center rounded-[10px] py-[11px] text-[14px] transition ${
+      collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
+    } ${
       isActive
         ? "bg-[#0f172a] text-white font-bold shadow-sm border-l-[3px] border-white"
         : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold"
@@ -37,53 +33,74 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
 
   return (
     <>
-      {isOpen && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-[65] bg-black/35 backdrop-blur-[1px] transition-opacity"
-          onClick={closeAll}
+          className="fixed inset-0 z-[65] bg-black/35 backdrop-blur-[1px] transition-opacity min-[821px]:hidden"
+          onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[70] flex h-[100dvh] w-[280px] sm:w-[296px] max-w-[85vw] flex-col overflow-y-auto border-r border-brand-dark bg-gradient-to-b from-[#ee4d2d] to-[#f97316] px-4 py-4 text-white shadow-2xl transition-transform duration-200 dark:border-[#9a3412] dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        className={`relative shrink-0 bg-gradient-to-b from-[#ee4d2d] to-[#f97316] text-white border-r border-brand-dark shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+          mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
+        } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
+          collapsed ? "min-[821px]:w-[76px]" : "min-[821px]:w-[250px]"
         }`}
       >
-        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1 flex items-center gap-2.5">
-              <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
-                <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-4 w-auto shrink-0 object-contain" />
-              </span>
-              <div className="min-w-0">
-                <span className="block truncate text-[14px] font-black tracking-tight text-white">LogiSync</span>
-                <span className="block truncate text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-white/85">
-                  {ROLE_LABEL[role]}
+        {/* Edge-positioned Toggle Button (moves with sidebar right edge on desktop & tablet) */}
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden min-[821px]:flex absolute -right-3.5 top-3.5 z-50 h-7 w-7 items-center justify-center rounded-full border border-[#e5e8ee] bg-white text-[#ee4d2d] shadow-md transition hover:bg-orange-50 hover:scale-105 dark:border-night-line dark:bg-night-panel dark:text-[#fb923c]"
+        >
+          <i className={`fa-solid ${collapsed ? "fa-chevron-right" : "fa-chevron-left"} text-[11px]`} />
+        </button>
+
+        <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
+          {/* Branding Header */}
+          <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
+            <div className="flex items-center justify-between gap-2.5">
+              <div className={`flex min-w-0 items-center gap-2.5 ${collapsed ? "min-[821px]:justify-center" : "flex-1"}`}>
+                <span className="inline-flex shrink-0 rounded-lg bg-white px-2 py-1 shadow-xs">
+                  <img
+                    src={SPX_LOGO_DATA_URL}
+                    alt="SPX Express"
+                    draggable={false}
+                    className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-4" : "h-4"} w-auto shrink-0 object-contain`}
+                  />
                 </span>
+                <div className={`min-w-0 ${collapsed ? "min-[821px]:hidden" : ""}`}>
+                  <span className="block truncate text-[15px] font-black tracking-tight text-white leading-tight">LogiSync</span>
+                  <span className="block truncate text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-white/85">
+                    {ROLE_LABEL[role]}
+                  </span>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
+                <button
+                  type="button"
+                  onClick={toggleDark}
+                  aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+                  title={dark ? "Switch to light mode" : "Switch to dark mode"}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
+                >
+                  <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Close sidebar"
+                  title="Close sidebar"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/15 hover:text-white"
+                >
+                  <i className="fa-solid fa-xmark text-base" />
+                </button>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <button
-                type="button"
-                onClick={toggleDark}
-                aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-                title={dark ? "Switch to light mode" : "Switch to dark mode"}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand min-[821px]:hidden"
-              >
-                <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
-              </button>
-              <button
-                type="button"
-                onClick={closeAll}
-                aria-label="Close sidebar"
-                title="Close sidebar"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/15 hover:text-white"
-              >
-                <i className="fa-solid fa-xmark text-base" />
-              </button>
-            </div>
-          </div>
           <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
@@ -113,7 +130,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                   key={l.path}
                   to={toPath(role, l.path)}
                   end={l.path === ""}
-                  onClick={closeAll}
+                  onClick={onClose}
                   className={navClass}
                   title={l.label}
                   aria-label={l.label}
@@ -167,7 +184,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
         <div className="mt-auto pt-3 border-t border-white/20">
           <NavLink
             to={toPath(role, "settings")}
-            onClick={closeAll}
+            onClick={onClose}
             className={navClass}
             title="Settings"
             aria-label="Settings"
@@ -188,11 +205,14 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
             title="Logout"
             aria-label="Logout"
             {...tipProps("Logout")}
-            className="w-full flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] text-white/95 transition hover:bg-white hover:text-brand hover:font-semibold"
+            className={`w-full flex items-center rounded-[10px] py-[11px] text-[14px] text-white/95 transition hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold ${
+              collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
+            }`}
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            <span>Logout</span>
+            <span className={collapsed ? "min-[821px]:hidden" : ""}>Logout</span>
           </button>
+        </div>
         </div>
       </aside>
       {Tooltip}
