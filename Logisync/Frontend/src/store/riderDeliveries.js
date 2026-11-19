@@ -417,7 +417,7 @@ export function syncAutomaticReschedules() {
           icon: "fa-warehouse",
           tone: "red",
           title: `Return to Hub: ${d.transaction_number || d.parcel_id}`,
-          text: `${d.receiver || "Customer"} (${d.seller || "Seller"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling limit and must be returned to the hub.`,
+          text: `${d.receiver || "Customer"} (${typeof d.seller === "object" ? d.seller?.name || "Seller" : d.seller || "Seller"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling limit and must be returned to the hub.`,
           read: false,
           to: "/notifications",
         });

@@ -15,7 +15,17 @@ const tones = {
   green: "bg-[#eaf8ef] text-[#29945a]",
   red: "bg-[#fff0f0] text-[#d94747]",
 };
-const tabs = [["all", "All"], ["unread", "Unread"], ["rider", "Riders"], ["seller", "Sellers"], ["delivery", "Deliveries"], ["parcel", "Parcels"], ["system", "System"]];
+const tabs = [
+  ["all", "All"],
+  ["unread", "Unread"],
+  ["rider", "Riders"],
+  ["seller", "Sellers"],
+  ["delivery", "Deliveries"],
+  ["parcel", "Parcels"],
+  ["rescheduled", "Rescheduled"],
+  ["return_to_hub", "Return to Hub"],
+  ["system", "System"],
+];
 
 export default function Notifications() {
   const items = useNotifications();
@@ -28,10 +38,17 @@ export default function Notifications() {
   }, []);
   const unread = items.filter((n) => !n.read).length;
 
-  const list = useMemo(
-    () => (tab === "all" ? items : tab === "unread" ? items.filter((n) => !n.read) : items.filter((n) => n.kind === tab)),
-    [items, tab]
-  );
+  const list = useMemo(() => {
+    if (tab === "all") return items;
+    if (tab === "unread") return items.filter((n) => !n.read);
+    if (tab === "rescheduled") {
+      return items.filter((n) => /reschedul/i.test(`${n.title || ""} ${n.text || ""}`));
+    }
+    if (tab === "return_to_hub") {
+      return items.filter((n) => /return to hub/i.test(`${n.title || ""} ${n.text || ""}`));
+    }
+    return items.filter((n) => n.kind === tab);
+  }, [items, tab]);
 
   return (
     <>
@@ -56,9 +73,6 @@ export default function Notifications() {
         />
       )}
 
-      {/* Failed deliveries na naghihintay ng desisyon */}
-      <FailedDeliveryReview />
-
       <div className="flex gap-2 flex-wrap mb-5">
         {tabs.map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white" : "bg-white border border-[#eee] text-[#777] hover:text-brand dark:bg-night-panel dark:border-night-line dark:text-[#d1c9c2]"}`}>
@@ -66,6 +80,9 @@ export default function Notifications() {
           </button>
         ))}
       </div>
+
+      {/* Rescheduled & Return-to-Hub review panel (only shown under their dedicated filter tabs) */}
+      {(tab === "rescheduled" || tab === "return_to_hub") && <FailedDeliveryReview mode={tab} />}
 
       <section className={`${panel} overflow-hidden`}>
         {list.length === 0 ? (
@@ -80,7 +97,9 @@ export default function Notifications() {
               <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
               <span className="flex-1 min-w-0">
                 <strong className="block text-[14px]">{n.title}</strong>
-                <span className="block text-[13px] text-[#888] mt-0.5">{n.text}</span>
+                <span className="block text-[13px] text-[#888] mt-0.5">
+                  {String(n.text || "").replace(/\s*\(\[object Object\]\)/g, "")}
+                </span>
                 <small className="block text-[12px] text-[#aaa] mt-1">{timeAgo(n.ts)}</small>
               </span>
               {!n.read && <span className="mt-2 w-2.5 h-2.5 rounded-full bg-brand shrink-0" aria-label="Unread" />}
