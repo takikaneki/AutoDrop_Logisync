@@ -251,7 +251,7 @@ export default function ChatView({
                     onClick={() => setRoleFilter(option.value)}
                     className={`rounded-md px-2 py-2 text-xs font-semibold transition ${roleFilter === option.value
                         ? `${btnClass} text-white`
-                        : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800"
+                        : "text-slate-600 hover:bg-[#0f172a] hover:text-white dark:text-slate-300 dark:hover:bg-[#0f172a] dark:hover:text-white"
                       }`}
                   >
                     {option.label}
