@@ -753,7 +753,7 @@ export default function Parcels() {
         {/* Desktop & Tablet Table View */}
         <div className={`hidden min-[701px]:block ${tableScroll} !border-[#e5e8ee] dark:!border-night-line`}>
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="sticky top-0 z-10 bg-[#0f172a] text-white">
+            <thead className="sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#ee4d2d]">
               <tr>
                 <SortTh k="id">Tracking ID</SortTh>
                 <SortTh k="seller">Seller</SortTh>

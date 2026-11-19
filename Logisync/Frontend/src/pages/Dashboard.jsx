@@ -430,7 +430,7 @@ export default function Dashboard() {
           </div>
           <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
             <table className="w-full min-w-[580px] border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#0f172a]">
+              <thead className="sticky top-0 z-10 bg-[#0f172a] dark:bg-[#ee4d2d]">
                 <tr className="text-left text-xs uppercase tracking-wider text-white/90">
                   {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
                     <th key={h} className="px-4 py-3.5 font-normal">{h}</th>
