@@ -23,8 +23,8 @@ function shortParcelId(id) {
 }
 
 const FILTERS = [
-  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "fa-video", tone: "yellow", match: (p) => PENDING.includes(p.status) },
-  { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "fa-hourglass-half", tone: "blue", match: (p) => p.status === "VIDEO_SUBMITTED" },
+  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "fa-video", tone: "blue", match: (p) => PENDING.includes(p.status) },
+  { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "fa-hourglass-half", tone: "yellow", match: (p) => p.status === "VIDEO_SUBMITTED" },
   { key: "VERIFIED", label: "Verified / In Delivery", icon: "fa-circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) && !p.returnToHub },
   { key: "RETURN_TO_HUB", label: "Return to Hub / Failed", icon: "fa-warehouse", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED"].includes(p.status) || Boolean(p.returnToHub) },
 ];

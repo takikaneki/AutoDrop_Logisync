@@ -10,8 +10,8 @@ const purple = "bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-pu
 
 const STATUS = {
   PENDING: { label: "Pending", cls: gray },
-  WAITING_FOR_VIDEO: { label: "Waiting for video", cls: amber },
-  VIDEO_SUBMITTED: { label: "Under verification", cls: blue },
+  WAITING_FOR_VIDEO: { label: "Waiting for video", cls: blue },
+  VIDEO_SUBMITTED: { label: "Under verification", cls: amber },
   VERIFIED: { label: "Verified", cls: green },
   REJECTED: { label: "Rejected", cls: red },
   REUPLOAD_REQUESTED: { label: "Reupload requested", cls: orange },

@@ -319,7 +319,7 @@ export default function Verification() {
             label="Under verification"
             value={loading ? "…" : count("VIDEO_SUBMITTED")}
             icon="fa-hourglass-half"
-            tone="blue"
+            tone="yellow"
           />
         </button>
         <button
