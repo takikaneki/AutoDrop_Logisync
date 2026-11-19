@@ -198,7 +198,10 @@ export async function createParcel({
 // GET /api/parcels  -> seller: sariling parcels lang | coordinator: lahat
 export async function listParcels() {
   const data = await api("/parcels");
-  const rawList = Array.isArray(data.parcels) ? data.parcels : [];
+  if (!data || !Array.isArray(data.parcels)) {
+    throw new Error("Invalid parcel response from server.");
+  }
+  const rawList = data.parcels;
   const list = rawList.filter((p) => {
     const txn = String(p?.transaction_number || "").trim();
     const pid = String(p?.parcel_id || "").trim();

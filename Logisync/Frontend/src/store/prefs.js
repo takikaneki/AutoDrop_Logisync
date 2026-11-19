@@ -1,4 +1,5 @@
 import { createStore } from "./createStore.js";
+import { API_BASE_URL } from "../api.js";
 
 // Appearance + notification preferences.
 // Cached per authenticated user in localStorage AND synced with PostgreSQL so settings
@@ -119,7 +120,7 @@ async function flushPreferencesToServer(expectedUid) {
   const patch = queuedServerPatch;
   queuedServerPatch = {};
   try {
-    const res = await fetch(`${import.meta?.env?.VITE_API_URL || "/api"}/notifications/preferences`, {
+    const res = await fetch(`${API_BASE_URL}/notifications/preferences`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -142,7 +143,7 @@ export async function syncPrefsFromServer() {
   const { token, uid } = currentAuthInfo();
   if (!token || !uid) return;
   try {
-    const res = await fetch(`${import.meta?.env?.VITE_API_URL || "/api"}/notifications/preferences`, {
+    const res = await fetch(`${API_BASE_URL}/notifications/preferences`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) return;

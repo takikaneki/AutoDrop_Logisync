@@ -4,7 +4,10 @@ import { API_BASE_URL, api, getToken, getUser } from "../api.js";
 export async function listUsers(role) {
   const query = role ? `?role=${encodeURIComponent(role)}` : "";
   const data = await api(`/users${query}`);
-  return Array.isArray(data?.users) ? data.users : [];
+  if (!data || !Array.isArray(data.users)) {
+    throw new Error("Invalid accounts response from server.");
+  }
+  return data.users;
 }
 
 // POST /api/users  (role: seller | rider | coordinator)

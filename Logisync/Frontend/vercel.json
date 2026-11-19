@@ -9,6 +9,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!sw\\.js$|assets/|images/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

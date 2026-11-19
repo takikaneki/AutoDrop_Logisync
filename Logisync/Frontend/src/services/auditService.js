@@ -7,5 +7,8 @@ export async function listAudit({ limit = 20, offset = 0, category = "", q = "" 
   if (category) params.set("category", category);
   if (q) params.set("q", q);
   const data = await api(`/audit-logs?${params}`);
-  return { logs: data.logs, total: data.total };
+  if (!data || !Array.isArray(data.logs)) {
+    throw new Error("Invalid activity log response from server.");
+  }
+  return { logs: data.logs, total: Number(data.total || 0) };
 }

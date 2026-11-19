@@ -1,7 +1,13 @@
 // Isang lugar para sa lahat ng usapan sa Express backend.
 // Ang /api ay naka-proxy ng Vite papunta sa http://127.0.0.1:5000 (tingnan ang vite.config.js).
 
-export const API_BASE_URL = import.meta?.env?.VITE_API_URL || "/api";
+let viteApiUrl = "";
+try {
+  viteApiUrl = import.meta.env.VITE_API_URL || "";
+} catch {
+  /* Plain Node test runtime without Vite define */
+}
+export const API_BASE_URL = viteApiUrl || "/api";
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
@@ -130,6 +136,10 @@ export async function api(path, { method = "GET", body, headers } = {}) {
     }
     // Walang JSON galing sa 5xx = hindi naabot ng Vite proxy ang backend
     throw new Error(data?.message || (res.status >= 500 ? SERVER_DOWN : `Request failed (${res.status})`));
+  }
+
+  if (data === null) {
+    throw new Error("Unexpected response from server (expected JSON). Please check API configuration.");
   }
 
   return data;
