@@ -94,7 +94,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 </button>
               </div>
             </div>
-          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5">
+          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 min-[821px]:hidden">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] leading-tight text-white">
@@ -161,7 +161,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
               <NavLink
                 key={l.path}
                 to={toPath(role, l.path)}
-                onClick={closeAll}
+                onClick={onClose}
                 className={navClass}
                 title={l.label}
                 aria-label={l.label}
