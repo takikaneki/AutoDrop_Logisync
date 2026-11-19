@@ -9,7 +9,7 @@ body {
 }
 
 body {
-  @apply bg-[#f7f7f8] text-ink font-sans;
+  @apply bg-[#f7f8fb] text-ink font-sans;
 }
 
 body.dark {

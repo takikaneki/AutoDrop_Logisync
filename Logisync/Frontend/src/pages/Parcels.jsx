@@ -421,7 +421,7 @@ export default function Parcels() {
 
   const SortTh = ({ k, children }) => (
     <th
-      className={`${th} cursor-pointer select-none hover:text-brand`}
+      className={`${th} !text-white/90 cursor-pointer select-none hover:!text-[#fb923c]`}
       onClick={() => toggleSort(k)}
     >
       {children}
@@ -697,7 +697,7 @@ export default function Parcels() {
       </div>
 
       {/* PARCEL RECORDS LIST */}
-      <section className={`${tableCard} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
+      <section className={`rounded-2xl border border-[#e5e8ee] bg-white shadow-sm dark:border-night-line dark:bg-night-panel p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         <div className="mb-[18px]">
           <h2 className="text-[19px] font-bold mb-[5px]">
             Parcel Records
@@ -751,17 +751,17 @@ export default function Parcels() {
         </div>
 
         {/* Desktop & Tablet Table View */}
-        <div className={`hidden min-[701px]:block ${tableScroll}`}>
+        <div className={`hidden min-[701px]:block ${tableScroll} !border-[#e5e8ee] dark:!border-night-line`}>
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className={tableHead}>
+            <thead className="sticky top-0 z-10 bg-[#0f172a] text-white">
               <tr>
                 <SortTh k="id">Tracking ID</SortTh>
                 <SortTh k="seller">Seller</SortTh>
                 <SortTh k="recipient">Recipient</SortTh>
                 <SortTh k="rider">Rider</SortTh>
                 <SortTh k="ts">Date</SortTh>
-                <th className={th}>Status</th>
-                <th className={`${th} text-center`}>Action</th>
+                <th className={`${th} !text-white/90`}>Status</th>
+                <th className={`${th} !text-white/90 text-center`}>Action</th>
               </tr>
             </thead>
 

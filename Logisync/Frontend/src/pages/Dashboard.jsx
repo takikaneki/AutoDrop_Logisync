@@ -231,6 +231,7 @@ export default function Dashboard() {
         </div>
 
         <DashboardRightRail
+          variant="slate"
           tasksTitle="Action Queue"
           seeAllTo="/verification"
           tasks={actionQueue}

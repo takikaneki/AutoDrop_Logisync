@@ -22,10 +22,15 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
+  const isCoordinator = role === "coordinator";
   const navClass = ({ isActive }) =>
-    `relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
+    `group relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
       isActive
-        ? "bg-white text-brand font-bold shadow-sm"
+        ? isCoordinator
+          ? "bg-[#0f172a] text-white font-bold shadow-sm"
+          : "bg-white text-brand font-bold shadow-sm"
+        : isCoordinator
+        ? "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold"
         : "text-white/95 hover:bg-white hover:text-brand hover:font-semibold"
     }`;
 
@@ -40,7 +45,9 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
       )}
 
       <aside
-        className={`flex shrink-0 flex-col overflow-y-auto bg-brand text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
+        className={`flex shrink-0 flex-col overflow-y-auto ${
+          isCoordinator ? "bg-gradient-to-b from-[#ee4d2d] to-[#f97316]" : "bg-brand"
+        } text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-14 min-[821px]:z-40 min-[821px]:h-[calc(100vh-56px)] min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
           collapsed
@@ -117,10 +124,14 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                   aria-label={l.label}
                   {...tipProps(l.label)}
                 >
-                  <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                  <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
-                  {l.soon && (
-                    <span className={`rounded-full bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-bold uppercase text-[#aaa] dark:bg-night-head ${collapsed ? "min-[821px]:hidden" : ""}`}>Soon</span>
+                  {({ isActive }) => (
+                    <>
+                      <i className={`fa-solid ${l.icon} w-5 text-center ${isCoordinator && isActive ? "text-[#f97316]" : ""}`} />
+                      <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
+                      {l.soon && (
+                        <span className={`rounded-full bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-bold uppercase text-[#aaa] dark:bg-night-head ${collapsed ? "min-[821px]:hidden" : ""}`}>Soon</span>
+                      )}
+                    </>
                   )}
                 </NavLink>
               ))}
@@ -167,8 +178,12 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
             aria-label="Settings"
             {...tipProps("Settings")}
           >
-            <i className="fa-solid fa-gear w-5 text-center" />
-            <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
+            {({ isActive }) => (
+              <>
+                <i className={`fa-solid fa-gear w-5 text-center ${isCoordinator && isActive ? "text-[#f97316]" : ""}`} />
+                <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
+              </>
+            )}
           </NavLink>
           <button
             onClick={() => {
