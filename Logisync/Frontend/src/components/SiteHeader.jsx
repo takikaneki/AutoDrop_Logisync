@@ -54,7 +54,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
             >
               <i className="fa-solid fa-bars text-[18px]" />
             </button>
-            <Link to="/dashboard" className="flex min-w-0 items-center gap-2 sm:gap-2.5 min-[821px]:hidden">
+            <Link to="/dashboard" className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[821px]:hidden"}`}>
               <img
                 src={SPX_LOGO_DATA_URL}
                 alt="SPX Express"
@@ -62,7 +62,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                 className="h-5 sm:h-6 w-auto shrink-0 object-contain"
               />
               <span className="h-4 w-[1.5px] shrink-0 bg-slate-200 max-[380px]:hidden dark:bg-slate-700" aria-hidden="true" />
-              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 max-[380px]:hidden dark:text-white">
+              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-[#ee4d2d] max-[380px]:hidden dark:text-white">
                 LogiSync
               </span>
             </Link>
