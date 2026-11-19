@@ -233,7 +233,7 @@ export default function ChatView({
     );
 
   return (
-    <div className={`grid h-[calc(100vh-15rem)] min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "grid-cols-1" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
+    <div className={`grid h-[calc(100vh-170px)] min-h-[520px] max-[920px]:h-[calc(100vh-155px)] overflow-hidden rounded-2xl border ${directMode ? "grid-cols-1" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
         <aside className={`flex min-h-0 flex-col border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
