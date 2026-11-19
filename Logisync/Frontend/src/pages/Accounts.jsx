@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { Notice } from "../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, td, th } from "../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, labelCls, td, th } from "../components/styles.js";
 import { createUser, listUsers } from "../services/userService.js";
 import { toast } from "../store/toast.js";
 import { ROLE_BADGE } from "../utils/activity.js";
 import { formatDate } from "../utils/format.js";
 import {
-  MOBILE_NUMBER_MAX_LENGTH,
-  sanitizeMobileNumber,
+  formatPlus63Phone,
+  PHILIPPINE_LOCAL_MAX_LENGTH,
+  sanitizeLocalMobileDigits,
   validateMobileNumber,
 } from "../utils/phone.js";
 
@@ -25,7 +26,6 @@ const EMPTY = {
   zone: "General",
   vehicle: "Motorcycle",
   agency: "",
-  rider_type: "",
   password: "",
   role: "seller",
 };
@@ -60,7 +60,7 @@ export default function Accounts() {
   useEffect(load, []);
 
   const set = (k) => (e) => {
-    const val = k === "phone" ? sanitizeMobileNumber(e.target.value) : e.target.value;
+    const val = k === "phone" ? sanitizeLocalMobileDigits(e.target.value) : e.target.value;
     setForm((f) => ({ ...f, [k]: val }));
     setErrors((er) => ({ ...er, [k]: undefined }));
     setApiError("");
@@ -70,15 +70,14 @@ export default function Accounts() {
     const er = {};
     if (!form.name.trim()) er.name = "Enter the person's full name.";
     if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) er.email = "Enter a valid email address.";
-    const phoneErr = validateMobileNumber(form.phone, {
+    const phoneErr = validateMobileNumber(formatPlus63Phone(form.phone), {
       required: false,
       label: "Contact number",
     });
     if (phoneErr) er.phone = phoneErr;
     if (form.password.length < 8) er.password = "Password must be at least 8 characters.";
-    if (form.role === "rider") {
-      if (!form.agency.trim()) er.agency = "Enter the rider's assigned agency.";
-      if (!form.rider_type) er.rider_type = "Select First Mile (FM) or Last Mile (LM).";
+    if (form.role === "rider" && !form.agency.trim()) {
+      er.agency = "Enter the rider's assigned agency.";
     }
     setErrors(er);
     return Object.keys(er).length === 0;
@@ -90,17 +89,17 @@ export default function Accounts() {
     setSaving(true);
     setApiError("");
     try {
+      const formattedPhone = formatPlus63Phone(form.phone);
       const user = await createUser({
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
         role: form.role,
-        phone: form.phone.trim() || undefined,
+        phone: formattedPhone || undefined,
         shop_name: form.role === "seller" ? form.shop_name.trim() || undefined : undefined,
         zone: form.role === "rider" ? form.zone.trim() || "General" : undefined,
         vehicle: form.role === "rider" ? form.vehicle.trim() || "Motorcycle" : undefined,
         agency: form.role === "rider" ? form.agency.trim() : undefined,
-        rider_type: form.role === "rider" ? form.rider_type : undefined,
       });
       setCreated({ ...user, password: form.password });
       setUsers((l) => [{ ...user, created_at: user.created_at || new Date().toISOString() }, ...l]);
@@ -128,8 +127,8 @@ export default function Accounts() {
     <>
       <Topbar title="Accounts" subtitle="Create Seller and Rider accounts. Only the Coordinator can do this." />
 
-      <div className="grid grid-cols-[400px_1fr] items-start gap-6 max-[1100px]:grid-cols-1">
-        <section className={`${panel} p-6`}>
+      <div className="grid grid-cols-[400px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[1100px]:grid-cols-1">
+        <section className="border-r border-brand-line bg-[#f8fafc]/70 p-6 dark:border-night-line dark:bg-[#1d1a17]/60 max-[1100px]:border-r-0 max-[1100px]:border-b">
           <h2 className="mb-1 text-[17px] font-bold">
             <i className="fa-solid fa-user-plus mr-2 text-orange-500" />
             New account
@@ -171,7 +170,6 @@ export default function Accounts() {
             {[
               ["name", "Full name", "text", "e.g. Juan Dela Cruz"],
               ["email", "Email", "email", "name@example.com"],
-              ["phone", "Contact number (optional)", "tel", "e.g. 09171234567"],
             ].map(([k, label, type, ph]) => (
               <div key={k} className="mb-4">
                 <label htmlFor={`acc-${k}`} className={labelCls}>
@@ -180,12 +178,10 @@ export default function Accounts() {
                 <input
                   id={`acc-${k}`}
                   type={type}
-                  inputMode={k === "phone" ? "numeric" : undefined}
-                  pattern={k === "phone" ? "09[0-9]{9}" : undefined}
                   value={form[k]}
                   onChange={set(k)}
                   placeholder={ph}
-                  maxLength={k === "name" ? 100 : k === "phone" ? MOBILE_NUMBER_MAX_LENGTH : 150}
+                  maxLength={k === "name" ? 100 : 150}
                   autoComplete="off"
                   className={inputCls}
                 />
@@ -196,6 +192,34 @@ export default function Accounts() {
                 )}
               </div>
             ))}
+
+            <div className="mb-4">
+              <label htmlFor="acc-phone" className={labelCls}>
+                Contact number (optional)
+              </label>
+              <div className="flex h-[42px] items-center overflow-hidden rounded-lg border border-[#cbd5e1] bg-white focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand/10 dark:border-night-line dark:bg-night-head">
+                <span className="flex h-full shrink-0 items-center border-r border-[#cbd5e1] bg-[#f8fafc] px-3 text-[13px] font-semibold text-[#475569] select-none dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]">
+                  +63
+                </span>
+                <input
+                  id="acc-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="9[0-9]{9}"
+                  value={form.phone}
+                  onChange={set("phone")}
+                  placeholder="9171234567"
+                  maxLength={PHILIPPINE_LOCAL_MAX_LENGTH}
+                  autoComplete="off"
+                  className="h-full w-full bg-transparent px-3 text-[13px] text-ink outline-none dark:text-[#f1eeeb]"
+                />
+              </div>
+              {errors.phone && (
+                <p role="alert" className="mt-1 text-[12px] text-[#d94747]">
+                  {errors.phone}
+                </p>
+              )}
+            </div>
 
             {form.role === "seller" && (
               <div className="mb-4">
@@ -216,34 +240,21 @@ export default function Accounts() {
             )}
 
             {form.role === "rider" && (
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="acc-agency" className={labelCls}>
-                    Assigned agency
-                  </label>
-                  <input
-                    id="acc-agency"
-                    type="text"
-                    value={form.agency}
-                    onChange={set("agency")}
-                    maxLength={150}
-                    placeholder="e.g. Test Logistics Agency"
-                    autoComplete="off"
-                    className={inputCls}
-                  />
-                  {errors.agency && <p role="alert" className="mt-1 text-[12px] text-[#d94747]">{errors.agency}</p>}
-                </div>
-                <div>
-                  <label htmlFor="acc-rtype" className={labelCls}>
-                    Rider type
-                  </label>
-                  <select id="acc-rtype" value={form.rider_type} onChange={set("rider_type")} className={inputCls}>
-                    <option value="">Select…</option>
-                    <option value="FM">First Mile (FM)</option>
-                    <option value="LM">Last Mile (LM)</option>
-                  </select>
-                  {errors.rider_type && <p role="alert" className="mt-1 text-[12px] text-[#d94747]">{errors.rider_type}</p>}
-                </div>
+              <div className="mb-4">
+                <label htmlFor="acc-agency" className={labelCls}>
+                  Assigned agency
+                </label>
+                <input
+                  id="acc-agency"
+                  type="text"
+                  value={form.agency}
+                  onChange={set("agency")}
+                  maxLength={150}
+                  placeholder="e.g. Test Logistics Agency"
+                  autoComplete="off"
+                  className={inputCls}
+                />
+                {errors.agency && <p role="alert" className="mt-1 text-[12px] text-[#d94747]">{errors.agency}</p>}
               </div>
             )}
 
@@ -335,7 +346,7 @@ export default function Accounts() {
           </form>
         </section>
 
-        <section className={`${panel} min-w-0 p-6`}>
+        <section className="min-w-0 p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[17px] font-bold">
               All accounts <span className="ml-1 text-[14px] font-normal text-[#999]">({users.length})</span>

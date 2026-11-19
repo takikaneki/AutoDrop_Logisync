@@ -154,12 +154,9 @@ async function createUser(req, res) {
     let cleanRiderType = null;
     if (role === "rider") {
       cleanAgency = req.body?.agency ? String(req.body.agency).trim().slice(0, 150) : "";
-      cleanRiderType = normalizeRiderType(req.body?.rider_type);
+      cleanRiderType = normalizeRiderType(req.body?.rider_type) || "LM";
       if (!cleanAgency) {
         return res.status(400).json({ success: false, message: "Assigned agency is required for riders." });
-      }
-      if (!cleanRiderType) {
-        return res.status(400).json({ success: false, message: "Rider type is required: First Mile (FM) or Last Mile (LM)." });
       }
       if (cleanPhone) {
         const [dupPhone] = await pool.query("SELECT user_id FROM users WHERE role = 'rider' AND phone = ?", [cleanPhone]);

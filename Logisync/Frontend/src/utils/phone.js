@@ -3,6 +3,23 @@
 
 export const MOBILE_NUMBER_MAX_LENGTH = 11;
 export const MOBILE_NUMBER_REGEX = /^09\d{9}$/;
+export const PHILIPPINE_LOCAL_MAX_LENGTH = 10;
+
+/**
+ * Normalizes a pasted or typed phone number into the 10-digit local part after "+63"
+ * (e.g. "+639171234567", "639171234567", or "09171234567" -> "9171234567").
+ */
+export function sanitizeLocalMobileDigits(raw = "") {
+  let digits = String(raw || "").replace(/\D/g, "");
+  if (digits.startsWith("63")) digits = digits.slice(2);
+  if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits.slice(0, PHILIPPINE_LOCAL_MAX_LENGTH);
+}
+
+export function formatPlus63Phone(localDigits = "") {
+  const clean = String(localDigits || "").trim();
+  return clean ? `+63${clean}` : "";
+}
 
 /**
  * Strips letters, spaces, and invalid characters from a mobile number input.
@@ -27,7 +44,7 @@ export function validateMobileNumber(value = "", { required = true, label = "Mob
     return required ? `${label} is required.` : "";
   }
 
-  const normalized = raw.replace(/^\+639/, "09");
+  const normalized = raw.replace(/^\+639/, "09").replace(/^\+63/, "0");
 
   if (/\D/.test(normalized)) {
     return `${label} must contain numbers only (no letters or special characters).`;
