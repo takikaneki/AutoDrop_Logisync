@@ -93,7 +93,7 @@ export default function SellerVerification() {
       ) : (
         <div className={tableScroll}>
   <table className="w-full min-w-[650px] border-collapse text-left text-sm text-[#666] dark:text-[#d1c9c2]">
-    <thead className="sticky top-0 z-10 bg-gray-50 text-gray-700 dark:bg-night-head dark:text-[#f1eeeb]">
+    <thead className="sticky top-0 z-10 bg-[#0f172a] text-white">
       <tr>
         <th className="p-3">Name</th>
         <th className="p-3">Email</th>

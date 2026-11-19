@@ -635,7 +635,7 @@ export default function Parcels() {
               </h3>
               <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
                 <table className="w-full min-w-[600px] border-collapse">
-                  <thead className="bg-[#fafafa] dark:bg-night-head">
+                  <thead className={stickyThead}>
                     <tr>
                       {["Report ID", "Filters", "Parcels", "Generated", ""].map((h, i) => (
                         <th key={i} className={th}>{h}</th>

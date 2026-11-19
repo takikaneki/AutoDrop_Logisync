@@ -428,10 +428,10 @@ export default function Dashboard() {
             <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
             <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
           </div>
-          <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#edf0f4] dark:border-night-line">
+          <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
             <table className="w-full min-w-[580px] border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#f5f6f9] dark:bg-night-head">
-                <tr className="text-left text-sm text-[#65748b] dark:text-[#ddd7d2]">
+              <thead className="sticky top-0 z-10 bg-[#0f172a]">
+                <tr className="text-left text-xs uppercase tracking-wider text-white/90">
                   {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
                     <th key={h} className="px-4 py-3.5 font-normal">{h}</th>
                   ))}

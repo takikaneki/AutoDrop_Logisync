@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 export default function DashboardRightRail({
-  variant = "default",
+  variant = "slate",
   tasksTitle = "Action Queue",
   seeAllTo = "#",
   tasks = [],
