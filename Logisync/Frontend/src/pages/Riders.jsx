@@ -322,21 +322,21 @@ export default function Riders() {
           tone="orange"
         />
         <StatCard
-          label="First Mile (FM)"
-          value={loading ? "…" : riders.filter((r) => r.riderType === "FM").length}
-          icon="fa-box-open"
-          tone="blue"
+          label="Active"
+          value={loading ? "…" : riders.filter((r) => r.status === "Active").length}
+          icon="fa-circle-check"
+          tone="green"
         />
         <StatCard
-          label="Last Mile (LM)"
-          value={loading ? "…" : riders.filter((r) => r.riderType === "LM").length}
+          label="On Delivery"
+          value={loading ? "…" : riders.filter((r) => r.status === "On Delivery").length}
           icon="fa-truck"
-          tone="green"
+          tone="blue"
         />
       </StatGrid>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
-        <div className="mb-5 grid grid-cols-[1fr_150px_170px_150px_150px] gap-3 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
+        <div className="mb-5 grid grid-cols-[1fr_170px_150px_150px] gap-3 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative">
             <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input
@@ -349,19 +349,6 @@ export default function Riders() {
               className={`${inputCls} pl-9`}
             />
           </div>
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setPage(1);
-            }}
-            className={inputCls}
-            aria-label="Filter by rider type"
-          >
-            <option value="All">All types</option>
-            <option value="FM">First Mile (FM)</option>
-            <option value="LM">Last Mile (LM)</option>
-          </select>
           <select
             value={agencyFilter}
             onChange={(e) => {
@@ -415,7 +402,7 @@ export default function Riders() {
           <table className="w-full min-w-[700px] border-collapse">
             <thead className={stickyThead}>
               <tr>
-                {["Rider", "Email / Contact", "Agency", "Type", "Parcels", "Status", ""].map((h, i) => (
+                {["Rider", "Email / Contact", "Agency", "Parcels", "Status", ""].map((h, i) => (
                   <th key={i} className={th}>
                     {h}
                   </th>
@@ -423,7 +410,7 @@ export default function Riders() {
               </tr>
             </thead>
             {loading ? (
-              <TableSkeleton rows={5} cols={7} />
+              <TableSkeleton rows={5} cols={6} />
             ) : (
               <tbody>
                 {pageRows.map((r) => (
@@ -442,11 +429,6 @@ export default function Riders() {
                       )}
                     </td>
                     <td className={td}>{r.agency}</td>
-                    <td className={td}>
-                      <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-bold ${TYPE_TONE[r.riderType]}`}>
-                        {r.riderType}
-                      </span>
-                    </td>
                     <td className={td}>
                       <span className="font-semibold text-[#333] dark:text-[#f1eeeb]">
                         {r.stats.total}
@@ -530,7 +512,7 @@ export default function Riders() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <strong className="block text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{r.name}</strong>
-                    <span className="text-[12px] text-[#888]">{r.id} · {r.agency} · {r.riderType}</span>
+                    <span className="text-[12px] text-[#888]">{r.id} · {r.agency}</span>
                   </div>
                   <span
                     className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${
