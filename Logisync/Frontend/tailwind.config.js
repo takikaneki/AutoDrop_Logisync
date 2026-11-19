@@ -17,12 +17,12 @@ export default {
           navy: "#19324f",
           muted: "#7c8da0",
         },
-        // dark mode palette (galing sa .dark-theme ng dashb)
+        // Midnight Slate dark mode palette (harmonizes with Deep Slate #0f172a & Soft Orange)
         night: {
-          bg: "#292522",
-          panel: "#342f2b",
-          line: "#48413c",
-          head: "#3b3531",
+          bg: "#0b1120",
+          panel: "#111827",
+          line: "#1f2937",
+          head: "#1e293b",
         },
       },
       fontFamily: {

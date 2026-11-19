@@ -91,8 +91,8 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
       collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
     } ${
       isActive
-        ? "bg-[#0f172a] text-white font-bold shadow-sm"
-        : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold"
+        ? "bg-[#0f172a] text-white font-bold shadow-sm dark:bg-[#f26b2a] dark:text-white"
+        : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold dark:text-slate-300 dark:hover:bg-[#1e293b] dark:hover:text-white"
     }`;
 
   return (
@@ -106,7 +106,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
       )}
 
       <aside
-        className={`relative shrink-0 bg-[#f26b2a] text-white border-r border-[#e05a1b] shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-[#f26b2a] text-white border-r border-[#e05a1b] shadow-lg transition-[width,transform] duration-200 dark:border-[#1e293b] dark:bg-[#0f172a] print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
@@ -121,7 +121,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   src={SPX_LOGO_DATA_URL}
                   alt="SPX Express"
                   draggable={false}
-                  className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert`}
+                  className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert dark:brightness-100 dark:invert-0`}
                 />
                 <span className={`truncate text-[16px] font-black tracking-tight text-white leading-tight ${collapsed ? "min-[821px]:hidden" : ""}`}>
                   LogiSync
@@ -212,7 +212,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   >
                     {({ isActive }) => (
                       <>
-                        <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#f97316]" : ""}`} />
+                        <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#f97316] dark:text-white" : ""}`} />
                         <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                         {count > 0 && (
                           <span className={`min-w-[18px] h-[18px] px-1 rounded-full bg-white text-brand text-[11px] font-bold flex items-center justify-center shadow-xs ${collapsed ? "min-[821px]:hidden" : ""}`}>
@@ -273,7 +273,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
           >
             {({ isActive }) => (
               <>
-                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#f97316]" : ""}`} />
+                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#f97316] dark:text-white" : ""}`} />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
               </>
             )}
