@@ -311,7 +311,7 @@ export default function Verification() {
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "VIDEO_SUBMITTED" ? "ALL" : "VIDEO_SUBMITTED"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
             filter === "VIDEO_SUBMITTED" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >
@@ -325,7 +325,7 @@ export default function Verification() {
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "DISCREET_PENDING" ? "ALL" : "DISCREET_PENDING"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
             filter === "DISCREET_PENDING" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >
@@ -339,7 +339,7 @@ export default function Verification() {
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "VERIFIED" ? "ALL" : "VERIFIED"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
             filter === "VERIFIED" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >
@@ -353,7 +353,7 @@ export default function Verification() {
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "FLAGGED_DECLARATION" ? "ALL" : "FLAGGED_DECLARATION"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition ${
+          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
             filter === "FLAGGED_DECLARATION" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >

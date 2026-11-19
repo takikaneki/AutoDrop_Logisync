@@ -220,8 +220,8 @@ export default function Complaints() {
               setStatus(status === s ? "All" : s);
               setPage(1);
             }}
-            className={`${panel} p-6 text-left transition hover:border-brand ${
-              status === s ? "!border-brand ring-2 ring-brand/15" : ""
+            className={`${panel} p-6 text-left transition hover:ring-2 hover:ring-brand/30 hover:border-brand/60 hover:shadow-md active:scale-[0.99] ${
+              status === s ? "!border-brand ring-2 ring-brand/50 shadow-sm" : ""
             }`}
           >
             <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold ${statusTone[s]}`}>

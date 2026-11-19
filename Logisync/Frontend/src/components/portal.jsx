@@ -23,12 +23,12 @@ const cardBorders = {
 };
 
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).
-export function StatCard({ label, value, icon, tone = "orange", to }) {
+export function StatCard({ label, value, icon, tone = "orange", to, active = false, interactive = false }) {
   const body = (
     <div
       className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition ${
-        to ? "hover:shadow-md active:scale-[0.99]" : ""
-      }`}
+        to || interactive || active ? "hover:ring-2 hover:ring-brand/30 hover:shadow-md active:scale-[0.99]" : ""
+      } ${active ? "ring-2 ring-brand/50 !border-brand shadow-sm" : ""}`}
     >
       <div
         className={`flex h-[56px] w-[56px] max-[1280px]:h-[48px] max-[1280px]:w-[48px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-full text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}

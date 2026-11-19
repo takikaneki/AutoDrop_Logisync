@@ -680,16 +680,18 @@ export default function Parcels() {
               key={card.label}
               type="button"
               onClick={() => {
-                setStatus(card.label);
+                setStatus(status === card.label ? "All" : card.label);
                 setPage(1);
               }}
-              className="text-left w-full h-full cursor-pointer focus:outline-none"
+              className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
             >
               <StatCard
                 label={card.label}
                 value={loading ? "—" : counts[card.label]}
                 icon={card.icon}
                 tone={card.tone}
+                interactive
+                active={status === card.label}
               />
             </button>
           ))}

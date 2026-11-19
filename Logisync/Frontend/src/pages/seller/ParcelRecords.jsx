@@ -141,8 +141,8 @@ export default function ParcelRecords() {
       <div className={reportOpen ? "print:hidden" : ""}>
         <StatGrid>
           {FILTERS.map((f) => (
-            <button key={f.key} type="button" onClick={() => toggle(f.key)} aria-pressed={status === f.key} className={`block h-full text-left [&>div]:h-full ${status === f.key ? "[&>div]:!border-brand" : ""}`}>
-              <StatCard label={f.label} value={loading ? "…" : countOf(f)} icon={f.icon} tone={f.tone} />
+            <button key={f.key} type="button" onClick={() => toggle(f.key)} aria-pressed={status === f.key} className="block h-full text-left rounded-2xl focus:outline-none [&>div]:h-full">
+              <StatCard label={f.label} value={loading ? "…" : countOf(f)} icon={f.icon} tone={f.tone} interactive active={status === f.key} />
             </button>
           ))}
         </StatGrid>
