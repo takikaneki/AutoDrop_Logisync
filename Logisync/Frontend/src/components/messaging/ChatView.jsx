@@ -6,6 +6,7 @@ import { initiateReturnToHub } from "../../services/parcelService.js";
 import { getDeliveryRecordForParcel, initiateReturnToHubLocal } from "../../store/riderDeliveries.js";
 import { toast } from "../../store/toast.js";
 import { formatDate } from "../../utils/format.js";
+import CallUserModal from "./CallUserModal.jsx";
 
 const POLL_MS = 15000;
 
@@ -153,13 +154,13 @@ export default function ChatView({
       byUser.set(other, cur);
     }
     const q = search.trim().toLowerCase();
-return contacts
-  .filter((c) => {
-    const role = String(c.role || "").toLowerCase();
-    const matchesRole = roleFilter === "all" || role === roleFilter;
-    const matchesSearch = !q || c.name.toLowerCase().includes(q);
-    return matchesRole && matchesSearch;
-  })
+    return contacts
+      .filter((c) => {
+        const role = String(c.role || "").toLowerCase();
+        const matchesRole = roleFilter === "all" || role === roleFilter;
+        const matchesSearch = !q || c.name.toLowerCase().includes(q);
+        return matchesRole && matchesSearch;
+      })
       .map((c) => ({ contact: c, ...(byUser.get(Number(c.user_id)) || { last: null, unread: 0 }) }))
       .sort((a, b) => {
         const ta = a.last ? new Date(a.last.created_at).getTime() : 0;
@@ -236,84 +237,82 @@ return contacts
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
         <aside className={`flex min-h-0 flex-col border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
-        <div className="space-y-3 border-b border-slate-200 p-3 dark:border-slate-700">
-  {!coordinatorOnly && (
-  <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-night-head">
-    {[
-      { value: "all", label: "All" },
-      { value: "seller", label: "Sellers" },
-      { value: "rider", label: "Riders" },
-    ].map((option) => (
-      <button
-        key={option.value}
-        type="button"
-        onClick={() => setRoleFilter(option.value)}
-        className={`rounded-md px-2 py-2 text-xs font-semibold transition ${
-          roleFilter === option.value
-            ? `${btnClass} text-white`
-            : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800"
-        }`}
-      >
-        {option.label}
-      </button>
-    ))}
-  </div>
-  )}
+          <div className="space-y-3 border-b border-slate-200 p-3 dark:border-slate-700">
+            {!coordinatorOnly && (
+              <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-night-head">
+                {[
+                  { value: "all", label: "All" },
+                  { value: "seller", label: "Sellers" },
+                  { value: "rider", label: "Riders" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setRoleFilter(option.value)}
+                    className={`rounded-md px-2 py-2 text-xs font-semibold transition ${roleFilter === option.value
+                        ? `${btnClass} text-white`
+                        : "text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-800"
+                      }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-  <input
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    placeholder="Search name"
-    aria-label="Search contacts"
-    className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none dark:border-slate-600"
-  />
-</div>
-        <ul className="min-h-0 flex-1 overflow-y-auto">
-          {rows.length === 0 && <li className="p-6 text-center text-sm text-slate-500">{coordinatorOnly ? "No coordinator is available right now." : "No contacts available."}</li>}
-          {rows.map(({ contact, last, unread }) => (
-            <li key={contact.user_id}>
-              <button
-                onClick={() => {
-                  setActiveId(contact.user_id);
-                  setCallModalOpen(false);
-                }}
-                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                  Number(activeId) === Number(contact.user_id) ? activeClass : ""
-                }`}
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold dark:bg-slate-700">
-                  {contact.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center justify-between gap-2">
-                    <strong className="truncate text-sm">{contact.name}</strong>
-                    <span className="shrink-0 text-[11px] capitalize text-slate-400">{contact.role}</span>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name"
+              aria-label="Search contacts"
+              className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none dark:border-slate-600"
+            />
+          </div>
+          <ul className="min-h-0 flex-1 overflow-y-auto">
+            {rows.length === 0 && <li className="p-6 text-center text-sm text-slate-500">{coordinatorOnly ? "No coordinator is available right now." : "No contacts available."}</li>}
+            {rows.map(({ contact, last, unread }) => (
+              <li key={contact.user_id}>
+                <button
+                  onClick={() => {
+                    setActiveId(contact.user_id);
+                    setCallModalOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 ${Number(activeId) === Number(contact.user_id) ? activeClass : ""
+                    }`}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold dark:bg-slate-700">
+                    {contact.name.charAt(0).toUpperCase()}
                   </span>
-                  <span className="flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
-                    {(() => {
-                      const rep = last ? parseRefusalReport(last.message) : null;
-                      if (rep) {
-                        return (
-                          <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                            Refusal Report · {rep.txn || rep.reason}
-                          </span>
-                        );
-                      }
-                      return last ? last.message : "No messages yet";
-                    })()}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <strong className="truncate text-sm">{contact.name}</strong>
+                      <span className="shrink-0 text-[11px] capitalize text-slate-400">{contact.role}</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                      {(() => {
+                        const rep = last ? parseRefusalReport(last.message) : null;
+                        if (rep) {
+                          return (
+                            <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                              Refusal Report · {rep.txn || rep.reason}
+                            </span>
+                          );
+                        }
+                        return last ? last.message : "No messages yet";
+                      })()}
+                    </span>
                   </span>
-                </span>
-                {unread > 0 && (
-                  <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[12px] font-bold text-white ${btnClass.split(" ")[0]}`}>
-                    {unread}
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </aside>
+                  {unread > 0 && (
+                    <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[12px] font-bold text-white ${btnClass.split(" ")[0]}`}>
+                      {unread}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
       )}
 
       {/* USAPAN */}
@@ -381,11 +380,10 @@ return contacts
                       className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
                     >
                       <div
-                        className={`w-full max-w-[95%] sm:max-w-md rounded-2xl border p-4 shadow-sm ${
-                          mine
+                        className={`w-full max-w-[95%] sm:max-w-md rounded-2xl border p-4 shadow-sm ${mine
                             ? "border-amber-300 bg-amber-50/90 text-slate-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-slate-100"
                             : "border-rose-300 bg-rose-50/90 text-slate-900 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-slate-100"
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2 border-b border-rose-200/70 pb-2.5 dark:border-rose-900/40">
                           <div className="flex items-center gap-2">
@@ -482,9 +480,8 @@ return contacts
                 return (
                   <div key={m.message_id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
                     <div
-                      className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm ${
-                        mine ? `${btnClass.split(" ")[0]} text-white` : "bg-slate-100 dark:bg-slate-800"
-                      }`}
+                      className={`max-w-[80%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm ${mine ? `${btnClass.split(" ")[0]} text-white` : "bg-slate-100 dark:bg-slate-800"
+                        }`}
                     >
                       {m.message}
                     </div>
@@ -528,119 +525,6 @@ return contacts
           onClose={() => setCallModalOpen(false)}
         />
       )}
-    </div>
-  );
-}
-
-function CallUserModal({ active, onClose }) {
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  const rawPhone = active?.phone ? String(active.phone).trim() : "";
-  const telDigits = rawPhone.replace(/[^\d+]/g, "");
-  const hasValidPhone = Boolean(rawPhone && telDigits.replace(/\D/g, "").length >= 7);
-
-  const formattedRole = active?.role
-    ? active.role.charAt(0).toUpperCase() + active.role.slice(1)
-    : "User";
-
-  return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      role="presentation"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="call-modal-title"
-        className="w-[400px] max-w-full rounded-2xl border-[1.5px] border-brand/35 bg-white p-6 shadow-[0_20px_50px_rgba(0,0,0,.18)] animate-popup dark:border-brand/30 dark:bg-[#2c2724] dark:text-[#f5f1ed]"
-      >
-        <div className="flex items-start justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand ring-4 ring-brand/10 dark:bg-night-head">
-            <i className="fa-solid fa-phone text-lg" />
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <i className="fa-solid fa-xmark text-base" />
-          </button>
-        </div>
-
-        <div className="mt-3">
-          <h3 id="call-modal-title" className="text-[17px] font-extrabold text-[#1e293b] dark:text-[#f5f1ed]">
-            Call {active.name}
-          </h3>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="inline-block rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-brand dark:bg-night-head">
-              {formattedRole}
-            </span>
-          </div>
-        </div>
-
-        {hasValidPhone ? (
-          <div className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-center dark:border-slate-700/60 dark:bg-slate-800/50">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400">
-              Registered Phone Number
-            </div>
-            <div className="mt-1 flex items-center justify-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-              <i className="fa-solid fa-phone text-xs text-brand" />
-              <span>{rawPhone}</span>
-            </div>
-            <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
-              Clicking <strong>Go to Phone</strong> will open your device&apos;s phone/dialer application with this number populated.
-            </p>
-          </div>
-        ) : (
-          <div className="my-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-center dark:border-amber-900/50 dark:bg-amber-950/30">
-            <div className="flex items-center justify-center gap-2 text-[13px] font-semibold text-amber-800 dark:text-amber-300">
-              <i className="fa-solid fa-circle-exclamation text-sm text-amber-600 dark:text-amber-400" />
-              <span>No registered phone number available.</span>
-            </div>
-            <p className="mt-1 text-[11.5px] text-[#64748b] dark:text-[#b8b0a8]">
-              This {formattedRole.toLowerCase()} has no registered phone number available on their account profile.
-            </p>
-          </div>
-        )}
-
-        <div className="mt-5 flex items-center justify-center gap-2.5">
-          <button
-            type="button"
-            className="flex-1 rounded-xl border border-[#cbd5e1] bg-white px-4 py-2.5 text-[13px] font-semibold text-[#475569] transition hover:bg-[#f8fafc] dark:border-night-line dark:bg-night-head dark:text-[#e2dad3] dark:hover:bg-[#3d3732]"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          {hasValidPhone ? (
-            <a
-              href={`tel:${telDigits}`}
-              onClick={onClose}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-brand-dark"
-            >
-              <i className="fa-solid fa-phone text-xs" />
-              <span>Go to Phone</span>
-            </a>
-          ) : (
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-2.5 text-[13px] font-bold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500"
-            >
-              <i className="fa-solid fa-phone text-xs" />
-              <span>Go to Phone</span>
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
