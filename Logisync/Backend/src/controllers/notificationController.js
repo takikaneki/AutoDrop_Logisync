@@ -6,6 +6,8 @@ const DEFAULT_PREFERENCES = {
   dark: false,
   themeMode: "light",
   fontSize: "md",
+  highContrast: false,
+  enhancedFocus: false,
   notificationsEnabled: true,
   inAppNotifications: true,
   inAppPopups: true,
@@ -31,6 +33,8 @@ function sanitizePreferencesPatch(raw = {}) {
   const out = {};
   const boolKeys = [
     "dark",
+    "highContrast",
+    "enhancedFocus",
     "notificationsEnabled",
     "inAppNotifications",
     "inAppPopups",
@@ -379,3 +383,4 @@ module.exports = {
   listAnnouncements,
   createAnnouncement,
 };
+

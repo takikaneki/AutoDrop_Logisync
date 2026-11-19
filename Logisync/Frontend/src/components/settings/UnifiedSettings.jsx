@@ -10,6 +10,14 @@ import { getUser } from "../../api.js";
 import { previewTone } from "../../utils/sound.js";
 import { riderTypeOf } from "../layout/navConfig.js";
 import {
+  COPYRIGHT_OWNER,
+  EFFECTIVE_DATE,
+  POLICY_VERSION,
+  PRIVACY_SECTIONS,
+  REPUBLIC_ACTS,
+  TERMS_SECTIONS,
+} from "../../data/terms.js";
+import {
   disableDesktopWebPush,
   enableDesktopWebPush,
   inspectPushState,
@@ -103,6 +111,9 @@ export default function UnifiedSettings() {
   const notificationsRef = useRef(null);
   const appearanceRef = useRef(null);
   const accessibilityRef = useRef(null);
+  const termsRef = useRef(null);
+  const privacyRef = useRef(null);
+  const aboutRef = useRef(null);
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -173,18 +184,30 @@ export default function UnifiedSettings() {
     ? "appearance display dark light system default device theme text size small medium large".includes(q)
     : activeNav === "appearance";
   const showAccessibility = isSearching
-    ? "accessibility keyboard shortcuts keybinds navigation".includes(q)
+    ? "accessibility keyboard shortcuts keybinds navigation high contrast focus indicators".includes(q)
     : activeNav === "accessibility";
+  const showTerms = isSearching
+    ? "terms conditions policy usage legal".includes(q)
+    : activeNav === "terms";
+  const showPrivacy = isSearching
+    ? "privacy policy personal information data protection videos preferences".includes(q)
+    : activeNav === "privacy";
+  const showAbout = isSearching
+    ? "about logisync version system developers".includes(q)
+    : activeNav === "about";
 
   const activeTitle = isSearching
     ? "Search Results"
     : {
-        "account-info": "Account Info",
+        "account-info": "Account & Security",
         password: "Password & Security",
         status: "Account Status",
         notifications: "Notifications",
         appearance: "Appearance & Display",
-        accessibility: "Accessibility · Keyboard Shortcuts",
+        accessibility: "Accessibility",
+        terms: "Terms & Conditions",
+        privacy: "Privacy Policy",
+        about: "About LOGISYNC",
       }[activeNav] || "Settings";
 
   const notificationsOn = prefs.notificationsEnabled !== false;
@@ -370,8 +393,8 @@ export default function UnifiedSettings() {
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <i className="fa-solid fa-user text-[13px]" />
-                <span>Account</span>
+                <i className="fa-solid fa-user-shield text-[13px]" />
+                <span>Account &amp; Security</span>
               </span>
               <i className={`fa-solid fa-chevron-${isAccountActive ? "down" : "right"} text-[10px] opacity-70`} />
             </button>
@@ -460,6 +483,28 @@ export default function UnifiedSettings() {
               <i className="fa-solid fa-universal-access text-[13px]" />
               <span>Accessibility</span>
             </button>
+
+            <div className="my-2 border-t border-brand-line/70 pt-2 dark:border-night-line">
+              {[
+                ["terms", "Terms & Conditions", "fa-file-contract", termsRef],
+                ["privacy", "Privacy Policy", "fa-shield-halved", privacyRef],
+                ["about", "About LOGISYNC", "fa-circle-info", aboutRef],
+              ].map(([navKey, label, icon, ref]) => (
+                <button
+                  key={navKey}
+                  type="button"
+                  onClick={() => jumpTo(navKey, ref)}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
+                    activeNav === navKey
+                      ? "bg-brand-soft text-brand dark:bg-night-head"
+                      : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
+                  }`}
+                >
+                  <i className={`fa-solid ${icon} text-[13px]`} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
           </nav>
 
           {/* Log Out Footer */}
@@ -1100,38 +1145,264 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 5. ACCESSIBILITY (Keyboard Shortcuts only) */}
+          {/* 5. ACCESSIBILITY */}
           {showAccessibility && (
-            <div ref={accessibilityRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Keyboard Shortcuts
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Navigate quickly across LogiSync portals using keyboard keybinds.
-              </p>
-              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                {roleShortcuts.map(([action, hint, keys]) => (
-                  <div key={action} className="flex items-center justify-between gap-4 py-3">
-                    <div className="min-w-0">
-                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                        {action}
-                      </strong>
-                      <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                        {hint}
+            <div ref={accessibilityRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-6`}>
+              <div>
+                <h3 className="mb-1 text-[17.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                  Accessibility
+                </h3>
+                <p className="text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                  Configure visual contrast, focus visibility, and keyboard navigation shortcuts.
+                </p>
+              </div>
+
+              {/* Visual & Navigation Controls */}
+              <div>
+                <h4 className="mb-2 text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Contrast &amp; Focus
+                </h4>
+                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/25 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  {[
+                    [
+                      "highContrast",
+                      "High Contrast Mode",
+                      "Increase contrast for text, borders, inputs, and buttons in both Light and Dark themes.",
+                    ],
+                    [
+                      "enhancedFocus",
+                      "Enhanced Focus Indicators",
+                      "Show a prominent orange focus outline around the currently focused button, input, link, or menu item.",
+                    ],
+                  ].map(([key, label, hint]) => {
+                    const checked = Boolean(prefs[key]);
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-4 py-3.5">
+                        <div className="min-w-0">
+                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                            {label}
+                          </strong>
+                          <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{hint}</span>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={checked}
+                          aria-label={label}
+                          onClick={() => {
+                            const next = !checked;
+                            setPrefs({ [key]: next });
+                            toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
+                          }}
+                          className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                            checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                              checked ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Keyboard Shortcuts */}
+              <div>
+                <h4 className="mb-1 text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                  Keyboard Shortcuts
+                </h4>
+                <p className="mb-2.5 text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                  Quickly navigate across your portal. Shortcuts are automatically paused while typing in text inputs.
+                </p>
+                <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/25 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                  {roleShortcuts.map(([action, hint, keys]) => (
+                    <div key={action} className="flex items-center justify-between gap-4 py-3">
+                      <div className="min-w-0">
+                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                          {action}
+                        </strong>
+                        <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                          {hint}
+                        </span>
+                      </div>
+                      <span className="flex shrink-0 items-center gap-1">
+                        {keys.map((k) => (
+                          <kbd
+                            key={k}
+                            className="rounded-md border border-[#cbd5e1] bg-white px-2.5 py-1 font-mono text-[11.5px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                          >
+                            {k}
+                          </kbd>
+                        ))}
                       </span>
                     </div>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {keys.map((k) => (
-                        <kbd
-                          key={k}
-                          className="rounded-md border border-[#cbd5e1] bg-white px-2.5 py-1 font-mono text-[11.5px] font-bold text-[#1e293b] shadow-2xs dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
-                        >
-                          {k}
-                        </kbd>
-                      ))}
-                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. TERMS & CONDITIONS */}
+          {showTerms && (
+            <div ref={termsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-5`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Terms &amp; Conditions
+                  </h3>
+                  <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                    System usage terms governing the LOGISYNC parcel verification and delivery platform.
+                  </p>
+                </div>
+                <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand">
+                  v{POLICY_VERSION} · {EFFECTIVE_DATE}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {TERMS_SECTIONS.map((sec) => (
+                  <div
+                    key={sec.id}
+                    className="rounded-xl border border-brand-line bg-brand-softer/20 p-4 dark:border-night-line dark:bg-night-head/40"
+                  >
+                    <h4 className="mb-2 text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
+                      {sec.title}
+                    </h4>
+                    {sec.paragraphs?.map((p, idx) => (
+                      <p key={idx} className="mb-2 text-[12.5px] leading-relaxed text-[#475569] last:mb-0 dark:text-[#d1c9c2]">
+                        {p}
+                      </p>
+                    ))}
+                    {sec.bullets && (
+                      <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12.5px] leading-relaxed text-[#475569] dark:text-[#d1c9c2]">
+                        {sec.bullets.map((b, idx) => (
+                          <li key={idx}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* 7. PRIVACY POLICY */}
+          {showPrivacy && (
+            <div ref={privacyRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-5`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                    Privacy Policy
+                  </h3>
+                  <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                    How LOGISYNC collects, stores, and uses account details, parcel records, verification videos, and notification preferences.
+                  </p>
+                </div>
+                <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand">
+                  v{POLICY_VERSION} · {EFFECTIVE_DATE}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 max-[760px]:grid-cols-1">
+                {REPUBLIC_ACTS.map((act) => (
+                  <div
+                    key={act.code}
+                    className="rounded-xl border border-brand-line bg-brand-softer/20 p-3.5 dark:border-night-line dark:bg-night-head/40"
+                  >
+                    <div className="mb-1 flex items-center gap-2 text-[12px] font-extrabold text-brand">
+                      <i className={`fa-solid ${act.icon}`} />
+                      <span>{act.code}</span>
+                    </div>
+                    <strong className="block text-[12.5px] text-[#1e293b] dark:text-[#f1eeeb]">
+                      {act.title}
+                    </strong>
+                    <p className="mt-1 text-[11.5px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
+                      {act.summary}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                {PRIVACY_SECTIONS.map((sec) => (
+                  <div
+                    key={sec.id}
+                    className="rounded-xl border border-brand-line bg-brand-softer/20 p-4 dark:border-night-line dark:bg-night-head/40"
+                  >
+                    <h4 className="mb-2 text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
+                      {sec.title}
+                    </h4>
+                    {sec.paragraphs?.map((p, idx) => (
+                      <p key={idx} className="mb-2 text-[12.5px] leading-relaxed text-[#475569] last:mb-0 dark:text-[#d1c9c2]">
+                        {p}
+                      </p>
+                    ))}
+                    {sec.bullets && (
+                      <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12.5px] leading-relaxed text-[#475569] dark:text-[#d1c9c2]">
+                        {sec.bullets.map((b, idx) => (
+                          <li key={idx}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 8. ABOUT LOGISYNC */}
+          {showAbout && (
+            <div ref={aboutRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-5`}>
+              <div>
+                <h3 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                  About LOGISYNC
+                </h3>
+                <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                  System information, application version, and project details.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-brand-line bg-brand-softer/25 p-5 dark:border-night-line dark:bg-night-head/40">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-line pb-4 dark:border-night-line">
+                  <div>
+                    <h4 className="text-[17px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                      LOGISYNC
+                    </h4>
+                    <span className="text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                      Parcel Verification, QR Tracking &amp; Delivery Coordination System
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-brand-soft px-3 py-1 text-[12px] font-extrabold text-brand">
+                    Version 1.0.0
+                  </span>
+                </div>
+
+                <p className="mt-4 text-[13px] leading-relaxed text-[#475569] dark:text-[#d1c9c2]">
+                  LOGISYNC enables coordinators, sellers, and riders to register parcels, verify packing videos before dispatch, track QR-based deliveries, and manage hub communications in one unified platform.
+                </p>
+
+                <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-brand-line pt-4 text-[12.5px] max-[600px]:grid-cols-1 dark:border-night-line">
+                  <div>
+                    <dt className="font-semibold text-[#64748b] dark:text-[#b8b0a8]">Project</dt>
+                    <dd className="font-bold text-[#1e293b] dark:text-[#f1eeeb]">{COPYRIGHT_OWNER} · LOGISYNC</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-[#64748b] dark:text-[#b8b0a8]">Application Version</dt>
+                    <dd className="font-bold text-[#1e293b] dark:text-[#f1eeeb]">1.0.0</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-[#64748b] dark:text-[#b8b0a8]">Policy Version</dt>
+                    <dd className="font-bold text-[#1e293b] dark:text-[#f1eeeb]">v{POLICY_VERSION} ({EFFECTIVE_DATE})</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-[#64748b] dark:text-[#b8b0a8]">Active Portal Role</dt>
+                    <dd className="font-bold capitalize text-[#1e293b] dark:text-[#f1eeeb]">{roleKey}</dd>
+                  </div>
+                </dl>
               </div>
             </div>
           )}
@@ -1140,7 +1411,10 @@ export default function UnifiedSettings() {
             !showSecurity &&
             !showNotifications &&
             !showAppearance &&
-            !showAccessibility && (
+            !showAccessibility &&
+            !showTerms &&
+            !showPrivacy &&
+            !showAbout && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">
               No settings match &ldquo;{search}&rdquo;.
             </p>

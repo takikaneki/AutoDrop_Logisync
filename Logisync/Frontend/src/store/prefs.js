@@ -19,6 +19,8 @@ const BASE_DEFAULTS = {
   fontSize: "md", // "sm" | "md" | "lg"
   reducedMotion: false,
   underlineLinks: false,
+  highContrast: false,
+  enhancedFocus: false,
   notificationsEnabled: true,
   inAppNotifications: true,
   inAppPopups: true,
@@ -97,6 +99,8 @@ export function applyPrefs(p = store.get()) {
   document.body.classList.toggle("dark", isDark);
   root.classList.toggle("reduced-motion", Boolean(p.reducedMotion));
   root.classList.toggle("underline-links", Boolean(p.underlineLinks));
+  root.classList.toggle("high-contrast", Boolean(p.highContrast));
+  root.classList.toggle("enhanced-focus", Boolean(p.enhancedFocus));
   root.style.zoom = "";
   root.style.fontSize = fontSizeMap[p.fontSize] || "16px";
   try {

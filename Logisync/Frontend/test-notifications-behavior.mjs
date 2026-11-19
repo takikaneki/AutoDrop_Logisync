@@ -2,6 +2,7 @@ import assert from "node:assert";
 
 // Minimal browser globals mock so ES modules run in Node cleanly
 const storage = new Map();
+const rootClasses = new Set();
 globalThis.localStorage = {
   getItem: (k) => (storage.has(k) ? storage.get(k) : null),
   setItem: (k, v) => storage.set(k, String(v)),
@@ -9,7 +10,12 @@ globalThis.localStorage = {
 };
 globalThis.sessionStorage = { clear: () => {} };
 globalThis.document = {
-  documentElement: { classList: { toggle: () => {} }, style: {} },
+  documentElement: {
+    classList: {
+      toggle: (cls, on) => (on ? rootClasses.add(cls) : rootClasses.delete(cls)),
+    },
+    style: {},
+  },
   body: { classList: { toggle: () => {} } },
 };
 const dispatchedEvents = [];
@@ -110,9 +116,11 @@ playAlertSound();
 assert.strictEqual(audioTriggers, 0, "Master notifications OFF must disable all sounds");
 
 // 6. Font size uses root fontSize instead of zoom (responsive viewport fit)
-setPrefs({ fontSize: "sm" }, { skipServerSync: true });
+setPrefs({ fontSize: "sm", highContrast: true, enhancedFocus: true }, { skipServerSync: true });
 assert.strictEqual(globalThis.document.documentElement.style.zoom, "");
 assert.strictEqual(globalThis.document.documentElement.style.fontSize, "14px");
+assert.strictEqual(rootClasses.has("high-contrast"), true, "high-contrast class should toggle on");
+assert.strictEqual(rootClasses.has("enhanced-focus"), true, "enhanced-focus class should toggle on");
 
 // 7. Browser Push permission status mapping
 assert.deepStrictEqual(

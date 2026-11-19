@@ -110,3 +110,74 @@ body.dark {
 .underline-links main a {
   text-decoration: underline;
 }
+
+/* Accessibility: High Contrast Mode (Light & Dark) */
+.high-contrast {
+  --hc-border: #1e293b;
+}
+.high-contrast body {
+  background-color: #ffffff;
+  color: #09090b;
+}
+.high-contrast main,
+.high-contrast aside,
+.high-contrast section,
+.high-contrast header {
+  color: #09090b;
+}
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea,
+.high-contrast button[class*="border"],
+.high-contrast [class*="border-"] {
+  border-color: #334155 !important;
+}
+.high-contrast p,
+.high-contrast span,
+.high-contrast small {
+  color: inherit;
+}
+.high-contrast .text-\[\#64748b\],
+.high-contrast .text-\[\#777\],
+.high-contrast .text-\[\#888\],
+.high-contrast .text-\[\#94a3b8\] {
+  color: #1e293b !important;
+}
+
+.high-contrast.dark body {
+  background-color: #09090b;
+  color: #ffffff;
+}
+.high-contrast.dark main,
+.high-contrast.dark aside,
+.high-contrast.dark section,
+.high-contrast.dark header {
+  background-color: #121110 !important;
+  color: #ffffff !important;
+}
+.high-contrast.dark input,
+.high-contrast.dark select,
+.high-contrast.dark textarea,
+.high-contrast.dark button[class*="border"],
+.high-contrast.dark [class*="border-"] {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+.high-contrast.dark .text-\[\#64748b\],
+.high-contrast.dark .text-\[\#b8b0a8\],
+.high-contrast.dark .text-\[\#94a3b8\] {
+  color: #f4f4f5 !important;
+}
+
+/* Accessibility: Enhanced Focus Indicators */
+.enhanced-focus :is(a, button, input, select, textarea, [tabindex], [role="switch"], [role="radio"]):focus-visible,
+.enhanced-focus :is(a, button, input, select, textarea):focus {
+  outline: 3px solid #ea580c !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.28) !important;
+}
+.enhanced-focus.dark :is(a, button, input, select, textarea, [tabindex], [role="switch"], [role="radio"]):focus-visible,
+.enhanced-focus.dark :is(a, button, input, select, textarea):focus {
+  outline: 3px solid #fb923c !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(251, 146, 60, 0.35) !important;
+}
