@@ -47,7 +47,7 @@ const infoLinks = [
   { to: "/help", icon: "fa-circle-question", label: "Help" },
 ];
 
-export default function Sidebar({ collapsed, mobileOpen = false, onClose, onCloseDesktop }) {
+export default function Sidebar({ collapsed, mobileOpen = false, onClose, onCloseDesktop, onToggleSidebar }) {
   const t = useT();
   const { dark } = usePrefs();
   const profile = useProfile();
@@ -87,42 +87,57 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
   const badges = { messages: unreadConversations, notifications: unread, complaints: unreadComplaints };
 
   const navClass = ({ isActive }) =>
-    `relative flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] transition ${
+    `group relative flex items-center rounded-[10px] py-[11px] text-[14px] transition ${
+      collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
+    } ${
       isActive
-        ? "bg-white text-brand font-bold shadow-sm"
-        : "text-white/95 hover:bg-white hover:text-brand hover:font-semibold"
+        ? "bg-[#0f172a] text-white font-bold shadow-sm border-l-[3px] border-white"
+        : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold"
     }`;
 
   return (
     <>
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[65] bg-black/30 backdrop-blur-[1px] transition-opacity min-[821px]:hidden"
+          className="fixed inset-0 z-[65] bg-black/35 backdrop-blur-[1px] transition-opacity min-[821px]:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`flex shrink-0 flex-col overflow-y-auto bg-brand text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-gradient-to-b from-[#ee4d2d] to-[#f97316] text-white border-r border-brand-dark shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
-        } min-[821px]:sticky min-[821px]:top-14 min-[821px]:z-40 min-[821px]:h-[calc(100vh-56px)] min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
-          collapsed
-            ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0 min-[821px]:px-0"
-            : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:border-r min-[821px]:px-3.5 xl:px-[18px]"
+        } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
+          collapsed ? "min-[821px]:w-[76px]" : "min-[821px]:w-[250px]"
         }`}
       >
-        <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5 min-[821px]:hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
-              <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
-                <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-4 w-auto shrink-0 object-contain" />
-              </span>
-              <span className="block truncate text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-white/95">
-                Coordinator Hub
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5">
+        <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
+          {/* Branding Header + Upper-Right Hamburger Toggle */}
+          <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:flex-col min-[821px]:items-center min-[821px]:gap-2.5 min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
+            <div className={`flex items-center justify-between gap-2.5 ${collapsed ? "min-[821px]:flex-col min-[821px]:justify-center" : ""}`}>
+              <div className={`flex min-w-0 items-center gap-2 ${collapsed ? "min-[821px]:justify-center" : "flex-1"}`}>
+                <img
+                  src={SPX_LOGO_DATA_URL}
+                  alt="SPX Express"
+                  draggable={false}
+                  className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert`}
+                />
+                <span className={`truncate text-[16px] font-black tracking-tight text-white leading-tight ${collapsed ? "min-[821px]:hidden" : ""}`}>
+                  LogiSync
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onToggleSidebar}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="hidden min-[821px]:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/95 transition hover:bg-white/15 hover:text-white"
+              >
+                <i className="fa-solid fa-bars text-[17px]" />
+              </button>
+              <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
               <button
                 type="button"
                 onClick={toggleDark}
@@ -158,7 +173,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
               </button>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5">
+          <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-white/20 bg-white/15 px-3 py-2.5 min-[821px]:hidden">
             <UserAvatar className="h-9 w-9 shrink-0" />
             <div className="min-w-0 flex-1">
               <strong className="block truncate text-[13px] leading-tight text-white">
@@ -195,12 +210,16 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                     aria-label={labelText}
                     {...tipProps(labelText)}
                   >
-                    <i className={`fa-solid ${l.icon} w-5 text-center`} />
-                    <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
-                    {count > 0 && (
-                      <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-white text-brand text-[11px] font-bold flex items-center justify-center shadow-xs">
-                        {count}
-                      </span>
+                    {({ isActive }) => (
+                      <>
+                        <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#f97316]" : ""}`} />
+                        <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
+                        {count > 0 && (
+                          <span className={`min-w-[18px] h-[18px] px-1 rounded-full bg-white text-brand text-[11px] font-bold flex items-center justify-center shadow-xs ${collapsed ? "min-[821px]:hidden" : ""}`}>
+                            {count}
+                          </span>
+                        )}
+                      </>
                     )}
                   </NavLink>
                 );
@@ -252,8 +271,12 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
             aria-label={t("Settings")}
             {...tipProps(t("Settings"))}
           >
-            <i className="fa-solid fa-gear w-5 text-center" />
-            <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
+            {({ isActive }) => (
+              <>
+                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#f97316]" : ""}`} />
+                <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
+              </>
+            )}
           </NavLink>
           <button
             onClick={() => {
@@ -263,11 +286,14 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
             title={t("Logout")}
             aria-label={t("Logout")}
             {...tipProps(t("Logout"))}
-            className="w-full flex items-center gap-[13px] rounded-[10px] px-3.5 py-[11px] text-[14px] text-white/95 transition hover:bg-white hover:text-brand hover:font-semibold"
+            className={`w-full flex items-center rounded-[10px] py-[11px] text-[14px] text-white/95 transition hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold ${
+              collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
+            }`}
           >
             <i className="fa-solid fa-right-from-bracket w-5 text-center" />
-            <span>{t("Logout")}</span>
+            <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Logout")}</span>
           </button>
+        </div>
         </div>
       </aside>
       {Tooltip}
