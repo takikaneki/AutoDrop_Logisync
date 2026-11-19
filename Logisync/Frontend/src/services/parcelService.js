@@ -205,7 +205,7 @@ export async function listParcels() {
   const list = rawList.filter((p) => {
     const txn = String(p?.transaction_number || "").trim();
     const pid = String(p?.parcel_id || "").trim();
-    return /^SPX\d{9}$/i.test(txn) && pid.length > 0 && pid.length <= 10;
+    return (/^PH\d{10}[A-Z]$/i.test(txn) || /^SPX\d{9}$/i.test(txn)) && pid.length > 0 && pid.length <= 10;
   });
   syncCustomersFromParcels(list);
   return list.map(enrichParcel);

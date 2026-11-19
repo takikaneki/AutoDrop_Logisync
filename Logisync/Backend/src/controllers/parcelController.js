@@ -246,7 +246,7 @@ function evaluateDeclarationRisk({
 }
 
 function isValidTransactionNumber(tx) {
-  return /^SPX\d{9}$/i.test(String(tx || "").trim());
+  return /^PH\d{10}[A-Z]$/.test(String(tx || "").trim().toUpperCase());
 }
 
 function isGibberishName(str) {
@@ -554,7 +554,7 @@ async function createParcel(req, res) {
     if (!isValidTransactionNumber(transactionNumber)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid transaction number. Must follow the format SPX123456789 (SPX followed by exactly 9 digits)."
+        message: "Invalid transaction number. Must follow the format PH1234567891U (PH followed by 10 digits and 1 uppercase letter)."
       });
     }
 

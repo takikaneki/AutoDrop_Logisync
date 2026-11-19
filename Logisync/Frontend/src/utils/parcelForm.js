@@ -52,9 +52,9 @@ export const PARCEL_BASE_FIELDS = [
   {
     name: "transaction_number",
     label: "Transaction number",
-    max: 12,
-    placeholder: "e.g. SPX123456789",
-    help: "Enter SPX followed by exactly 9 digits (e.g. SPX123456789). Letters beyond SPX and incorrect digit counts are rejected.",
+    max: 13,
+    placeholder: "e.g. PH1234567891U",
+    help: "Enter PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).",
   },
   {
     name: "receiver_name",
@@ -205,7 +205,7 @@ export function evaluateDeclarationFlags(values = {}) {
 }
 
 export function isValidTransactionNumber(tx) {
-  return /^SPX\d{9}$/i.test(String(tx || "").trim());
+  return /^PH\d{10}[A-Z]$/.test(String(tx || "").trim().toUpperCase());
 }
 
 export function isGibberishName(str) {
@@ -253,7 +253,7 @@ export function validateParcel(values) {
   if (!tx) {
     errors.transaction_number = "Transaction number is required.";
   } else if (!isValidTransactionNumber(tx)) {
-    errors.transaction_number = "Invalid format. Expected SPX followed by 9 digits (e.g. SPX123456789).";
+    errors.transaction_number = "Invalid format. Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).";
   }
 
   const name = (values.receiver_name || "").trim();

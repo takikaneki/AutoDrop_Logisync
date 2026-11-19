@@ -6,10 +6,10 @@
 // Kapag nakita na ang totoong sample ng QR, dito lang natin aayusin.
 const QUERY_KEYS = ["transaction_number", "transactionNumber", "txn", "tn", "order_id", "id"];
 
-export const TRANSACTION_NUMBER_REGEX = /^SPX\d{9}$/i;
+export const TRANSACTION_NUMBER_REGEX = /^PH\d{10}[A-Z]$/;
 
 export function isValidTransactionNumber(raw) {
-  return TRANSACTION_NUMBER_REGEX.test(String(raw ?? "").trim());
+  return TRANSACTION_NUMBER_REGEX.test(String(raw ?? "").trim().toUpperCase());
 }
 
 export function parseTransactionNumber(raw) {
@@ -30,8 +30,8 @@ export function parseTransactionNumber(raw) {
     }
   }
 
-  // Extract embedded SPX token if present
-  const match = text.match(/\bSPX\d{9}\b/i);
+  // Extract embedded PH token if present (e.g. PH1234567891U)
+  const match = text.match(/\bPH\d{10}[A-Z]\b/i);
   if (match) return match[0].toUpperCase();
 
   return text.toUpperCase();

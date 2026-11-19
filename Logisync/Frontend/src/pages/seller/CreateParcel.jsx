@@ -197,7 +197,7 @@ export default function CreateParcel() {
     const { name, value } = e.target;
     let nextValue = value;
     if (name === "transaction_number") {
-      nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+      nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 13);
     } else if (name === "receiver_contact") {
       nextValue = sanitizeMobileNumber(value);
     }
@@ -358,7 +358,7 @@ export default function CreateParcel() {
       setTxnLookupMessage("");
       setErrors((er) => ({
         ...er,
-        transaction_number: "Enter a transaction number first (e.g. SPX272828381).",
+        transaction_number: "Enter a transaction number first (e.g. PH1234567891U).",
       }));
       return;
     }
@@ -367,7 +367,7 @@ export default function CreateParcel() {
       setTxnLookupMessage("");
       setErrors((er) => ({
         ...er,
-        transaction_number: `Invalid format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX272828381).`,
+        transaction_number: `Invalid format ("${rawTxn}"). Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).`,
       }));
       return;
     }
@@ -393,10 +393,10 @@ export default function CreateParcel() {
     }
     if (!isValidTransactionNumber(rawTxn)) {
       setTxnLookupMessage("");
-      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow SPX123456789 (SPX followed by exactly 9 digits).`);
+      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow PH1234567891U (PH followed by 10 digits and 1 uppercase letter).`);
       setErrors((er) => ({
         ...er,
-        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected SPX followed by 9 digits (e.g. SPX272828381).`
+        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).`
       }));
       return;
     }
@@ -527,8 +527,8 @@ export default function CreateParcel() {
                         type="text"
                         value={values.transaction_number}
                         onChange={onChange}
-                        placeholder="Transaction number..."
-                        maxLength={12}
+                        placeholder="e.g. PH1234567891U"
+                        maxLength={13}
                         aria-invalid={!!errors.transaction_number}
                         className={`${inputCls} pl-7 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
                       />
