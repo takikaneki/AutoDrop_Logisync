@@ -213,23 +213,31 @@ export default function Complaints() {
 
       {/* Summary KPI Cards */}
       <section className="grid grid-cols-3 gap-5 mb-7 max-[700px]:grid-cols-1">
-        {counts.map(([s, n]) => (
-          <button
-            key={s}
-            onClick={() => {
-              setStatus(status === s ? "All" : s);
-              setPage(1);
-            }}
-            className={`${panel} p-6 text-left transition hover:ring-2 hover:ring-brand/30 hover:border-brand/60 hover:shadow-md active:scale-[0.99] ${
-              status === s ? "!border-brand ring-2 ring-brand/50 shadow-sm" : ""
-            }`}
-          >
-            <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold ${statusTone[s]}`}>
-              {s}
-            </span>
-            <strong className="block text-[32px] mt-3 leading-none">{n}</strong>
-          </button>
-        ))}
+        {counts.map(([s, n]) => {
+          const topBorder =
+            s === "Open"
+              ? "!border-[#fecaca] !border-t-[3px] !border-t-[#ef4444] dark:!border-[#991b1b]/70 dark:!border-t-[#ef4444]"
+              : s === "In Progress"
+              ? "!border-[#fde68a] !border-t-[3px] !border-t-[#f59e0b] dark:!border-[#92400e]/70 dark:!border-t-[#f59e0b]"
+              : "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]";
+          return (
+            <button
+              key={s}
+              onClick={() => {
+                setStatus(status === s ? "All" : s);
+                setPage(1);
+              }}
+              className={`${panel} ${topBorder} p-6 text-left transition hover:ring-2 hover:ring-brand/30 hover:shadow-md active:scale-[0.99] ${
+                status === s ? "!border-brand ring-2 ring-brand/50 shadow-sm" : ""
+              }`}
+            >
+              <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold ${statusTone[s]}`}>
+                {s}
+              </span>
+              <strong className="block text-[32px] mt-3 leading-none">{n}</strong>
+            </button>
+          );
+        })}
       </section>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>

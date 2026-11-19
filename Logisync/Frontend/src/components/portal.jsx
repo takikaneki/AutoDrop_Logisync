@@ -26,8 +26,8 @@ const cardBorders = {
 export function StatCard({ label, value, icon, tone = "orange", to, active = false, interactive = false }) {
   const body = (
     <div
-      className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition ${
-        to || interactive || active ? "hover:ring-2 hover:ring-brand/30 hover:shadow-md active:scale-[0.99]" : ""
+      className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
+        to || interactive || active ? "active:scale-[0.99]" : ""
       } ${active ? "ring-2 ring-brand/50 !border-brand shadow-sm" : ""}`}
     >
       <div
