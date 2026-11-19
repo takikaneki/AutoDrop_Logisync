@@ -163,6 +163,7 @@ export const EMPTY_PARCEL = {
   receiver_province: "Cavite",
   receiver_address: "",
   contents: "",
+  quantity: 1,
   content_category: "",
   other_category_description: "",
   discrete_item: false,
@@ -366,6 +367,7 @@ export function trimParcel(values) {
     receiver_province: (values.receiver_province || "").trim(),
     receiver_address: fullAddress,
     contents: (values.contents || "").trim(),
+    quantity: Math.max(1, parseInt(values.quantity, 10) || 1),
     content_category: category,
     other_category_description:
       category === "Other" ? (values.other_category_description || "").trim() : "",

@@ -952,26 +952,48 @@ export default function CreateParcel() {
 
             {/* 5 & 6. Item Description & Content Category side by side */}
             <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-            {/* 5. Parcel Item Description / Contents */}
+            {/* 5. Parcel Item Description / Contents & Quantity */}
             <div className="relative">
-              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                <label htmlFor="contents" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                  Parcel item description / contents <span className="text-brand">*</span>
-                </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_104px]">
+                <div>
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <label htmlFor="contents" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
+                      Parcel item description / contents <span className="text-brand">*</span>
+                    </label>
+                  </div>
+                  <input
+                    id="contents"
+                    name="contents"
+                    type="text"
+                    value={values.contents}
+                    onChange={onChange}
+                    placeholder="e.g. Cotton T-Shirt (Black, Medium)"
+                    maxLength={255}
+                    aria-invalid={!!errors.contents}
+                    className={`${inputCls} ${errors.contents ? "!border-[#d94747]" : ""}`}
+                  />
+                </div>
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor="quantity" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
+                      Quantity <span className="text-brand">*</span>
+                    </label>
+                  </div>
+                  <input
+                    id="quantity"
+                    name="quantity"
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={values.quantity ?? 1}
+                    onChange={onChange}
+                    aria-invalid={!!errors.quantity}
+                    className={`${inputCls} ${errors.quantity ? "!border-[#d94747]" : ""}`}
+                  />
+                </div>
               </div>
-              <input
-                id="contents"
-                name="contents"
-                type="text"
-                value={values.contents}
-                onChange={onChange}
-                placeholder="e.g. 2x Cotton T-Shirt (Black, Medium)"
-                maxLength={255}
-                aria-invalid={!!errors.contents}
-                className={`${inputCls} ${errors.contents ? "!border-[#d94747]" : ""}`}
-              />
-              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.contents ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.contents || "Provide an accurate description of the physical item(s) inside the parcel."}
+              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.contents || errors.quantity ? "text-[#d94747]" : "text-[#999]"}`}>
+                {errors.contents || errors.quantity || "Provide an accurate description and quantity of the physical item(s)."}
               </p>
             </div>
 

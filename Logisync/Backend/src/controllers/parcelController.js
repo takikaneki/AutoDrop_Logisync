@@ -90,6 +90,7 @@ async function ensureCustomerSchema() {
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_city VARCHAR(150);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS receiver_province VARCHAR(150);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS content_category VARCHAR(100);
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 1;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS other_category_description VARCHAR(255);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discrete_item BOOLEAN NOT NULL DEFAULT FALSE;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS discreet_reason VARCHAR(500);
@@ -618,6 +619,7 @@ async function createParcel(req, res) {
         .join(", ");
     }
     const cleanContents = String(contents || "").trim();
+    const cleanQuantity = Math.max(1, parseInt(req.body?.quantity, 10) || 1);
     if (cleanContents.length < 3 || cleanContents.length > 255) {
       return res.status(400).json({
         success: false,
@@ -682,12 +684,12 @@ async function createParcel(req, res) {
        (parcel_id, transaction_number, seller_id, receiver_name,
         receiver_contact, receiver_address,
         receiver_house_number, receiver_street, receiver_barangay, receiver_city, receiver_province,
-        contents, content_category, other_category_description,
+        contents, quantity, content_category, other_category_description,
         discrete_item, discreet_reason, discreet_status,
         declaration_flagged, declaration_flag_reason,
         is_cod, payment_method,
         status, verification_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
       [
         parcelId,
         transactionNumber,
@@ -701,6 +703,7 @@ async function createParcel(req, res) {
         cleanCity,
         cleanProvince,
         cleanContents,
+        cleanQuantity,
         cleanCategory,
         cleanOtherCategoryDescription || null,
         isDiscrete,

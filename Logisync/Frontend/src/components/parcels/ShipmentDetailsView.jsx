@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { getRole } from "../../api.js";
 import { getVideoUrl } from "../../services/parcelService.js";
 import { getParcelAddress } from "../../store/customers.js";
 import { toast } from "../../store/toast.js";
@@ -26,7 +27,7 @@ function deriveOrderId(parcel) {
   return `${prefix}V6${suffix}`;
 }
 
-function buildShipmentMilestones({ parcel, videos = [], verificationRecords = [] }) {
+function buildShipmentMilestones({ parcel, videos = [], verificationRecords = [], isSeller = false }) {
   const s = String(parcel?.status || "").toUpperCase();
   const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
   const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
@@ -42,7 +43,7 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
       parcel?.delivery_status
   );
 
-  return [
+  const steps = [
     {
       label: "Parcel registered",
       note: formatDate(parcel?.created_at),
@@ -98,9 +99,10 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
       state: isDelivered ? "done" : isFailedDelivery ? "fail" : hasRiderScanned ? "current" : "todo",
     },
   ];
+  return isSeller ? steps.slice(0, 4) : steps;
 }
 
-function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [] }) {
+function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [], isSeller = false }) {
   const s = String(parcel?.status || "").toUpperCase();
   const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
   const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
@@ -118,7 +120,7 @@ function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [
   );
   const deliveredAt = parcel?.delivered_at || parcel?.deliveryRecord?.doneAt || (isDelivered ? parcel?.updated_at : null);
 
-  return [
+  const items = [
     {
       label: "Parcel Created",
       value: parcel?.created_at ? formatDate(parcel.created_at) : "—",
@@ -153,6 +155,7 @@ function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [
       done: Boolean(isDelivered && deliveredAt),
     },
   ];
+  return isSeller ? items.slice(0, 3) : items;
 }
 
 function resolveDeliveryBanner(parcel) {
@@ -473,8 +476,9 @@ export default function ShipmentDetailsView({
   const [videoError, setVideoError] = useState("");
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
-  const milestones = buildShipmentMilestones({ parcel, videos, verificationRecords });
-  const lifecycleTimestamps = buildLifecycleTimestamps({ parcel, videos, verificationRecords });
+  const isSeller = String(getRole() || "").toLowerCase() === "seller";
+  const milestones = buildShipmentMilestones({ parcel, videos, verificationRecords, isSeller });
+  const lifecycleTimestamps = buildLifecycleTimestamps({ parcel, videos, verificationRecords, isSeller });
 
   const fullAddress =
     getParcelAddress(parcel) ||
@@ -854,10 +858,10 @@ export default function ShipmentDetailsView({
             </div>
           )}
 
-          {/* TAB 3: DOCUMENTS (Submitted Video & Proof of Delivery cards ONLY) */}
+          {/* TAB 3: DOCUMENTS (Submitted Video; Proof of Delivery hidden for sellers) */}
           {activeTab === "documents" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className={`grid grid-cols-1 gap-5 ${isSeller ? "max-w-[540px]" : "md:grid-cols-2"}`}>
                 {/* 1. Submitted Video Card */}
                 <section className={`${panel} flex flex-col p-5`}>
                   <h2 className="mb-3.5 text-[15.5px] font-bold text-[#1e293b] dark:text-white">
@@ -989,7 +993,8 @@ export default function ShipmentDetailsView({
                   )}
                 </section>
 
-                {/* 2. Proof of Delivery Card */}
+                {/* 2. Proof of Delivery Card (hidden for Seller role) */}
+                {!isSeller && (
                 <section className={`${panel} flex flex-col p-5`}>
                   <h2 className="mb-3.5 text-[15.5px] font-bold text-[#1e293b] dark:text-white">
                     Proof of Delivery
@@ -1046,6 +1051,7 @@ export default function ShipmentDetailsView({
                     View Photo
                   </button>
                 </section>
+                )}
               </div>
             </div>
           )}
