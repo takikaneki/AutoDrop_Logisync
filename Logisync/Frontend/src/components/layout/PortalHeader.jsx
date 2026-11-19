@@ -37,9 +37,9 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               aria-label="Toggle sidebar"
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
-              className={iconBtn}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line"
             >
-              <i className="fa-solid fa-bars text-[15px]" />
+              <i className="fa-solid fa-bars text-[18px]" />
             </button>
             <Link to={toPath(role, "")} className="flex min-w-0 items-center gap-2 sm:gap-2.5">
               <img

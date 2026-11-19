@@ -42,12 +42,25 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
       <aside
         className={`flex shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-[#ee4d2d] to-[#f97316] text-white py-4 transition-[width,transform,padding] duration-200 dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[276px] max-[820px]:max-w-[85vw] max-[820px]:border-r max-[820px]:border-brand-dark max-[820px]:px-4 max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
-        } min-[821px]:sticky min-[821px]:top-14 min-[821px]:z-40 min-[821px]:h-[calc(100vh-56px)] min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
+        } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 min-[821px]:border-brand-dark dark:min-[821px]:border-[#9a3412] ${
           collapsed
             ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0 min-[821px]:px-0"
             : "min-[821px]:w-[224px] xl:w-[250px] min-[821px]:border-r min-[821px]:px-3.5 xl:px-[18px]"
         }`}
       >
+        {!collapsed && (
+          <div className="mb-3 hidden min-[821px]:flex items-center gap-2.5 border-b border-white/20 px-1 pb-3.5">
+            <span className="inline-flex rounded-lg bg-white px-2 py-1 shadow-xs">
+              <img src={SPX_LOGO_DATA_URL} alt="SPX Express" draggable={false} className="h-4 w-auto shrink-0 object-contain" />
+            </span>
+            <div className="min-w-0">
+              <span className="block truncate text-[13px] font-black tracking-tight text-white">LogiSync</span>
+              <span className="block truncate text-[9.5px] font-bold uppercase tracking-[0.08em] text-white/80">
+                {ROLE_LABEL[role]}
+              </span>
+            </div>
+          </div>
+        )}
         <div className="mb-3.5 border-b border-white/20 px-1 pb-3.5 min-[821px]:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex flex-col items-start gap-1">
