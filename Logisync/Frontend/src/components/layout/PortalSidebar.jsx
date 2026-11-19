@@ -65,20 +65,16 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
             <div className="flex items-center justify-between gap-2.5">
               <div className={`flex min-w-0 items-center gap-2.5 ${collapsed ? "min-[821px]:justify-center" : "flex-1"}`}>
-                <span className="inline-flex shrink-0 rounded-lg bg-white px-2 py-1 shadow-xs">
-                  <img
-                    src={SPX_LOGO_DATA_URL}
-                    alt="SPX Express"
-                    draggable={false}
-                    className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-4" : "h-4"} w-auto shrink-0 object-contain`}
-                  />
+                <img
+                  src={SPX_LOGO_DATA_URL}
+                  alt="SPX Express"
+                  draggable={false}
+                  className={`${collapsed ? "min-[821px]:h-4 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert`}
+                />
+                <span className={`h-4 w-px shrink-0 bg-white/40 ${collapsed ? "min-[821px]:hidden" : ""}`} aria-hidden="true" />
+                <span className={`truncate text-[16px] font-black tracking-tight text-white leading-tight ${collapsed ? "min-[821px]:hidden" : ""}`}>
+                  LogiSync
                 </span>
-                <div className={`min-w-0 ${collapsed ? "min-[821px]:hidden" : ""}`}>
-                  <span className="block truncate text-[15px] font-black tracking-tight text-white leading-tight">LogiSync</span>
-                  <span className="block truncate text-[9.5px] font-extrabold uppercase tracking-[0.08em] text-white/85">
-                    {ROLE_LABEL[role]}
-                  </span>
-                </div>
               </div>
               <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
                 <button

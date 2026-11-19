@@ -11,7 +11,7 @@ const iconBtn =
   "relative w-[40px] h-[40px] max-[480px]:w-9 max-[480px]:h-9 shrink-0 rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
 
 // Bell sa header ng Seller/Rider. Parehong data ng Notifications page (tingnan ang store/portalNotifications.js).
-export default function NotificationMenu({ role }) {
+export default function NotificationMenu({ role, btnClass }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const seenIdsRef = useRef(null);
@@ -76,11 +76,11 @@ export default function NotificationMenu({ role }) {
         }}
         aria-label={`Notifications${unread ? `, ${unread} new` : ""}`}
         aria-expanded={open}
-        className={iconBtn}
+        className={btnClass || iconBtn}
       >
         <i className="fa-regular fa-bell" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#dc2626] px-1 text-[11px] font-bold text-white ring-2 ring-[#f97316]">
             {unread}
           </span>
         )}

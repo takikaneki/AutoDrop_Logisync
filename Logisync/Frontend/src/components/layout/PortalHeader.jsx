@@ -11,7 +11,7 @@ import NotificationMenu from "./NotificationMenu.jsx";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 
 const iconBtn =
-  "flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25 transition";
 
 // Navigation bar for Seller and Rider portals.
 export default function PortalHeader({ role, collapsed = false, mobileOpen = false, onToggleSidebar }) {
@@ -28,7 +28,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
 
   return (
     <>
-      <header className="sticky top-0 z-50 h-14 w-full border-b border-[#eee] bg-white px-3 sm:px-6 shadow-sm print:hidden dark:bg-night-panel dark:border-night-line">
+      <header className="sticky top-0 z-50 h-14 w-full border-b border-black/10 bg-gradient-to-r from-[#ee4d2d] to-[#f97316] px-3 sm:px-6 text-white shadow-sm print:hidden dark:from-brand-dark dark:to-brand-dark dark:border-night-line">
         <div className="flex h-full w-full items-center justify-between gap-2">
           {/* Left Column: Mobile Drawer Toggle & Portal Identity */}
           <div className="flex min-w-0 items-center justify-start gap-2 sm:gap-3">
@@ -37,7 +37,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               aria-label="Toggle sidebar"
               aria-expanded={mobileOpen}
               title="Toggle sidebar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line min-[821px]:hidden"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-white hover:bg-white/15 transition min-[821px]:hidden"
             >
               <i className="fa-solid fa-bars text-[18px]" />
             </button>
@@ -46,15 +46,15 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                 src={SPX_LOGO_DATA_URL}
                 alt="SPX Express"
                 draggable={false}
-                className="h-5 sm:h-6 w-auto shrink-0 object-contain"
+                className="h-5 sm:h-6 w-auto shrink-0 object-contain brightness-0 invert"
               />
-              <span className="h-4 w-[1.5px] shrink-0 bg-slate-200 max-[380px]:hidden dark:bg-slate-700" aria-hidden="true" />
-              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 max-[380px]:hidden dark:text-white">
+              <span className="h-4 w-[1.5px] shrink-0 bg-white/40 max-[380px]:hidden" aria-hidden="true" />
+              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-white max-[380px]:hidden">
                 LogiSync
               </span>
             </Link>
-            <span className="hidden min-[821px]:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            <span className="hidden min-[821px]:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white border border-white/25">
+              <span className="h-1.5 w-1.5 rounded-full bg-white" />
               {ROLE_LABEL[role]}
             </span>
           </div>
@@ -63,32 +63,32 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
             <button
               onClick={toggleDark}
-              className={iconBtn}
+              className="flex h-9 items-center gap-1.5 rounded-full bg-[#0f172a]/25 px-3 text-white hover:bg-[#0f172a]/40 transition"
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-[14px] sm:text-[15px]`} />
+              <i className={`fa-solid ${dark ? "fa-sun text-amber-300" : "fa-moon"} text-[13px]`} />
             </button>
 
-            <NotificationMenu role={role} />
+            <NotificationMenu role={role} btnClass={iconBtn} />
 
             <div ref={menuRef} className="relative ml-0.5 sm:ml-1 max-[600px]:ml-0">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-expanded={menuOpen}
                 aria-label="Account menu"
-                className="flex items-center gap-2 rounded-full p-1 min-[769px]:pr-2.5 hover:bg-[#fafafa] border border-transparent hover:border-[#eee] transition dark:hover:bg-night-line dark:hover:border-night-line"
+                className="flex items-center gap-2 rounded-full p-1 min-[769px]:pr-2.5 hover:bg-white/15 border border-transparent hover:border-white/20 transition"
               >
-                <UserAvatar className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px]" />
+                <UserAvatar className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] ring-2 ring-white/30" />
                 <span className="text-left max-[820px]:hidden">
-                  <strong className="block max-w-[110px] truncate text-[13.5px] leading-tight text-slate-800 dark:text-white">
+                  <strong className="block max-w-[110px] truncate text-[13.5px] leading-tight text-white">
                     {profile.name}
                   </strong>
-                  <small className="block text-[11px] text-[#999] mt-[1px]">
+                  <small className="block text-[11px] text-white/80 mt-[1px]">
                     {profile.role}
                   </small>
                 </span>
-                <i className="fa-solid fa-chevron-down text-[10px] text-[#999] max-[820px]:hidden" />
+                <i className="fa-solid fa-chevron-down text-[10px] text-white/80 max-[820px]:hidden" />
               </button>
 
               {menuOpen && (
