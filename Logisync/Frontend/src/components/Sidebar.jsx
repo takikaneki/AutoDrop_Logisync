@@ -109,7 +109,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
         className={`relative shrink-0 bg-gradient-to-b from-[#ee4d2d] to-[#f97316] text-white border-r border-brand-dark shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
-          collapsed ? "min-[821px]:w-[76px]" : "min-[821px]:w-[250px]"
+          collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
         }`}
       >
         <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
