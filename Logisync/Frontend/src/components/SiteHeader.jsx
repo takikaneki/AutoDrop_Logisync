@@ -66,8 +66,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                 LogiSync
               </span>
             </Link>
-            <span className="hidden min-[821px]:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            <span className="hidden min-[821px]:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
               Coordinator Hub
             </span>
           </div>

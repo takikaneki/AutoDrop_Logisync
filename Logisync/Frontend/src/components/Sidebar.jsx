@@ -91,7 +91,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
       collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
     } ${
       isActive
-        ? "bg-[#0f172a] text-white font-bold shadow-sm border-l-[3px] border-white"
+        ? "bg-[#0f172a] text-white font-bold shadow-sm"
         : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold"
     }`;
 
@@ -106,7 +106,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
       )}
 
       <aside
-        className={`relative shrink-0 bg-gradient-to-b from-[#ee4d2d] to-[#f97316] text-white border-r border-brand-dark shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark dark:from-brand-dark dark:to-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-[#f26b2a] text-white border-r border-[#e05a1b] shadow-lg transition-[width,transform] duration-200 dark:border-[#9a3412] dark:bg-brand-dark print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"

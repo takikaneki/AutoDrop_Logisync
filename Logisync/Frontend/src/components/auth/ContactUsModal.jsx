@@ -97,7 +97,7 @@ export function ContactUsContent({
       {/* Top Header */}
       <div
         className={`flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7 sm:py-5 ${
-          onClose ? "sticky top-0 z-10 bg-white/95 backdrop-blur-md" : ""
+          onClose ? `sticky top-0 z-10 bg-white/95 backdrop-blur-md ${dk("dark:bg-night-panel/95")}` : ""
         } ${dk("dark:border-night-line")}`}
       >
         <div className="flex items-center gap-3">
@@ -121,7 +121,9 @@ export function ContactUsContent({
             type="button"
             onClick={onClose}
             aria-label="Close Contact Modal"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 ${dk(
+              "dark:border-night-line dark:text-[#d1c9c2] dark:hover:border-night-line dark:hover:bg-night-head dark:hover:text-white"
+            )}`}
           >
             <i className="fa-solid fa-xmark text-base" />
           </button>
@@ -338,7 +340,9 @@ export function ContactUsContent({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                    className={`rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 ${dk(
+                      "dark:border-night-line dark:text-[#d1c9c2] dark:hover:bg-night-line"
+                    )}`}
                   >
                     Close
                   </button>
@@ -380,10 +384,10 @@ export default function ContactUsModal({ open, onClose }) {
       aria-labelledby="contact-modal-title"
     >
       <div
-        className="relative max-h-[92dvh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-[0_24px_80px_rgba(15,23,42,0.35)] animate-popup"
+        className="relative max-h-[92dvh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-[0_24px_80px_rgba(15,23,42,0.35)] animate-popup dark:border dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
         onClick={(e) => e.stopPropagation()}
       >
-        <ContactUsContent onClose={onClose} />
+        <ContactUsContent onClose={onClose} supportDark />
       </div>
     </div>
   );
