@@ -24,7 +24,6 @@ import CreateParcel from "./pages/seller/CreateParcel.jsx";
 import RiderDashboard from "./pages/rider/RiderDashboard.jsx";
 import RiderScan from "./pages/rider/RiderScan.jsx";
 import RiderDeliveries from "./pages/rider/RiderDeliveries.jsx";
-import RiderParcels from "./pages/rider/RiderParcels.jsx";
 import PortalNotifications from "./pages/shared/PortalNotifications.jsx";
 import PortalComplaints from "./pages/shared/PortalComplaints.jsx";
 import ParcelRecords from "./pages/seller/ParcelRecords.jsx";
@@ -105,13 +104,13 @@ export default function App() {
           <Route index element={<RiderDashboard />} />
           <Route element={<RequireLastMile />}>
             <Route path="scan" element={<RiderScan />} />
-            <Route path="parcels" element={<RiderParcels />} />
+            <Route path="parcels" element={<Navigate to="/rider/deliveries" replace />} />
             <Route path="deliveries" element={<RiderDeliveries />} />
           </Route>
           <Route path="pending" element={<Navigate to="/rider/deliveries" replace />} />
           <Route path="delivered" element={<Navigate to="/rider/deliveries?tab=delivered" replace />} />
           <Route path="failed" element={<Navigate to="/rider/deliveries?tab=failed" replace />} />
-          <Route path="reports" element={<Navigate to="/rider/parcels?report=1" replace />} />
+          <Route path="reports" element={<Navigate to="/rider/deliveries" replace />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="announcements" element={<Navigate to="/rider/notifications" replace />} />
           <Route path="messages" element={<MessagesPage />} />

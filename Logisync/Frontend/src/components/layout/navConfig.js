@@ -40,7 +40,6 @@ export const NAV = {
       title: "Deliveries",
       links: [
         { path: "scan", label: "Scan QR Code", icon: "fa-qrcode" },
-        { path: "parcels", label: "My Parcels", icon: "fa-boxes-stacked" },
         { path: "deliveries", label: "Deliveries", icon: "fa-truck-fast" },
       ],
     },

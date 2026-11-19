@@ -49,7 +49,7 @@ export default function RiderDashboard() {
                 label: "Total Parcels",
                 value: stats.total,
                 tone: "dark",
-                to: "/rider/parcels",
+                to: "/rider/deliveries",
                 badge: "All Assigned",
                 icon: "fa-box",
                 subtext: `${stats.failed} failed delivery`,
@@ -78,7 +78,7 @@ export default function RiderDashboard() {
           <PortalHeroBanner
             role="rider"
             pipeline={[
-              { label: "Assigned", count: assigned.length, icon: "fa-box-open", to: "/rider/parcels" },
+              { label: "Assigned", count: assigned.length, icon: "fa-box-open", to: "/rider/deliveries" },
               { label: "To Deliver", count: stats.toDeliver, icon: "fa-truck-fast", to: "/rider/deliveries" },
               { label: "Delivered", count: stats.delivered, icon: "fa-circle-check", to: "/rider/deliveries?tab=delivered" },
               { label: "Failed", count: stats.failed, icon: "fa-triangle-exclamation", to: "/rider/deliveries?tab=failed" },

@@ -31,7 +31,7 @@ const ROLE_CONFIG = {
     imageAlt: "SPX Express doorstep parcel delivery",
     liveText: "Route Delivery Mode",
     primary: { label: "Scan Parcel", icon: "fa-qrcode", to: "/rider/scan" },
-    secondary: { label: "Generate Report", icon: "fa-file-lines", to: "/rider/parcels?report=1" },
+    secondary: { label: "Deliveries", icon: "fa-truck-fast", to: "/rider/deliveries" },
   },
 };
 

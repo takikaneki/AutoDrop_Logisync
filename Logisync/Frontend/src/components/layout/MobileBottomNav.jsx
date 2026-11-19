@@ -19,7 +19,7 @@ const ITEMS = {
     { to: "/rider", end: true, icon: "fa-chart-pie", label: "Home" },
     { to: "/rider/deliveries", icon: "fa-truck-fast", label: "Deliveries" },
     { to: "/rider/scan", icon: "fa-qrcode", label: "Scan QR" },
-    { to: "/rider/parcels", icon: "fa-boxes-stacked", label: "Parcels" },
+    { to: "/rider/messages", icon: "fa-comments", label: "Messages" },
   ],
 };
 
