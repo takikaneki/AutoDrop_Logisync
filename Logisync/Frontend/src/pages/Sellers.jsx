@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
-import Pagination from "../components/Pagination.jsx";
 import { Avatar, ConfirmDialog, EmptyState, Modal, StatusBadge, TableSkeleton } from "../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, th } from "../components/styles.js";
 import { createUser, listUsers, updateSeller, updateUserVerification } from "../services/userService.js";
 import { listParcels } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
@@ -148,7 +147,7 @@ export default function Sellers() {
     );
   }, [sellers, status, search]);
 
-  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageRows = rows;
   const current = viewId != null ? sellers.find((s) => s.userId === viewId) : null;
 
   const [formOpen, setFormOpen] = useState(false);
@@ -371,9 +370,9 @@ export default function Sellers() {
           </select>
         </div>
 
-        <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[780px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={stickyThead}>
               <tr>
                 {["Seller", "Shop", "Contact", "Parcels", "Status", ""].map((h, i) => (
                   <th key={i} className={th}>
@@ -534,7 +533,6 @@ export default function Sellers() {
             ))
           )}
         </div>
-        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       <Modal

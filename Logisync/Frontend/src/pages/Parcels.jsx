@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { StatCard, StatGrid } from "../components/portal.jsx";
-import Pagination from "../components/Pagination.jsx";
 import {
   Avatar,
   CodBadge,
@@ -16,10 +15,12 @@ import {
   inputCls,
   labelCls,
   panel,
+  stickyThead,
   tableCard,
   tableHead,
   tableRow,
-  tableWrap,
+  tableScroll,
+  tableScrollCompact,
   td,
   th,
 } from "../components/styles.js";
@@ -325,9 +326,7 @@ export default function Parcels() {
     };
   }, [reportResult]);
 
-  const reportPageRows = reportResult
-    ? reportResult.rows.slice((reportPage - 1) * PAGE_SIZE, reportPage * PAGE_SIZE)
-    : [];
+  const reportPageRows = reportResult ? reportResult.rows : [];
 
   const counts = useMemo(() => {
     const result = {
@@ -384,10 +383,7 @@ export default function Parcels() {
     });
   }, [parcels, search, status, sort]);
 
-  const pageRows = rows.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE
-  );
+  const pageRows = rows;
 
   const reset = (setter) => (event) => {
     setter(event.target.value);
@@ -577,9 +573,9 @@ export default function Parcels() {
             />
           ) : (
             <>
-              <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line print:hidden">
+              <div className={`${tableScrollCompact} print:hidden`}>
                 <table className="w-full min-w-[760px] border-collapse">
-                  <thead className="bg-[#fafafa] dark:bg-night-head">
+                  <thead className={stickyThead}>
                     <tr>
                       {["Tracking ID", "Seller", "Recipient", "Address", "Rider", "Date", "Status"].map((h) => (
                         <th key={h} className={th}>{h}</th>
@@ -605,10 +601,6 @@ export default function Parcels() {
                   </tbody>
                 </table>
               </div>
-              <div className="print:hidden">
-                <Pagination page={reportPage} pageSize={PAGE_SIZE} total={reportResult.rows.length} onPage={setReportPage} />
-              </div>
-
               {/* Print Table */}
               <table className="hidden print:table w-full border-collapse text-[12px]">
                 <thead>
@@ -759,7 +751,7 @@ export default function Parcels() {
         </div>
 
         {/* Desktop & Tablet Table View */}
-        <div className={`hidden min-[701px]:block ${tableWrap}`}>
+        <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[820px] border-collapse">
             <thead className={tableHead}>
               <tr>
@@ -938,12 +930,6 @@ export default function Parcels() {
             ))}
         </div>
 
-        <Pagination
-          page={page}
-          pageSize={PAGE_SIZE}
-          total={rows.length}
-          onPage={setPage}
-        />
       </section>
     </>
   );

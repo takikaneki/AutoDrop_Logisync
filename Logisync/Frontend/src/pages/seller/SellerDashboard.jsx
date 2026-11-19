@@ -4,7 +4,7 @@ import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { LoadingRow, Notice, PanelLink, PanelTitle } from "../../components/portal.jsx";
-import { panel, td, th } from "../../components/styles.js";
+import { panel, stickyThead, tableScrollCompact, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
 import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
@@ -144,15 +144,15 @@ export default function SellerDashboard() {
           <EmptyState title="No parcels yet" text="Register your first parcel to get started." />
         ) : (
           <>
-            <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
               <table className="w-full min-w-[680px] border-collapse">
-                <thead className="bg-[#fafafa] dark:bg-night-head">
+                <thead className={stickyThead}>
                   <tr>
                     {["Transaction no.", "Receiver", "Contents", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
-                  {parcels.slice(0, 5).map((p) => (
+                  {parcels.map((p) => (
                     <tr key={p.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
                       <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>
                         <span className="inline-flex items-center gap-1.5 flex-wrap">

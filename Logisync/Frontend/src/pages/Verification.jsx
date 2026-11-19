@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { StatCard, StatGrid } from "../components/portal.jsx";
-import Pagination from "../components/Pagination.jsx";
 import ScanPanel from "../components/qr/ScanPanel.jsx";
 import { EmptyState, Modal } from "../components/ui.jsx";
-import { btnDanger, btnGhost, btnPrimary, inputCls, panel, td, textareaCls, th } from "../components/styles.js";
+import { btnDanger, btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, textareaCls, th } from "../components/styles.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import {
   decideDiscreetHandling,
@@ -155,7 +154,7 @@ export default function Verification() {
   }, [parcels, filter, search]);
 
   useEffect(() => setPage(1), [filter, search]);
-  const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const visible = rows;
 
   const releaseVideo = () => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -381,9 +380,9 @@ export default function Verification() {
         {error && <p role="alert" className="mb-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm text-[#d94a4a]">{error} <button onClick={load} className="font-semibold underline">Try again</button></p>}
 
         {/* Desktop & Tablet Table */}
-        <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[860px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={stickyThead}>
               <tr>
                 {[
                   "Parcel ID",
@@ -440,7 +439,7 @@ export default function Verification() {
         </div>
 
         {/* Mobile Cards */}
-        <div className="min-[701px]:hidden space-y-3">
+        <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
           {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
           {!loading && visible.map((r) => (
             <article key={r.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
@@ -482,7 +481,6 @@ export default function Verification() {
         {!loading && rows.length === 0 && (
           <EmptyState icon="fa-clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
         )}
-        {!loading && rows.length > 0 && <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />}
       </section>
 
       {/* WORKSPACE */}

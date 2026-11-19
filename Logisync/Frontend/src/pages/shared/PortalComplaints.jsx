@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import { EmptyState } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
-import { btnPrimary, inputCls, labelCls, panel, td, textareaCls, th } from "../../components/styles.js";
+import { btnPrimary, inputCls, labelCls, panel, stickyThead, tableScrollCompact, td, textareaCls, th } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { getUser } from "../../api.js";
 import { createComplaint, fetchComplaints } from "../../services/complaintService.js";
@@ -233,9 +233,9 @@ export default function PortalComplaints() {
           <EmptyState icon="fa-inbox" title="Nothing submitted yet" text="Your complaints and requests will be listed here with the coordinator's response." />
         ) : (
           <>
-            <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
               <table className="w-full min-w-[640px] border-collapse">
-                <thead className="bg-[#fafafa] dark:bg-night-head"><tr>{["Ticket", "Subject", "Type", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
+                <thead className={stickyThead}><tr>{["Ticket", "Subject", "Type", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {mine.map((c) => (
                     <tr key={c.id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">

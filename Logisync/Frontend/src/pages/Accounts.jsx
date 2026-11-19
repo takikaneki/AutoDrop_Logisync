@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { Notice } from "../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, td, th } from "../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, labelCls, stickyThead, td, th } from "../components/styles.js";
 import { createUser, listUsers } from "../services/userService.js";
 import { toast } from "../store/toast.js";
 import { ROLE_BADGE } from "../utils/activity.js";
@@ -392,9 +392,9 @@ export default function Accounts() {
           )}
           {!loadError && (
             <>
-              <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+              <div className="hidden min-[701px]:block h-[calc(100vh-310px)] min-h-[400px] overflow-auto rounded-[10px] border border-[#eee] dark:border-night-line">
                 <table className="w-full min-w-[520px] border-collapse">
-                  <thead className="bg-[#fafafa] dark:bg-night-head">
+                  <thead className={stickyThead}>
                     <tr>
                       {["Name", "Email", "Role", "Created"].map((h) => (
                         <th key={h} className={th}>

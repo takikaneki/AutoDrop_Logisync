@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../../api.js";
-import Pagination from "../Pagination.jsx";
 import { EmptyState } from "../ui.jsx";
 import { Notice } from "../portal.jsx";
-import { inputCls, panel, td, th } from "../styles.js";
+import { inputCls, panel, stickyThead, tableScroll, td, th } from "../styles.js";
 import { listAudit } from "../../services/auditService.js";
 import { CATEGORIES, ROLE_BADGE, metaOf } from "../../utils/activity.js";
 
-const PAGE_SIZE = 12;
+const FETCH_LIMIT = 200;
 
-// Buong talaan ng audit log (may search, filter at pagination). Iisang component para sa
+// Buong talaan ng audit log (may search, filter at scrollable fixed container). Iisang component para sa
 // Audit Log ng coordinator at Activity Log ng seller/rider; ang backend ang nagsasala ayon sa role.
 export default function AuditTable({ note }) {
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ export default function AuditTable({ note }) {
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
-  const [page, setPage] = useState(1);
   const [data, setData] = useState({ logs: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,7 +25,6 @@ export default function AuditTable({ note }) {
   useEffect(() => {
     const t = setTimeout(() => {
       setQ(search.trim());
-      setPage(1);
     }, 350);
     return () => clearTimeout(t);
   }, [search]);
@@ -35,14 +32,14 @@ export default function AuditTable({ note }) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    listAudit({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE, category: category === "All" ? "" : category, q })
+    listAudit({ limit: FETCH_LIMIT, offset: 0, category: category === "All" ? "" : category, q })
       .then((d) => alive && (setData(d), setError("")))
       .catch((e) => alive && setError(e.message))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [category, q, page]);
+  }, [category, q]);
 
   const destinationFor = (log) => {
     const target = String(log.target || "").trim();
@@ -66,7 +63,7 @@ export default function AuditTable({ note }) {
           <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search action, parcel, person or detail..." aria-label="Search" className={`${inputCls} pl-9`} />
         </div>
-        <select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} aria-label="Filter by category" className={inputCls}>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category" className={inputCls}>
           {["All", ...CATEGORIES].map((c) => <option key={c}>{c}</option>)}
         </select>
       </div>
@@ -75,9 +72,9 @@ export default function AuditTable({ note }) {
 
       {!error && (
         <>
-          <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+          <div className={`hidden min-[701px]:block ${tableScroll}`}>
             <table className="w-full min-w-[760px] border-collapse">
-              <thead className="bg-[#fafafa] dark:bg-night-head">
+              <thead className={stickyThead}>
                 <tr>{["When", "Who", "Action", "Target", "Details"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
               </thead>
               <tbody>
@@ -116,7 +113,7 @@ export default function AuditTable({ note }) {
           </div>
 
           {/* Mobile Card List */}
-          <div className="min-[701px]:hidden space-y-3">
+          <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
             {loading ? (
               <div className="py-8 text-center text-[13px] text-[#888]">Loading activity…</div>
             ) : data.logs.length === 0 ? (
@@ -162,7 +159,6 @@ export default function AuditTable({ note }) {
         </>
       )}
 
-      {!error && data.total > 0 && <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onPage={setPage} />}
     </section>
   );
 }

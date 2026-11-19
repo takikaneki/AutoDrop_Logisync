@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import StatusBadge from "../StatusBadge.jsx";
 import { EmptyState } from "../ui.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, td, th } from "../styles.js";
+import { btnGhost, btnPrimary, inputCls, labelCls, panel, stickyThead, tableScrollCompact, td, th } from "../styles.js";
 import { getUser } from "../../api.js";
 import { toast } from "../../store/toast.js";
 import { formatDate } from "../../utils/format.js";
@@ -237,9 +237,9 @@ export default function ParcelReport({ parcels, onClose }) {
                   <i className="fa-solid fa-list-check mr-1.5 text-brand" />
                   Included Parcels ({result.rows.length})
                 </h3>
-                <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+                <div className={tableScrollCompact}>
                   <table className="w-full min-w-[720px] border-collapse">
-                    <thead className="bg-[#fafafa] dark:bg-night-head">
+                    <thead className={stickyThead}>
                       <tr>{["Transaction no.", "Customer / Receiver", "Address", "Contents", "Status", "Created"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
                     </thead>
                     <tbody>

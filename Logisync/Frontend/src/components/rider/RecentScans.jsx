@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import StatusBadge from "../StatusBadge.jsx";
 import { EmptyState } from "../ui.jsx";
 import { PanelTitle } from "../portal.jsx";
-import { panel, td, th } from "../styles.js";
+import { panel, stickyThead, tableScrollCompact, td, th } from "../styles.js";
 import { formatDate } from "../../utils/format.js";
 import { STAGE, useMyDeliveries } from "../../store/riderDeliveries.js";
 
@@ -25,9 +25,9 @@ export default function RecentScans({ scans, limit = 5, action }) {
       {rows.length === 0 ? (
         <EmptyState icon="fa-qrcode" title="No scans yet" text="Parcels you scan will show up here, then move to To Be Delivered." />
       ) : (
-        <div className="overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className={tableScrollCompact}>
           <table className="w-full min-w-[720px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={stickyThead}>
               <tr>{["Transaction no.", "Receiver", "Seller", "Verification", "Delivery", "Scanned", ""].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
             </thead>
             <tbody>

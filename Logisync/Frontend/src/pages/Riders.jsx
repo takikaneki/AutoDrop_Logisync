@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
-import Pagination from "../components/Pagination.jsx";
 import { EmptyState, Modal, StatusBadge, TableSkeleton, ConfirmDialog } from "../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, panel, td, th } from "../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, th } from "../components/styles.js";
 import { createUser, listUsers, updateSeller, updateUserVerification } from "../services/userService.js";
 import { listParcels } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
@@ -287,7 +286,7 @@ export default function Riders() {
     );
   }, [riders, status, zone, typeFilter, agencyFilter, search]);
 
-  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageRows = rows;
   const current = viewId != null ? riders.find((r) => r.userId === viewId) : null;
 
   return (
@@ -412,9 +411,9 @@ export default function Riders() {
           </select>
         </div>
 
-        <div className="hidden min-[701px]:block w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+        <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[700px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={stickyThead}>
               <tr>
                 {["Rider", "Email / Contact", "Agency", "Type", "Parcels", "Status", ""].map((h, i) => (
                   <th key={i} className={th}>
@@ -574,7 +573,6 @@ export default function Riders() {
             ))
           )}
         </div>
-        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       <Modal

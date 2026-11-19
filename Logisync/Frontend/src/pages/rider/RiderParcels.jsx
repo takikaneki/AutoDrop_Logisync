@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
-import Pagination from "../../components/Pagination.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, tableCard, tableHead, tableRow, tableWrap, td, th } from "../../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, labelCls, panel, tableCard, tableHead, tableRow, tableScroll, td, th } from "../../components/styles.js";
 import { getUser } from "../../api.js";
 import { createStore } from "../../store/createStore.js";
 import { MAX_RESCHEDULES, STAGE, useAssignedParcels, useMyDeliveries } from "../../store/riderDeliveries.js";
@@ -113,7 +112,7 @@ export default function RiderParcels() {
   const count = (k) => (k === "all" ? all.length : all.filter((p) => p.stage === k).length);
   const list = filter === "all" ? all : all.filter((p) => p.stage === filter);
   const safePage = Math.min(page, Math.max(1, Math.ceil(list.length / PAGE_SIZE)));
-  const rows = list.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const rows = list;
 
   const pick = (k) => {
     setPage(1);
@@ -407,7 +406,7 @@ export default function RiderParcels() {
         ) : (
           <>
             {/* Desktop & Tablet Table View */}
-            <div className={`hidden min-[701px]:block ${tableWrap}`}>
+            <div className={`hidden min-[701px]:block ${tableScroll}`}>
               <table className="w-full min-w-[760px] border-collapse">
                 <thead className={tableHead}>
                   <tr>{["Parcel", "Receiver", "Address", "Seller", "Status", "Updated", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr>
@@ -534,7 +533,6 @@ export default function RiderParcels() {
               })}
             </div>
 
-            <Pagination page={safePage} pageSize={PAGE_SIZE} total={list.length} onPage={setPage} />
           </>
         )}
       </section>

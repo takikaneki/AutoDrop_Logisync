@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState, Modal, TableSkeleton } from "../components/ui.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, td, textareaCls, th } from "../components/styles.js";
-import Pagination from "../components/Pagination.jsx";
+import { btnGhost, btnPrimary, inputCls, labelCls, panel, stickyThead, tableScroll, td, textareaCls, th } from "../components/styles.js";
 import {
   fetchComplaints,
   markComplaintsAsRead,
@@ -147,7 +146,6 @@ export default function Complaints() {
     );
   }, [normalizedComplaints, status, priority, search]);
 
-  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const current = openId && normalizedComplaints.find((c) => c.rawId === openId || c.id === openId);
 
   const setStatusFor = async (c, nextStatus) => {
@@ -278,9 +276,9 @@ export default function Complaints() {
         </div>
 
         {/* Desktop & Tablet Table Layout */}
-        <div className="hidden min-[768px]:block w-full overflow-x-auto border border-[#eee] rounded-[10px] dark:border-night-line">
+        <div className={`hidden min-[768px]:block ${tableScroll}`}>
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="bg-[#fafafa] dark:bg-night-head">
+            <thead className={stickyThead}>
               <tr>
                 {["Ticket", "From", "Category", "Subject", "Priority", "Date", "Status", ""].map((h, i) => (
                   <th key={i} className={th}>
@@ -293,7 +291,7 @@ export default function Complaints() {
               <TableSkeleton rows={6} cols={8} />
             ) : (
               <tbody>
-                {pageRows.map((c) => (
+                {rows.map((c) => (
                   <tr
                     key={c.id}
                     className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head"
@@ -356,7 +354,7 @@ export default function Complaints() {
         </div>
 
         {/* Mobile View: Dedicated Individual Cards */}
-        <div className="min-[768px]:hidden space-y-3.5">
+        <div className="min-[768px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3.5 pr-1">
           {loading ? (
             <div className="py-10 text-center text-[13px] text-[#888]">
               <i className="fa-solid fa-spinner fa-spin mr-2 text-brand" />
@@ -369,7 +367,7 @@ export default function Complaints() {
               text="No complaints match your active filters."
             />
           ) : (
-            pageRows.map((c) => (
+            rows.map((c) => (
               <div
                 key={c.id}
                 className="rounded-2xl border border-[#edf0f4] bg-white p-4 shadow-sm transition hover:shadow-md dark:border-night-line dark:bg-night-head"
@@ -439,7 +437,6 @@ export default function Complaints() {
           )}
         </div>
 
-        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       {/* Ticket Details Modal */}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import { tableScroll } from "../components/styles.js";
 
 export default function SellerVerification() {
   const [sellers, setSellers] = useState([]);
@@ -90,9 +91,9 @@ export default function SellerVerification() {
           No seller accounts found.
         </p>
       ) : (
-        <div className="w-full overflow-x-auto border border-[#eee] rounded-[10px] dark:border-night-line">
+        <div className={tableScroll}>
   <table className="w-full min-w-[650px] border-collapse text-left text-sm text-[#666] dark:text-[#d1c9c2]">
-    <thead className="bg-gray-50 text-gray-700 dark:bg-night-head dark:text-[#f1eeeb]">
+    <thead className="sticky top-0 z-10 bg-gray-50 text-gray-700 dark:bg-night-head dark:text-[#f1eeeb]">
       <tr>
         <th className="p-3">Name</th>
         <th className="p-3">Email</th>

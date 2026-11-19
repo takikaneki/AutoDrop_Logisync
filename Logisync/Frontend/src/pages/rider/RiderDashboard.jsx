@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import RecentScans from "../../components/rider/RecentScans.jsx";
-import Pagination from "../../components/Pagination.jsx";
 import { EmptyState } from "../../components/ui.jsx";
 import { PanelLink, PanelTitle } from "../../components/portal.jsx";
-import { btnPrimary, panel, td, th } from "../../components/styles.js";
+import { btnPrimary, panel, stickyThead, tableScrollCompact, td, th } from "../../components/styles.js";
 import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
 import DashboardRightRail from "../../components/dashboard/DashboardRightRail.jsx";
@@ -24,8 +23,7 @@ export default function RiderDashboard() {
   const [page, setPage] = useState(1);
 
   const stats = riderCounts(assigned, mine);
-  const safePage = Math.min(page, Math.max(1, Math.ceil(assigned.length / PAGE_SIZE)));
-  const rows = assigned.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const rows = assigned;
 
   const deliveryRate = stats.total ? `${Math.round((stats.delivered / stats.total) * 100)}%` : "0%";
 
@@ -118,9 +116,9 @@ export default function RiderDashboard() {
         ) : (
           <>
             {/* Desktop & Tablet Table */}
-            <div className="hidden min-[701px]:block overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+            <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
               <table className="w-full min-w-[720px] border-collapse">
-                <thead className="bg-[#fafafa] dark:bg-night-head">
+                <thead className={stickyThead}>
                   <tr>{["Parcel", "Receiver", "Address", "Seller", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
@@ -169,7 +167,6 @@ export default function RiderDashboard() {
               ))}
             </div>
 
-            <Pagination page={safePage} pageSize={PAGE_SIZE} total={assigned.length} onPage={setPage} />
           </>
         )}
       </section>

@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
-import Pagination from "../../components/Pagination.jsx";
 import { EmptyState, CodBadge } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
-import { btnGhost, btnPrimary, inputCls, tableCard, tableHead, tableRow, tableWrap, td, th } from "../../components/styles.js";
+import { btnGhost, btnPrimary, inputCls, tableCard, tableHead, tableRow, tableScroll, td, th } from "../../components/styles.js";
 import { listParcels } from "../../services/parcelService.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
@@ -83,7 +82,7 @@ export default function ParcelRecords() {
   }, [parcels, search, status, sort, isBucket]);
 
   useEffect(() => setPage(1), [search, status, sort]);
-  const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const visible = rows;
 
   const setStatus = (v) => {
     if (v === "ALL") params.delete("status");
@@ -175,7 +174,7 @@ export default function ParcelRecords() {
 
         {/* Desktop & Tablet Table View + Create Parcel Quick Card */}
         <div className="hidden min-[701px]:grid grid-cols-[1fr_220px] items-stretch gap-4 max-[1080px]:grid-cols-1">
-          <div className={tableWrap}>
+          <div className={tableScroll}>
             <table className="w-full min-w-[860px] border-collapse">
               <thead className={tableHead}>
                 <tr>
@@ -376,7 +375,6 @@ export default function ParcelRecords() {
             })}
         </div>
 
-        {!loading && rows.length > 0 && <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />}
       </section>
     </>
   );
