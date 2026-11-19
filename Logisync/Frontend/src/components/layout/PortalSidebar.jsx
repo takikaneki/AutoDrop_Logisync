@@ -27,7 +27,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
       collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
     } ${
       isActive
-        ? "bg-[#0f172a] text-white font-bold shadow-sm dark:bg-[#f26b2a] dark:text-white"
+        ? "bg-[#0f172a] text-white font-bold shadow-sm dark:bg-[#ee4d2d] dark:text-white"
         : "text-white/95 hover:bg-[#0f172a]/20 hover:text-white hover:font-semibold dark:text-slate-300 dark:hover:bg-[#1e293b] dark:hover:text-white"
     }`;
 
@@ -42,7 +42,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
       )}
 
       <aside
-        className={`relative shrink-0 bg-[#f26b2a] text-white border-r border-[#e05a1b] shadow-lg transition-[width,transform] duration-200 dark:border-[#1e293b] dark:bg-[#0f172a] print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-[#ee4d2d] text-white border-r border-[#d73211] shadow-lg transition-[width,transform] duration-200 dark:border-[#1e293b] dark:bg-[#0f172a] print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
@@ -131,7 +131,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 >
                   {({ isActive }) => (
                     <>
-                      <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#f97316] dark:text-white" : ""}`} />
+                      <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                       <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
                       {l.soon && (
                         <span className={`rounded-full bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-bold uppercase text-[#aaa] dark:bg-night-head ${collapsed ? "min-[821px]:hidden" : ""}`}>Soon</span>
@@ -185,7 +185,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           >
             {({ isActive }) => (
               <>
-                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#f97316] dark:text-white" : ""}`} />
+                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
               </>
             )}
