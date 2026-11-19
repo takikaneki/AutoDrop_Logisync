@@ -80,7 +80,7 @@ export default function NotificationMenu({ role, btnClass }) {
       >
         <i className="fa-regular fa-bell" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#dc2626] px-1 text-[11px] font-bold text-white ring-2 ring-[#f97316]">
+          <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-bold text-white">
             {unread}
           </span>
         )}

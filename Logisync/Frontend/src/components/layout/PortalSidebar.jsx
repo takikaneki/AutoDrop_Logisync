@@ -48,34 +48,31 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           collapsed ? "min-[821px]:w-[76px]" : "min-[821px]:w-[250px]"
         }`}
       >
-        {/* Edge-positioned Toggle Button (moves with sidebar right edge on desktop & tablet) */}
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden min-[821px]:flex absolute -right-3.5 top-3.5 z-50 h-7 w-7 items-center justify-center rounded-full border border-[#e5e8ee] bg-white text-[#ee4d2d] shadow-md transition hover:bg-orange-50 hover:scale-105 dark:border-night-line dark:bg-night-panel dark:text-[#fb923c]"
-        >
-          <i className={`fa-solid ${collapsed ? "fa-chevron-right" : "fa-chevron-left"} text-[11px]`} />
-        </button>
-
         <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
-          {/* Branding Header */}
-          <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:justify-center min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
-            <div className="flex items-center justify-between gap-2.5">
-              <div className={`flex min-w-0 items-center gap-2.5 ${collapsed ? "min-[821px]:justify-center" : "flex-1"}`}>
+          {/* Branding Header + Upper-Right Hamburger Toggle */}
+          <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:flex-col min-[821px]:items-center min-[821px]:gap-2.5 min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
+            <div className={`flex items-center justify-between gap-2.5 ${collapsed ? "min-[821px]:flex-col min-[821px]:justify-center" : ""}`}>
+              <div className={`flex min-w-0 items-center gap-2 ${collapsed ? "min-[821px]:justify-center" : "flex-1"}`}>
                 <img
                   src={SPX_LOGO_DATA_URL}
                   alt="SPX Express"
                   draggable={false}
-                  className={`${collapsed ? "min-[821px]:h-4 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert`}
+                  className={`${collapsed ? "min-[821px]:h-3.5 max-[820px]:h-5" : "h-5"} w-auto shrink-0 object-contain brightness-0 invert`}
                 />
-                <span className={`h-4 w-px shrink-0 bg-white/40 ${collapsed ? "min-[821px]:hidden" : ""}`} aria-hidden="true" />
                 <span className={`truncate text-[16px] font-black tracking-tight text-white leading-tight ${collapsed ? "min-[821px]:hidden" : ""}`}>
                   LogiSync
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={onToggleSidebar}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="hidden min-[821px]:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/95 transition hover:bg-white/15 hover:text-white"
+              >
+                <i className="fa-solid fa-bars text-[17px]" />
+              </button>
               <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
                 <button
                   type="button"
