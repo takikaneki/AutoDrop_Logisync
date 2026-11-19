@@ -38,6 +38,8 @@ export function previewTone(kind = "announcements", volumeOverride) {
 // Maikling alert tone para sa announcement (galing sa dating Messages.jsx)
 export function playAlertSound() {
   const prefs = getPrefs();
-  if (prefs.sound === false || prefs.soundAnnouncements === false) return;
+  if (prefs.notificationsEnabled === false || prefs.sound === false || prefs.soundAnnouncements === false) {
+    return;
+  }
   previewTone("announcements");
 }

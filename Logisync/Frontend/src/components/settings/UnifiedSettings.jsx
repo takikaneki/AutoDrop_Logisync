@@ -8,6 +8,7 @@ import { setProfile, useProfile } from "../../store/profile.js";
 import { toast } from "../../store/toast.js";
 import { getUser } from "../../api.js";
 import { previewTone } from "../../utils/sound.js";
+import { riderTypeOf } from "../layout/navConfig.js";
 import {
   MOBILE_NUMBER_MAX_LENGTH,
   sanitizeMobileNumber,
@@ -81,10 +82,6 @@ export default function UnifiedSettings() {
   const notificationsRef = useRef(null);
   const appearanceRef = useRef(null);
   const accessibilityRef = useRef(null);
-  const readabilityRef = useRef(null);
-  const soundsRef = useRef(null);
-  const shortcutsRef = useRef(null);
-  const languageRef = useRef(null);
 
   const formattedUserId =
     user?.user_id !== undefined && user?.user_id !== null && String(user.user_id).trim() !== ""
@@ -139,8 +136,6 @@ export default function UnifiedSettings() {
   const isSearching = Boolean(q);
   const isAccountActive =
     activeNav === "account-info" || activeNav === "password" || activeNav === "status";
-  const isA11yActive =
-    activeNav === "a11y-readability" || activeNav === "a11y-sounds" || activeNav === "a11y-shortcuts";
 
   const showAccount = isSearching
     ? "account info username email phone profile status verified".includes(q)
@@ -149,23 +144,16 @@ export default function UnifiedSettings() {
     ? "password security change password".includes(q)
     : activeNav === "password";
   const showNotifications = isSearching
-    ? "notifications popup sound email alerts parcel verification messages announcements".includes(q)
+    ? "notifications popup sound volume preview parcel verification messages complaints announcements".includes(q)
     : activeNav === "notifications";
   const showAppearance = isSearching
-    ? "appearance display dark light device theme".includes(q)
+    ? "appearance display dark light system default device theme text size small medium large reduced motion underline links".includes(
+        q
+      )
     : activeNav === "appearance";
-  const showReadability = isSearching
-    ? "accessibility text readability size reduced motion underline links".includes(q)
-    : activeNav === "a11y-readability";
-  const showSounds = isSearching
-    ? "accessibility notification sounds volume preview parcel messages announcements scan".includes(q)
-    : activeNav === "a11y-sounds";
-  const showShortcuts = isSearching
-    ? "accessibility keyboard shortcuts keybinds".includes(q)
-    : activeNav === "a11y-shortcuts";
-  const showLanguage = isSearching
-    ? "language filipino english time format 12 hour 24 hour".includes(q)
-    : activeNav === "language";
+  const showAccessibility = isSearching
+    ? "accessibility keyboard shortcuts keybinds navigation".includes(q)
+    : activeNav === "accessibility";
 
   const activeTitle = isSearching
     ? "Search Results"
@@ -175,10 +163,7 @@ export default function UnifiedSettings() {
         status: "Account Status",
         notifications: "Notifications",
         appearance: "Appearance & Display",
-        "a11y-readability": "Accessibility · Text Readability",
-        "a11y-sounds": "Accessibility · Notification Sounds",
-        "a11y-shortcuts": "Accessibility · Keyboard Shortcuts",
-        language: "Language & Time",
+        accessibility: "Accessibility · Keyboard Shortcuts",
       }[activeNav] || "Settings";
 
   const notificationsOn = prefs.notificationsEnabled !== false;
@@ -201,7 +186,6 @@ export default function UnifiedSettings() {
         notificationsEnabled: false,
         inAppPopups: false,
         sound: false,
-        emailAlerts: false,
         notifyParcel: false,
         notifyVerification: false,
         notifyMessages: false,
@@ -212,7 +196,7 @@ export default function UnifiedSettings() {
   };
 
   const togglePref = (key, label) => {
-    const current = key === "emailAlerts" ? Boolean(prefs[key]) : prefs[key] !== false && notificationsOn;
+    const current = prefs[key] !== false && notificationsOn;
     const next = !current;
     setPrefs({
       [key]: next,
@@ -220,6 +204,55 @@ export default function UnifiedSettings() {
     });
     toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
   };
+
+  const roleKey = String(profile.role || user?.role || "coordinator").toLowerCase();
+  const isLmRider = roleKey === "rider" && riderTypeOf(user) !== "FM";
+  const roleShortcuts = useMemo(() => {
+    if (roleKey === "seller") {
+      return [
+        ["Go to Dashboard", "Open your seller overview", ["G", "D"]],
+        ["Go to Parcel Records", "View and search your parcels", ["G", "P"]],
+        ["Create Parcel", "Open the create parcel form", ["G", "C"]],
+        ["Scan QR / Upload Video", "Open packing & QR verification", ["G", "V"]],
+        ["Go to Messages", "Open direct chat & announcements", ["G", "M"]],
+        ["Go to Notifications", "View all bell alerts", ["G", "N"]],
+        ["Go to Activity Log", "Inspect recent parcel activity", ["G", "A"]],
+        ["Go to Settings", "Open account and portal preferences", ["G", "S"]],
+        ["Open Help Center", "View guides and FAQ", ["?"]],
+        ["Close Sidebar / Modal", "Dismiss open drawers or dialogs", ["ESC"]],
+      ];
+    }
+    if (roleKey === "rider") {
+      return [
+        ["Go to Dashboard", "Open your rider overview", ["G", "D"]],
+        ...(isLmRider
+          ? [
+              ["Go to My Parcels", "View assigned parcels", ["G", "P"]],
+              ["Scan QR Code", "Open QR scanner for delivery", ["G", "V"]],
+              ["Go to Deliveries", "Manage active deliveries", ["G", "L"]],
+            ]
+          : []),
+        ["Go to Messages", "Open direct chat & announcements", ["G", "M"]],
+        ["Go to Notifications", "View all bell alerts", ["G", "N"]],
+        ["Go to Activity Log", "Inspect recent rider logs", ["G", "A"]],
+        ["Go to Settings", "Open account and portal preferences", ["G", "S"]],
+        ["Open Help Center", "View guides and FAQ", ["?"]],
+        ["Close Sidebar / Modal", "Dismiss open drawers or dialogs", ["ESC"]],
+      ];
+    }
+    return [
+      ["Go to Dashboard", "Open coordinator hub overview", ["G", "D"]],
+      ["Go to Parcel Records", "View and search all parcels", ["G", "P"]],
+      ["Report / Filter Parcels", "Jump directly to parcel report view", ["G", "R"]],
+      ["Go to Verification", "Open packing & QR verification", ["G", "V"]],
+      ["Go to Messages", "Open direct chat & announcements", ["G", "M"]],
+      ["Go to Notifications", "View all bell alerts", ["G", "N"]],
+      ["Go to Activity Log", "Inspect recent system & parcel logs", ["G", "A"]],
+      ["Go to Settings", "Open account and portal preferences", ["G", "S"]],
+      ["Open Help Center", "View guides and FAQ", ["?"]],
+      ["Close Sidebar / Modal", "Dismiss open drawers or dialogs", ["ESC"]],
+    ];
+  }, [roleKey, isLmRider]);
 
   return (
     <>
@@ -352,54 +385,15 @@ export default function UnifiedSettings() {
 
             <button
               type="button"
-              onClick={() => jumpTo("a11y-readability", readabilityRef)}
-              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                isA11yActive
-                  ? "bg-brand-soft/60 text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <i className="fa-solid fa-universal-access text-[13px]" />
-                <span>Accessibility</span>
-              </span>
-              <i className={`fa-solid fa-chevron-${isA11yActive ? "down" : "right"} text-[10px] opacity-70`} />
-            </button>
-
-            {(isA11yActive || isSearching) && (
-              <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
-                {[
-                  ["a11y-readability", "Text Readability", readabilityRef],
-                  ["a11y-sounds", "Notification Sounds", soundsRef],
-                  ["a11y-shortcuts", "Keyboard Shortcuts", shortcutsRef],
-                ].map(([navKey, navLabel, navRef]) => (
-                  <button
-                    key={navKey}
-                    type="button"
-                    onClick={() => jumpTo(navKey, navRef)}
-                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
-                      activeNav === navKey
-                        ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                        : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                    }`}
-                  >
-                    <span>{navLabel}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => jumpTo("language", languageRef)}
+              onClick={() => jumpTo("accessibility", accessibilityRef)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "language"
+                activeNav === "accessibility"
                   ? "bg-brand-soft text-brand dark:bg-night-head"
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-language text-[13px]" />
-              <span>Language &amp; Time</span>
+              <i className="fa-solid fa-universal-access text-[13px]" />
+              <span>Accessibility</span>
             </button>
           </nav>
 
@@ -643,18 +637,16 @@ export default function UnifiedSettings() {
                 </div>
               </div>
 
-              <div className={`space-y-5 transition-opacity ${notificationsOn ? "opacity-100" : "opacity-55"}`}>
+              <div className={`space-y-5 transition-opacity ${notificationsOn ? "opacity-100" : "opacity-55 pointer-events-none"}`}>
                 <div>
                   <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                    Delivery Channels
+                    General Notification Controls
                   </h4>
                   <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
                     {[
                       ["inAppPopups", "In-App Popup Alerts", "Show a brief top-right popup under the bell when new updates arrive."],
-                      ["sound", "Alert Sound", "Play a subtle chime for new announcements and urgent alerts."],
-                      ["emailAlerts", "Email Alerts", "Also send critical account and parcel alerts to your email."],
                     ].map(([key, label, hint]) => {
-                      const checked = notificationsOn && (key === "emailAlerts" ? Boolean(prefs[key]) : prefs[key] !== false);
+                      const checked = notificationsOn && prefs[key] !== false;
                       return (
                         <div key={key} className="flex items-center justify-between gap-4 py-3">
                           <div className="min-w-0">
@@ -666,6 +658,7 @@ export default function UnifiedSettings() {
                             role="switch"
                             aria-checked={checked}
                             aria-label={label}
+                            disabled={!notificationsOn}
                             onClick={() => togglePref(key, label)}
                             className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
                               checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
@@ -706,6 +699,7 @@ export default function UnifiedSettings() {
                             role="switch"
                             aria-checked={checked}
                             aria-label={label}
+                            disabled={!notificationsOn}
                             onClick={() => togglePref(key, label)}
                             className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
                               checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
@@ -722,6 +716,90 @@ export default function UnifiedSettings() {
                     })}
                   </div>
                 </div>
+
+                <div>
+                  <h4 className="mb-2 text-[11.5px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                    Sound Preferences
+                  </h4>
+                  <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
+                    <div className="py-3.5">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div>
+                          <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                            Alert Volume
+                          </strong>
+                          <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                            Adjust sound loudness for Messages &amp; Complaints and Hub Announcements.
+                          </span>
+                        </div>
+                        <span className="rounded-md bg-brand-soft px-2 py-0.5 text-[12px] font-bold text-brand">
+                          {prefs.soundVolume ?? 80}%
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={5}
+                        disabled={!notificationsOn}
+                        value={prefs.soundVolume ?? 80}
+                        aria-label="Alert volume"
+                        onChange={(e) => setPrefs({ soundVolume: Number(e.target.value) })}
+                        onMouseUp={(e) => notificationsOn && previewTone("messages", Number(e.target.value))}
+                        onTouchEnd={(e) => notificationsOn && previewTone("messages", Number(e.target.value))}
+                        className="h-2 w-full cursor-pointer accent-brand"
+                      />
+                    </div>
+
+                    {[
+                      ["soundMessages", "messages", "Messages & Complaints Sound"],
+                      ["soundAnnouncements", "announcements", "Hub Announcements Sound"],
+                    ].map(([prefKey, toneKey, label]) => {
+                      const checked = notificationsOn && prefs.sound !== false && prefs[prefKey] !== false;
+                      return (
+                        <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
+                          <div className="min-w-0">
+                            <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                              {label}
+                            </strong>
+                            <button
+                              type="button"
+                              disabled={!notificationsOn}
+                              onClick={() => previewTone(toneKey)}
+                              className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
+                            >
+                              Preview Sound
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={checked}
+                            aria-label={label}
+                            disabled={!notificationsOn}
+                            onClick={() => {
+                              const next = !checked;
+                              setPrefs({ [prefKey]: next, ...(next ? { sound: true, notificationsEnabled: true } : {}) });
+                              if (next) previewTone(toneKey);
+                            }}
+                            className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                              checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                                checked ? "translate-x-5" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                    Parcel &amp; Delivery Updates and Verification &amp; Video Status remain silent.
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -733,51 +811,50 @@ export default function UnifiedSettings() {
                 Appearance &amp; Display
               </h3>
               <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Choose your theme or sync automatically with your device appearance.
+                Customize your theme, text size, motion, and link visibility across portals.
               </p>
 
-              {/* Same as Device Theme */}
-              <div className="mb-5 flex items-center justify-between gap-4 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
-                <div className="min-w-0">
-                  <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                    Same as Device Theme
-                  </strong>
-                  <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                    Match your device&apos;s light or dark mode automatically.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isSystemTheme}
-                  aria-label="Same as Device Theme"
-                  onClick={() => {
-                    const nextMode = isSystemTheme ? (prefs.dark ? "dark" : "light") : "system";
-                    setPrefs({ themeMode: nextMode });
-                    toast(nextMode === "system" ? "Synced with device theme." : "Using manual theme.", "info");
-                  }}
-                  className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                    isSystemTheme ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                      isSystemTheme ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Default Themes Swatch Picker (Discord-inspired) */}
-              <div>
+              {/* Theme Preferences */}
+              <div className="mb-5">
                 <span className="mb-2.5 block text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
-                  Default Themes
+                  Theme Preferences
                 </span>
+                <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
+                  <div className="min-w-0">
+                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
+                      System Default
+                    </strong>
+                    <span className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                      Automatically follow your device&apos;s light or dark appearance.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isSystemTheme}
+                    aria-label="System Default Theme"
+                    onClick={() => {
+                      const nextMode = isSystemTheme ? (prefs.dark ? "dark" : "light") : "system";
+                      setPrefs({ themeMode: nextMode });
+                      toast(nextMode === "system" ? "Synced with system default theme." : "Using manual theme.", "info");
+                    }}
+                    className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
+                      isSystemTheme ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                        isSystemTheme ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <div className="flex flex-wrap items-center gap-3">
                   {[
                     { key: "light", label: "Light", swatch: "bg-white border-[#cbd5e1]" },
                     { key: "dark", label: "Dark", swatch: "bg-[#292522] border-[#48413c]" },
-                    { key: "system", label: "Device", swatch: "bg-gradient-to-br from-white via-[#cbd5e1] to-[#1e293b] border-[#94a3b8]", icon: "fa-arrows-rotate" },
+                    { key: "system", label: "System Default", swatch: "bg-gradient-to-br from-white via-[#cbd5e1] to-[#1e293b] border-[#94a3b8]", icon: "fa-arrows-rotate" },
                   ].map((item) => {
                     const active = themeMode === item.key;
                     return (
@@ -810,20 +887,12 @@ export default function UnifiedSettings() {
                   })}
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* 5A. TEXT READABILITY */}
-          {showReadability && (
-            <div ref={readabilityRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Text Readability
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Adjust display font size, motion, and link visibility across portals.
-              </p>
+              {/* Text Size & Additional Display Preferences */}
+              <span className="mb-2.5 block text-[12px] font-bold uppercase tracking-wider text-[#94a3b8]">
+                Display &amp; Readability
+              </span>
               <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                {/* Text Size */}
                 <div className="flex flex-wrap items-center justify-between gap-3 py-3.5">
                   <div>
                     <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
@@ -889,97 +958,9 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 5B. NOTIFICATION SOUNDS & VOLUME */}
-          {showSounds && (
-            <div ref={soundsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Notification Sounds &amp; Volume
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Control sound volume and preview or toggle individual alert chimes.
-              </p>
-              <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                {/* Volume Slider */}
-                <div className="py-3.5">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                        Alert &amp; Notification Volume
-                      </strong>
-                      <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                        Adjust how loud alert chimes and notification tones play.
-                      </span>
-                    </div>
-                    <span className="rounded-md bg-brand-soft px-2 py-0.5 text-[12px] font-bold text-brand">
-                      {prefs.soundVolume ?? 80}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={5}
-                    value={prefs.soundVolume ?? 80}
-                    aria-label="Alert and notification volume"
-                    onChange={(e) => setPrefs({ soundVolume: Number(e.target.value) })}
-                    onMouseUp={(e) => previewTone("parcel", Number(e.target.value))}
-                    onTouchEnd={(e) => previewTone("parcel", Number(e.target.value))}
-                    className="h-2 w-full cursor-pointer accent-brand"
-                  />
-                </div>
-
-                {/* Individual Sound Rows with Preview Sound */}
-                {[
-                  ["soundParcel", "parcel", "Parcel & Delivery Alerts"],
-                  ["soundMessages", "messages", "New Messages & Replies"],
-                  ["soundAnnouncements", "announcements", "Hub Announcements"],
-                  ["soundScan", "scan", "QR Scan & Verification"],
-                ].map(([prefKey, toneKey, label]) => {
-                  const checked = prefs.sound !== false && prefs[prefKey] !== false;
-                  return (
-                    <div key={prefKey} className="flex items-center justify-between gap-4 py-3">
-                      <div className="min-w-0">
-                        <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                          {label}
-                        </strong>
-                        <button
-                          type="button"
-                          onClick={() => previewTone(toneKey)}
-                          className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
-                        >
-                          Preview Sound
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={checked}
-                        aria-label={label}
-                        onClick={() => {
-                          const next = !checked;
-                          setPrefs({ [prefKey]: next, ...(next ? { sound: true } : {}) });
-                          if (next) previewTone(toneKey);
-                        }}
-                        className={`relative h-[24px] w-[44px] shrink-0 rounded-full transition-colors ${
-                          checked ? "bg-brand" : "bg-[#cbd5e1] dark:bg-night-line"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
-                            checked ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 5C. KEYBOARD SHORTCUTS */}
-          {showShortcuts && (
-            <div ref={shortcutsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
+          {/* 5. ACCESSIBILITY (Keyboard Shortcuts only) */}
+          {showAccessibility && (
+            <div ref={accessibilityRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Keyboard Shortcuts
               </h3>
@@ -987,18 +968,7 @@ export default function UnifiedSettings() {
                 Navigate quickly across LogiSync portals using keyboard keybinds.
               </p>
               <div className="divide-y divide-[#edf0f4] rounded-xl border border-brand-line bg-brand-softer/35 px-4 dark:divide-night-line dark:border-night-line dark:bg-night-head/40">
-                {[
-                  ["Go to Dashboard", "Open your portal overview", ["G", "D"]],
-                  ["Go to Parcel Records", "View and search all parcels", ["G", "P"]],
-                  ["Report / Filter Parcels", "Jump directly to parcel report view", ["G", "R"]],
-                  ["Go to Verification", "Open packing & QR verification", ["G", "V"]],
-                  ["Go to Messages", "Open direct chat & announcements", ["G", "M"]],
-                  ["Go to Notifications", "View all bell alerts", ["G", "N"]],
-                  ["Go to Activity Log", "Inspect recent system & parcel logs", ["G", "A"]],
-                  ["Go to Settings", "Open account and portal preferences", ["G", "S"]],
-                  ["Open Help Center", "View guides and FAQ", ["?"]],
-                  ["Close Sidebar / Modal", "Dismiss open drawers or dialogs", ["ESC"]],
-                ].map(([action, hint, keys]) => (
+                {roleShortcuts.map(([action, hint, keys]) => (
                   <div key={action} className="flex items-center justify-between gap-4 py-3">
                     <div className="min-w-0">
                       <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
@@ -1024,97 +994,11 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 6. LANGUAGE & TIME */}
-          {showLanguage && (
-            <div ref={languageRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
-              <h3 className="mb-1 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                Language &amp; Time
-              </h3>
-              <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                Choose your preferred display language and time format.
-              </p>
-
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
-                  <div>
-                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                      Select a Language
-                    </strong>
-                    <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                      Switch navigation and portal labels between English and Filipino.
-                    </span>
-                  </div>
-                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
-                    {[
-                      ["en", "English"],
-                      ["fil", "Filipino"],
-                    ].map(([code, label]) => (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => {
-                          setPrefs({ lang: code });
-                          toast(`Language set to ${label}.`, "info");
-                        }}
-                        aria-pressed={(prefs.lang || "en") === code}
-                        className={`rounded-lg px-3.5 py-1 text-[12.5px] font-semibold transition ${
-                          (prefs.lang || "en") === code
-                            ? "bg-brand text-white shadow-xs"
-                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-softer/35 px-4 py-3 dark:border-night-line dark:bg-night-head/40">
-                  <div>
-                    <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
-                      Time Format
-                    </strong>
-                    <span className="text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                      Choose 12-hour or 24-hour timestamps across tables and logs.
-                    </span>
-                  </div>
-                  <div className="inline-flex rounded-xl border border-[#cbd5e1] bg-white p-1 dark:border-night-line dark:bg-night-panel">
-                    {[
-                      ["auto", "Auto"],
-                      ["12h", "12-hour"],
-                      ["24h", "24-hour"],
-                    ].map(([tf, label]) => (
-                      <button
-                        key={tf}
-                        type="button"
-                        onClick={() => {
-                          setPrefs({ timeFormat: tf });
-                          toast(`Time format set to ${label}.`, "info");
-                        }}
-                        aria-pressed={(prefs.timeFormat || "auto") === tf}
-                        className={`rounded-lg px-3 py-1 text-[12.5px] font-semibold transition ${
-                          (prefs.timeFormat || "auto") === tf
-                            ? "bg-brand text-white shadow-xs"
-                            : "text-[#475569] hover:text-brand dark:text-[#d1c9c2]"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {!showAccount &&
             !showSecurity &&
-            !showAppearance &&
             !showNotifications &&
-            !showReadability &&
-            !showSounds &&
-            !showShortcuts &&
-            !showLanguage && (
+            !showAppearance &&
+            !showAccessibility && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">
               No settings match &ldquo;{search}&rdquo;.
             </p>

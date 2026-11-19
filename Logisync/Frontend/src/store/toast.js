@@ -1,5 +1,6 @@
 import { createStore } from "./createStore.js";
 import { getPrefs } from "./prefs.js";
+import { previewTone } from "../utils/sound.js";
 
 const store = createStore([]);
 const popupStore = createStore([]);
@@ -7,28 +8,17 @@ const popupStore = createStore([]);
 export const useToasts = store.use;
 export const usePopups = popupStore.use;
 
-function playChime() {
-  try {
-    const prefs = getPrefs();
-    const vol = Math.max(0, Math.min(100, prefs.soundVolume ?? 80)) / 100;
-    if (vol <= 0) return;
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.09);
-    gain.gain.setValueAtTime(0.08 * vol, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.24);
-  } catch {
-    // Ignore autoplay restrictions
+function playNotificationCategorySound(category) {
+  const prefs = getPrefs();
+  if (prefs.notificationsEnabled === false || prefs.sound === false) return;
+  if (category === "messages") {
+    if (prefs.soundMessages !== false) previewTone("messages");
+    return;
   }
+  if (category === "announcements") {
+    if (prefs.soundAnnouncements !== false) previewTone("announcements");
+  }
+  // Parcel & Delivery Updates and Verification & Video Status must remain silent.
 }
 
 export function toast(message, type = "success") {
@@ -37,10 +27,10 @@ export function toast(message, type = "success") {
   setTimeout(() => store.set((l) => l.filter((t) => t.id !== id)), 3200);
 }
 
-export function notifyPopup({ title, message, icon = "fa-bell", to = "" }) {
+export function notifyPopup({ title, message, icon = "fa-bell", to = "", category = "parcel" }) {
   const prefs = getPrefs();
   if (prefs.notificationsEnabled === false) return;
-  if (prefs.sound !== false) playChime();
+  playNotificationCategorySound(category);
   if (prefs.inAppPopups === false) return;
   const id = Date.now() + Math.random();
   popupStore.set((l) => [{ id, title, message, icon, to }, ...l].slice(0, 3));

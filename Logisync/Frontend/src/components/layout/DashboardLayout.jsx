@@ -1,11 +1,12 @@
-import { useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Footer from "../Footer.jsx";
 import Toaster from "../Toaster.jsx";
 import PortalHeader from "./PortalHeader.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
 import useResponsiveSidebar from "../../hooks/useResponsiveSidebar.js";
+import { riderTypeOf, toPath } from "./navConfig.js";
 import { syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 
 // Shared responsive layout shell for Seller and Rider portals.
@@ -13,6 +14,8 @@ import { syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 export default function DashboardLayout({ role }) {
   const { collapsed, mobileOpen, closeMobile, closeDesktop, toggleSidebar } = useResponsiveSidebar();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const gPressed = useRef(0);
 
   useEffect(() => {
     closeMobile();
@@ -21,6 +24,44 @@ export default function DashboardLayout({ role }) {
       syncRiderDeliveriesWithServer();
     }
   }, [pathname, role, closeMobile]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      const el = e.target;
+      if (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Escape") {
+        closeMobile();
+        return;
+      }
+      if (e.key === "?") return navigate(toPath(role, "help"));
+      if (e.key === "g") {
+        gPressed.current = Date.now();
+        return;
+      }
+      if (Date.now() - gPressed.current >= 1200) return;
+
+      const isLmRider = role === "rider" && riderTypeOf() !== "FM";
+      const go = {
+        d: toPath(role, ""),
+        a: toPath(role, "activity"),
+        m: toPath(role, "messages"),
+        n: toPath(role, "notifications"),
+        s: toPath(role, "settings"),
+        ...(role === "seller"
+          ? { p: toPath(role, "parcels"), c: toPath(role, "create"), v: toPath(role, "scan") }
+          : isLmRider
+            ? { p: toPath(role, "parcels"), v: toPath(role, "scan"), l: toPath(role, "deliveries") }
+            : {}),
+      };
+      if (go[e.key]) {
+        gPressed.current = 0;
+        navigate(go[e.key]);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate, role, closeMobile]);
 
   useEffect(() => {
     if (role !== "rider") return;

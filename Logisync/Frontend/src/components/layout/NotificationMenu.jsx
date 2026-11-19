@@ -49,11 +49,21 @@ export default function NotificationMenu({ role }) {
     seenIdsRef.current = ids;
     if (fresh.length > 0) {
       const n = fresh[0];
+      const txt = `${n.title || ""} ${n.text || ""}`.toLowerCase();
+      const category =
+        n.kind === "announcement" || txt.includes("announcement")
+          ? "announcements"
+          : txt.includes("message") || txt.includes("complaint") || txt.includes("reply")
+            ? "messages"
+            : txt.includes("video") || txt.includes("verif")
+              ? "verification"
+              : "parcel";
       notifyPopup({
         title: n.title,
         message: n.text,
         icon: n.icon || "fa-bell",
         to: n.to || toPath(role, "notifications"),
+        category,
       });
     }
   }, [items, role]);
