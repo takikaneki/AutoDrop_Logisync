@@ -1,7 +1,7 @@
 // Shared class strings para pare-pareho ang itsura (light + dark) ng mga bagong page.
 export const panel = "bg-white border border-[#e5e8ee] rounded-2xl shadow-sm dark:bg-night-panel dark:border-night-line";
 export const inputCls =
-  "w-full h-[42px] rounded-lg border border-brand/50 bg-white px-3 text-[13px] text-ink outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 dark:bg-night-head dark:border-brand/45 dark:text-[#f1eeeb]";
+  "w-full h-[42px] rounded-lg border border-[#0f172a] bg-white px-3 text-[13px] font-medium text-[#ee4d2d] placeholder:text-[#ee4d2d]/70 outline-none focus:border-[#0f172a] focus:ring-[3px] focus:ring-[#0f172a]/15 dark:bg-night-head dark:border-[#ee4d2d] dark:text-white dark:placeholder:text-white/70 dark:focus:border-[#ee4d2d] dark:focus:ring-[#ee4d2d]/20";
 export const textareaCls =
   "w-full rounded-lg border border-[#cbd5e1] bg-white px-3 py-2.5 text-[13px] text-ink outline-none resize-y focus:border-brand focus:ring-[3px] focus:ring-brand/10 dark:bg-night-head dark:border-night-line dark:text-[#f1eeeb]";
 export const labelCls = "block mb-1.5 text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]";
