@@ -112,7 +112,13 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
         )}
 
         {actions && (
-          <div className="mb-3.5 min-[821px]:mb-4 flex items-center justify-end gap-2 flex-wrap print:hidden min-[821px]:ml-auto max-[520px]:w-full max-[520px]:justify-start">
+          <div
+            className={
+              pathname === "/rider/deliveries"
+                ? "hidden min-[821px]:flex min-[821px]:mb-4 min-[821px]:ml-auto items-center justify-end gap-2 flex-wrap print:hidden"
+                : "mb-3.5 min-[821px]:mb-4 flex items-center justify-end gap-2 flex-wrap print:hidden min-[821px]:ml-auto max-[520px]:w-full max-[520px]:justify-start"
+            }
+          >
             {actions}
           </div>
         )}
