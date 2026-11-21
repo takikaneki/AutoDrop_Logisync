@@ -48,8 +48,8 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
               aria-label="Toggle sidebar"
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
-              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line ${
-                collapsed ? "flex" : "flex min-[821px]:hidden"
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line max-[820px]:hidden ${
+                collapsed ? "flex" : "hidden"
               }`}
             >
               <i className="fa-solid fa-bars text-[18px]" />
@@ -61,8 +61,8 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                 draggable={false}
                 className="h-5 sm:h-6 w-auto shrink-0 object-contain"
               />
-              <span className="h-4 w-[1.5px] shrink-0 bg-slate-200 max-[380px]:hidden dark:bg-slate-700" aria-hidden="true" />
-              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-[#ee4d2d] max-[380px]:hidden dark:text-white">
+              <span className="h-4 w-[1.5px] shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-[#0f172a] min-[821px]:text-[#ee4d2d] dark:text-white">
                 LogiSync
               </span>
             </Link>
@@ -71,11 +71,11 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
             </span>
           </div>
 
-          {/* Right Column: Theme Toggle, Announcement, Notifications, and Profile */}
+          {/* Right Column: Theme Toggle (desktop), Announcement, Notifications, and Profile (desktop) */}
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
             <button
               onClick={toggleDark}
-              className={iconBtn}
+              className={`${iconBtn} max-[820px]:hidden`}
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -93,7 +93,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
 
             <NotificationBell />
 
-            <div ref={menuRef} className="relative ml-0.5 sm:ml-1 max-[600px]:ml-0">
+            <div ref={menuRef} className="relative ml-0.5 sm:ml-1 max-[820px]:hidden">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-expanded={menuOpen}

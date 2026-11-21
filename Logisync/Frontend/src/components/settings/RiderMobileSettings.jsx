@@ -87,7 +87,10 @@ function Toggle({ checked, disabled = false, label, onClick }) {
   );
 }
 
-export default function RiderMobileSettings() {
+export default function RiderMobileSettings({ role = "rider" }) {
+  const isCoordinator = role === "coordinator";
+  const profilePath = isCoordinator ? "/profile" : "/rider/profile";
+  const activityPath = isCoordinator ? "/audit" : "/rider/activity";
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawSection = (searchParams.get("section") || "").toLowerCase();
@@ -143,11 +146,12 @@ export default function RiderMobileSettings() {
     };
   }, [profile.userId]);
 
-  const riderIdDisplay =
-    profile.riderCode ||
-    (profile.userId !== null && profile.userId !== undefined && String(profile.userId).trim() !== ""
-      ? `RID-${String(profile.userId).padStart(4, "0")}`
-      : "RID-0001");
+  const accountIdDisplay = isCoordinator
+    ? `COOR-${String(profile.userId ?? 1).padStart(4, "0")}`
+    : profile.riderCode ||
+      (profile.userId !== null && profile.userId !== undefined && String(profile.userId).trim() !== ""
+        ? `RID-${String(profile.userId).padStart(4, "0")}`
+        : "RID-0001");
 
   const openSection = (next) => {
     setSavedNotice("");
@@ -169,7 +173,7 @@ export default function RiderMobileSettings() {
       }
       return;
     }
-    navigate("/rider/profile");
+    navigate(profilePath);
   };
 
   const handleChangePhoto = async (e) => {
@@ -388,11 +392,18 @@ export default function RiderMobileSettings() {
                   title: "Accessibility",
                   subtitle: "High contrast & focus indicators",
                 },
+                {
+                  key: "activity",
+                  icon: "fa-solid fa-clock-rotate-left",
+                  title: "Activity Log",
+                  subtitle: "View your personal account activity",
+                  to: activityPath,
+                },
               ].map((row) => (
                 <button
                   key={row.key}
                   type="button"
-                  onClick={() => openSection(row.key)}
+                  onClick={() => (row.to ? navigate(row.to) : openSection(row.key))}
                   className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70"
                 >
                   <span className="flex min-w-0 items-center gap-3.5">
@@ -567,31 +578,39 @@ export default function RiderMobileSettings() {
               </button>
             </form>
 
-            {/* Protected Coordinator-Managed Details (Read-Only) */}
+            {/* Protected Account Details (Read-Only) */}
             <div className={`${cardCls} p-4`}>
               <div className="mb-2.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-slate-400">
                 <i className="fa-solid fa-lock text-[11px]" />
-                <span>Coordinator-Managed Details</span>
+                <span>{isCoordinator ? "Account Details" : "Coordinator-Managed Details"}</span>
               </div>
               <div className="divide-y divide-slate-100 text-[13.5px] dark:divide-night-line">
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-slate-500 dark:text-[#b8b0a8]">Rider ID</span>
-                  <strong className="font-mono text-[#0f172a] dark:text-white">{riderIdDisplay}</strong>
+                  <span className="text-slate-500 dark:text-[#b8b0a8]">
+                    {isCoordinator ? "Coordinator ID" : "Rider ID"}
+                  </span>
+                  <strong className="font-mono text-[#0f172a] dark:text-white">{accountIdDisplay}</strong>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-slate-500 dark:text-[#b8b0a8]">Role</span>
-                  <strong className="text-[#0f172a] dark:text-white">Rider</strong>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-slate-500 dark:text-[#b8b0a8]">Assigned Agency</span>
-                  <strong className="text-right text-[#0f172a] dark:text-white">
-                    {profile.agency || "Unassigned"}
+                  <strong className="text-[#0f172a] dark:text-white">
+                    {isCoordinator ? "Coordinator" : "Rider"}
                   </strong>
                 </div>
+                {!isCoordinator && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-slate-500 dark:text-[#b8b0a8]">Assigned Agency</span>
+                    <strong className="text-right text-[#0f172a] dark:text-white">
+                      {profile.agency || "Unassigned"}
+                    </strong>
+                  </div>
+                )}
               </div>
-              <p className="mt-2 text-[11.5px] leading-snug text-slate-400 dark:text-[#9c948d]">
-                Rider ID, role, and assigned agency are managed by your Hub Coordinator and cannot be edited here.
-              </p>
+              {!isCoordinator && (
+                <p className="mt-2 text-[11.5px] leading-snug text-slate-400 dark:text-[#9c948d]">
+                  Rider ID, role, and assigned agency are managed by your Hub Coordinator and cannot be edited here.
+                </p>
+              )}
             </div>
 
             {/* Password & Security Card (Preserves existing ChangePasswordForm) */}
@@ -1165,7 +1184,9 @@ export default function RiderMobileSettings() {
                 </div>
                 <div>
                   <dt className="text-slate-400">Active Portal</dt>
-                  <dd className="font-bold text-[#0f172a] dark:text-white">Rider Portal</dd>
+                  <dd className="font-bold text-[#0f172a] dark:text-white">
+                    {isCoordinator ? "Coordinator Hub" : "Rider Portal"}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-slate-400">Service Hub</dt>

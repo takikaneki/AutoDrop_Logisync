@@ -15,6 +15,8 @@ import AuditLog from "./pages/AuditLog.jsx";
 import Accounts from "./pages/Accounts.jsx";
 import ActivityPage from "./pages/shared/ActivityPage.jsx";
 import Settings from "./pages/Settings.jsx";
+import CoordinatorProfile from "./pages/CoordinatorProfile.jsx";
+import CoordinatorAnalytics from "./pages/CoordinatorAnalytics.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import Help from "./pages/Help.jsx";
@@ -140,7 +142,8 @@ export default function App() {
           <Route path="/complaints" element={<Complaints />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/notifications" element={<Notifications />} />
-          <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/profile" element={<CoordinatorProfile />} />
+          <Route path="/analytics" element={<CoordinatorAnalytics />} />
           <Route path="/audit" element={<AuditLog />} />
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/settings" element={<Settings />} />

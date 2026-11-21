@@ -44,6 +44,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
   const label = title ? t(title) : "";
   const actions = children || right || actionsProp;
   const isRider = base === "/rider";
+  const isCoordinator = base === "";
 
   useEffect(() => {
     if (label) document.title = `${label} · LogiSync`;
@@ -60,27 +61,44 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
 
   const isHomeDashboard = title === "Dashboard";
 
-  // Rider Portal Mobile (max-[820px]):
-  // - /rider/deliveries & /rider/messages: no top title bar (actions still render if present).
-  // - /rider/scan: centered title bar without back arrow.
-  // - Sub-pages opened from Profile (/rider/help, /rider/complaints, etc.): sticky back-arrow + centered title bar.
-  // Desktop Rider (min-[821px]), Seller, and Coordinator remain 100% unchanged.
-  if (isRider && !isHomeDashboard) {
-    const hideMobileTitleBar =
-      pathname === "/rider/deliveries" ||
-      pathname === "/rider/messages";
+  // Rider & Coordinator Portal Mobile (max-[820px]):
+  // - Home (/dashboard), Deliveries, Parcels, Messages: no redundant mobile title bar.
+  // - Scan QR / Verification: centered title bar without back arrow.
+  // - Sub-pages opened from Profile/Settings (Help, Complaints, Accounts, Activity Log, etc.): sticky back-arrow + centered title bar.
+  // Desktop (min-[821px]) and Seller portal remain 100% unchanged.
+  if (isRider || isCoordinator) {
+    if (isHomeDashboard) {
+      return null;
+    }
 
-    const isTopLevelTab = pathname === "/rider/scan";
+    const hideMobileTitleBar = isRider
+      ? pathname === "/rider/deliveries" || pathname === "/rider/messages"
+      : pathname === "/parcels" || pathname === "/messages";
 
-    const fallbackBack =
-      pathname.startsWith("/rider/help") ||
-      pathname.startsWith("/rider/complaints") ||
-      pathname.startsWith("/rider/about") ||
-      pathname.startsWith("/rider/contact")
-        ? "/rider/profile"
-        : "/rider";
+    const isTopLevelTab = isRider
+      ? pathname === "/rider/scan"
+      : pathname === "/verification";
 
-    const handleRiderBack = () => {
+    const fallbackBack = isRider
+      ? pathname.startsWith("/rider/activity")
+        ? "/rider/settings"
+        : pathname.startsWith("/rider/help") ||
+            pathname.startsWith("/rider/complaints") ||
+            pathname.startsWith("/rider/about") ||
+            pathname.startsWith("/rider/contact")
+          ? "/rider/profile"
+          : "/rider"
+      : pathname.startsWith("/audit")
+        ? "/settings"
+        : pathname.startsWith("/accounts") ||
+            pathname.startsWith("/complaints") ||
+            pathname.startsWith("/help") ||
+            pathname.startsWith("/about") ||
+            pathname.startsWith("/contact")
+          ? "/profile"
+          : "/dashboard";
+
+    const handleMobileBack = () => {
       if (window.history.length > 1) {
         navigate(-1);
       } else {
@@ -97,7 +115,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
             ) : (
               <button
                 type="button"
-                onClick={handleRiderBack}
+                onClick={handleMobileBack}
                 aria-label="Go back"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
               >

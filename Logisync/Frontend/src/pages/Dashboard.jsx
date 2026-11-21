@@ -184,65 +184,71 @@ export default function Dashboard() {
     <>
       <Topbar title="Dashboard" />
 
-      {/* 1. BENTO OVERVIEW GRID (No Maps) */}
+      {/* 1. BENTO OVERVIEW GRID (No Maps) — Mobile: Banner -> Cards; Desktop: Cards -> Banner + Right Rail */}
       <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
         <div className="flex flex-col gap-4">
-          <BentoKpiRow
-            cards={[
-              {
-                label: "Total Parcels",
-                value: v(stats.total),
-                tone: "dark",
-                to: "/parcels",
-                badge: "All Shipments",
-                icon: "fa-box",
-                subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
-              },
-              {
-                label: "Needs Verification",
-                value: v(stats.flagged),
-                tone: "light",
-                to: "/verification?status=VIDEO_SUBMITTED",
-                badge: "Pending Review",
-                icon: "fa-hourglass-half",
-                subtext: "Awaiting hub approval",
-              },
-              {
-                label: "Verified Parcels",
-                value: v(stats.pending),
-                tone: "orange",
-                to: "/verification?status=VERIFIED",
-                badge: "Cleared",
-                icon: "fa-circle-check",
-                subtext: "Ready for rider dispatch",
-              },
-            ]}
-          />
+          <div className="order-2 min-[821px]:order-1">
+            <BentoKpiRow
+              cards={[
+                {
+                  label: "Total Parcels",
+                  value: v(stats.total),
+                  tone: "dark",
+                  to: "/parcels",
+                  badge: "All Shipments",
+                  icon: "fa-box",
+                  subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
+                },
+                {
+                  label: "Needs Verification",
+                  value: v(stats.flagged),
+                  tone: "light",
+                  to: "/verification?status=VIDEO_SUBMITTED",
+                  badge: "Pending Review",
+                  icon: "fa-hourglass-half",
+                  subtext: "Awaiting hub approval",
+                },
+                {
+                  label: "Verified Parcels",
+                  value: v(stats.pending),
+                  tone: "orange",
+                  to: "/verification?status=VERIFIED",
+                  badge: "Cleared",
+                  icon: "fa-circle-check",
+                  subtext: "Ready for rider dispatch",
+                },
+              ]}
+            />
+          </div>
 
-          <PortalHeroBanner
-            role="coordinator"
-            pipeline={[
-              { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "fa-video", to: "/verification?status=VIDEO_SUBMITTED" },
-              { label: "Verified", count: v(countStatus("VERIFIED")), icon: "fa-circle-check", to: "/verification?status=VERIFIED" },
-              { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "fa-truck-fast", to: "/parcels" },
-              { label: "Failed / Return", count: v(stats.flagged), icon: "fa-triangle-exclamation", to: "/parcels" },
-            ]}
-          />
+          <div className="order-1 min-[821px]:order-2">
+            <PortalHeroBanner
+              role="coordinator"
+              pipeline={[
+                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "fa-video", to: "/verification?status=VIDEO_SUBMITTED" },
+                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "fa-circle-check", to: "/verification?status=VERIFIED" },
+                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "fa-truck-fast", to: "/parcels" },
+                { label: "Failed / Return", count: v(stats.flagged), icon: "fa-triangle-exclamation", to: "/parcels" },
+              ]}
+            />
+          </div>
         </div>
 
-        <DashboardRightRail
-          variant="slate"
-          tasksTitle="Action Queue"
-          seeAllTo="/verification"
-          tasks={actionQueue}
-          emptyText="No pending verification proofs or rider incidents right now."
-          summary={{
-            label: "Verification Rate",
-            value: loadingStats ? "…" : verificationRate,
-            sublabel: `${v(verifiedTotal)} of ${v(real.length)} cleared`,
-            bars: miniBars,
-          }}
-        />
+        <div className="hidden min-[821px]:grid">
+          <DashboardRightRail
+            variant="slate"
+            tasksTitle="Action Queue"
+            seeAllTo="/verification"
+            tasks={actionQueue}
+            emptyText="No pending verification proofs or rider incidents right now."
+            summary={{
+              label: "Verification Rate",
+              value: loadingStats ? "…" : verificationRate,
+              sublabel: `${v(verifiedTotal)} of ${v(real.length)} cleared`,
+              bars: miniBars,
+            }}
+          />
+        </div>
       </section>
 
       {/* RIDER INCIDENT MANAGEMENT / DELIVERY HOLD */}
@@ -421,8 +427,8 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* 3. RECENT PARCELS */}
-      <section className="mb-6 max-[600px]:mb-4">
+      {/* 3. RECENT PARCELS (Desktop only; mobile Home shows Banner -> Cards -> Graph) */}
+      <section className="hidden min-[821px]:block mb-6 max-[600px]:mb-4">
         <div className={`${panel} overflow-hidden`}>
           <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
             <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
@@ -484,8 +490,8 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* 4. RECENT ACTIVITY */}
-      <div className="mt-6 max-[600px]:mt-4"><RecentActivity to="/audit" /></div>
+      {/* 4. RECENT ACTIVITY (Desktop only; mobile Activity Log is under Settings) */}
+      <div className="hidden min-[821px]:block mt-6 max-[600px]:mt-4"><RecentActivity to="/audit" /></div>
 
       {/* Incident Action Modal */}
       <Modal

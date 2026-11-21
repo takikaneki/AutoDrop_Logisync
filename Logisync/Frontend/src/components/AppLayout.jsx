@@ -7,6 +7,7 @@ import Toaster from "./Toaster.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
 import useResponsiveSidebar from "../hooks/useResponsiveSidebar.js";
 import { syncPrefsFromServer } from "../store/prefs.js";
+import { syncProfileFromServer } from "../store/profile.js";
 import { syncAnnouncementsFromServer } from "../store/announcements.js";
 
 // Keyboard shortcuts: "g" tapos d/p/r/v/m/n/a/s  ·  "?" = Help
@@ -17,7 +18,7 @@ const go = {
   v: "/verification",
   m: "/messages",
   n: "/notifications",
-  a: "/activity",
+  a: "/audit",
   s: "/settings",
 };
 
@@ -29,6 +30,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     syncPrefsFromServer();
+    syncProfileFromServer();
     syncAnnouncementsFromServer();
   }, []);
 
@@ -60,6 +62,11 @@ export default function AppLayout() {
     return () => window.removeEventListener("keydown", onKey);
   }, [navigate, closeMobile]);
 
+  const isEdgeMobile =
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/analytics");
+
   return (
     <div className="flex min-h-screen max-w-[100vw] overflow-x-clip">
       <Sidebar
@@ -71,11 +78,25 @@ export default function AppLayout() {
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <SiteHeader collapsed={collapsed} mobileOpen={mobileOpen} onToggleSidebar={toggleSidebar} />
-        <main className="flex min-w-0 max-w-full flex-1 flex-col overflow-x-clip px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 max-[820px]:px-3.5 max-[820px]:pt-3.5 max-[820px]:pb-24 max-[380px]:px-2.5 print:p-0">
-          <div className="min-h-[calc(100vh-80px)] max-[820px]:min-h-[calc(100dvh-136px)] min-w-0 flex-1 pb-10 max-[820px]:pb-6">
+        <main
+          className={`flex min-w-0 max-w-full flex-1 flex-col overflow-x-clip px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 print:p-0 ${
+            isEdgeMobile
+              ? "max-[820px]:px-0 max-[820px]:pt-0 max-[820px]:pb-[calc(5.25rem+env(safe-area-inset-bottom))]"
+              : "max-[820px]:px-3.5 max-[820px]:pt-3.5 max-[820px]:pb-[calc(5.75rem+env(safe-area-inset-bottom))] max-[380px]:px-2.5"
+          }`}
+        >
+          <div
+            className={`min-h-[calc(100vh-80px)] min-w-0 flex-1 ${
+              isEdgeMobile
+                ? "pb-10 max-[820px]:min-h-[calc(100dvh-124px)] max-[820px]:pb-0"
+                : "pb-10 max-[820px]:min-h-[calc(100dvh-136px)] max-[820px]:pb-6"
+            }`}
+          >
             <Outlet />
           </div>
-          <Footer />
+          <div className="max-[820px]:hidden">
+            <Footer />
+          </div>
         </main>
       </div>
       <MobileBottomNav role="coordinator" mobileOpen={mobileOpen} onToggleMenu={toggleSidebar} />
