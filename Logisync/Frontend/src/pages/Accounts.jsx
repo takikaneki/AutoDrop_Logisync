@@ -17,6 +17,7 @@ import {
 const ROLES = [
   ["seller", "Seller", "Registers parcels and uploads video proof."],
   ["rider", "Rider", "Scans verified parcels and delivers them."],
+  ["coordinator", "Coordinator", "Manages hub operations, parcels, riders, and verification."],
 ];
 const EMPTY = {
   name: "",
@@ -125,7 +126,7 @@ export default function Accounts() {
 
   return (
     <>
-      <Topbar title="Accounts" subtitle="Create Seller and Rider accounts. Only the Coordinator can do this." />
+      <Topbar title="Accounts" subtitle="Create Seller, Rider, and Coordinator accounts. Only the Coordinator can do this." />
 
       <div className="grid grid-cols-[400px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[1100px]:grid-cols-1">
         <section className="border-r border-brand-line bg-[#f8fafc]/70 p-6 dark:border-night-line dark:bg-[#1d1a17]/60 max-[1100px]:border-r-0 max-[1100px]:border-b">
@@ -362,6 +363,7 @@ export default function Accounts() {
                 ["all", "All", users.length],
                 ["seller", "Sellers", count("seller")],
                 ["rider", "Riders", count("rider")],
+                ["coordinator", "Coordinators", count("coordinator")],
               ].map(([k, l, n]) => (
                 <button
                   key={k}

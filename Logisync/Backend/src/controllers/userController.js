@@ -188,6 +188,18 @@ async function createUser(req, res) {
       }
     }
 
+    if (role === "coordinator") {
+      if (cleanPhone) {
+        const [dupPhone] = await pool.query(
+          "SELECT user_id FROM users WHERE role = 'coordinator' AND phone = $1",
+          [cleanPhone]
+        );
+        if (dupPhone && dupPhone.length > 0) {
+          return res.status(409).json({ success: false, message: "A coordinator with this contact number already exists." });
+        }
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const sellerCodeSql = role === "seller" ? "'SEL-' || LPAD(nextval('seller_code_seq')::text, 4, '0')" : "NULL";
     const riderCodeSql = role === "rider" ? "'RID-' || LPAD(nextval('rider_code_seq')::text, 4, '0')" : "NULL";
