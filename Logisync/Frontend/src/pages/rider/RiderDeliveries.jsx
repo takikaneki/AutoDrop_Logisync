@@ -955,6 +955,16 @@ export default function RiderDeliveries() {
             <i className="fa-solid fa-map-pin" /> Group by area
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            setIncidentError("");
+            setIncidentOpen(true);
+          }}
+          className="ml-auto inline-flex min-[821px]:hidden items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2.5 text-[13px] font-bold text-[#b45309] transition active:scale-95 hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
+        >
+          <i className="fa-solid fa-triangle-exclamation" /> Report Incident
+        </button>
       </div>
 
       <section className={stage === STAGE.TO_DELIVER && list.length === 0 ? `${panel} p-6` : ""}>

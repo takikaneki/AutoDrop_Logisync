@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
 import RecentScans from "../../components/rider/RecentScans.jsx";
 import { PanelLink } from "../../components/portal.jsx";
@@ -6,19 +5,17 @@ import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
 import DashboardRightRail from "../../components/dashboard/DashboardRightRail.jsx";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
-import ReportIncidentModal from "../../components/rider/ReportIncidentModal.jsx";
 import { useRiderScans } from "../../store/riderScans.js";
 import { riderCounts } from "../../utils/stats.js";
 import { useAssignedParcels, useMyDeliveries } from "../../store/riderDeliveries.js";
 
 // Dashboard ng rider:
 // - Desktop / Laptop (min-[821px]): Bento KPI -> Hero Banner -> Right Rail -> Recent Scans -> Recent Activity (unchanged)
-// - Mobile (max-[820px]): Welcome Rider Banner -> KPI Cards -> Report Incident at bottom
+// - Mobile (max-[820px]): Welcome Rider Banner -> KPI Cards below it
 export default function RiderDashboard() {
   const scans = useRiderScans();
   const assigned = useAssignedParcels();
   const mine = useMyDeliveries();
-  const [incidentOpen, setIncidentOpen] = useState(false);
 
   const stats = riderCounts(assigned, mine);
 
@@ -88,22 +85,11 @@ export default function RiderDashboard() {
           RIDER MOBILE HOME (max-[820px] ONLY):
           1. Welcome Rider Banner
           2. KPI Summary Cards directly below the banner
-          3. Report Incident button at the very bottom
       ===================================================================== */}
       <div className="flex flex-col gap-4 min-[821px]:hidden">
         <PortalHeroBanner role="rider" pipeline={pipelineSteps} />
         <BentoKpiRow cards={kpiCards} />
-        <button
-          type="button"
-          onClick={() => setIncidentOpen(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#f59e0b] bg-[#fffbeb] px-4 py-3.5 text-[14px] font-bold text-[#b45309] shadow-xs transition active:scale-[0.99] hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
-        >
-          <i className="fa-solid fa-triangle-exclamation" />
-          <span>Report Incident</span>
-        </button>
       </div>
-
-      <ReportIncidentModal open={incidentOpen} onClose={() => setIncidentOpen(false)} />
 
       {/* =====================================================================
           DESKTOP / LAPTOP RIDER DASHBOARD (min-[821px] — 100% UNCHANGED)
