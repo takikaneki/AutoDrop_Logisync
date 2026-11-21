@@ -78,18 +78,6 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
 
             <NotificationMenu role={role} />
 
-            {/* Rider Mobile Profile Avatar -> directly navigates to Rider Profile page */}
-            {isRider && (
-              <Link
-                to="/rider/profile"
-                aria-label="Rider Profile"
-                title="Profile"
-                className="hidden max-[820px]:flex items-center justify-center rounded-full p-0.5 ring-2 ring-brand/20 transition active:scale-95 hover:ring-brand/50"
-              >
-                <UserAvatar className="w-[34px] h-[34px] text-[13px]" />
-              </Link>
-            )}
-
             <div ref={menuRef} className={`relative ml-0.5 sm:ml-1 max-[600px]:ml-0 ${isRider ? "max-[820px]:hidden" : ""}`}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}

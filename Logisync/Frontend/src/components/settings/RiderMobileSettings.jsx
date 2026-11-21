@@ -437,7 +437,6 @@ export default function RiderMobileSettings() {
               <div className={`${cardCls} divide-y divide-slate-100 dark:divide-night-line`}>
                 {[
                   { key: "privacy", icon: "fa-solid fa-shield-halved", title: "Privacy Policy" },
-                  { key: "terms", icon: "fa-solid fa-file-contract", title: "Terms & Conditions" },
                   { key: "about", icon: "fa-solid fa-circle-info", title: "About LOGISYNC" },
                 ].map((row) => (
                   <button

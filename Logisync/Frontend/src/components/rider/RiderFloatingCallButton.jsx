@@ -26,7 +26,8 @@ export default function RiderFloatingCallButton() {
     pathname === "/rider" ||
     pathname === "/rider/" ||
     pathname.startsWith("/rider/profile") ||
-    pathname.startsWith("/rider/settings");
+    pathname.startsWith("/rider/settings") ||
+    pathname.startsWith("/rider/analytics");
 
   // Pre-load coordinator contact info on mount
   useEffect(() => {

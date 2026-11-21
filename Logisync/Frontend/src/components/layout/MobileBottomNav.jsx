@@ -31,7 +31,9 @@ export default function MobileBottomNav({ role = "coordinator", mobileOpen, onTo
   // Dedicated 5-item mobile bottom navigation for Rider Portal (no Menu tab)
   if (role === "rider") {
     const isProfileSection =
-      pathname.startsWith("/rider/profile") || pathname.startsWith("/rider/settings");
+      pathname.startsWith("/rider/profile") ||
+      pathname.startsWith("/rider/settings") ||
+      pathname.startsWith("/rider/analytics");
 
     return (
       <nav

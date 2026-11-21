@@ -26,7 +26,8 @@ export default function RiderProfile() {
 
   const riderId = formatRiderId(profile);
 
-  const primaryItems = [
+  // Single unified container from Personal Information through About LOGISYNC
+  const menuItems = [
     {
       key: "personal",
       label: "Personal Information",
@@ -40,25 +41,28 @@ export default function RiderProfile() {
       to: "/rider/help#faq",
     },
     {
-      key: "contact",
-      label: "Contact Us",
-      icon: "fa-solid fa-phone",
-      onClick: () => setContactOpen(true),
+      key: "analytics",
+      label: "Analytics",
+      icon: "fa-solid fa-chart-simple",
+      to: "/rider/analytics",
     },
-  ];
-
-  const legalItems = [
+    {
+      key: "complaints",
+      label: "Complaints",
+      icon: "fa-solid fa-triangle-exclamation",
+      to: "/rider/complaints",
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: "fa-solid fa-gear",
+      to: "/rider/settings",
+    },
     {
       key: "privacy",
       label: "Privacy Policy",
       icon: "fa-solid fa-shield-halved",
       to: "/rider/settings?section=privacy",
-    },
-    {
-      key: "terms",
-      label: "Terms & Conditions",
-      icon: "fa-solid fa-file-contract",
-      to: "/rider/settings?section=terms",
     },
     {
       key: "about",
@@ -67,9 +71,6 @@ export default function RiderProfile() {
       to: "/rider/settings?section=about",
     },
   ];
-
-  const rowCls =
-    "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70 dark:active:bg-night-head";
 
   return (
     <>
@@ -87,7 +88,7 @@ export default function RiderProfile() {
         {/* Profile Header */}
         <section className="relative z-10 flex flex-col items-center text-center">
           <div className="relative">
-            <div className="rounded-full p-1 ring-2 ring-brand/25 shadow-sm bg-white dark:bg-night-panel">
+            <div className="rounded-full bg-white p-1 shadow-sm ring-2 ring-brand/25 dark:bg-night-panel">
               <UserAvatar className="h-[88px] w-[88px] text-[30px]" />
             </div>
             <button
@@ -125,57 +126,14 @@ export default function RiderProfile() {
 
         {/* Profile Menu */}
         <nav aria-label="Rider profile menu" className="relative z-10 mt-6 space-y-3">
-          {/* Group 1: Personal Information, FAQs, Contact Us */}
+          {/* Unified single container: Personal Information -> About LOGISYNC */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] divide-y divide-slate-100 dark:border-night-line dark:bg-night-panel dark:divide-night-line">
-            {primaryItems.map((item) =>
-              item.to ? (
-                <Link key={item.key} to={item.to} className={rowCls}>
-                  <span className="flex min-w-0 items-center gap-3.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                      <i className={`${item.icon} text-[15px]`} />
-                    </span>
-                    <span className="truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
-                      {item.label}
-                    </span>
-                  </span>
-                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-slate-400" />
-                </Link>
-              ) : (
-                <button key={item.key} type="button" onClick={item.onClick} className={rowCls}>
-                  <span className="flex min-w-0 items-center gap-3.5">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                      <i className={`${item.icon} text-[15px]`} />
-                    </span>
-                    <span className="truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
-                      {item.label}
-                    </span>
-                  </span>
-                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-slate-400" />
-                </button>
-              )
-            )}
-          </div>
-
-          {/* Highlighted Settings Card */}
-          <Link
-            to="/rider/settings"
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#fed7aa]/90 bg-[#fff3e8] px-4 py-3.5 shadow-[0_2px_10px_rgba(238,77,45,0.07)] transition active:scale-[0.99] hover:bg-[#ffead6] dark:border-brand/30 dark:bg-brand/15 dark:hover:bg-brand/20"
-          >
-            <span className="flex min-w-0 items-center gap-3.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/90 text-[#0f172a] shadow-2xs dark:bg-night-panel dark:text-brand">
-                <i className="fa-solid fa-gear text-[15px]" />
-              </span>
-              <span className="truncate text-[14.5px] font-bold text-[#0f172a] dark:text-white">
-                Settings
-              </span>
-            </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-brand" />
-          </Link>
-
-          {/* Group 2: Privacy Policy, Terms & Conditions, About LOGISYNC */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] divide-y divide-slate-100 dark:border-night-line dark:bg-night-panel dark:divide-night-line">
-            {legalItems.map((item) => (
-              <Link key={item.key} to={item.to} className={rowCls}>
+            {menuItems.map((item) => (
+              <Link
+                key={item.key}
+                to={item.to}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70 dark:active:bg-night-head"
+              >
                 <span className="flex min-w-0 items-center gap-3.5">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
                     <i className={`${item.icon} text-[15px]`} />
@@ -188,6 +146,28 @@ export default function RiderProfile() {
               </Link>
             ))}
           </div>
+
+          {/* Need Help? -> Opens Contact Support Modal */}
+          <button
+            type="button"
+            onClick={() => setContactOpen(true)}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#fed7aa]/90 bg-[#fff3e8] px-4 py-3.5 text-left shadow-[0_2px_10px_rgba(238,77,45,0.07)] transition active:scale-[0.99] hover:bg-[#ffead6] dark:border-brand/30 dark:bg-brand/15 dark:hover:bg-brand/20"
+          >
+            <span className="flex min-w-0 items-center gap-3.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/90 text-brand shadow-2xs dark:bg-night-panel">
+                <i className="fa-solid fa-headset text-[15px]" />
+              </span>
+              <span className="min-w-0">
+                <strong className="block truncate text-[14.5px] font-bold text-[#0f172a] dark:text-white">
+                  Need Help?
+                </strong>
+                <small className="block truncate text-[12px] font-semibold text-brand">
+                  Contact Support
+                </small>
+              </span>
+            </span>
+            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-brand" />
+          </button>
 
           {/* Log Out Row */}
           <button
