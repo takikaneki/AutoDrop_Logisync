@@ -676,7 +676,7 @@ export default function Parcels() {
       <div
         role="tablist"
         aria-label="Filter parcels by status"
-        className={`-mx-3.5 mb-4 max-[380px]:-mx-2.5 grid grid-cols-4 border-y border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 ${reportOpen ? "print:hidden" : ""}`}
+        className={`sticky top-14 z-30 -mx-3.5 -mt-3.5 mb-3 max-[380px]:-mx-2.5 grid grid-cols-4 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 ${reportOpen ? "print:hidden" : ""}`}
       >
         {[
           { key: "All", label: "All", count: parcels.length },
@@ -722,6 +722,23 @@ export default function Parcels() {
         })}
       </div>
 
+      {/* MOBILE COMPACT GENERATE REPORT BUTTON (upper-right, below filter bar, above records container) */}
+      <div className="mb-3 flex justify-end min-[821px]:hidden print:hidden">
+        <button
+          type="button"
+          onClick={toggleReport}
+          aria-expanded={reportOpen}
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12.5px] font-bold transition active:scale-95 ${
+            reportOpen
+              ? "border border-slate-200 bg-white text-slate-600 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+              : "bg-brand text-white shadow-xs hover:bg-brand-dark"
+          }`}
+        >
+          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"} text-[12px]`} />
+          <span>{reportOpen ? "Hide Report" : "Generate Report"}</span>
+        </button>
+      </div>
+
       {/* DESKTOP SUMMARY CARDS (min-[821px] — 100% unchanged) */}
       <div className={`hidden min-[821px]:block ${reportOpen ? "print:hidden" : ""}`}>
         <StatGrid cols={3}>
@@ -750,7 +767,7 @@ export default function Parcels() {
 
       {/* PARCEL RECORDS LIST */}
       <section className={`rounded-2xl border border-[#e5e8ee] bg-white shadow-sm dark:border-night-line dark:bg-night-panel p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
-        <div className="mb-[18px]">
+        <div className="mb-[18px] max-[820px]:hidden">
           <h2 className="text-[19px] font-bold mb-[5px]">
             Parcel Records
           </h2>
