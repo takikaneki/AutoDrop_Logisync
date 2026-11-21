@@ -33,7 +33,9 @@ export default function MobileBottomNav({ role = "coordinator", mobileOpen, onTo
     const isProfileSection =
       pathname.startsWith("/rider/profile") ||
       pathname.startsWith("/rider/settings") ||
-      pathname.startsWith("/rider/analytics");
+      pathname.startsWith("/rider/analytics") ||
+      pathname.startsWith("/rider/complaints") ||
+      pathname.startsWith("/rider/help");
 
     return (
       <nav
