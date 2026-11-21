@@ -459,8 +459,8 @@ export default function RiderDeliveries() {
       }
       if (result?.outcome === "recipient_refused") {
         toast(
-          `Failed delivery report for ${d.transaction_number} sent to Coordinator in Messages. Awaiting Return-to-Hub decision.`,
-          "info"
+          `Recipient refused delivery. ${d.transaction_number} marked as Return to Hub and removed from active queue.`,
+          "error"
         );
       } else if (result?.outcome === "return_to_hub") {
         toast(

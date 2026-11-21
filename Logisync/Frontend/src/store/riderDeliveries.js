@@ -146,7 +146,7 @@ export function diffCalendarDays(dateStrA, dateStrB) {
   return Math.round((utc2 - utc1) / (24 * 60 * 60 * 1000));
 }
 
-const sync = (fn) => fn().catch(() => {});
+const sync = (fn) => fn().catch(() => { });
 
 // Awtomatikong nagre-reschedule ayon sa 3-Day Rescheduling Rule:
 // - Day 0: Initial scheduled date
@@ -473,15 +473,15 @@ function mapServerParcelToDelivery(row, riderId) {
   const scannedMs = row.scanned_at
     ? new Date(row.scanned_at).getTime()
     : row.updated_at
-    ? new Date(row.updated_at).getTime()
-    : Date.now();
+      ? new Date(row.updated_at).getTime()
+      : Date.now();
   const doneMs = row.delivered_at
     ? new Date(row.delivered_at).getTime()
     : row.return_to_hub_at
-    ? new Date(row.return_to_hub_at).getTime()
-    : row.delivery_status === "DELIVERED" || row.delivery_status === "RETURN_TO_HUB" || row.delivery_status === "FAILED"
-    ? new Date(row.updated_at || Date.now()).getTime()
-    : null;
+      ? new Date(row.return_to_hub_at).getTime()
+      : row.delivery_status === "DELIVERED" || row.delivery_status === "RETURN_TO_HUB" || row.delivery_status === "FAILED"
+        ? new Date(row.updated_at || Date.now()).getTime()
+        : null;
 
   const isReturnToHub = Boolean(row.return_to_hub || row.delivery_status === "RETURN_TO_HUB");
   const isRescheduled = Boolean(row.rescheduled);
@@ -705,7 +705,7 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
             );
             if (pRes?.parcel) {
               const p = pRes.parcel;
-              await scanForDelivery(p.parcel_id || target).catch(() => {});
+              await scanForDelivery(p.parcel_id || target).catch(() => { });
               if (!serverParcels) serverParcels = [];
               serverParcels.push({
                 ...p,
@@ -713,8 +713,8 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
                   /delivered/i.test(log.action) && !/failed|retry/i.test(log.action)
                     ? "DELIVERED"
                     : /failed/i.test(log.action)
-                    ? "FAILED"
-                    : p.delivery_status || "TO_DELIVER",
+                      ? "FAILED"
+                      : p.delivery_status || "TO_DELIVER",
                 scanned_at: p.scanned_at || log.created_at,
               });
             }
@@ -864,10 +864,10 @@ export const useMyDeliveries = () => {
       if (addr && contact) return { ...d, address: addr, contact };
       const match = Array.isArray(parcels)
         ? parcels.find(
-            (p) =>
-              String(p.id || p.parcel_id || "").toLowerCase() === String(d.parcel_id || "").toLowerCase() ||
-              String(p.id || p.transaction_number || "").toLowerCase() === String(d.transaction_number || "").toLowerCase()
-          )
+          (p) =>
+            String(p.id || p.parcel_id || "").toLowerCase() === String(d.parcel_id || "").toLowerCase() ||
+            String(p.id || p.transaction_number || "").toLowerCase() === String(d.transaction_number || "").toLowerCase()
+        )
         : null;
       return {
         ...d,
@@ -948,18 +948,18 @@ export function addToDeliver(parcel, scanned) {
     store.set((l) =>
       l.map((d) =>
         isSameRider(d, id) &&
-        isSameParcelItem(d, { parcel_id: resolvedParcelId, transaction_number: resolvedTxn })
+          isSameParcelItem(d, { parcel_id: resolvedParcelId, transaction_number: resolvedTxn })
           ? {
-              ...d,
-              user_id: id || d.user_id,
-              parcel_id: resolvedParcelId || d.parcel_id,
-              transaction_number: cleanField(d.transaction_number) || resolvedTxn,
-              receiver: cleanField(d.receiver) || cleanField(parcel.receiver || parcel.receiver_name),
-              contact: cleanField(d.contact) || resolvedContact,
-              address: cleanField(d.address) || resolvedAddress,
-              contents: cleanField(d.contents) || resolvedContents,
-              seller: cleanField(d.seller) || resolvedSeller,
-            }
+            ...d,
+            user_id: id || d.user_id,
+            parcel_id: resolvedParcelId || d.parcel_id,
+            transaction_number: cleanField(d.transaction_number) || resolvedTxn,
+            receiver: cleanField(d.receiver) || cleanField(parcel.receiver || parcel.receiver_name),
+            contact: cleanField(d.contact) || resolvedContact,
+            address: cleanField(d.address) || resolvedAddress,
+            contents: cleanField(d.contents) || resolvedContents,
+            seller: cleanField(d.seller) || resolvedSeller,
+          }
           : d
       )
     );
@@ -1075,8 +1075,7 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
   const riderName = getUser()?.name || current.rider_name || "Rider";
 
   // 1. RECIPIENT REFUSAL:
-  // HINDI awtomatikong nagre-reschedule.
-  // Nagpapadala ng direct message sa Coordinator para sa Return-to-Hub desisyon.
+  // Immediately marks parcel for Return to Hub without requiring coordinator approval.
   if (isRecipientRefusal(reason)) {
     const attemptEntry = {
       id: `att-${parcelId}-refusal-${Date.now()}`,
@@ -1086,17 +1085,18 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
       rescheduledTo: null,
       rescheduleDay: count,
       reason,
-      note: note || "Recipient refused delivery. Direct message sent to Coordinator for Return to Hub decision.",
+      note: note || "Recipient refused delivery. Immediately marked for Return to Hub.",
       auto: false,
       outcome: "recipient_refused",
     };
     const nextAttempts = [...(current.attempts || []), attemptEntry];
 
     patch(parcelId, {
-      stage: STAGE.FAILED,
+      stage: STAGE.RETURN_TO_HUB,
       doneAt: Date.now(),
       rescheduled: false,
-      refusal_awaiting_coordinator: true,
+      returnToHub: true,
+      return_to_hub: true,
       lastFailure: reason,
       lastNote: note || "",
       reason,
@@ -1105,18 +1105,18 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
       attempts: nextAttempts,
     });
 
-    updateParcelRecord(parcelId, { status: "Failed Delivery" });
-    if (txn !== parcelId) updateParcelRecord(txn, { status: "Failed Delivery" });
+    updateParcelRecord(parcelId, { status: "Return to Hub", returnToHub: true });
+    if (txn !== parcelId) updateParcelRecord(txn, { status: "Return to Hub", returnToHub: true });
 
     addNotification({
       id: `refusal-${parcelId}-${Date.now()}`,
       kind: "delivery",
-      icon: "fa-shield-halved",
+      icon: "fa-warehouse",
       tone: "red",
-      title: `Recipient Refusal: ${txn}`,
-      text: `${riderName} reported "${reason}". Direct message sent to Messages. Coordinator review needed for Return to Hub.`,
+      title: `Return to Hub: ${txn}`,
+      text: `${riderName} reported "${reason}". Parcel immediately marked for Return to Hub.`,
       read: false,
-      to: "/messages",
+      to: "/notifications",
     });
 
     sync(async () => {
@@ -1125,15 +1125,16 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
         scheduledFor: baseDate,
         rescheduled: false,
         rescheduleCount: count,
-        returnToHub: false,
+        returnToHub: true,
+        status: "RETURN_TO_HUB",
         attempts: nextAttempts,
-      }).catch(() => {});
+      }).catch(() => { });
 
       try {
         const contacts = await listContacts();
         const coordinator = contacts.find((c) => c.role === "coordinator");
         if (coordinator) {
-          const msg = `🚨 [FAILED DELIVERY REPORT - RECIPIENT REFUSAL]
+          const msg = `🚨 [RETURN TO HUB - RECIPIENT REFUSAL]
 Tracking / Txn: ${txn}
 Parcel ID: ${current.parcel_id || txn}
 Receiver: ${current.receiver || "Consignee"}
@@ -1143,7 +1144,7 @@ Refusal Reason: ${reason}
 Rider: ${riderName} (ID: ${me()})
 Notes: ${note || "Recipient refused parcel."}
 
-Action Required: Please review and initiate Return to Hub.`;
+Status: Immediately marked for Return to Hub. Please verify physical arrival when parcel is returned to the hub.`;
           await sendMessage(coordinator.user_id, msg);
         }
       } catch (err) {

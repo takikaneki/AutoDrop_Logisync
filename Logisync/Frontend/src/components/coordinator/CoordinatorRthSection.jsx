@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import StatusBadge from "../StatusBadge.jsx";
-import ScanPanel from "../qr/ScanPanel.jsx";
 import CoordinatorRthModal from "./CoordinatorRthModal.jsx";
-import { EmptyState, Modal } from "../ui.jsx";
+import { EmptyState } from "../ui.jsx";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
-import { fetchCoordinatorRth, findParcel } from "../../services/parcelService.js";
+import { fetchCoordinatorRth } from "../../services/parcelService.js";
 import { formatDate } from "../../utils/format.js";
-import { toast } from "../../store/toast.js";
 
 export default function CoordinatorRthSection() {
   const [data, setData] = useState({ pending: [], confirmed: [], counts: { pending: 0, confirmed: 0, total: 0 } });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("pending"); // "pending" | "confirmed"
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedParcel, setSelectedParcel] = useState(null);
-  const [scanError, setScanError] = useState("");
 
   const loadRth = async () => {
     try {
@@ -42,42 +39,6 @@ export default function CoordinatorRthSection() {
     loadRth();
   }, []);
 
-  const handleScanValue = async (val) => {
-    setScanError("");
-    const cleanVal = String(val || "").trim().toLowerCase();
-    // Search in pending or confirmed list first
-    const match =
-      data.pending.find(
-        (p) =>
-          String(p.transaction_number || "").toLowerCase() === cleanVal ||
-          String(p.parcel_id || "").toLowerCase() === cleanVal
-      ) ||
-      data.confirmed.find(
-        (p) =>
-          String(p.transaction_number || "").toLowerCase() === cleanVal ||
-          String(p.parcel_id || "").toLowerCase() === cleanVal
-      );
-
-    if (match) {
-      setScannerOpen(false);
-      setSelectedParcel(match);
-      return;
-    }
-
-    // Try finding via findParcel API
-    try {
-      const res = await findParcel(val, "coordinator");
-      if (res?.parcel) {
-        setScannerOpen(false);
-        setSelectedParcel(res.parcel);
-      } else {
-        setScanError(`Parcel with QR ${val} not found in Return to Hub queue.`);
-      }
-    } catch (err) {
-      setScanError(err.message || `No parcel found matching QR code.`);
-    }
-  };
-
   const list = tab === "pending" ? data.pending : data.confirmed;
 
   return (
@@ -87,7 +48,7 @@ export default function CoordinatorRthSection() {
           <div className="flex items-center gap-2">
             <h2 className="text-[19px] font-bold text-[#1e293b] dark:text-white">
               <i className="fa-solid fa-warehouse mr-2 text-[#7c3aed]" />
-              Return to Hub (RTH) Verification
+              Return to Hub (RTH) Physical Verification
             </h2>
             {data.counts.pending > 0 && (
               <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
@@ -96,18 +57,18 @@ export default function CoordinatorRthSection() {
             )}
           </div>
           <p className="mt-1 text-[13px] text-[#64748b] dark:text-[#9c948c]">
-            Track rider returns in transit and scan the unified QR code upon physical receipt at the hub.
+            Monitor rider returns in transit and verify physical arrival at the hub using the Unified QR Scanner.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setScannerOpen(true)}
+          <Link
+            to="/verification?scan=1"
             className={`${btnPrimary} !bg-[#7c3aed] hover:!bg-[#6d28d9]`}
+            title="Open the Unified QR Scanner to verify returned parcels"
           >
-            <i className="fa-solid fa-qrcode mr-1.5" /> Scan Return QR
-          </button>
+            <i className="fa-solid fa-qrcode mr-1.5" /> Scan Unified QR
+          </Link>
           <button
             type="button"
             onClick={loadRth}
@@ -132,7 +93,7 @@ export default function CoordinatorRthSection() {
           }`}
         >
           <i className="fa-solid fa-clock-rotate-left" />
-          <span>Pending Physical Return</span>
+          <span>Pending Physical Arrival</span>
           <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-extrabold text-[#c2410c] dark:bg-night-panel dark:text-orange-300">
             {data.counts.pending}
           </span>
@@ -217,7 +178,7 @@ export default function CoordinatorRthSection() {
                       <StatusBadge
                         status={
                           tab === "pending"
-                            ? "Return to Hub – Pending Confirmation"
+                            ? "Return to Hub"
                             : "Return to Hub – Confirmed"
                         }
                       />
@@ -234,7 +195,7 @@ export default function CoordinatorRthSection() {
                       >
                         {tab === "pending" ? (
                           <>
-                            <i className="fa-solid fa-check mr-1" /> Confirm
+                            <i className="fa-solid fa-check mr-1" /> Verify Arrival
                           </>
                         ) : (
                           "View Record"
@@ -249,47 +210,13 @@ export default function CoordinatorRthSection() {
         </div>
       )}
 
-      {/* QR Scanner Modal for Hub Verification */}
-      <Modal
-        open={scannerOpen}
-        onClose={() => {
-          setScannerOpen(false);
-          setScanError("");
-        }}
-        z="z-[3500]"
-        className="w-full max-w-[420px] p-6 text-center dark:bg-night-panel"
-      >
-        <div className="mb-3 flex items-center justify-between text-left">
-          <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            Scan Return to Hub QR Code
-          </h3>
-          <button
-            onClick={() => setScannerOpen(false)}
-            aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
-          >
-            <i className="fa-solid fa-xmark text-sm" />
-          </button>
-        </div>
-        <p className="mb-4 text-[12.5px] text-[#64748b] dark:text-[#9c948c]">
-          Scan the parcel's permanent unified QR code to verify physical return at the hub.
-        </p>
-        <ScanPanel onValue={handleScanValue} />
-        {scanError && (
-          <div className="mt-3 rounded-lg bg-red-50 p-2.5 text-[12.5px] font-medium text-red-700 dark:bg-red-950/30 dark:text-red-300">
-            <i className="fa-solid fa-triangle-exclamation mr-1.5" />
-            {scanError}
-          </div>
-        )}
-      </Modal>
-
       {/* Coordinator RTH Physical Confirmation Modal */}
       {selectedParcel && (
         <CoordinatorRthModal
           parcel={selectedParcel}
           open={!!selectedParcel}
           onClose={() => setSelectedParcel(null)}
-          onConfirmed={(updated) => {
+          onConfirmed={() => {
             loadRth();
           }}
         />

@@ -20,9 +20,9 @@ const STATUS = {
   RESCHEDULED: { label: "Rescheduled for Delivery", cls: amber },
   Rescheduled: { label: "Rescheduled for Delivery", cls: amber },
   "Rescheduled for Delivery": { label: "Rescheduled for Delivery", cls: amber },
-  RTH_PENDING: { label: "Return to Hub – Pending Confirmation", cls: orange },
-  "Return to Hub – Pending Confirmation": { label: "Return to Hub – Pending Confirmation", cls: orange },
-  "Return to Hub - Pending Confirmation": { label: "Return to Hub – Pending Confirmation", cls: orange },
+  RTH_PENDING: { label: "Return to Hub", cls: purple },
+  "Return to Hub – Pending Confirmation": { label: "Return to Hub", cls: purple },
+  "Return to Hub - Pending Confirmation": { label: "Return to Hub", cls: purple },
   RTH_CONFIRMED: { label: "Return to Hub – Confirmed", cls: purple },
   "Return to Hub – Confirmed": { label: "Return to Hub – Confirmed", cls: purple },
   "Return to Hub - Confirmed": { label: "Return to Hub – Confirmed", cls: purple },
@@ -52,12 +52,18 @@ export function getParcelStatus(parcel) {
     return "Return to Hub – Confirmed";
   }
   if (
+    rthStatus === "PENDING" ||
     rthStatus === "PENDING_CONFIRMATION" ||
+    parcelStatus === "return_to_hub" ||
+    parcelStatus === "return to hub" ||
     parcelStatus === "rth_pending" ||
     parcelStatus === "return to hub – pending confirmation" ||
-    parcelStatus === "return to hub - pending confirmation"
+    parcelStatus === "return to hub - pending confirmation" ||
+    parcel.returnToHub ||
+    status === "return_to_hub" ||
+    status === "return to hub"
   ) {
-    return "Return to Hub – Pending Confirmation";
+    return "Return to Hub";
   }
 
   if (parcel.delivery_hold) {

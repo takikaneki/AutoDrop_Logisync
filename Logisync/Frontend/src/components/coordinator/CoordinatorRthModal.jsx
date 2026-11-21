@@ -45,7 +45,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
     try {
       const res = await confirmCoordinatorRth(parcelId, { notes: notes.trim() });
       if (res?.success) {
-        toast(`Parcel ${txn} successfully confirmed as Returned to Hub.`, "success");
+        toast(`Parcel ${txn} physical arrival confirmed at the Hub.`, "success");
         if (onConfirmed) onConfirmed(res.parcel || { ...parcel, rth_status: "CONFIRMED", status: "RTH_CONFIRMED" });
         onClose();
       } else {
@@ -99,7 +99,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
               status={
                 isConfirmed
                   ? "Return to Hub – Confirmed"
-                  : "Return to Hub – Pending Confirmation"
+                  : "Return to Hub"
               }
             />
           </div>
@@ -188,7 +188,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
             className={`${btnPrimary} !bg-[#7c3aed] hover:!bg-[#6d28d9]`}
           >
             <i className="fa-solid fa-warehouse mr-1.5" />
-            {busy ? "Confirming…" : "Confirm Returned to Hub"}
+            {busy ? "Confirming…" : "Confirm Physical Arrival at Hub"}
           </button>
         )}
       </div>

@@ -47,9 +47,7 @@ export const enrichParcel = (p) => {
       status = "DELIVERED";
     } else if (p.rth_status === "CONFIRMED" || p.status === "RTH_CONFIRMED") {
       status = "RTH_CONFIRMED";
-    } else if (p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING") {
-      status = "RTH_PENDING";
-    } else if (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB") {
+    } else if (p.status === "RETURN_TO_HUB" || p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING" || p.return_to_hub || p.delivery_status === "RETURN_TO_HUB") {
       status = "RETURN_TO_HUB";
     } else if ((p.rescheduled || p.status === "RESCHEDULED") && (p.delivery_status === "TO_DELIVER" || !p.delivery_status)) {
       status = "RESCHEDULED";
@@ -62,7 +60,7 @@ export const enrichParcel = (p) => {
     next = {
       ...next,
       status,
-      rth_status: p.rth_status || (status === "RTH_CONFIRMED" ? "CONFIRMED" : status === "RTH_PENDING" ? "PENDING_CONFIRMATION" : null),
+      rth_status: p.rth_status || (status === "RTH_CONFIRMED" ? "CONFIRMED" : status === "RETURN_TO_HUB" ? "PENDING" : null),
       rth_reason: p.rth_reason || "",
       rth_requested_at: p.rth_requested_at || null,
       rth_confirmed_at: p.rth_confirmed_at || null,

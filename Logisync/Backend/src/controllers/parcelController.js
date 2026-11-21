@@ -2139,16 +2139,16 @@ async function finishDelivery(req, res, outcome) {
     } else if (outcome === "FAILED") {
       const refusal = isRecipientRefusal(reason || note);
       if (refusal) {
-        // Scenario A: Recipient Refused Parcel -> immediately RTH_PENDING
+        // Scenario A: Recipient Refused Parcel -> immediately RETURN_TO_HUB
         isReturnToHub = true;
         isRescheduled = false;
         rthReason = reason || note || "Recipient Refused Parcel";
-        finalStatus = "RTH_PENDING";
-        finalDeliveryStatus = "FAILED";
-        newStatusLabel = "Return to Hub – Pending Confirmation";
+        finalStatus = "RETURN_TO_HUB";
+        finalDeliveryStatus = "RETURN_TO_HUB";
+        newStatusLabel = "Return to Hub";
       } else {
         // Scenario B: Other Failed Delivery Reasons -> Next Day Delivery
-        if (parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING") {
+        if (parcel.rth_status === "PENDING" || parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RETURN_TO_HUB" || parcel.status === "RTH_PENDING") {
           await connection.rollback();
           return res.status(400).json({ success: false, message: "Maximum delivery attempts reached. This parcel is already marked for Return to Hub." });
         }
@@ -2168,13 +2168,13 @@ async function finishDelivery(req, res, outcome) {
           rescheduleCount = rescheduleCount + 1;
 
           if (nextDayCount >= 2) {
-            // SECOND next-day attempt failed! Automatically move to RTH_PENDING
+            // SECOND next-day attempt failed! Automatically move to RETURN_TO_HUB
             isReturnToHub = true;
             isRescheduled = false;
             rthReason = "Maximum delivery attempts reached";
-            finalStatus = "RTH_PENDING";
-            finalDeliveryStatus = "FAILED";
-            newStatusLabel = "Return to Hub – Pending Confirmation";
+            finalStatus = "RETURN_TO_HUB";
+            finalDeliveryStatus = "RETURN_TO_HUB";
+            newStatusLabel = "Return to Hub";
           } else {
             // FIRST next-day attempt failed -> remains RESCHEDULED for next day
             isReturnToHub = false;
@@ -2228,7 +2228,7 @@ async function finishDelivery(req, res, outcome) {
            next_day_attempt_count = ?,
            return_to_hub = ?,
            return_to_hub_at = ${isReturnToHub ? "COALESCE(return_to_hub_at, NOW())" : "return_to_hub_at"},
-           rth_status = ${isReturnToHub ? "'PENDING_CONFIRMATION'" : "rth_status"},
+           rth_status = ${isReturnToHub ? "'PENDING'" : "rth_status"},
            rth_requested_at = ${isReturnToHub ? "COALESCE(rth_requested_at, NOW())" : "rth_requested_at"},
            rth_requested_by = ${isReturnToHub ? "COALESCE(rth_requested_by, ?)" : "rth_requested_by"},
            rth_reason = ${isReturnToHub ? "COALESCE(?, rth_reason)" : "rth_reason"},
@@ -2275,7 +2275,7 @@ async function finishDelivery(req, res, outcome) {
         outcome === "DELIVERED"
           ? "Delivered parcel"
           : isReturnToHub
-            ? `Requested Return to Hub (${rthReason})`
+            ? `Marked Return to Hub (${rthReason})`
             : isRescheduled
               ? `Rescheduled delivery attempt (Next-Day Attempt ${nextDayCount}/2)`
               : "Failed delivery",
@@ -2299,7 +2299,7 @@ async function finishDelivery(req, res, outcome) {
       next_day_attempt_count: nextDayCount,
       remaining_next_day_attempts: Math.max(0, 2 - nextDayCount),
       return_to_hub: isReturnToHub,
-      rth_status: isReturnToHub ? "PENDING_CONFIRMATION" : parcel.rth_status,
+      rth_status: isReturnToHub ? "PENDING" : parcel.rth_status,
       rth_reason: rthReason
     });
   } catch (error) {
@@ -2810,16 +2810,49 @@ async function scanUnified(req, res) {
     const role = req.user.role;
     const userId = Number(req.user.user_id);
 
+    // Explicitly prioritized status detection
+    // 1. Already confirmed Return to Hub
+    const isRthConfirmed =
+      parcel.status === "RTH_CONFIRMED" ||
+      parcel.rth_status === "CONFIRMED" ||
+      Boolean(parcel.rth_confirmed_at);
+
+    // 2. Completed delivery (cannot be overridden by stale RTH fields)
+    const isDelivered =
+      !isRthConfirmed && (
+        parcel.status === "DELIVERED" ||
+        parcel.delivery_status === "DELIVERED" ||
+        Boolean(parcel.delivered_at)
+      );
+
+    // 3. Active rescheduled delivery (cannot be overridden by stale RTH fields)
+    const isRescheduled =
+      !isRthConfirmed && !isDelivered && (
+        parcel.status === "RESCHEDULED" ||
+        (Boolean(parcel.rescheduled) && parcel.status !== "RETURN_TO_HUB" && parcel.status !== "RTH_PENDING")
+      );
+
+    // 4. Valid pending Return to Hub (current or legitimate legacy)
+    const isCurrentRth =
+      parcel.status === "RETURN_TO_HUB" ||
+      (parcel.delivery_status === "RETURN_TO_HUB" && (parcel.rth_status === "PENDING" || parcel.rth_status === "PENDING_CONFIRMATION"));
+
+    const isLegacyRth =
+      parcel.status === "RTH_PENDING" ||
+      (parcel.delivery_status === "FAILED" && Boolean(parcel.return_to_hub) && (parcel.rth_status === "PENDING" || parcel.rth_status === "PENDING_CONFIRMATION"));
+
+    const isRthPending = !isRthConfirmed && !isDelivered && !isRescheduled && (isCurrentRth || isLegacyRth);
+
     // Compute unified display status
     let displayStatus = "Ready for Delivery";
-    if (parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED") {
+    if (isRthConfirmed) {
       displayStatus = "Return to Hub – Confirmed";
-    } else if (parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING" || (parcel.return_to_hub && !parcel.rth_confirmed_at)) {
-      displayStatus = "Return to Hub – Pending Confirmation";
-    } else if (parcel.delivery_status === "DELIVERED" || parcel.status === "DELIVERED" || parcel.delivered_at) {
+    } else if (isDelivered) {
       displayStatus = "Delivered";
-    } else if (parcel.rescheduled || parcel.status === "RESCHEDULED") {
+    } else if (isRescheduled) {
       displayStatus = "Rescheduled for Delivery";
+    } else if (isRthPending) {
+      displayStatus = "Return to Hub";
     } else if (parcel.verification_status !== "VERIFIED" && parcel.status !== "VERIFIED") {
       displayStatus = parcel.status || "Pending Verification";
     }
@@ -2867,8 +2900,8 @@ async function scanUnified(req, res) {
         });
       }
 
-      // Check current state
-      if (parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED") {
+      // Check current state in prioritized order
+      if (isRthConfirmed) {
         return res.json({
           success: true,
           role: "rider",
@@ -2879,24 +2912,24 @@ async function scanUnified(req, res) {
         });
       }
 
-      if (parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING" || (parcel.return_to_hub && !parcel.rth_confirmed_at)) {
-        return res.json({
-          success: true,
-          role: "rider",
-          action: "RTH_PENDING",
-          displayStatus: "Return to Hub – Pending Confirmation",
-          message: "This parcel is marked for Return to Hub and is pending Coordinator physical confirmation.",
-          parcel
-        });
-      }
-
-      if (parcel.delivery_status === "DELIVERED" || parcel.status === "DELIVERED" || parcel.delivered_at) {
+      if (isDelivered) {
         return res.json({
           success: true,
           role: "rider",
           action: "ALREADY_DELIVERED",
           displayStatus: "Delivered",
           message: "This parcel has already been successfully delivered.",
+          parcel
+        });
+      }
+
+      if (isRthPending) {
+        return res.json({
+          success: true,
+          role: "rider",
+          action: "RETURN_TO_HUB",
+          displayStatus: "Return to Hub",
+          message: "This parcel is marked for Return to Hub and is awaiting Coordinator physical verification at the hub.",
           parcel
         });
       }
@@ -2927,7 +2960,7 @@ async function scanUnified(req, res) {
         success: true,
         role: "rider",
         action: "DELIVERY_PROCESS",
-        displayStatus: parcel.rescheduled ? "Rescheduled for Delivery" : "Ready for Delivery",
+        displayStatus: isRescheduled ? "Rescheduled for Delivery" : "Ready for Delivery",
         availableActions: ["DELIVERED", "RESCHEDULE", "RETURN_TO_HUB"],
         next_day_attempt_count: nextDayCount,
         remaining_next_day_attempts: remainingNextDay,
@@ -2938,59 +2971,78 @@ async function scanUnified(req, res) {
 
     // ROLE: COORDINATOR
     if (role === "coordinator") {
-    const isRthPending = parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING" || (parcel.return_to_hub && !parcel.rth_confirmed_at);
-    const isRthConfirmed = parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED";
+      if (isRthConfirmed) {
+        return res.json({
+          success: true,
+          role: "coordinator",
+          action: "RTH_ALREADY_CONFIRMED",
+          displayStatus: "Return to Hub – Confirmed",
+          currentConfirmationStatus: "Confirmed",
+          message: "This parcel has already been confirmed as physically returned to the hub.",
+          parcel
+        });
+      }
 
-    if (isRthPending) {
+      if (isDelivered) {
+        return res.json({
+          success: true,
+          role: "coordinator",
+          action: "VIEW_STATUS",
+          displayStatus: "Delivered",
+          message: "This parcel has already been successfully delivered.",
+          parcel
+        });
+      }
+
+      if (isRescheduled) {
+        return res.json({
+          success: true,
+          role: "coordinator",
+          action: "VIEW_STATUS",
+          displayStatus: "Rescheduled for Delivery",
+          message: "This parcel is currently rescheduled for delivery.",
+          parcel
+        });
+      }
+
+      if (isRthPending) {
+        return res.json({
+          success: true,
+          role: "coordinator",
+          action: "CONFIRM_RTH",
+          displayStatus: "Return to Hub",
+          currentConfirmationStatus: "Pending Physical Arrival",
+          message: "Parcel designated for Return to Hub. Verify physical arrival at the hub.",
+          parcel
+        });
+      }
+
+      if (parcel.status === "VIDEO_SUBMITTED" || parcel.status === "WAITING_FOR_VIDEO") {
+        return res.json({
+          success: true,
+          role: "coordinator",
+          action: "VERIFY_VIDEO",
+          displayStatus: parcel.status,
+          message: "Parcel verification queue.",
+          parcel
+        });
+      }
+
       return res.json({
         success: true,
         role: "coordinator",
-        action: "CONFIRM_RTH",
-        displayStatus: "Return to Hub – Pending Confirmation",
-        currentConfirmationStatus: "Pending Confirmation",
-        message: "Parcel marked for Return to Hub by Rider. Verify physical return and confirm.",
+        action: "VIEW_STATUS",
+        displayStatus,
+        message: `Parcel current status: ${displayStatus}`,
         parcel
       });
     }
 
-    if (isRthConfirmed) {
-      return res.json({
-        success: true,
-        role: "coordinator",
-        action: "RTH_ALREADY_CONFIRMED",
-        displayStatus: "Return to Hub – Confirmed",
-        currentConfirmationStatus: "Confirmed",
-        message: "This parcel was already confirmed returned to the hub.",
-        parcel
-      });
-    }
-
-    if (parcel.status === "VIDEO_SUBMITTED" || parcel.status === "WAITING_FOR_VIDEO") {
-      return res.json({
-        success: true,
-        role: "coordinator",
-        action: "VERIFY_VIDEO",
-        displayStatus: parcel.status,
-        message: "Parcel verification queue.",
-        parcel
-      });
-    }
-
-    return res.json({
-      success: true,
-      role: "coordinator",
-      action: "VIEW_STATUS",
-      displayStatus,
-      message: `Parcel current status: ${displayStatus}`,
-      parcel
-    });
+    return res.status(403).json({ success: false, message: "Unauthorized role." });
+  } catch (error) {
+    console.error("scanUnified error:", error);
+    res.status(500).json({ success: false, message: "Failed to process unified QR scan." });
   }
-
-  return res.status(403).json({ success: false, message: "Unauthorized role." });
-} catch (error) {
-  console.error("scanUnified error:", error);
-  res.status(500).json({ success: false, message: "Failed to process unified QR scan." });
-}
 }
 
 // POST /api/parcels/rider/:parcelId/reschedule
@@ -3055,7 +3107,7 @@ async function riderReschedule(req, res) {
     const refusal = isRecipientRefusal(reason);
 
     if (refusal) {
-      // Scenario A: Recipient Refused Parcel -> immediately RTH_PENDING
+      // Scenario A: Recipient Refused Parcel -> immediately RETURN_TO_HUB
       attempts.push({
         id: `att-${p.parcel_id}-refusal-${Date.now()}`,
         attempt: attempts.length + 1,
@@ -3064,7 +3116,7 @@ async function riderReschedule(req, res) {
         scheduledDate: p.scheduled_for || new Date().toISOString().slice(0, 10),
         reason: reason,
         notes: notes || "Recipient Refused Parcel",
-        status: "Return to Hub – Pending Confirmation",
+        status: "Return to Hub",
         outcome: "recipient_refused",
         riderId: req.user.user_id,
         riderName: req.user.name
@@ -3073,12 +3125,12 @@ async function riderReschedule(req, res) {
       const previousStatus = p.status;
       await connection.query(
         `UPDATE parcels
-         SET status = 'RTH_PENDING',
-             delivery_status = 'FAILED',
+         SET status = 'RETURN_TO_HUB',
+             delivery_status = 'RETURN_TO_HUB',
              rider_id = COALESCE(rider_id, ?),
              return_to_hub = TRUE,
              return_to_hub_at = NOW(),
-             rth_status = 'PENDING_CONFIRMATION',
+             rth_status = 'PENDING',
              rth_requested_at = NOW(),
              rth_requested_by = ?,
              rth_reason = ?,
@@ -3106,17 +3158,17 @@ async function riderReschedule(req, res) {
         parcelId: p.parcel_id,
         transactionNumber: p.transaction_number,
         previousStatus: previousStatus,
-        newStatus: "Return to Hub – Pending Confirmation",
+        newStatus: "Return to Hub",
         actorId: req.user.user_id,
         actorName: req.user.name,
         actorRole: "rider",
         reason: reason,
-        notes: notes || "Recipient Refused Parcel. Marked for Return to Hub – Pending Confirmation."
+        notes: notes || "Recipient Refused Parcel. Marked for Return to Hub."
       });
 
       await logAudit(req.user, {
         category: "Return to Hub",
-        action: "Requested Return to Hub (Recipient Refused Parcel)",
+        action: "Marked Return to Hub (Recipient Refused Parcel)",
         target: p.parcel_id,
         detail: `${reason}${notes ? ` · Note: ${notes}` : ""}`,
         sellerId: p.seller_id,
@@ -3127,18 +3179,18 @@ async function riderReschedule(req, res) {
 
       return res.json({
         success: true,
-        message: "Recipient refused parcel. Marked for Return to Hub – Pending Confirmation.",
+        message: "Recipient refused parcel. Marked for Return to Hub.",
         parcel_id: p.parcel_id,
-        status: "RTH_PENDING",
-        displayStatus: "Return to Hub – Pending Confirmation",
+        status: "RETURN_TO_HUB",
+        displayStatus: "Return to Hub",
         return_to_hub: true,
-        rth_status: "PENDING_CONFIRMATION",
+        rth_status: "PENDING",
         rth_reason: reason
       });
     }
 
     // Scenario B: Other Failed Delivery Reasons (Next Day Delivery)
-    if (p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING") {
+    if (p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION" || p.status === "RETURN_TO_HUB" || p.status === "RTH_PENDING") {
       await connection.rollback();
       return res.status(400).json({ success: false, message: "Maximum delivery attempts reached. This parcel is already marked for Return to Hub." });
     }
@@ -3168,12 +3220,12 @@ async function riderReschedule(req, res) {
       nextRescheduleCount = nextRescheduleCount + 1;
 
       if (nextDayCount >= 2) {
-        // SECOND next-day attempt failed! Automatically move to RTH_PENDING
-        finalStatus = "RTH_PENDING";
-        finalDeliveryStatus = "FAILED";
+        // SECOND next-day attempt failed! Automatically move to RETURN_TO_HUB
+        finalStatus = "RETURN_TO_HUB";
+        finalDeliveryStatus = "RETURN_TO_HUB";
         isReturnToHub = true;
         rthReason = "Maximum delivery attempts reached";
-        statusLabel = "Return to Hub – Pending Confirmation";
+        statusLabel = "Return to Hub";
       } else {
         // FIRST next-day attempt failed -> remains RESCHEDULED
         finalStatus = "RESCHEDULED";
@@ -3222,7 +3274,7 @@ async function riderReschedule(req, res) {
            delivery_attempts = ?,
            return_to_hub = ?,
            return_to_hub_at = ${isReturnToHub ? "COALESCE(return_to_hub_at, NOW())" : "return_to_hub_at"},
-           rth_status = ${isReturnToHub ? "'PENDING_CONFIRMATION'" : "rth_status"},
+           rth_status = ${isReturnToHub ? "'PENDING'" : "rth_status"},
            rth_requested_at = ${isReturnToHub ? "COALESCE(rth_requested_at, NOW())" : "rth_requested_at"},
            rth_requested_by = ${isReturnToHub ? "COALESCE(rth_requested_by, ?)" : "rth_requested_by"},
            rth_reason = ${isReturnToHub ? "COALESCE(?, rth_reason)" : "rth_reason"},
@@ -3265,7 +3317,7 @@ async function riderReschedule(req, res) {
     await logAudit(req.user, {
       category: isReturnToHub ? "Return to Hub" : "Delivery",
       action: isReturnToHub
-        ? "Requested Return to Hub (Max Next-Day Attempts Reached)"
+        ? "Marked Return to Hub (Max Next-Day Attempts Reached)"
         : "Rescheduled delivery attempt",
       target: p.parcel_id,
       detail: isReturnToHub
@@ -3290,7 +3342,7 @@ async function riderReschedule(req, res) {
       reschedule_count: nextRescheduleCount,
       scheduled_for: isReturnToHub ? null : scheduledFor,
       return_to_hub: isReturnToHub,
-      rth_status: isReturnToHub ? "PENDING_CONFIRMATION" : p.rth_status,
+      rth_status: isReturnToHub ? "PENDING" : p.rth_status,
       rth_reason: rthReason
     });
   } catch (error) {
@@ -3341,17 +3393,17 @@ async function riderRequestRth(req, res) {
       return res.status(409).json({ success: false, message: "This parcel has already been confirmed returned to the hub." });
     }
 
-    // If already pending, return existing state idempotently
-    if (p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING") {
+    // If already in Return to Hub, return existing state idempotently
+    if (p.status === "RETURN_TO_HUB" || p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING") {
       await connection.commit();
       return res.json({
         success: true,
-        message: "Parcel is already marked as Return to Hub – Pending Confirmation.",
+        message: "Parcel is already marked for Return to Hub.",
         parcel_id: p.parcel_id,
-        status: "RTH_PENDING",
-        displayStatus: "Return to Hub – Pending Confirmation",
+        status: "RETURN_TO_HUB",
+        displayStatus: "Return to Hub",
         return_to_hub: true,
-        rth_status: "PENDING_CONFIRMATION",
+        rth_status: "PENDING",
         rth_reason: p.rth_reason || reason
       });
     }
@@ -3370,7 +3422,7 @@ async function riderRequestRth(req, res) {
       scheduledDate: p.scheduled_for || new Date().toISOString().slice(0, 10),
       reason: reason,
       notes: notes,
-      status: "Return to Hub – Pending Confirmation",
+      status: "Return to Hub",
       outcome: "recipient_refused",
       riderId: req.user.user_id,
       riderName: req.user.name
@@ -3379,12 +3431,12 @@ async function riderRequestRth(req, res) {
     const previousStatus = p.status;
     await connection.query(
       `UPDATE parcels
-       SET status = 'RTH_PENDING',
-           delivery_status = 'FAILED',
+       SET status = 'RETURN_TO_HUB',
+           delivery_status = 'RETURN_TO_HUB',
            rider_id = COALESCE(rider_id, ?),
            return_to_hub = TRUE,
            return_to_hub_at = NOW(),
-           rth_status = 'PENDING_CONFIRMATION',
+           rth_status = 'PENDING',
            rth_requested_at = NOW(),
            rth_requested_by = ?,
            rth_reason = ?,
@@ -3412,17 +3464,17 @@ async function riderRequestRth(req, res) {
       parcelId: p.parcel_id,
       transactionNumber: p.transaction_number,
       previousStatus: previousStatus,
-      newStatus: "Return to Hub – Pending Confirmation",
+      newStatus: "Return to Hub",
       actorId: req.user.user_id,
       actorName: req.user.name,
       actorRole: "rider",
       reason: reason,
-      notes: notes || "Recipient Refused Parcel. Marked for Return to Hub – Pending Confirmation."
+      notes: notes || "Rider marked parcel for Return to Hub."
     });
 
     await logAudit(req.user, {
       category: "Return to Hub",
-      action: "Requested Return to Hub (Recipient Refused Parcel)",
+      action: "Marked Return to Hub",
       target: p.parcel_id,
       detail: `${reason}${notes ? ` · Note: ${notes}` : ""}`,
       sellerId: p.seller_id,
@@ -3433,12 +3485,12 @@ async function riderRequestRth(req, res) {
 
     return res.json({
       success: true,
-      message: "Parcel marked as Return to Hub – Pending Confirmation.",
+      message: "Parcel marked as Return to Hub.",
       parcel_id: p.parcel_id,
-      status: "RTH_PENDING",
-      displayStatus: "Return to Hub – Pending Confirmation",
+      status: "RETURN_TO_HUB",
+      displayStatus: "Return to Hub",
       return_to_hub: true,
-      rth_status: "PENDING_CONFIRMATION",
+      rth_status: "PENDING",
       rth_reason: reason
     });
   } catch (error) {
@@ -3451,7 +3503,7 @@ async function riderRequestRth(req, res) {
 }
 
 // GET /api/parcels/coordinator/rth
-// Coordinator: Returns all RTH parcels, separated into pending confirmation and confirmed
+// Coordinator: Returns all RTH parcels, separated into pending physical arrival and confirmed
 async function coordinatorListRth(req, res) {
   try {
     await ensureCustomerSchema();
@@ -3468,7 +3520,7 @@ async function coordinatorListRth(req, res) {
        LEFT JOIN users rq ON p.rth_requested_by = rq.user_id
        WHERE p.rth_status IS NOT NULL
           OR p.return_to_hub = TRUE
-          OR p.status IN ('RTH_PENDING', 'RTH_CONFIRMED', 'RETURN_TO_HUB')
+          OR p.status IN ('RETURN_TO_HUB', 'RTH_PENDING', 'RTH_CONFIRMED')
        ORDER BY COALESCE(p.rth_requested_at, p.return_to_hub_at, p.updated_at) DESC`
     );
 
@@ -3476,18 +3528,57 @@ async function coordinatorListRth(req, res) {
     const confirmed = [];
 
     for (const row of rows) {
-      const isConfirmed = row.rth_status === "CONFIRMED" || Boolean(row.rth_confirmed_at) || row.status === "RTH_CONFIRMED";
+      // 1. Confirmed Return to Hub
+      const isConfirmed =
+        row.status === "RTH_CONFIRMED" ||
+        row.rth_status === "CONFIRMED" ||
+        Boolean(row.rth_confirmed_at);
+
       if (isConfirmed) {
         confirmed.push({
           ...row,
           displayStatus: "Return to Hub – Confirmed",
           confirmationStatus: "Confirmed"
         });
-      } else {
+        continue;
+      }
+
+      // 2. Exclude parcels that are already delivered
+      const isDelivered =
+        row.status === "DELIVERED" ||
+        row.delivery_status === "DELIVERED" ||
+        Boolean(row.delivered_at);
+
+      if (isDelivered) {
+        continue;
+      }
+
+      // 3. Exclude actively rescheduled parcels (unless authoritative status is RETURN_TO_HUB or RTH_PENDING)
+      const isRescheduled =
+        row.status === "RESCHEDULED" ||
+        (Boolean(row.rescheduled) && row.status !== "RETURN_TO_HUB" && row.status !== "RTH_PENDING");
+
+      if (isRescheduled) {
+        continue;
+      }
+
+      // 4. Validate legitimate current and legacy pending Return to Hub records
+      const isCurrentRth =
+        row.status === "RETURN_TO_HUB" ||
+        (row.delivery_status === "RETURN_TO_HUB" && (row.rth_status === "PENDING" || row.rth_status === "PENDING_CONFIRMATION"));
+
+      const isLegacyRth =
+        row.status === "RTH_PENDING" ||
+        (row.delivery_status === "FAILED" && Boolean(row.return_to_hub) && (row.rth_status === "PENDING" || row.rth_status === "PENDING_CONFIRMATION")) ||
+        (Boolean(row.return_to_hub) && (row.rth_status === "PENDING" || row.rth_status === "PENDING_CONFIRMATION"));
+
+      const isPendingRth = isCurrentRth || isLegacyRth;
+
+      if (isPendingRth) {
         pending.push({
           ...row,
-          displayStatus: "Return to Hub – Pending Confirmation",
-          confirmationStatus: "Pending Confirmation"
+          displayStatus: "Return to Hub",
+          confirmationStatus: "Pending Physical Arrival"
         });
       }
     }
@@ -3499,7 +3590,7 @@ async function coordinatorListRth(req, res) {
       counts: {
         pending: pending.length,
         confirmed: confirmed.length,
-        total: rows.length
+        total: pending.length + confirmed.length
       }
     });
   } catch (error) {
@@ -3511,28 +3602,88 @@ async function coordinatorListRth(req, res) {
 // POST /api/parcels/coordinator/:parcelId/rth-confirm
 // Coordinator: Confirm parcel physically arrived at the hub -> Return to Hub – Confirmed
 async function coordinatorConfirmRth(req, res) {
+  let connection;
   try {
     await ensureCustomerSchema();
     const parcelId = String(req.params.parcelId || "").trim();
     const notes = String(req.body?.notes || req.body?.remarks || "").trim().slice(0, 500);
 
-    const [rows] = await pool.query(
-      `SELECT * FROM parcels WHERE parcel_id = ? OR transaction_number = ? LIMIT 1`,
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query(
+      `SELECT * FROM parcels WHERE parcel_id = ? OR transaction_number = ? LIMIT 1 FOR UPDATE`,
       [parcelId, parcelId]
     );
-    if (!rows.length) return res.status(404).json({ success: false, message: "Parcel not found." });
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Parcel not found." });
+    }
     const p = rows[0];
 
     // Prevent duplicate confirmation
     if (p.rth_status === "CONFIRMED" || p.status === "RTH_CONFIRMED" || Boolean(p.rth_confirmed_at)) {
+      await connection.rollback();
       return res.status(409).json({
         success: false,
         message: "This parcel return has already been confirmed returned to the hub."
       });
     }
 
+    // 1. Explicit rejection check for delivered parcels BEFORE evaluating RTH eligibility
+    const isDelivered =
+      p.status === "DELIVERED" ||
+      p.delivery_status === "DELIVERED" ||
+      Boolean(p.delivered_at);
+
+    if (isDelivered) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Cannot confirm Return to Hub: this parcel has already been successfully delivered.",
+        current_status: p.status,
+        delivery_status: p.delivery_status
+      });
+    }
+
+    // 2. Explicit rejection check for rescheduled parcels BEFORE evaluating RTH eligibility
+    const isRescheduled =
+      p.status === "RESCHEDULED" ||
+      (Boolean(p.rescheduled) && p.status !== "RETURN_TO_HUB" && p.status !== "RTH_PENDING");
+
+    if (isRescheduled) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Cannot confirm Return to Hub: this parcel is currently scheduled for delivery.",
+        current_status: p.status,
+        delivery_status: p.delivery_status
+      });
+    }
+
+    // 3. Validate legitimate current and legacy pending Return to Hub states
+    const isCurrentRth =
+      p.status === "RETURN_TO_HUB" ||
+      (p.delivery_status === "RETURN_TO_HUB" && (p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION"));
+
+    const isLegacyRth =
+      p.status === "RTH_PENDING" ||
+      (p.delivery_status === "FAILED" && Boolean(p.return_to_hub) && (p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION"));
+
+    const isEligibleForRthConfirmation = isCurrentRth || isLegacyRth;
+
+    if (!isEligibleForRthConfirmation) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Parcel is currently in '${p.status || p.delivery_status}' status and is not pending Return to Hub verification.`,
+        current_status: p.status,
+        delivery_status: p.delivery_status
+      });
+    }
+
     const previousStatus = p.status;
-    await pool.query(
+    await connection.query(
       `UPDATE parcels
        SET status = 'RTH_CONFIRMED',
            delivery_status = 'RETURN_TO_HUB',
@@ -3547,7 +3698,7 @@ async function coordinatorConfirmRth(req, res) {
       [req.user.user_id, notes || null, p.parcel_id]
     );
 
-    await recordParcelHistory(pool, {
+    await recordParcelHistory(connection, {
       parcelId: p.parcel_id,
       transactionNumber: p.transaction_number,
       previousStatus: previousStatus,
@@ -3568,7 +3719,9 @@ async function coordinatorConfirmRth(req, res) {
       riderId: p.rider_id
     });
 
-    res.json({
+    await connection.commit();
+
+    return res.json({
       success: true,
       message: "Parcel confirmed returned to hub successfully.",
       parcel_id: p.parcel_id,
@@ -3578,8 +3731,11 @@ async function coordinatorConfirmRth(req, res) {
       rth_confirmed_at: new Date().toISOString()
     });
   } catch (error) {
+    if (connection) await connection.rollback();
     console.error("coordinatorConfirmRth error:", error);
     res.status(500).json({ success: false, message: "Failed to confirm Return to Hub." });
+  } finally {
+    if (connection) connection.release();
   }
 }
 

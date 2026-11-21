@@ -6,6 +6,7 @@ import ScanPanel from "../components/qr/ScanPanel.jsx";
 import { EmptyState, Modal } from "../components/ui.jsx";
 import { btnDanger, btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, textareaCls, th } from "../components/styles.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import CoordinatorRthModal from "../components/coordinator/CoordinatorRthModal.jsx";
 import {
   decideDiscreetHandling,
   decideParcel,
@@ -13,6 +14,7 @@ import {
   getCoordinatorParcel,
   getVideoUrl,
   listParcels,
+  scanUnifiedQr,
 } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
@@ -77,6 +79,7 @@ export default function Verification() {
   const [scanOpen, setScanOpen] = useState(params.get("scan") === "1");
   const [looking, setLooking] = useState(false);
   const [lookupError, setLookupError] = useState("");
+  const [rthModalParcel, setRthModalParcel] = useState(null);
 
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState(null);
@@ -214,13 +217,21 @@ export default function Verification() {
     setLooking(true);
     setLookupError("");
     try {
+      const res = await scanUnifiedQr(value);
+      if (res?.success) {
+        if (res.action === "CONFIRM_RTH" || res.action === "RTH_ALREADY_CONFIRMED") {
+          setScanOpen(false);
+          setRthModalParcel(res.parcel);
+          return;
+        }
+      }
       const data = await findParcel(value, "coordinator");
       setScanOpen(false);
       setOpen(true);
       setDetailError("");
       applyDetail(data);
     } catch (e) {
-      setLookupError(e.message);
+      setLookupError(e.message || "Failed to scan parcel QR.");
     } finally {
       setLooking(false);
     }
@@ -710,6 +721,17 @@ export default function Verification() {
           </div>
         )}
       </Modal>
+
+      {rthModalParcel && (
+        <CoordinatorRthModal
+          parcel={rthModalParcel}
+          open={!!rthModalParcel}
+          onClose={() => setRthModalParcel(null)}
+          onConfirmed={() => {
+            load();
+          }}
+        />
+      )}
     </>
   );
 }

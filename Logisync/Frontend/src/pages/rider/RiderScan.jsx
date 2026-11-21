@@ -183,15 +183,15 @@ export default function RiderScan() {
         notes: actionNotes.trim(),
       });
       if (res?.success) {
-        if (res.rth_required || res.status === "RTH_PENDING") {
+        if (res.rth_required || res.status === "RETURN_TO_HUB" || res.status === "RTH_PENDING") {
           toast(
             `${parcel.transaction_number} reached maximum next-day delivery attempts (2 attempts). Automatically marked for Return to Hub.`,
             "error"
           );
           setParcel((prev) => ({
             ...prev,
-            status: "RTH_PENDING",
-            rth_status: "PENDING_CONFIRMATION",
+            status: "RETURN_TO_HUB",
+            rth_status: "PENDING",
             rth_reason: "Maximum delivery attempts reached",
           }));
         } else {
@@ -236,13 +236,13 @@ export default function RiderScan() {
       });
       if (res?.success) {
         toast(
-          `${parcel.transaction_number} marked for Return to Hub (Pending Coordinator Confirmation). Removed from active queue.`,
+          `${parcel.transaction_number} marked for Return to Hub. Removed from active queue.`,
           "error"
         );
         setParcel((prev) => ({
           ...prev,
-          status: "RTH_PENDING",
-          rth_status: "PENDING_CONFIRMATION",
+          status: "RETURN_TO_HUB",
+          rth_status: "PENDING",
           rth_reason: rthReason,
           rth_requested_at: new Date().toISOString(),
         }));
@@ -261,8 +261,11 @@ export default function RiderScan() {
   const isAssigned = scanContext?.assigned_to_current_rider !== false;
   const isDelivered = parcel?.status === "DELIVERED" || parcel?.delivery_status === "DELIVERED";
   const isRthPending =
+    parcel?.status === "RETURN_TO_HUB" ||
+    parcel?.status === "Return to Hub" ||
     parcel?.status === "RTH_PENDING" ||
     parcel?.status === "Return to Hub – Pending Confirmation" ||
+    parcel?.rth_status === "PENDING" ||
     parcel?.rth_status === "PENDING_CONFIRMATION";
   const isRthConfirmed =
     parcel?.status === "RTH_CONFIRMED" ||
@@ -348,10 +351,10 @@ export default function RiderScan() {
             </Notice>
           ) : isRthPending ? (
             <Notice tone="warn" icon="fa-warehouse" role="status">
-              <strong className="block">Return to Hub – Pending Confirmation</strong>
+              <strong className="block">Return to Hub</strong>
               <span>
                 You have marked this parcel for Return to Hub (Reason: {parcel.rth_reason || parcel.return_note || "Buyer refused"}).
-                Please physically bring this parcel to the Hub. It remains pending until the Coordinator scans and confirms receipt.
+                Please physically bring this parcel to the Hub for Coordinator physical verification.
               </span>
             </Notice>
           ) : isRthConfirmed ? (
@@ -634,7 +637,7 @@ export default function RiderScan() {
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[13px] text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
           <strong className="block font-bold">Buyer Cancelled / Refused / Damaged:</strong>
           <p className="mt-1">
-            This will mark the parcel as <strong>Return to Hub – Pending Confirmation</strong> and remove it from your active delivery queue. The Coordinator will physically verify and confirm receipt at the Hub.
+            This will immediately mark the parcel as <strong>Return to Hub</strong> and remove it from your active delivery queue. The Coordinator will physically verify and confirm receipt upon arrival at the Hub.
           </p>
         </div>
 
