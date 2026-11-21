@@ -7,6 +7,7 @@ import BentoKpiRow from "../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../components/dashboard/PortalHeroBanner.jsx";
 import DashboardRightRail from "../components/dashboard/DashboardRightRail.jsx";
 import RecentActivity from "../components/audit/RecentActivity.jsx";
+import CoordinatorRthSection from "../components/coordinator/CoordinatorRthSection.jsx";
 import { btnGhost, btnPrimary, inputCls } from "../components/styles.js";
 import {
   listParcels,
@@ -320,6 +321,9 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      {/* RETURN TO HUB (RTH) DEDICATED SECTION */}
+      <CoordinatorRthSection />
 
       {/* 2. ANALYTICS */}
       <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-chart-line mr-2 text-orange-500" />Analytics</h2>

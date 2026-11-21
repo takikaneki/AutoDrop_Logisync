@@ -5,7 +5,7 @@ import DeliveryTabs from "../../components/rider/DeliveryTabs.jsx";
 import { EmptyState, Modal, CodBadge } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, panel, textareaCls } from "../../components/styles.js";
-import { reportIncident } from "../../services/parcelService.js";
+import { reportIncident, riderRescheduleParcel, riderRequestRth } from "../../services/parcelService.js";
 import {
   FAIL_REASONS,
   MAX_RESCHEDULES,
@@ -448,6 +448,15 @@ export default function RiderDeliveries() {
       if (reason === "Other" && !note.trim()) return setError("Please explain the reason in the notes.");
       const result = markFailed(d.parcel_id, { reason, note: note.trim() });
       reportFailure(d, { reason, note: note.trim(), result });
+      if (result?.outcome === "recipient_refused" || result?.outcome === "return_to_hub" || isRecipientRefusal(reason)) {
+        riderRequestRth(d.parcel_id, { reason, notes: note.trim() }).catch(() => {});
+      } else {
+        riderRescheduleParcel(d.parcel_id, {
+          reason,
+          scheduledFor: result?.scheduledFor,
+          notes: note.trim(),
+        }).catch(() => {});
+      }
       if (result?.outcome === "recipient_refused") {
         toast(
           `Failed delivery report for ${d.transaction_number} sent to Coordinator in Messages. Awaiting Return-to-Hub decision.`,

@@ -22,7 +22,13 @@ const {
   reportRiderIncident,
   listRiderIncidents,
   confirmRiderIncident,
-  actionRiderIncident
+  actionRiderIncident,
+  scanUnified,
+  riderReschedule,
+  riderRequestRth,
+  coordinatorListRth,
+  coordinatorConfirmRth,
+  getParcelHistory
 } = require("../controllers/parcelController");
 const { authenticateToken, authorizeRoles, requireRiderType } = require("../middleware/auth");
 const { uploadVideo: uploadVideoMiddleware } = require("../middleware/upload");
@@ -43,6 +49,18 @@ router.get("/rider/mine", authenticateToken, authorizeRoles("rider"), listRiderP
 router.post("/rider/:parcelId/scan", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderScanParcel);
 router.post("/rider/:parcelId/delivered", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderDelivered);
 router.post("/rider/:parcelId/failed", authenticateToken, authorizeRoles("rider"), requireRiderType("LM"), riderFailed);
+router.post("/rider/:parcelId/reschedule", authenticateToken, authorizeRoles("rider"), riderReschedule);
+router.post("/rider/:parcelId/rth-request", authenticateToken, authorizeRoles("rider"), riderRequestRth);
+
+// Unified QR Code Scan (accessible to all authenticated roles)
+router.post("/scan-unified", authenticateToken, scanUnified);
+
+// Coordinator Return to Hub (ilagay bago ang /coordinator/:parcelId)
+router.get("/coordinator/rth", authenticateToken, authorizeRoles("coordinator"), coordinatorListRth);
+router.post("/coordinator/:parcelId/rth-confirm", authenticateToken, authorizeRoles("coordinator"), coordinatorConfirmRth);
+
+// Parcel Movement History
+router.get("/:parcelId/history", authenticateToken, getParcelHistory);
 
 router.post(
   "/",

@@ -36,8 +36,12 @@ import { enrichParcel } from "../services/parcelService.js";
 
 const statusIcons = {
   "In Transit": "fa-truck",
+  "Ready for Delivery": "fa-circle-check",
+  "Rescheduled for Delivery": "fa-calendar-day",
   Rescheduled: "fa-calendar-day",
   Delivered: "fa-check",
+  "Return to Hub – Pending Confirmation": "fa-clock-rotate-left",
+  "Return to Hub – Confirmed": "fa-warehouse",
   "Return to Hub": "fa-warehouse",
   "Failed Delivery": "fa-triangle-exclamation",
 };
@@ -45,8 +49,11 @@ const statusIcons = {
 const PAGE_SIZE = 10;
 const STATUS_OPTIONS = [
   "In Transit",
-  "Rescheduled",
+  "Ready for Delivery",
+  "Rescheduled for Delivery",
   "Delivered",
+  "Return to Hub – Pending Confirmation",
+  "Return to Hub – Confirmed",
   "Return to Hub",
   "Failed Delivery",
   "Failed / Return to Hub",
@@ -70,10 +77,14 @@ function mapParcel(rawParcel, index) {
   const iso = validDate ? date.toISOString().slice(0, 10) : parcel.iso || "";
 
   let resolvedStatus = getParcelStatus(parcel);
-  if (parcel.returnToHub) {
+  if (parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED") {
+    resolvedStatus = "Return to Hub – Confirmed";
+  } else if (parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING") {
+    resolvedStatus = "Return to Hub – Pending Confirmation";
+  } else if (parcel.returnToHub) {
     resolvedStatus = "Return to Hub";
   } else if (parcel.rescheduled && resolvedStatus !== "Delivered") {
-    resolvedStatus = "Rescheduled";
+    resolvedStatus = "Rescheduled for Delivery";
   }
 
   return {

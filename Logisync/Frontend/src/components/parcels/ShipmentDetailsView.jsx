@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getRole } from "../../api.js";
-import { getVideoUrl } from "../../services/parcelService.js";
+import { getVideoUrl, fetchParcelHistory } from "../../services/parcelService.js";
 import { getParcelAddress } from "../../store/customers.js";
 import { toast } from "../../store/toast.js";
 import { formatDate, formatDay, formatSize } from "../../utils/format.js";
-import { btnPrimary, panel } from "../styles.js";
+import { btnGhost, btnPrimary, panel } from "../styles.js";
+import UnifiedQrModal from "../qr/UnifiedQrModal.jsx";
+import StatusBadge from "../StatusBadge.jsx";
 
 function shortParcelId(id) {
   const str = String(id || "").trim();
@@ -161,6 +163,28 @@ function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [
 function resolveDeliveryBanner(parcel) {
   const s = String(parcel?.status || "").toUpperCase();
   const delStatus = String(parcel?.delivery_status || "").toUpperCase();
+  const rthConfirmed = parcel?.rth_status === "CONFIRMED" || s === "RTH_CONFIRMED";
+  const rthPending = parcel?.rth_status === "PENDING_CONFIRMATION" || s === "RTH_PENDING";
+
+  if (rthConfirmed) {
+    return {
+      status: "Return to Hub – Confirmed",
+      timestamp: formatDate(parcel?.rth_confirmed_at || parcel?.updated_at),
+      bg: "bg-[#f3e8ff] border-[#d8b4fe] text-[#6b21a8] dark:bg-[#581c87]/30 dark:border-[#9333ea]/40 dark:text-[#d8b4fe]",
+      iconBg: "bg-[#7c3aed] text-white",
+      icon: "fa-warehouse",
+    };
+  }
+
+  if (rthPending) {
+    return {
+      status: "Return to Hub – Pending Confirmation",
+      timestamp: formatDate(parcel?.rth_requested_at || parcel?.updated_at),
+      bg: "bg-[#fff7ed] border-[#fed7aa] text-[#9a3412] dark:bg-[#7c2d12]/30 dark:border-[#ea580c]/40 dark:text-[#fed7aa]",
+      iconBg: "bg-[#ea580c] text-white",
+      icon: "fa-clock-rotate-left",
+    };
+  }
 
   if (s === "DELIVERED" || delStatus === "DELIVERED" || parcel?.delivered_at) {
     return {
@@ -468,6 +492,27 @@ export default function ShipmentDetailsView({
   const [activeTab, setActiveTab] = useState("shipment");
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [historyList, setHistoryList] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === "history" && !historyLoaded) {
+      const targetId = parcel?.parcel_id || parcel?.transaction_number;
+      if (!targetId) return;
+      setHistoryLoading(true);
+      fetchParcelHistory(targetId)
+        .then((res) => {
+          if (res?.success) setHistoryList(res.history || []);
+        })
+        .catch(() => {})
+        .finally(() => {
+          setHistoryLoading(false);
+          setHistoryLoaded(true);
+        });
+    }
+  }, [activeTab, historyLoaded, parcel]);
 
   // Video & Photo modal viewer states
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -577,6 +622,7 @@ export default function ShipmentDetailsView({
   const TABS = [
     { id: "shipment", label: "Shipment" },
     { id: "details", label: "Details" },
+    { id: "history", label: "Movement History", icon: "fa-solid fa-clock-rotate-left" },
     { id: "documents", label: "Documents", icon: "fa-regular fa-file-lines" },
   ];
 
@@ -605,9 +651,19 @@ export default function ShipmentDetailsView({
                 <span>{backLabel}</span>
               </Link>
             )}
-            <h1 className="mt-1.5 text-[24px] sm:text-[26px] font-extrabold tracking-tight text-[#1e293b] dark:text-white">
-              Shipment Details
-            </h1>
+            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-3">
+              <h1 className="text-[24px] sm:text-[26px] font-extrabold tracking-tight text-[#1e293b] dark:text-white">
+                Shipment Details
+              </h1>
+              <button
+                type="button"
+                onClick={() => setQrModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-2 text-[13px] font-bold text-orange-700 shadow-sm transition hover:bg-orange-100 dark:border-brand/40 dark:bg-brand/10 dark:text-orange-300"
+              >
+                <i className="fa-solid fa-qrcode" />
+                <span>View Unified QR Code</span>
+              </button>
+            </div>
           </div>
 
           {/* 3 Tabs directly below the page heading */}
@@ -855,6 +911,74 @@ export default function ShipmentDetailsView({
               </section>
 
               {coordinatorSlot}
+            </div>
+          )}
+
+          {/* TAB: MOVEMENT HISTORY (Immutable Audit & Movement Timeline) */}
+          {activeTab === "history" && (
+            <div className="space-y-4">
+              <section className={`${panel} p-6 max-[600px]:p-4`}>
+                <div className="mb-4 flex items-center justify-between border-b border-[#e5e7eb] pb-3 dark:border-night-line">
+                  <div>
+                    <h2 className="text-[16px] font-bold text-[#1e293b] dark:text-white">
+                      Parcel Movement & Audit History
+                    </h2>
+                    <p className="text-[12px] text-[#64748b] dark:text-[#9c948c]">
+                      Immutable audit log of all status transitions, actors, and hub confirmations.
+                    </p>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-[#64748b]">
+                    {parcel?.transaction_number || parcel?.parcel_id}
+                  </span>
+                </div>
+
+                {historyLoading ? (
+                  <div className="py-10 text-center text-[13px] text-[#64748b]">
+                    <i className="fa-solid fa-circle-notch fa-spin mr-2 text-brand" />
+                    Loading movement history…
+                  </div>
+                ) : historyList.length === 0 ? (
+                  <div className="py-8 text-center text-[13px] text-[#64748b]">
+                    <i className="fa-solid fa-clock-rotate-left mb-2 block text-2xl text-[#94a3b8]" />
+                    No movement events recorded yet.
+                  </div>
+                ) : (
+                  <ol className="relative space-y-6 border-l-2 border-[#e5e7eb] pl-4 dark:border-night-line">
+                    {historyList.map((item, idx) => (
+                      <li key={item.history_id || idx} className="relative">
+                        <span className="absolute -left-[23px] top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand ring-4 ring-white dark:ring-night-panel" />
+                        <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-3.5 dark:border-night-line dark:bg-night-soft">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-bold text-[#1e293b] dark:text-white">
+                              {item.previous_status ? `${item.previous_status} → ` : ""}{item.new_status}
+                            </span>
+                            <span className="text-xs text-[#64748b] dark:text-[#9c948c]">
+                              {formatDate(item.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="mt-1.5 text-xs text-[#64748b] dark:text-[#9c948c]">
+                            Action by: <strong className="text-[#334155] dark:text-[#e2e8f0]">{item.actor_name || "System"}</strong> ({item.actor_role || "User"} #{item.actor_id || "—"})
+                          </div>
+
+                          {item.reason && (
+                            <div className="mt-2 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-800 dark:bg-red-950/30 dark:text-red-300">
+                              <i className="fa-solid fa-triangle-exclamation mr-1.5" />
+                              Reason: {item.reason}
+                            </div>
+                          )}
+
+                          {item.notes && (
+                            <p className="mt-1.5 text-xs italic text-[#475569] dark:text-[#cbd5e1]">
+                              "{item.notes}"
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
             </div>
           )}
 
@@ -1166,6 +1290,15 @@ export default function ShipmentDetailsView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Unified Permanent QR Modal */}
+      {qrModalOpen && (
+        <UnifiedQrModal
+          parcel={parcel}
+          open={qrModalOpen}
+          onClose={() => setQrModalOpen(false)}
+        />
       )}
     </div>
   );

@@ -41,13 +41,17 @@ export const enrichParcel = (p) => {
     }
   }
 
-  if (p.delivery_status || p.rescheduled || p.return_to_hub) {
+  if (p.delivery_status || p.rescheduled || p.return_to_hub || p.rth_status || p.status === "RTH_PENDING" || p.status === "RTH_CONFIRMED" || p.status === "RESCHEDULED") {
     let status = next.status;
     if (p.delivery_status === "DELIVERED" || p.delivered_at) {
       status = "DELIVERED";
+    } else if (p.rth_status === "CONFIRMED" || p.status === "RTH_CONFIRMED") {
+      status = "RTH_CONFIRMED";
+    } else if (p.rth_status === "PENDING_CONFIRMATION" || p.status === "RTH_PENDING") {
+      status = "RTH_PENDING";
     } else if (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB") {
       status = "RETURN_TO_HUB";
-    } else if (p.rescheduled && p.delivery_status === "TO_DELIVER") {
+    } else if ((p.rescheduled || p.status === "RESCHEDULED") && (p.delivery_status === "TO_DELIVER" || !p.delivery_status)) {
       status = "RESCHEDULED";
     } else if (p.delivery_status === "TO_DELIVER") {
       status = "OUT_FOR_DELIVERY";
@@ -58,15 +62,20 @@ export const enrichParcel = (p) => {
     next = {
       ...next,
       status,
-      rescheduled: Boolean(p.rescheduled),
-      scheduledFor: p.scheduled_for || null,
-      rescheduleCount: Number(p.reschedule_count || 0),
+      rth_status: p.rth_status || (status === "RTH_CONFIRMED" ? "CONFIRMED" : status === "RTH_PENDING" ? "PENDING_CONFIRMATION" : null),
+      rth_reason: p.rth_reason || "",
+      rth_requested_at: p.rth_requested_at || null,
+      rth_confirmed_at: p.rth_confirmed_at || null,
+      rth_confirmed_notes: p.rth_confirmed_notes || "",
+      rescheduled: Boolean(p.rescheduled || p.status === "RESCHEDULED"),
+      scheduledFor: p.scheduled_for || p.scheduledFor || null,
+      rescheduleCount: Number(p.reschedule_count || p.rescheduleCount || 0),
       maxReschedules: 3,
       attempts: dbAttempts,
       lastFailure: p.last_failure || p.delivery_note || "",
-      returnToHub: Boolean(p.return_to_hub || p.delivery_status === "RETURN_TO_HUB"),
-      returnCoordinated: Boolean(p.return_coordinated),
-      returnNote: p.return_note || "",
+      returnToHub: Boolean(p.return_to_hub || p.delivery_status === "RETURN_TO_HUB" || p.rth_status),
+      returnCoordinated: Boolean(p.return_coordinated || p.rth_confirmed_at),
+      returnNote: p.return_note || p.rth_confirmed_notes || "",
     };
   }
 
@@ -303,3 +312,39 @@ export const actionIncident = (incidentId, { action, notes = "", new_date = "", 
 
 // GET /api/parcels/videos/:videoId (coordinator lang) -> blob URL
 export const getVideoUrl = (videoId) => apiBlobUrl(`/parcels/videos/${enc(videoId)}`);
+
+// Unified QR Code Scan (Roles: Rider, Coordinator, Seller)
+export const scanUnifiedQr = (code) =>
+  api("/parcels/scan-unified", {
+    method: "POST",
+    body: { code },
+  });
+
+// Rider: Reschedule for delivery (Buyer Unavailable)
+export const riderRescheduleParcel = (parcelId, { reason, scheduledFor, notes } = {}) =>
+  api(`/parcels/rider/${enc(parcelId)}/reschedule`, {
+    method: "POST",
+    body: { reason, scheduledFor, notes },
+  });
+
+// Rider: Return to Hub request (Buyer Cancelled / Refused / etc.)
+export const riderRequestRth = (parcelId, { reason, notes } = {}) =>
+  api(`/parcels/rider/${enc(parcelId)}/rth-request`, {
+    method: "POST",
+    body: { reason, notes },
+  });
+
+// Coordinator: List all RTH parcels (pending & confirmed)
+export const fetchCoordinatorRth = () =>
+  api("/parcels/coordinator/rth");
+
+// Coordinator: Confirm Return to Hub
+export const confirmCoordinatorRth = (parcelId, { notes } = {}) =>
+  api(`/parcels/coordinator/${enc(parcelId)}/rth-confirm`, {
+    method: "POST",
+    body: { notes },
+  });
+
+// Complete movement and status history for a parcel
+export const fetchParcelHistory = (parcelId) =>
+  api(`/parcels/${enc(parcelId)}/history`);

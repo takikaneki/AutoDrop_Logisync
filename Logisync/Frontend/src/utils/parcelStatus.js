@@ -12,11 +12,20 @@ const STATUS = {
   PENDING: { label: "Pending", cls: gray },
   WAITING_FOR_VIDEO: { label: "Waiting for video", cls: blue },
   VIDEO_SUBMITTED: { label: "Under verification", cls: amber },
-  VERIFIED: { label: "Verified", cls: green },
+  VERIFIED: { label: "Ready for Delivery", cls: green },
+  READY_FOR_DELIVERY: { label: "Ready for Delivery", cls: green },
+  "Ready for Delivery": { label: "Ready for Delivery", cls: green },
   REJECTED: { label: "Rejected", cls: red },
   REUPLOAD_REQUESTED: { label: "Reupload requested", cls: orange },
-  RESCHEDULED: { label: "Rescheduled", cls: amber },
-  Rescheduled: { label: "Rescheduled", cls: amber },
+  RESCHEDULED: { label: "Rescheduled for Delivery", cls: amber },
+  Rescheduled: { label: "Rescheduled for Delivery", cls: amber },
+  "Rescheduled for Delivery": { label: "Rescheduled for Delivery", cls: amber },
+  RTH_PENDING: { label: "Return to Hub – Pending Confirmation", cls: orange },
+  "Return to Hub – Pending Confirmation": { label: "Return to Hub – Pending Confirmation", cls: orange },
+  "Return to Hub - Pending Confirmation": { label: "Return to Hub – Pending Confirmation", cls: orange },
+  RTH_CONFIRMED: { label: "Return to Hub – Confirmed", cls: purple },
+  "Return to Hub – Confirmed": { label: "Return to Hub – Confirmed", cls: purple },
+  "Return to Hub - Confirmed": { label: "Return to Hub – Confirmed", cls: purple },
   RETURN_TO_HUB: { label: "Return to Hub", cls: purple },
   "Return to Hub": { label: "Return to Hub", cls: purple },
   DELIVERY_HOLD: { label: "Delivery Hold", cls: amber },
@@ -27,12 +36,19 @@ const STATUS = {
   "Failed Delivery": { label: "Failed Delivery", cls: red },
 };
 
-// Delivery label na ginagamit ng Parcels page AT ng Dashboard cards, kaya laging tugma ang bilang
-// ng card sa listahang bubukas kapag na-click: "Delivered" | "Return to Hub" | "Rescheduled" | "Failed Delivery" | "In Transit".
+// Delivery label na ginagamit ng Parcels page AT ng Dashboard cards
 export function getParcelStatus(parcel) {
   if (!parcel) return "In Transit";
   const status = String(parcel.delivery_status || "").toLowerCase();
   const parcelStatus = String(parcel.status || "").toLowerCase();
+  const rthStatus = String(parcel.rth_status || "").toUpperCase();
+
+  if (rthStatus === "CONFIRMED" || parcelStatus === "rth_confirmed" || parcelStatus.includes("confirmed")) {
+    return "Return to Hub – Confirmed";
+  }
+  if (rthStatus === "PENDING_CONFIRMATION" || parcelStatus === "rth_pending" || parcelStatus.includes("pending confirmation")) {
+    return "Return to Hub – Pending Confirmation";
+  }
 
   if (parcel.delivery_hold) {
     return "Delivery Hold";
@@ -52,8 +68,11 @@ export function getParcelStatus(parcel) {
   if (status === "failed" || status === "failed delivery" || parcelStatus === "failed" || parcelStatus === "failed delivery") {
     return "Failed Delivery";
   }
-  if (parcel.rescheduled || status === "rescheduled" || parcelStatus === "rescheduled") {
-    return "Rescheduled";
+  if (parcel.rescheduled || status === "rescheduled" || parcelStatus === "rescheduled" || parcelStatus === "rescheduled for delivery") {
+    return "Rescheduled for Delivery";
+  }
+  if (parcel.verification_status === "VERIFIED" || parcelStatus === "verified" || parcelStatus === "ready for delivery") {
+    return "Ready for Delivery";
   }
   return "In Transit";
 }
