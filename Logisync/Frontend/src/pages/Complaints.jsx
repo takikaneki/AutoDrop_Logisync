@@ -211,8 +211,60 @@ export default function Complaints() {
         subtitle="Tickets from sellers and riders that need a coordinator's attention."
       />
 
-      {/* Summary KPI Cards */}
-      <section className="grid grid-cols-3 gap-5 mb-7 max-[700px]:grid-cols-1">
+      {/* MOBILE HORIZONTAL FILTER BAR (max-[820px] ONLY) */}
+      <div
+        role="tablist"
+        aria-label="Filter complaints by status"
+        className="-mx-3.5 -mt-3.5 mb-4 max-[380px]:-mx-2.5 grid grid-cols-4 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95"
+      >
+        {[
+          { key: "All", label: "All", count: normalizedComplaints.length },
+          ...counts.map(([s, n]) => ({
+            key: s,
+            label: s === "In Progress" ? "Progress" : s,
+            count: n,
+          })),
+        ].map((tab) => {
+          const active = status === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setStatus(tab.key);
+                setPage(1);
+              }}
+              className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11.5px] max-[360px]:text-[10.5px] leading-tight transition ${
+                active
+                  ? "font-extrabold text-brand"
+                  : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
+              }`}
+            >
+              <span className="truncate">{tab.label}</span>
+              <span
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                  active
+                    ? "bg-brand/12 text-brand"
+                    : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
+                }`}
+              >
+                {tab.count}
+              </span>
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-2 bottom-0 h-[2.5px] rounded-full bg-brand"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Desktop Summary KPI Cards (min-[821px] — 100% unchanged) */}
+      <section className="hidden min-[821px]:grid grid-cols-3 gap-5 mb-7">
         {counts.map(([s, n]) => {
           const topBorder =
             s === "Open"
