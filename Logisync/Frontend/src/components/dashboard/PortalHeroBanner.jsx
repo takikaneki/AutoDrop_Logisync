@@ -66,19 +66,19 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
             </p>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2.5 max-[600px]:grid max-[600px]:grid-cols-2">
+          <div className="mt-5 flex flex-wrap items-center gap-2.5 max-[600px]:grid max-[600px]:grid-cols-2 max-[600px]:items-stretch">
             <Link
               to={cfg.primary.to}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ee4d2d] px-4 py-2.5 text-[13.5px] font-bold text-white shadow-[0_8px_18px_-8px_rgba(238,77,45,0.65)] transition hover:bg-[#d94122]"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#ee4d2d] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-bold text-white shadow-[0_8px_18px_-8px_rgba(238,77,45,0.65)] transition hover:bg-[#d94122]"
             >
-              <i className={`fa-solid ${cfg.primary.icon}`} />
+              <i className={`fa-solid ${cfg.primary.icon} shrink-0`} />
               <span>{cfg.primary.label}</span>
             </Link>
             <Link
               to={cfg.secondary.to}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#e5e8ee] bg-[#f8fafc] px-4 py-2.5 text-[13.5px] font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f1f5f9] dark:border-night-line dark:bg-night-head dark:text-[#e2ddd8] dark:hover:bg-[#352f2b]"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#e5e8ee] bg-[#f8fafc] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f1f5f9] dark:border-night-line dark:bg-night-head dark:text-[#e2ddd8] dark:hover:bg-[#352f2b]"
             >
-              <i className={`fa-solid ${cfg.secondary.icon}`} />
+              <i className={`fa-solid ${cfg.secondary.icon} shrink-0`} />
               <span>{cfg.secondary.label}</span>
             </Link>
           </div>
