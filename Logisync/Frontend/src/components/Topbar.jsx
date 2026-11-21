@@ -91,6 +91,8 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
       : pathname.startsWith("/audit")
         ? "/settings"
         : pathname.startsWith("/accounts") ||
+            pathname.startsWith("/riders") ||
+            pathname.startsWith("/sellers") ||
             pathname.startsWith("/complaints") ||
             pathname.startsWith("/help") ||
             pathname.startsWith("/about") ||

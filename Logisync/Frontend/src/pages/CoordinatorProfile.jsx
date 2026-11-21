@@ -48,6 +48,20 @@ export default function CoordinatorProfile() {
         to: "/accounts",
       },
       {
+        key: "riders",
+        label: "Riders",
+        icon: "fa-solid fa-motorcycle",
+        to: "/riders",
+      },
+      {
+        key: "sellers",
+        label: "Sellers",
+        icon: "fa-solid fa-store",
+        to: "/sellers",
+      },
+    ],
+    [
+      {
         key: "analytics",
         label: "Analytics",
         icon: "fa-solid fa-chart-simple",
