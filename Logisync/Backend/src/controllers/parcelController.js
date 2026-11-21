@@ -852,15 +852,15 @@ async function createParcel(req, res) {
       },
       customer: savedCustomer
         ? {
-            name: savedCustomer.receiver_name,
-            contact: savedCustomer.receiver_contact,
-            address: savedCustomer.receiver_address,
-            house_number: savedCustomer.receiver_house_number || "",
-            street: savedCustomer.receiver_street || "",
-            barangay: savedCustomer.receiver_barangay || "",
-            city: savedCustomer.receiver_city || "",
-            province: savedCustomer.receiver_province || ""
-          }
+          name: savedCustomer.receiver_name,
+          contact: savedCustomer.receiver_contact,
+          address: savedCustomer.receiver_address,
+          house_number: savedCustomer.receiver_house_number || "",
+          street: savedCustomer.receiver_street || "",
+          barangay: savedCustomer.receiver_barangay || "",
+          city: savedCustomer.receiver_city || "",
+          province: savedCustomer.receiver_province || ""
+        }
         : null
     });
   } catch (error) {
@@ -2275,10 +2275,10 @@ async function finishDelivery(req, res, outcome) {
         outcome === "DELIVERED"
           ? "Delivered parcel"
           : isReturnToHub
-          ? `Requested Return to Hub (${rthReason})`
-          : isRescheduled
-          ? `Rescheduled delivery attempt (Next-Day Attempt ${nextDayCount}/2)`
-          : "Failed delivery",
+            ? `Requested Return to Hub (${rthReason})`
+            : isRescheduled
+              ? `Rescheduled delivery attempt (Next-Day Attempt ${nextDayCount}/2)`
+              : "Failed delivery",
       target: parcel.parcel_id,
       detail: note || reason || rthReason || null,
       sellerId: parcel.seller_id,
@@ -2935,65 +2935,65 @@ async function scanUnified(req, res) {
         max_next_day_attempts: 2,
         parcel
       });
-        parcel
-      });
-    }
+      parcel
+    });
+  }
 
     // ROLE: COORDINATOR
     if (role === "coordinator") {
-      const isRthPending = parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING" || (parcel.return_to_hub && !parcel.rth_confirmed_at);
-      const isRthConfirmed = parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED";
+    const isRthPending = parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RTH_PENDING" || (parcel.return_to_hub && !parcel.rth_confirmed_at);
+    const isRthConfirmed = parcel.rth_status === "CONFIRMED" || parcel.status === "RTH_CONFIRMED";
 
-      if (isRthPending) {
-        return res.json({
-          success: true,
-          role: "coordinator",
-          action: "CONFIRM_RTH",
-          displayStatus: "Return to Hub – Pending Confirmation",
-          currentConfirmationStatus: "Pending Confirmation",
-          message: "Parcel marked for Return to Hub by Rider. Verify physical return and confirm.",
-          parcel
-        });
-      }
-
-      if (isRthConfirmed) {
-        return res.json({
-          success: true,
-          role: "coordinator",
-          action: "RTH_ALREADY_CONFIRMED",
-          displayStatus: "Return to Hub – Confirmed",
-          currentConfirmationStatus: "Confirmed",
-          message: "This parcel was already confirmed returned to the hub.",
-          parcel
-        });
-      }
-
-      if (parcel.status === "VIDEO_SUBMITTED" || parcel.status === "WAITING_FOR_VIDEO") {
-        return res.json({
-          success: true,
-          role: "coordinator",
-          action: "VERIFY_VIDEO",
-          displayStatus: parcel.status,
-          message: "Parcel verification queue.",
-          parcel
-        });
-      }
-
+    if (isRthPending) {
       return res.json({
         success: true,
         role: "coordinator",
-        action: "VIEW_STATUS",
-        displayStatus,
-        message: `Parcel current status: ${displayStatus}`,
+        action: "CONFIRM_RTH",
+        displayStatus: "Return to Hub – Pending Confirmation",
+        currentConfirmationStatus: "Pending Confirmation",
+        message: "Parcel marked for Return to Hub by Rider. Verify physical return and confirm.",
         parcel
       });
     }
 
-    return res.status(403).json({ success: false, message: "Unauthorized role." });
-  } catch (error) {
-    console.error("scanUnified error:", error);
-    res.status(500).json({ success: false, message: "Failed to process unified QR scan." });
+    if (isRthConfirmed) {
+      return res.json({
+        success: true,
+        role: "coordinator",
+        action: "RTH_ALREADY_CONFIRMED",
+        displayStatus: "Return to Hub – Confirmed",
+        currentConfirmationStatus: "Confirmed",
+        message: "This parcel was already confirmed returned to the hub.",
+        parcel
+      });
+    }
+
+    if (parcel.status === "VIDEO_SUBMITTED" || parcel.status === "WAITING_FOR_VIDEO") {
+      return res.json({
+        success: true,
+        role: "coordinator",
+        action: "VERIFY_VIDEO",
+        displayStatus: parcel.status,
+        message: "Parcel verification queue.",
+        parcel
+      });
+    }
+
+    return res.json({
+      success: true,
+      role: "coordinator",
+      action: "VIEW_STATUS",
+      displayStatus,
+      message: `Parcel current status: ${displayStatus}`,
+      parcel
+    });
   }
+
+  return res.status(403).json({ success: false, message: "Unauthorized role." });
+} catch (error) {
+  console.error("scanUnified error:", error);
+  res.status(500).json({ success: false, message: "Failed to process unified QR scan." });
+}
 }
 
 // POST /api/parcels/rider/:parcelId/reschedule
@@ -3261,8 +3261,8 @@ async function riderReschedule(req, res) {
       notes: isReturnToHub
         ? `Automatic RTH: Second next-day delivery attempt unsuccessful. Reason: Maximum delivery attempts reached.`
         : nextDayCount === 0
-        ? `Initial delivery attempt failed (${reason}). Scheduled for Next Day Delivery Attempt 1 (${scheduledFor}).`
-        : `Next Day Delivery Attempt 1 failed (${reason}). Scheduled for Next Day Delivery Attempt 2 (${scheduledFor}).`
+          ? `Initial delivery attempt failed (${reason}). Scheduled for Next Day Delivery Attempt 1 (${scheduledFor}).`
+          : `Next Day Delivery Attempt 1 failed (${reason}). Scheduled for Next Day Delivery Attempt 2 (${scheduledFor}).`
     });
 
     await logAudit(req.user, {
