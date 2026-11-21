@@ -310,6 +310,75 @@ export default function Sellers() {
         }
       />
 
+      {/* MOBILE LALAMOVE-STYLE HORIZONTAL FILTER BAR (max-[820px] ONLY) */}
+      <div
+        role="tablist"
+        aria-label="Filter sellers by status"
+        className="-mx-3.5 -mt-3.5 mb-3 max-[380px]:-mx-2.5 grid grid-cols-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95"
+      >
+        {[
+          { key: "All", label: "All", count: sellers.length },
+          { key: "Active", label: "Active", count: sellers.filter((x) => x.status === "Active").length },
+          { key: "Inactive", label: "Inactive", count: sellers.filter((x) => x.status === "Inactive").length },
+        ].map((tab) => {
+          const active = status === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setStatus(tab.key);
+                setPage(1);
+              }}
+              className={`relative flex items-center justify-center gap-1.5 px-2 py-3.5 text-[12.5px] leading-tight transition ${
+                active
+                  ? "font-extrabold text-brand"
+                  : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
+              }`}
+            >
+              <span className="truncate">{tab.label}</span>
+              <span
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                  active
+                    ? "bg-brand/12 text-brand"
+                    : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
+                }`}
+              >
+                {loading ? "…" : tab.count}
+              </span>
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-brand"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* MOBILE COMPACT ACTION ROW (below filter bar, upper-right) */}
+      <div className="mb-3 flex items-center justify-end gap-2 min-[821px]:hidden">
+        <button
+          type="button"
+          onClick={loadData}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-bold text-slate-600 transition active:scale-95 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+        >
+          <i className="fa-solid fa-rotate text-[11px]" />
+          <span>Refresh</span>
+        </button>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-[12.5px] font-bold text-white shadow-xs transition active:scale-95 hover:bg-brand-dark"
+        >
+          <i className="fa-solid fa-plus text-[11px]" />
+          <span>Add Seller</span>
+        </button>
+      </div>
+
       {error && (
         <div className="mb-5">
           <Notice tone="error" icon="fa-circle-exclamation" role="alert">
@@ -318,26 +387,28 @@ export default function Sellers() {
         </div>
       )}
 
-      <StatGrid cols={3}>
-        <StatCard
-          label="Total sellers"
-          value={loading ? "…" : sellers.length}
-          icon="fa-store"
-          tone="orange"
-        />
-        <StatCard
-          label="Active"
-          value={loading ? "…" : sellers.filter((x) => x.status === "Active").length}
-          icon="fa-circle-check"
-          tone="green"
-        />
-        <StatCard
-          label="Inactive"
-          value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
-          icon="fa-ban"
-          tone="red"
-        />
-      </StatGrid>
+      <div className="hidden min-[821px]:block">
+        <StatGrid cols={3}>
+          <StatCard
+            label="Total sellers"
+            value={loading ? "…" : sellers.length}
+            icon="fa-store"
+            tone="orange"
+          />
+          <StatCard
+            label="Active"
+            value={loading ? "…" : sellers.filter((x) => x.status === "Active").length}
+            icon="fa-circle-check"
+            tone="green"
+          />
+          <StatCard
+            label="Inactive"
+            value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
+            icon="fa-ban"
+            tone="red"
+          />
+        </StatGrid>
+      </div>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         <div className="mb-5 grid grid-cols-[1fr_200px] gap-3 max-[700px]:grid-cols-1">
