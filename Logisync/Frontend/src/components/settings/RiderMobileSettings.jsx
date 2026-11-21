@@ -430,35 +430,6 @@ export default function RiderMobileSettings() {
               ))}
             </div>
 
-            <div>
-              <h2 className="mb-2 px-1 text-[13px] font-extrabold tracking-wide text-slate-500 uppercase dark:text-[#b8b0a8]">
-                Legal Information
-              </h2>
-              <div className={`${cardCls} divide-y divide-slate-100 dark:divide-night-line`}>
-                {[
-                  { key: "privacy", icon: "fa-solid fa-shield-halved", title: "Privacy Policy" },
-                  { key: "about", icon: "fa-solid fa-circle-info", title: "About LOGISYNC" },
-                ].map((row) => (
-                  <button
-                    key={row.key}
-                    type="button"
-                    onClick={() => openSection(row.key)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70"
-                  >
-                    <span className="flex min-w-0 items-center gap-3.5">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                        <i className={`${row.icon} text-[15px]`} />
-                      </span>
-                      <span className="truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
-                        {row.title}
-                      </span>
-                    </span>
-                    <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-slate-400" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <button
               type="button"
               onClick={() => setLogoutOpen(true)}
