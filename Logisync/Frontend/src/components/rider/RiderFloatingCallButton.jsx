@@ -23,8 +23,6 @@ export default function RiderFloatingCallButton() {
   const [loading, setLoading] = useState(false);
 
   const hideOnCleanScreens =
-    pathname === "/rider" ||
-    pathname === "/rider/" ||
     pathname.startsWith("/rider/profile") ||
     pathname.startsWith("/rider/settings") ||
     pathname.startsWith("/rider/analytics");
@@ -77,18 +75,15 @@ export default function RiderFloatingCallButton() {
 
   return (
     <>
-      {/* Mobile-only floating call button (bottom-left) */}
+      {/* Mobile-only floating call icon button (bottom-right) */}
       <button
         type="button"
         onClick={handleClick}
         aria-label="Call Coordinator"
         title="Call Coordinator"
-        className="fixed bottom-[86px] left-3.5 z-30 min-[821px]:hidden flex items-center gap-2 rounded-full bg-brand px-3.5 py-2.5 text-xs font-bold text-white shadow-[0_4px_16px_rgba(255,104,24,0.35)] transition-all active:scale-95 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-night-bg print:hidden"
+        className="fixed bottom-[82px] right-4 z-30 min-[821px]:hidden flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow-[0_6px_20px_rgba(238,77,45,0.42)] ring-2 ring-white/80 transition-all active:scale-95 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:ring-night-panel dark:focus:ring-offset-night-bg print:hidden"
       >
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
-          <i className="fa-solid fa-phone text-[10px]" />
-        </span>
-        <span className="leading-none">Call Coordinator</span>
+        <i className="fa-solid fa-phone text-[18px]" />
       </button>
 
       {/* Call Coordinator Modal */}

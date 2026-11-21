@@ -60,9 +60,16 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
 
   const isHomeDashboard = title === "Dashboard";
 
-  // Rider Portal Mobile (max-[820px]): clean back-arrow + centered title bar (matches Settings mobile header).
+  // Rider Portal Mobile (max-[820px]): clean sticky header bar (matches Settings mobile header).
+  // Top-level bottom-nav tabs (/rider/deliveries, /rider/scan, /rider/messages) have NO back button;
+  // sub-pages opened from Profile (/rider/help, /rider/complaints, etc.) keep the back arrow.
   // Desktop Rider (min-[821px]), Seller, and Coordinator remain 100% unchanged.
   if (isRider && !isHomeDashboard) {
+    const isTopLevelTab =
+      pathname === "/rider/deliveries" ||
+      pathname === "/rider/scan" ||
+      pathname === "/rider/messages";
+
     const fallbackBack =
       pathname.startsWith("/rider/help") ||
       pathname.startsWith("/rider/complaints") ||
@@ -82,14 +89,18 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
     return (
       <>
         <header className="sticky top-14 z-30 -mx-3.5 -mt-3.5 mb-3.5 max-[380px]:-mx-2.5 flex h-[52px] items-center justify-between border-b border-slate-200/80 bg-white/95 px-3 backdrop-blur-md min-[821px]:hidden print:hidden dark:border-night-line dark:bg-night-panel/95">
-          <button
-            type="button"
-            onClick={handleRiderBack}
-            aria-label="Go back"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
-          >
-            <i className="fa-solid fa-arrow-left text-[17px]" />
-          </button>
+          {isTopLevelTab ? (
+            <span className="h-10 w-10 shrink-0" aria-hidden="true" />
+          ) : (
+            <button
+              type="button"
+              onClick={handleRiderBack}
+              aria-label="Go back"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
+            >
+              <i className="fa-solid fa-arrow-left text-[17px]" />
+            </button>
+          )}
           <h1 className="min-w-0 flex-1 truncate px-2 text-center text-[16.5px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
             {label}
           </h1>
