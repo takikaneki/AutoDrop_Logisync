@@ -74,9 +74,6 @@ export default function Footer() {
       <div className="mt-5 max-[800px]:mt-3.5 flex flex-wrap items-center justify-between gap-3 max-[800px]:gap-2 border-t border-[#eee] py-4 max-[800px]:py-3 text-[12px] max-[800px]:text-[11.5px] text-[#aaa] dark:border-night-line">
         <span>© 2026 LogiSync. All rights reserved.</span>
         <span className="flex items-center gap-4">
-          <button type="button" onClick={() => setDoc("terms")} className="hover:text-brand">
-            Terms and Conditions
-          </button>
           <button type="button" onClick={() => setDoc("privacy")} className="hover:text-brand">
             Privacy Policy
           </button>

@@ -15,7 +15,6 @@ import {
   POLICY_VERSION,
   PRIVACY_SECTIONS,
   REPUBLIC_ACTS,
-  TERMS_SECTIONS,
 } from "../../data/terms.js";
 import {
   disableDesktopWebPush,
@@ -111,7 +110,6 @@ export default function UnifiedSettings() {
   const notificationsRef = useRef(null);
   const appearanceRef = useRef(null);
   const accessibilityRef = useRef(null);
-  const termsRef = useRef(null);
   const privacyRef = useRef(null);
   const aboutRef = useRef(null);
 
@@ -201,9 +199,6 @@ export default function UnifiedSettings() {
   const showAccessibility = isSearching
     ? "accessibility keyboard shortcuts keybinds navigation high contrast focus indicators".includes(q)
     : activeNav === "accessibility";
-  const showTerms = isSearching
-    ? "terms conditions policy usage legal".includes(q)
-    : activeNav === "terms";
   const showPrivacy = isSearching
     ? "privacy policy personal information data protection videos preferences".includes(q)
     : activeNav === "privacy";
@@ -220,7 +215,6 @@ export default function UnifiedSettings() {
         notifications: "Notifications",
         appearance: "Appearance & Display",
         accessibility: "Accessibility",
-        terms: "Terms & Conditions",
         privacy: "Privacy Policy",
         about: "About LOGISYNC",
       }[activeNav] || "Settings";
@@ -501,7 +495,6 @@ export default function UnifiedSettings() {
 
             <div className="my-2 border-t border-brand-line/70 pt-2 dark:border-night-line">
               {[
-                ["terms", "Terms & Conditions", "fa-file-contract", termsRef],
                 ["privacy", "Privacy Policy", "fa-shield-halved", privacyRef],
                 ["about", "About LOGISYNC", "fa-circle-info", aboutRef],
               ].map(([navKey, label, icon, ref]) => (
@@ -1265,51 +1258,7 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 6. TERMS & CONDITIONS */}
-          {showTerms && (
-            <div ref={termsRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-5`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                    Terms &amp; Conditions
-                  </h3>
-                  <p className="mt-0.5 text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">
-                    System usage terms governing the LOGISYNC parcel verification and delivery platform.
-                  </p>
-                </div>
-                <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand">
-                  v{POLICY_VERSION} · {EFFECTIVE_DATE}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                {TERMS_SECTIONS.map((sec) => (
-                  <div
-                    key={sec.id}
-                    className="rounded-xl border border-brand-line bg-brand-softer/20 p-4 dark:border-night-line dark:bg-night-head/40"
-                  >
-                    <h4 className="mb-2 text-[14px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
-                      {sec.title}
-                    </h4>
-                    {sec.paragraphs?.map((p, idx) => (
-                      <p key={idx} className="mb-2 text-[12.5px] leading-relaxed text-[#475569] last:mb-0 dark:text-[#d1c9c2]">
-                        {p}
-                      </p>
-                    ))}
-                    {sec.bullets && (
-                      <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12.5px] leading-relaxed text-[#475569] dark:text-[#d1c9c2]">
-                        {sec.bullets.map((b, idx) => (
-                          <li key={idx}>{b}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 7. PRIVACY POLICY */}
+          {/* 6. PRIVACY POLICY */}
           {showPrivacy && (
             <div ref={privacyRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4 space-y-5`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1431,7 +1380,6 @@ export default function UnifiedSettings() {
             !showNotifications &&
             !showAppearance &&
             !showAccessibility &&
-            !showTerms &&
             !showPrivacy &&
             !showAbout && (
             <p className="py-10 text-center text-[13.5px] text-[#64748b]">

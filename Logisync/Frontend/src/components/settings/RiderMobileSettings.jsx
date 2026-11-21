@@ -14,7 +14,6 @@ import {
   POLICY_VERSION,
   PRIVACY_SECTIONS,
   REPUBLIC_ACTS,
-  TERMS_SECTIONS,
 } from "../../data/terms.js";
 import {
   disableDesktopWebPush,
@@ -42,7 +41,6 @@ const SECTION_TITLES = {
   appearance: "Appearance & Display",
   accessibility: "Accessibility",
   privacy: "Privacy Policy",
-  terms: "Terms & Conditions",
   about: "About LOGISYNC",
 };
 
@@ -1219,43 +1217,7 @@ export default function RiderMobileSettings() {
         )}
 
         {/* =================================================================
-            6. TERMS & CONDITIONS
-        ================================================================= */}
-        {section === "terms" && (
-          <div className="mx-auto max-w-xl space-y-4 px-4 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-              <p className="text-[12.5px] text-slate-500 dark:text-[#b8b0a8]">
-                Platform usage terms for LOGISYNC operations.
-              </p>
-              <span className="rounded-full bg-brand-soft px-3 py-1 text-[11px] font-bold text-brand">
-                v{POLICY_VERSION} · {EFFECTIVE_DATE}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {TERMS_SECTIONS.map((sec) => (
-                <div key={sec.id} className={`${cardCls} p-4`}>
-                  <h3 className="mb-1.5 text-[14px] font-bold text-[#0f172a] dark:text-white">{sec.title}</h3>
-                  {sec.paragraphs?.map((p, idx) => (
-                    <p key={idx} className="mb-2 text-[12.5px] leading-relaxed text-slate-600 last:mb-0 dark:text-[#d1c9c2]">
-                      {p}
-                    </p>
-                  ))}
-                  {sec.bullets && (
-                    <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[12.5px] leading-relaxed text-slate-600 dark:text-[#d1c9c2]">
-                      {sec.bullets.map((b, idx) => (
-                        <li key={idx}>{b}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* =================================================================
-            7. ABOUT LOGISYNC
+            6. ABOUT LOGISYNC
         ================================================================= */}
         {section === "about" && (
           <div className="mx-auto flex min-h-[calc(100dvh-180px)] max-w-xl flex-col justify-between px-4 pt-6">
