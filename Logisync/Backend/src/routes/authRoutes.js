@@ -10,7 +10,7 @@ const {
   verifyResetToken,
   resetPassword,
 } = require("../controllers/authController");
-const { createUser } = require("../controllers/userController");
+const { createUser, updateMyProfile } = require("../controllers/userController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
@@ -32,6 +32,8 @@ router.post("/reset-password", resetPassword);
 // Session management
 router.post("/logout", authenticateToken, logout);
 router.get("/me", authenticateToken, me);
+router.patch("/me", authenticateToken, updateMyProfile);
+router.put("/me", authenticateToken, updateMyProfile);
 
 // Authenticated user: verify current password & update own password (Coordinator, Seller, Rider)
 router.post("/verify-password", authenticateToken, verifyPassword);

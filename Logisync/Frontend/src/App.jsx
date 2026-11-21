@@ -24,6 +24,7 @@ import CreateParcel from "./pages/seller/CreateParcel.jsx";
 import RiderDashboard from "./pages/rider/RiderDashboard.jsx";
 import RiderScan from "./pages/rider/RiderScan.jsx";
 import RiderDeliveries from "./pages/rider/RiderDeliveries.jsx";
+import RiderProfile from "./pages/rider/RiderProfile.jsx";
 import PortalNotifications from "./pages/shared/PortalNotifications.jsx";
 import PortalComplaints from "./pages/shared/PortalComplaints.jsx";
 import ParcelRecords from "./pages/seller/ParcelRecords.jsx";
@@ -116,6 +117,7 @@ export default function App() {
           <Route path="messages" element={<MessagesPage />} />
           <Route path="complaints" element={<PortalComplaints />} />
           <Route path="notifications" element={<PortalNotifications />} />
+          <Route path="profile" element={<RiderProfile />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />

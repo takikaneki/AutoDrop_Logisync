@@ -18,6 +18,7 @@ async function ensureUserColumns() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS rider_code VARCHAR(20);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS agency VARCHAR(150);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS rider_type VARCHAR(2);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
     CREATE SEQUENCE IF NOT EXISTS rider_code_seq START 1;
     CREATE UNIQUE INDEX IF NOT EXISTS uq_users_rider_code ON users(rider_code) WHERE rider_code IS NOT NULL;
     UPDATE users u
@@ -428,4 +429,173 @@ async function reviewSeller(req, res) {
   }
 }
 
-module.exports = { listContacts, createUser, listUsers, reviewSeller, updateSellerAccount };
+const MY_PROFILE_FIELDS = `user_id, name, email, role, verification_status,
+                  phone, avatar, shop_name, zone, vehicle, plate_number,
+                  seller_code, pickup_address, rider_code, agency, rider_type, created_at, updated_at`;
+
+// GET /api/users/me -> load the authenticated user's own profile from DB
+async function getMyProfile(req, res) {
+  try {
+    await ensureUserColumns();
+    const userId = Number(req.user?.user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+    const [rows] = await pool.query(
+      `SELECT ${MY_PROFILE_FIELDS} FROM users WHERE user_id = ? LIMIT 1`,
+      [userId]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: "Account not found." });
+    }
+    return res.json({ success: true, user: rows[0] });
+  } catch (error) {
+    console.error("getMyProfile error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load profile." });
+  }
+}
+
+// PATCH /api/users/me (and PUT /api/users/me) -> self-service profile update.
+// Only permitted fields (name, email, phone, avatar) can be edited.
+// Protected Coordinator-managed fields (role, rider_code, agency, rider_type, verification_status) are never modified here.
+async function updateMyProfile(req, res) {
+  try {
+    await ensureUserColumns();
+    const userId = Number(req.user?.user_id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const [found] = await pool.query(
+      "SELECT user_id, role FROM users WHERE user_id = ? LIMIT 1",
+      [userId]
+    );
+    if (!found.length) {
+      return res.status(404).json({ success: false, message: "Account not found." });
+    }
+    const myRole = found[0].role;
+
+    const { name, email, phone, avatar } = req.body || {};
+    const sets = [];
+    const vals = [];
+
+    if (name !== undefined) {
+      const cleanName = typeof name === "string" ? name.trim().slice(0, 100) : "";
+      if (!cleanName) {
+        return res.status(400).json({ success: false, message: "Full name is required." });
+      }
+      sets.push("name = ?");
+      vals.push(cleanName);
+    }
+
+    if (email !== undefined) {
+      const cleanEmail = String(email || "").trim().toLowerCase();
+      if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+        return res.status(400).json({ success: false, message: "Please enter a valid email address." });
+      }
+      const [dup] = await pool.query(
+        "SELECT user_id FROM users WHERE LOWER(email) = LOWER(?) AND user_id <> ?",
+        [cleanEmail, userId]
+      );
+      if (dup.length) {
+        return res.status(409).json({ success: false, message: "Email is already registered to another account." });
+      }
+      sets.push("email = ?");
+      vals.push(cleanEmail);
+    }
+
+    if (phone !== undefined) {
+      const p = cleanPhoneValue(phone);
+      if (p && !/^09\d{9}$/.test(p)) {
+        return res.status(400).json({
+          success: false,
+          message: "Contact number must be a valid Philippine mobile number (e.g. +63 917 123 4567 or 09171234567).",
+        });
+      }
+      if (p) {
+        const [dup] = await pool.query(
+          "SELECT user_id FROM users WHERE role = ? AND phone = ? AND user_id <> ?",
+          [myRole, p, userId]
+        );
+        if (dup.length) {
+          return res.status(409).json({
+            success: false,
+            message: `This contact number is already used by another ${myRole} account.`,
+          });
+        }
+      }
+      sets.push("phone = ?");
+      vals.push(p);
+    }
+
+    if (avatar !== undefined) {
+      if (avatar === null || avatar === "") {
+        sets.push("avatar = ?");
+        vals.push(null);
+      } else if (typeof avatar === "string" && avatar.startsWith("data:image/")) {
+        if (avatar.length > 250000) {
+          return res.status(400).json({
+            success: false,
+            message: "Profile photo is too large. Please choose a smaller image.",
+          });
+        }
+        sets.push("avatar = ?");
+        vals.push(avatar);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid profile photo format.",
+        });
+      }
+    }
+
+    if (!sets.length) {
+      return res.status(400).json({ success: false, message: "No profile changes were provided." });
+    }
+
+    vals.push(userId);
+    await pool.query(
+      `UPDATE users SET ${sets.join(", ")}, updated_at = NOW() WHERE user_id = ?`,
+      vals
+    );
+
+    const updatedFields = sets.map((x) => x.split(" ")[0]);
+    try {
+      await logAudit(req.user, {
+        category: "Settings",
+        action: "Updated profile",
+        target: String(userId),
+        detail: `Fields: ${updatedFields.join(", ")}`,
+      });
+    } catch {
+      /* non-fatal audit log */
+    }
+
+    const [rows] = await pool.query(
+      `SELECT ${MY_PROFILE_FIELDS} FROM users WHERE user_id = ? LIMIT 1`,
+      [userId]
+    );
+    return res.json({
+      success: true,
+      message: "Account updated successfully.",
+      user: rows[0],
+    });
+  } catch (error) {
+    console.error("updateMyProfile error:", error);
+    if (error && error.code === "23505") {
+      return res.status(409).json({ success: false, message: "Duplicate email or contact number detected." });
+    }
+    return res.status(500).json({ success: false, message: "Failed to update account details." });
+  }
+}
+
+module.exports = {
+  ensureUserColumns,
+  listContacts,
+  createUser,
+  listUsers,
+  reviewSeller,
+  updateSellerAccount,
+  getMyProfile,
+  updateMyProfile,
+};

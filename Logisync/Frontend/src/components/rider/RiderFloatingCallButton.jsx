@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { getRole } from "../../api.js";
 import { listContacts } from "../../services/messageService.js";
 import CallUserModal from "../messaging/CallUserModal.jsx";
@@ -15,18 +16,21 @@ import CallUserModal from "../messaging/CallUserModal.jsx";
  */
 export default function RiderFloatingCallButton() {
   const role = getRole();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [coordinators, setCoordinators] = useState([]);
   const [selectedCoordinator, setSelectedCoordinator] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Strictly enforce Rider role
-  if (role !== "rider") {
-    return null;
-  }
+  const hideOnCleanScreens =
+    pathname === "/rider" ||
+    pathname === "/rider/" ||
+    pathname.startsWith("/rider/profile") ||
+    pathname.startsWith("/rider/settings");
 
   // Pre-load coordinator contact info on mount
   useEffect(() => {
+    if (role !== "rider") return;
     let active = true;
     listContacts()
       .then((contacts) => {
@@ -44,7 +48,12 @@ export default function RiderFloatingCallButton() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [role]);
+
+  // Strictly enforce Rider role & keep redesigned Home/Profile/Settings unobstructed
+  if (role !== "rider" || hideOnCleanScreens) {
+    return null;
+  }
 
   const handleClick = async () => {
     if (coordinators.length === 0) {
@@ -73,7 +82,7 @@ export default function RiderFloatingCallButton() {
         onClick={handleClick}
         aria-label="Call Coordinator"
         title="Call Coordinator"
-        className="fixed bottom-20 left-4 z-40 md:hidden flex items-center gap-2 rounded-full bg-brand px-3.5 py-2.5 text-xs font-bold text-white shadow-[0_4px_16px_rgba(255,104,24,0.35)] transition-all active:scale-95 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-night-bg print:hidden"
+        className="fixed bottom-[86px] left-3.5 z-30 min-[821px]:hidden flex items-center gap-2 rounded-full bg-brand px-3.5 py-2.5 text-xs font-bold text-white shadow-[0_4px_16px_rgba(255,104,24,0.35)] transition-all active:scale-95 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-night-bg print:hidden"
       >
         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
           <i className="fa-solid fa-phone text-[10px]" />

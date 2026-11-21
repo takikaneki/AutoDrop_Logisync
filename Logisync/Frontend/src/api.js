@@ -41,6 +41,19 @@ export function saveSession({ token, user }) {
   window.dispatchEvent(new CustomEvent("logisync-auth-changed", { detail: { user } }));
 }
 
+export function updateStoredUser(patch) {
+  if (!patch || typeof patch !== "object") return getUser();
+  try {
+    const existing = JSON.parse(localStorage.getItem(USER_KEY)) || {};
+    const merged = { ...existing, ...patch };
+    localStorage.setItem(USER_KEY, JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent("logisync-user-updated", { detail: { user: merged } }));
+    return getUser();
+  } catch {
+    return getUser();
+  }
+}
+
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

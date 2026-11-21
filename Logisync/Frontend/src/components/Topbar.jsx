@@ -20,6 +20,7 @@ const names = {
   accounts: "Accounts",
   activity: "Activity Log",
   settings: "Settings",
+  profile: "Profile",
   seller: "Seller Portal",
   rider: "Rider Portal",
   create: "Create Parcel",

@@ -4,7 +4,7 @@ import LogoutModal from "../LogoutModal.jsx";
 import ChangePasswordForm from "../ChangePasswordForm.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls } from "../styles.js";
 import { setPrefs, toggleDark, usePrefs } from "../../store/prefs.js";
-import { setProfile, useProfile } from "../../store/profile.js";
+import { saveProfileToServer, useProfile } from "../../store/profile.js";
 import { toast } from "../../store/toast.js";
 import { getUser } from "../../api.js";
 import { previewTone } from "../../utils/sound.js";
@@ -137,8 +137,11 @@ export default function UnifiedSettings() {
     jumpTo("account-info", accountRef);
   };
 
-  const saveProfile = (e) => {
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  const saveProfile = async (e) => {
     e.preventDefault();
+    if (savingProfile) return;
     const err = {};
     if (!name.trim()) err.name = "Please enter your name.";
     if (!/^\S+@\S+\.\S+$/.test(email)) err.email = "Please enter a valid email address.";
@@ -146,9 +149,20 @@ export default function UnifiedSettings() {
     if (phoneErr) err.phone = phoneErr;
     setErrors(err);
     if (Object.keys(err).length) return;
-    setProfile({ name: name.trim(), email: email.trim(), phone: sanitizeMobileNumber(phone) });
-    setEditingProfile(false);
-    toast("Profile saved.");
+    setSavingProfile(true);
+    try {
+      await saveProfileToServer({
+        name: name.trim(),
+        email: email.trim(),
+        phone: sanitizeMobileNumber(phone),
+      });
+      setEditingProfile(false);
+      toast("Profile saved.");
+    } catch (ex) {
+      toast(ex?.message || "Could not save profile changes.", "error");
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const uploadAvatar = async (e) => {
@@ -156,10 +170,11 @@ export default function UnifiedSettings() {
     if (!file) return;
     if (!file.type.startsWith("image/")) return toast("Please choose an image file.", "error");
     try {
-      setProfile({ avatar: await resizeImage(file) });
+      const dataUrl = await resizeImage(file);
+      await saveProfileToServer({ avatar: dataUrl });
       toast("Profile picture updated.");
-    } catch {
-      toast("Could not read that image.", "error");
+    } catch (ex) {
+      toast(ex?.message || "Could not update profile picture.", "error");
     }
     e.target.value = "";
   };
@@ -577,9 +592,13 @@ export default function UnifiedSettings() {
                       {profile.avatar && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setProfile({ avatar: "" });
-                            toast("Photo removed.");
+                          onClick={async () => {
+                            try {
+                              await saveProfileToServer({ avatar: "" });
+                              toast("Photo removed.");
+                            } catch (ex) {
+                              toast(ex?.message || "Could not remove photo.", "error");
+                            }
                           }}
                           className={btnGhost}
                         >

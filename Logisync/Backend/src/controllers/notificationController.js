@@ -6,6 +6,8 @@ const DEFAULT_PREFERENCES = {
   dark: false,
   themeMode: "light",
   fontSize: "md",
+  reducedMotion: false,
+  underlineLinks: false,
   highContrast: false,
   enhancedFocus: false,
   notificationsEnabled: true,
@@ -33,6 +35,8 @@ function sanitizePreferencesPatch(raw = {}) {
   const out = {};
   const boolKeys = [
     "dark",
+    "reducedMotion",
+    "underlineLinks",
     "highContrast",
     "enhancedFocus",
     "notificationsEnabled",

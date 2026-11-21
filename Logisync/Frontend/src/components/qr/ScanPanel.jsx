@@ -10,6 +10,7 @@ export default function ScanPanel({
   busy = false,
   label = "Transaction number",
   btnClass = "bg-brand hover:bg-brand-dark",
+  autoStart = false,
 }) {
   const [manual, setManual] = useState("");
   const [error, setError] = useState("");
@@ -28,6 +29,7 @@ export default function ScanPanel({
       <div className="w-full">
         <QrScanner
           btnClass={btnClass}
+          autoStart={autoStart}
           onScan={(text) => submit(text)}
         />
       </div>

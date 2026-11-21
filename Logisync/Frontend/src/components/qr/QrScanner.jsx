@@ -19,9 +19,11 @@ export default function QrScanner({
   compactIdle = false,
   startLabel = "Scan with camera",
   showHint = true,
+  autoStart = false,
 }) {
   const regionId = useRef(`qr-region-${Math.random().toString(36).slice(2)}`).current;
   const scannerRef = useRef(null);
+  const autoStartedRef = useRef(false);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
@@ -68,6 +70,14 @@ export default function QrScanner({
       setStarting(false);
     }
   };
+
+  // Auto-start camera when requested (e.g., from Rider mobile Home QR scanner button)
+  useEffect(() => {
+    if (autoStart && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      start();
+    }
+  }, [autoStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Isara ang camera kapag umalis sa page
   useEffect(() => () => {

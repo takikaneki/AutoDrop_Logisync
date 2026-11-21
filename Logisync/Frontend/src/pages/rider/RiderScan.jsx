@@ -38,6 +38,7 @@ export default function RiderScan() {
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
   const expect = params.get("expect");
+  const autoStart = params.get("auto") === "1";
 
   const lookup = async (value) => {
     setLooking(true);
@@ -83,6 +84,7 @@ export default function RiderScan() {
     setError("");
     params.delete("txn");
     params.delete("expect");
+    params.delete("auto");
     setParams(params, { replace: true });
   };
 
@@ -108,7 +110,7 @@ export default function RiderScan() {
               </Notice>
             </div>
           )}
-          <ScanPanel onValue={lookup} busy={looking} />
+          <ScanPanel onValue={lookup} busy={looking} autoStart={autoStart} />
           {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
           {error && (
             <div className="mx-auto mt-4 max-w-[360px]">

@@ -4,7 +4,9 @@ const {
   createUser,
   listUsers,
   reviewSeller,
-  updateSellerAccount
+  updateSellerAccount,
+  getMyProfile,
+  updateMyProfile
 } = require("../controllers/userController");
 const { verifyPassword, changePassword } = require("../controllers/authController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
@@ -12,6 +14,11 @@ const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 const router = express.Router();
 
 router.get("/contacts", authenticateToken, listContacts);
+
+// Authenticated user self-profile load & update (permitted fields only)
+router.get("/me", authenticateToken, getMyProfile);
+router.patch("/me", authenticateToken, updateMyProfile);
+router.put("/me", authenticateToken, updateMyProfile);
 
 // Authenticated user password verification & update
 router.post("/verify-password", authenticateToken, verifyPassword);

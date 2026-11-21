@@ -128,6 +128,16 @@ async function send(path, method, body, withToken = true) {
   throw new Error(SERVER_DOWN);
 }
 
+export async function fetchMyProfile() {
+  const data = await api("/users/me");
+  return data.user;
+}
+
+export async function updateMyProfile(payload) {
+  const data = await api("/users/me", { method: "PATCH", body: payload });
+  return data;
+}
+
 export async function verifyCurrentPassword(currentPassword) {
   const token = getToken();
   if (!token) throw new Error("Please log in again.");
