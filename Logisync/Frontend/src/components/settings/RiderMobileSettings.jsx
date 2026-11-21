@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import UserAvatar from "../Avatar.jsx";
 import LogoutModal from "../LogoutModal.jsx";
@@ -332,21 +332,6 @@ export default function RiderMobileSettings() {
     }
   };
 
-  const riderShortcuts = useMemo(
-    () => [
-      ["Go to Home", "Open your rider home screen", ["G", "D"]],
-      ["Scan QR Code", "Open QR scanner for delivery", ["G", "V"]],
-      ["Go to My Deliveries", "Manage active deliveries", ["G", "L"]],
-      ["Go to Messages", "Open direct chat with coordinator", ["G", "M"]],
-      ["Go to Notifications", "View all bell alerts", ["G", "N"]],
-      ["Go to Activity Log", "Inspect recent rider activity", ["G", "A"]],
-      ["Go to Settings", "Open account and app settings", ["G", "S"]],
-      ["Open Help / FAQs", "View guides and FAQ", ["?"]],
-      ["Close Dialog / Modal", "Dismiss open dialogs", ["ESC"]],
-    ],
-    []
-  );
-
   const cardCls =
     "overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel";
 
@@ -395,13 +380,13 @@ export default function RiderMobileSettings() {
                   key: "appearance",
                   icon: "fa-solid fa-palette",
                   title: "Appearance & Display",
-                  subtitle: "Theme, text size & display options",
+                  subtitle: "Theme mode & text size",
                 },
                 {
                   key: "accessibility",
                   icon: "fa-solid fa-universal-access",
                   title: "Accessibility",
-                  subtitle: "Keyboard shortcuts, contrast & focus",
+                  subtitle: "High contrast & focus indicators",
                 },
               ].map((row) => (
                 <button
@@ -1035,50 +1020,6 @@ export default function RiderMobileSettings() {
                 </div>
               </div>
             </div>
-
-            {/* Display Toggles: Reduced Motion & Always Underline Links */}
-            <div>
-              <h2 className="mb-2 px-1 text-[12px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-[#b8b0a8]">
-                Display Options
-              </h2>
-              <div className={`${cardCls} divide-y divide-slate-100 px-4 dark:divide-night-line`}>
-                {[
-                  [
-                    "reducedMotion",
-                    "Reduced Motion",
-                    "Minimize animations and transition effects across screens.",
-                  ],
-                  [
-                    "underlineLinks",
-                    "Always Underline Links",
-                    "Underline interactive text links for easier recognition.",
-                  ],
-                ].map(([key, label, hint]) => {
-                  const checked = Boolean(prefs[key]);
-                  return (
-                    <div key={key} className="flex items-center justify-between gap-3 py-3.5">
-                      <div className="min-w-0">
-                        <strong className="block text-[14px] font-bold text-[#0f172a] dark:text-white">
-                          {label}
-                        </strong>
-                        <span className="block text-[12px] text-slate-500 dark:text-[#b8b0a8]">
-                          {hint}
-                        </span>
-                      </div>
-                      <Toggle
-                        checked={checked}
-                        label={label}
-                        onClick={() => {
-                          const next = !checked;
-                          setPrefs({ [key]: next });
-                          toast(`${label} ${next ? "enabled" : "disabled"}.`, "info");
-                        }}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
 
@@ -1128,40 +1069,6 @@ export default function RiderMobileSettings() {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Keyboard Shortcuts */}
-            <div>
-              <h2 className="mb-1 px-1 text-[12px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-[#b8b0a8]">
-                Keyboard Shortcuts
-              </h2>
-              <p className="mb-2.5 px-1 text-[12px] text-slate-500 dark:text-[#b8b0a8]">
-                Navigate faster when using an external keyboard. Shortcuts pause while typing.
-              </p>
-              <div className={`${cardCls} divide-y divide-slate-100 px-4 dark:divide-night-line`}>
-                {riderShortcuts.map(([action, hint, keys]) => (
-                  <div key={action} className="flex items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <strong className="block text-[13.5px] font-bold text-[#0f172a] dark:text-white">
-                        {action}
-                      </strong>
-                      <span className="block text-[11.5px] text-slate-500 dark:text-[#b8b0a8]">
-                        {hint}
-                      </span>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {keys.map((k) => (
-                        <kbd
-                          key={k}
-                          className="rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono text-[11px] font-bold text-[#0f172a] dark:border-night-line dark:bg-night-head dark:text-white"
-                        >
-                          {k}
-                        </kbd>
-                      ))}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
