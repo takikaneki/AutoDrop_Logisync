@@ -2310,7 +2310,6 @@ async function finishDelivery(req, res, outcome) {
     if (connection) connection.release();
   }
 }
-}
 
 const riderDelivered = (req, res) => finishDelivery(req, res, "DELIVERED");
 const riderFailed = (req, res) => finishDelivery(req, res, "FAILED");
@@ -2935,9 +2934,7 @@ async function scanUnified(req, res) {
         max_next_day_attempts: 2,
         parcel
       });
-      parcel
-    });
-  }
+    }
 
     // ROLE: COORDINATOR
     if (role === "coordinator") {
@@ -3451,7 +3448,6 @@ async function riderRequestRth(req, res) {
   } finally {
     if (connection) connection.release();
   }
-}
 }
 
 // GET /api/parcels/coordinator/rth
