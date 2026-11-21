@@ -27,8 +27,9 @@ import { formatDate, formatDay } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
 
 const RTH_REASONS = [
-  "Buyer cancelled order",
+  "Recipient Refused Parcel",
   "Buyer refused delivery",
+  "Buyer cancelled order",
   "Incorrect address / Cannot be located",
   "Damaged item upon arrival",
   "Other valid return reasons",
@@ -182,17 +183,31 @@ export default function RiderScan() {
         notes: actionNotes.trim(),
       });
       if (res?.success) {
-        toast(
-          `${parcel.transaction_number} rescheduled for next delivery day (${formatDay(nextDay)}). Attempt count recorded.`,
-          "info"
-        );
-        setParcel((prev) => ({
-          ...prev,
-          status: "RESCHEDULED",
-          rescheduled: true,
-          scheduledFor: nextDay,
-          rescheduleCount: Number(prev.rescheduleCount || 0) + 1,
-        }));
+        if (res.rth_required || res.status === "RTH_PENDING") {
+          toast(
+            `${parcel.transaction_number} reached maximum next-day delivery attempts (2 attempts). Automatically marked for Return to Hub.`,
+            "error"
+          );
+          setParcel((prev) => ({
+            ...prev,
+            status: "RTH_PENDING",
+            rth_status: "PENDING_CONFIRMATION",
+            rth_reason: "Maximum delivery attempts reached",
+          }));
+        } else {
+          toast(
+            `${parcel.transaction_number} rescheduled for next delivery day (${formatDay(nextDay)}). Attempt count recorded.`,
+            "info"
+          );
+          setParcel((prev) => ({
+            ...prev,
+            status: "RESCHEDULED",
+            rescheduled: true,
+            scheduledFor: nextDay,
+            next_day_attempt_count: res.next_day_attempt_count ?? (Number(prev.next_day_attempt_count || 0) + 1),
+            rescheduleCount: Number(prev.rescheduleCount || 0) + 1,
+          }));
+        }
         syncRiderDeliveriesWithServer();
         setActionModal(null);
       } else {
@@ -356,7 +371,7 @@ export default function RiderScan() {
               <strong className="block">Rescheduled for Delivery</strong>
               <span>
                 Scheduled delivery date: <strong>{formatDay(parcel.scheduledFor)}</strong>.
-                Attempt count: {parcel.rescheduleCount || 1}/3. Parcel remains in your active delivery queue.
+                Attempt count: {parcel.next_day_attempt_count ? `Attempt ${parcel.next_day_attempt_count} of 2` : 'Rescheduled (Next-Day)'}. Parcel remains in your active delivery queue.
               </span>
             </Notice>
           ) : (

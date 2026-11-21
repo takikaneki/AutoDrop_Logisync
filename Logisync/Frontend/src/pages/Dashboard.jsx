@@ -578,7 +578,7 @@ export default function Dashboard() {
                   className={inputCls}
                 />
                 <p className="text-[11px] text-[#888] mt-1">
-                  Reschedules parcels safely without consuming rider&apos;s 3-day failure count.
+                  Reschedules parcels safely without consuming rider&apos;s attempt limit.
                 </p>
               </div>
             )}

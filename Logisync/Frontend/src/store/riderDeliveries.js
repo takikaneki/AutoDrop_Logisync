@@ -66,7 +66,7 @@ function isSameParcelItem(a, b) {
   );
 }
 
-export const MAX_RESCHEDULES = 3;
+export const MAX_RESCHEDULES = 2;
 
 export const STAGE = {
   TO_DELIVER: "to_deliver",
@@ -77,9 +77,9 @@ export const STAGE = {
 
 export const FAIL_REASONS = [
   "Recipient Refused Parcel",
-  "Wrong Recipient / Unknown Consignee",
-  "Refused COD Payment",
-  "Recipient not home",
+  "Recipient Unavailable",
+  "Recipient Not Answering",
+  "No One Available to Receive Parcel",
   "Wrong or incomplete address",
   "Cannot contact the recipient",
   "Parcel damaged",
@@ -90,8 +90,16 @@ export function isRecipientRefusal(reason) {
   if (!reason) return false;
   const s = String(reason).trim().toLowerCase();
   return (
-    s.includes("refused") ||
+    s.includes("recipient refused") ||
+    s.includes("buyer refused") ||
+    s.includes("refused delivery") ||
+    s.includes("refused parcel") ||
+    s.includes("refused cod") ||
     s.includes("refusal") ||
+    s.includes("buyer cancelled") ||
+    s.includes("recipient cancelled") ||
+    s.includes("cancelled order") ||
+    s.includes("cancelled delivery") ||
     s.includes("wrong recipient") ||
     s.includes("unknown consignee")
   );

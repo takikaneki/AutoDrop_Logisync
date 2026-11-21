@@ -43,10 +43,20 @@ export function getParcelStatus(parcel) {
   const parcelStatus = String(parcel.status || "").toLowerCase();
   const rthStatus = String(parcel.rth_status || "").toUpperCase();
 
-  if (rthStatus === "CONFIRMED" || parcelStatus === "rth_confirmed" || parcelStatus.includes("confirmed")) {
+  if (
+    rthStatus === "CONFIRMED" ||
+    parcelStatus === "rth_confirmed" ||
+    parcelStatus === "return to hub – confirmed" ||
+    parcelStatus === "return to hub - confirmed"
+  ) {
     return "Return to Hub – Confirmed";
   }
-  if (rthStatus === "PENDING_CONFIRMATION" || parcelStatus === "rth_pending" || parcelStatus.includes("pending confirmation")) {
+  if (
+    rthStatus === "PENDING_CONFIRMATION" ||
+    parcelStatus === "rth_pending" ||
+    parcelStatus === "return to hub – pending confirmation" ||
+    parcelStatus === "return to hub - pending confirmation"
+  ) {
     return "Return to Hub – Pending Confirmation";
   }
 

@@ -224,6 +224,8 @@ async function ensureSchema() {
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rth_confirmed_at TIMESTAMPTZ;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rth_confirmed_by INTEGER REFERENCES users(user_id) ON DELETE SET NULL ON UPDATE CASCADE;
       ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rth_confirmed_notes VARCHAR(500);
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS next_day_attempt_count INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE parcels ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
 
       ALTER TABLE parcels DROP CONSTRAINT IF EXISTS parcels_status_check;
       ALTER TABLE parcels DROP CONSTRAINT IF EXISTS parcels_delivery_status_check;

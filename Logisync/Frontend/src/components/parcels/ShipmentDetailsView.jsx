@@ -31,7 +31,7 @@ function deriveOrderId(parcel) {
 
 function buildShipmentMilestones({ parcel, videos = [], verificationRecords = [], isSeller = false }) {
   const s = String(parcel?.status || "").toUpperCase();
-  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
+  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "RTH_PENDING", "RTH_CONFIRMED", "DELIVERY_FAILED"].includes(s);
   const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
   const decision = verificationRecords[0] || null;
   const decided = ["REJECTED", "REUPLOAD_REQUESTED"].includes(s) || isPostVerify;
@@ -41,7 +41,7 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
   const hasRiderScanned = Boolean(
     scannedAt ||
       isDelivered ||
-      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s) ||
+      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "RTH_PENDING", "RTH_CONFIRMED", "DELIVERY_FAILED"].includes(s) ||
       parcel?.delivery_status
   );
 
@@ -106,7 +106,7 @@ function buildShipmentMilestones({ parcel, videos = [], verificationRecords = []
 
 function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [], isSeller = false }) {
   const s = String(parcel?.status || "").toUpperCase();
-  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s);
+  const isPostVerify = ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED", "RETURN_TO_HUB", "RTH_PENDING", "RTH_CONFIRMED", "DELIVERY_FAILED"].includes(s);
   const hasVideo = videos.length > 0 || ["VIDEO_SUBMITTED", "REJECTED"].includes(s) || isPostVerify;
   const decision = verificationRecords[0] || null;
   const isDelivered =
@@ -117,7 +117,7 @@ function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [
   const hasRiderScanned = Boolean(
     scannedAt ||
       isDelivered ||
-      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "DELIVERY_FAILED"].includes(s) ||
+      ["OUT_FOR_DELIVERY", "RESCHEDULED", "RETURN_TO_HUB", "RTH_PENDING", "RTH_CONFIRMED", "DELIVERY_FAILED"].includes(s) ||
       parcel?.delivery_status
   );
   const deliveredAt = parcel?.delivered_at || parcel?.deliveryRecord?.doneAt || (isDelivered ? parcel?.updated_at : null);
@@ -163,8 +163,16 @@ function buildLifecycleTimestamps({ parcel, videos = [], verificationRecords = [
 function resolveDeliveryBanner(parcel) {
   const s = String(parcel?.status || "").toUpperCase();
   const delStatus = String(parcel?.delivery_status || "").toUpperCase();
-  const rthConfirmed = parcel?.rth_status === "CONFIRMED" || s === "RTH_CONFIRMED";
-  const rthPending = parcel?.rth_status === "PENDING_CONFIRMATION" || s === "RTH_PENDING";
+  const rthConfirmed =
+    parcel?.rth_status === "CONFIRMED" ||
+    s === "RTH_CONFIRMED" ||
+    s === "RETURN TO HUB – CONFIRMED" ||
+    s === "RETURN TO HUB - CONFIRMED";
+  const rthPending =
+    parcel?.rth_status === "PENDING_CONFIRMATION" ||
+    s === "RTH_PENDING" ||
+    s === "RETURN TO HUB – PENDING CONFIRMATION" ||
+    s === "RETURN TO HUB - PENDING CONFIRMATION";
 
   if (rthConfirmed) {
     return {

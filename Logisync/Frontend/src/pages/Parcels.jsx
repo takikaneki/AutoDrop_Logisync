@@ -910,7 +910,7 @@ export default function Parcels() {
                       )}
                       {parcel.returnToHub && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
-                          {parcel.returnCoordinated ? "Return Coordinated" : "3-Day Limit Reached"}
+                          {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                         </span>
                       )}
                     </td>
@@ -975,13 +975,13 @@ export default function Parcels() {
                 {parcel.rescheduled && !parcel.returnToHub && parcel.scheduledFor && (
                   <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
                     <i className="fa-solid fa-calendar-day mr-1" />
-                    Rescheduled (Day {parcel.rescheduleCount || 1}/3) · {formatDay(parcel.scheduledFor)}
+                    Rescheduled · {formatDay(parcel.scheduledFor)}
                   </p>
                 )}
                 {parcel.returnToHub && (
                   <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
                     <i className="fa-solid fa-warehouse mr-1" />
-                    Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "3-Day Limit Reached"}
+                    Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                   </p>
                 )}
 

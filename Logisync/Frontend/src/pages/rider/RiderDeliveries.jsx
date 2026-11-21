@@ -36,7 +36,7 @@ const COPY = {
   [STAGE.TO_DELIVER]: {
     title: "To Be Delivered",
     subtitle:
-      "Parcels you scanned. Undelivered parcels are automatically rescheduled for up to 3 days before being marked Return to Hub.",
+      "Parcels you scanned. Undelivered parcels are automatically rescheduled for up to 2 next-day attempts before being marked Return to Hub.",
     icon: "fa-truck-fast",
     empty: "Nothing to deliver",
     emptyText: "Scan a parcel's QR code and it will appear here.",
@@ -50,10 +50,10 @@ const COPY = {
   },
   [STAGE.FAILED]: {
     title: "Failed & Return to Hub",
-    subtitle: "Parcels that reached the 3-day rescheduling limit (Return to Hub) or failed delivery attempts.",
+    subtitle: "Parcels that reached the 2-attempt limit (Return to Hub) or failed delivery attempts.",
     icon: "fa-warehouse",
     empty: "No failed or Return to Hub parcels",
-    emptyText: "Parcels that reach the 3-day rescheduling limit will appear here as Return to Hub.",
+    emptyText: "Parcels that reach the 2-attempt limit will appear here as Return to Hub.",
   },
 };
 
@@ -238,8 +238,8 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
           }`}
         >
           {returnToHub
-            ? `3/${MAX_RESCHEDULES} Days Reached · Return to Hub`
-            : `Reschedule Day ${rescheduleCount || 1} of ${MAX_RESCHEDULES}`}
+            ? `2-Attempt Limit Reached · Marked as Return to Hub`
+            : `Attempt ${rescheduleCount || 1} of ${MAX_RESCHEDULES}`}
         </span>
       </div>
 
@@ -479,7 +479,7 @@ export default function RiderDeliveries() {
 
   const tryAgain = (d) => {
     if (d.returnToHub || d.stage === STAGE.RETURN_TO_HUB || Number(d.rescheduleCount || 0) >= MAX_RESCHEDULES) {
-      toast("Maximum 3-day rescheduling period reached. This parcel must be returned to the hub.", "error");
+      toast("Maximum 2-attempt limit reached. This parcel must be returned to the hub.", "error");
       return;
     }
     withdrawFailure(d.parcel_id);
@@ -748,7 +748,7 @@ export default function RiderDeliveries() {
                 }`}
               >
                 {isReturnToHub
-                  ? `Undelivered after ${MAX_RESCHEDULES}-day rescheduling limit · Marked as Return to Hub`
+                  ? `2-Attempt Limit Reached · Marked as Return to Hub`
                   : cleanText(d.reason || d.lastFailure) || "Delivery attempt failed"}
               </strong>
               <span className="mt-1 block text-[13px] text-[#666] dark:text-[#d1c9c2]">
@@ -775,7 +775,7 @@ export default function RiderDeliveries() {
             {isReturnToHub && (
               <div className="mt-3">
                 <span className="text-[12px] font-semibold text-[#888]">
-                  <i className="fa-solid fa-lock mr-1" /> Maximum {MAX_RESCHEDULES}-day limit reached (cannot reschedule again)
+                  <i className="fa-solid fa-lock mr-1" /> Maximum {MAX_RESCHEDULES}-attempt limit reached (cannot reschedule again)
                 </span>
               </div>
             )}
@@ -872,7 +872,7 @@ export default function RiderDeliveries() {
               count={list.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length}
               tone="text-[#7c3aed]"
             >
-              <i className="fa-solid fa-warehouse" /> Return to Hub (3-Day Rescheduling Limit Reached)
+              <i className="fa-solid fa-warehouse" /> Return to Hub (2-Attempt Limit Reached)
             </GroupTitle>
             <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{rthItems.map(failedCard)}</div>
           </div>
@@ -1038,10 +1038,10 @@ export default function RiderDeliveries() {
                   <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
                     <strong className="block font-bold">
                       <i className="fa-solid fa-warehouse mr-1.5" />
-                      3-Day Rescheduling Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Days)
+                      2-Attempt Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Attempts)
                     </strong>
                     <p className="mt-1">
-                      This parcel has completed all 3 rescheduled delivery days and will be marked as Return to Hub.
+                      This parcel has completed all 2 next-day delivery attempts and will be marked as Return to Hub.
                     </p>
                   </div>
                 )}
@@ -1113,10 +1113,10 @@ export default function RiderDeliveries() {
                 {action.type === "delivered"
                   ? "Confirm delivered"
                   : isRecipientRefusal(reason)
-                  ? "Send Refusal Report to Coordinator"
+                  ? "Classify for Return to Hub"
                   : modalWillReturnToHub
                   ? "Confirm & Mark Return to Hub"
-                  : `Reschedule Next Day – ${formatShortDay(modalNextDate)} (${modalReschedCount + 1}/${MAX_RESCHEDULES})`}
+                  : `Reschedule Next Day – ${formatShortDay(modalNextDate)}`}
               </button>
             </div>
           </>

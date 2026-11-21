@@ -28,7 +28,8 @@ const tabs = [
 function compactNotifText(text = "") {
   return String(text || "")
     .replace(/\s*\(\[object Object\]\)/g, "")
-    .replace(/remained undelivered after the \d+-day rescheduling limit and must be returned to the hub\.?/i, "3-day limit reached · Return to Hub")
+    .replace(/remained undelivered after the \d+-day rescheduling limit and must be returned to the hub\.?/i, "Attempt limit reached · Return to Hub")
+    .replace(/reached the \d+-attempt limit and must be returned to the hub\.?/i, "Attempt limit reached · Return to Hub")
     .trim();
 }
 
