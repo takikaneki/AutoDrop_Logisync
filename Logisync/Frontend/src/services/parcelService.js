@@ -371,17 +371,17 @@ export const scanUnifiedQr = (code) =>
   });
 
 // Rider: Reschedule for delivery (Buyer Unavailable)
-export const riderRescheduleParcel = (parcelId, { reason, scheduledFor, notes } = {}) =>
+export const riderRescheduleParcel = (parcelId, { reason, scheduledFor, notes, proof } = {}) =>
   api(`/parcels/rider/${enc(parcelId)}/reschedule`, {
     method: "POST",
-    body: { reason, scheduledFor, notes },
+    body: { reason, scheduledFor, notes, proof },
   });
 
-// Rider: Return to Hub request (Buyer Cancelled / Refused / etc.)
-export const riderRequestRth = (parcelId, { reason, notes } = {}) =>
+// Rider: Return to Hub request (Buyer Cancelled / Refused / Damaged / Wrong Address)
+export const riderRequestRth = (parcelId, { reason, notes, proof } = {}) =>
   api(`/parcels/rider/${enc(parcelId)}/rth-request`, {
     method: "POST",
-    body: { reason, notes },
+    body: { reason, notes, proof },
   });
 
 // Coordinator: List all RTH parcels (pending & confirmed)

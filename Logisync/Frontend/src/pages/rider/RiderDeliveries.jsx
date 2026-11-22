@@ -8,9 +8,12 @@ import { btnGhost, btnPrimary, inputCls, labelCls, panel, textareaCls } from "..
 import { reportIncident, riderRescheduleParcel, riderRequestRth } from "../../services/parcelService.js";
 import {
   FAIL_REASONS,
+  IMMEDIATE_RTH_REASONS,
   MAX_RESCHEDULES,
+  RESCHEDULE_REASONS,
   STAGE,
   addDaysIso,
+  isImmediateRthReason,
   isRecipientRefusal,
   markDelivered,
   markFailed,
@@ -37,7 +40,7 @@ const COPY = {
   [STAGE.TO_DELIVER]: {
     title: "To Be Delivered",
     subtitle:
-      "Parcels you scanned. Undelivered parcels are automatically rescheduled for up to 2 next-day attempts before being marked Return to Hub.",
+      "Active parcels ready for delivery. Select Delivered or Failed Delivery to record the outcome.",
     icon: "truck",
     empty: "Nothing to deliver",
     emptyText: "Scan a parcel's QR code and it will appear here.",
@@ -49,12 +52,20 @@ const COPY = {
     empty: "No delivered parcels yet",
     emptyText: "Completed deliveries will be listed here.",
   },
+  [STAGE.RESCHEDULED]: {
+    title: "Rescheduled",
+    subtitle:
+      "Parcels automatically rescheduled for next-day delivery (maximum of 2 reschedule attempts).",
+    icon: "calendar-days",
+    empty: "No rescheduled parcels",
+    emptyText: "Parcels rescheduled due to recipient unavailability will appear here.",
+  },
   [STAGE.FAILED]: {
     title: "Failed & Return to Hub",
-    subtitle: "Parcels that reached the 2-attempt limit (Return to Hub) or failed delivery attempts.",
+    subtitle: "Parcels marked for Return to Hub after 2 reschedule attempts or immediate return reasons.",
     icon: "undo-2",
     empty: "No failed or Return to Hub parcels",
-    emptyText: "Parcels that reach the 2-attempt limit will appear here as Return to Hub.",
+    emptyText: "Parcels marked for Return to Hub will appear here.",
   },
 };
 
@@ -290,7 +301,7 @@ function GroupTitle({ children, count, tone = "" }) {
 export default function RiderDeliveries() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab");
-  const stage = [STAGE.DELIVERED, STAGE.FAILED].includes(tab) ? tab : STAGE.TO_DELIVER;
+  const stage = [STAGE.DELIVERED, STAGE.RESCHEDULED, STAGE.FAILED].includes(tab) ? tab : STAGE.TO_DELIVER;
   const copy = COPY[stage];
   const all = useMyDeliveries();
   const failures = useFailedDeliveries();
@@ -360,10 +371,13 @@ export default function RiderDeliveries() {
     }
   };
 
-  // Tinitiyak na ang mga "Return to Hub" ay HINDI na lumalabas sa "To Be Delivered"
+  // Tinitiyak na hiwalay ang To Be Delivered, Rescheduled (3rd tab), at Failed/Return to Hub (4th tab)
   const mine = useMemo(() => {
     if (stage === STAGE.TO_DELIVER) {
-      return all.filter((d) => d.stage === STAGE.TO_DELIVER && !d.returnToHub);
+      return all.filter((d) => d.stage === STAGE.TO_DELIVER && !d.rescheduled && !d.returnToHub);
+    }
+    if (stage === STAGE.RESCHEDULED) {
+      return all.filter((d) => d.stage === STAGE.TO_DELIVER && Boolean(d.rescheduled) && !d.returnToHub);
     }
     if (stage === STAGE.FAILED) {
       return all.filter((d) => d.stage === STAGE.FAILED || d.stage === STAGE.RETURN_TO_HUB || d.returnToHub);
@@ -431,11 +445,14 @@ export default function RiderDeliveries() {
       toast(`${d.transaction_number} marked as delivered.`);
     } else {
       if (!reason) return setError("Please choose why the delivery failed.");
-      if (reason === "Other" && !note.trim()) return setError("Please explain the reason in the notes.");
-      const result = markFailed(d.parcel_id, { reason, note: note.trim() });
-      reportFailure(d, { reason, note: note.trim(), result });
-      if (result?.outcome === "recipient_refused" || result?.outcome === "return_to_hub" || isRecipientRefusal(reason)) {
-        riderRequestRth(d.parcel_id, { reason, notes: note.trim() }).catch(() => {});
+      const immediateRth = isImmediateRthReason(reason);
+      if (immediateRth && !proof) {
+        return setError("Please upload or capture a proof photo before submitting Return to Hub.");
+      }
+      const result = markFailed(d.parcel_id, { reason, note: note.trim(), proof });
+      reportFailure(d, { reason, note: note.trim(), proof, result });
+      if (result?.outcome === "recipient_refused" || result?.outcome === "return_to_hub" || immediateRth) {
+        riderRequestRth(d.parcel_id, { reason, notes: note.trim(), proof }).catch(() => {});
       } else {
         riderRescheduleParcel(d.parcel_id, {
           reason,
@@ -443,19 +460,19 @@ export default function RiderDeliveries() {
           notes: note.trim(),
         }).catch(() => {});
       }
-      if (result?.outcome === "recipient_refused") {
+      if (result?.outcome === "recipient_refused" || immediateRth) {
         toast(
-          `Recipient refused delivery. ${d.transaction_number} marked as Return to Hub and removed from active queue.`,
+          `${d.transaction_number} marked as Return to Hub (${reason}). Coordinator has been notified.`,
           "error"
         );
       } else if (result?.outcome === "return_to_hub") {
         toast(
-          `${d.transaction_number} reached the ${MAX_RESCHEDULES}-day rescheduling limit and was marked as Return to Hub. Coordinator notified.`,
+          `${d.transaction_number} reached the ${MAX_RESCHEDULES}-attempt reschedule limit and was marked as Return to Hub. Coordinator notified.`,
           "error"
         );
       } else {
         toast(
-          `${d.transaction_number} rescheduled for next day: ${formatShortDay(result?.scheduledFor)} (${result?.rescheduleCount}/${MAX_RESCHEDULES}).`,
+          `${d.transaction_number} rescheduled for ${formatDay(result?.scheduledFor)} (Attempt ${result?.rescheduleCount}/${MAX_RESCHEDULES}).`,
           "info"
         );
       }
@@ -487,10 +504,20 @@ export default function RiderDeliveries() {
           <Icon name="circle-check" /> Delivered
         </button>
         <button type="button" onClick={() => open("failed", d)} className={`${btnGhost} ${bigBtn}`}>
-          <Icon name="x" /> Failed
+          <Icon name="x" /> Failed Delivery
         </button>
       </div>
     );
+
+    const latestReason =
+      cleanText(d.lastFailure) ||
+      cleanText(d.attempts?.[d.attempts.length - 1]?.reason) ||
+      "";
+    const latestReschedTs =
+      parseValidTimestamp(d.lastRescheduledAt) ||
+      parseValidTimestamp(d.attempts?.[d.attempts.length - 1]?.failedAt) ||
+      parseValidTimestamp(d.updated_at) ||
+      null;
 
     return (
       <article key={cardKey} className={card}>
@@ -504,7 +531,7 @@ export default function RiderDeliveries() {
             isResched ? (
               <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
                 <Icon name="calendar-days" className="mr-1" />
-                Rescheduled (Day {reschedCount}/{MAX_RESCHEDULES}) · {formatDay(d.scheduledFor)}
+                Attempt {reschedCount}/{MAX_RESCHEDULES} · {formatDay(d.scheduledFor)}
               </span>
             ) : (
               <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2.5 py-1 text-[12px] font-bold text-[#29945a]">
@@ -513,6 +540,23 @@ export default function RiderDeliveries() {
             )
           }
         />
+
+        {isResched && (
+          <div className="mt-3 flex flex-col gap-1 rounded-xl bg-[#fff8eb] px-3 py-2.5 text-[12.5px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
+            <div className="flex items-start gap-2">
+              <Icon name="calendar-days" className="mt-0.5 shrink-0" />
+              <span>
+                Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
+                {latestReason ? ` due to ${latestReason}` : ""}.
+              </span>
+            </div>
+            {latestReschedTs && (
+              <span className="pl-5 text-[11.5px] text-[#b47b09] dark:text-[#fcd34d]/80">
+                Rescheduled at {formatDate(latestReschedTs)}
+              </span>
+            )}
+          </div>
+        )}
 
         {(d.delivery_hold || d.deliveryHold) && (
           <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
@@ -699,6 +743,17 @@ export default function RiderDeliveries() {
 
         {!expanded ? (
           <>
+            {d.proof && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setViewer(d)}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                >
+                  <Icon name="image" /> View Proof Photo
+                </button>
+              </div>
+            )}
             {canRetry && (
               <button type="button" onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-4`}>
                 <Icon name="undo-2" /> Try again
@@ -730,16 +785,16 @@ export default function RiderDeliveries() {
                 }`}
               >
                 {isReturnToHub
-                  ? `2-Attempt Limit Reached · Marked as Return to Hub`
+                  ? `Marked as Return to Hub`
                   : cleanText(d.reason || d.lastFailure) || "Delivery attempt failed"}
               </strong>
               <span className="mt-1 block text-[13px] text-[#666] dark:text-[#d1c9c2]">
-                Last failure reason:{" "}
+                Return / failure reason:{" "}
                 <strong>{cleanText(d.lastFailure || d.reason) || "Missed scheduled delivery date"}</strong>
               </span>
               {d.returnCoordinated ? (
                 <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[12px] font-bold text-[#29945a]">
-                  <Icon name="circle-check" /> Coordinator coordinated return to seller
+                  <Icon name="circle-check" /> Coordinator confirmed return at Hub
                 </span>
               ) : isReturnToHub ? (
                 <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[12px] font-bold text-[#c98200]">
@@ -747,6 +802,18 @@ export default function RiderDeliveries() {
                 </span>
               ) : null}
             </div>
+
+            {d.proof && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setViewer(d)}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                >
+                  <Icon name="image" /> View Proof Photo
+                </button>
+              </div>
+            )}
 
             <AttemptHistory
               attempts={d.attempts}
@@ -779,9 +846,6 @@ export default function RiderDeliveries() {
   const strip = {
     [STAGE.TO_DELIVER]: [
       [`${mine.length} left to deliver`, "text-brand bg-brand-soft"],
-      ...(mine.some((d) => d.rescheduled)
-        ? [[`${mine.filter((d) => d.rescheduled).length} rescheduled (max ${MAX_RESCHEDULES} days)`, "text-[#c98200] bg-[#fff4d8]"]]
-        : []),
     ],
     [STAGE.DELIVERED]: [
       [
@@ -792,13 +856,16 @@ export default function RiderDeliveries() {
       ],
       [`${mine.length} in total`, "text-[#777] bg-[#f1f1f1]"],
     ],
+    [STAGE.RESCHEDULED]: [
+      [`${mine.length} rescheduled (max ${MAX_RESCHEDULES} attempts)`, "text-[#c98200] bg-[#fff4d8]"],
+    ],
     [STAGE.FAILED]: [
       [`${mine.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length} Return to Hub`, "text-[#7c3aed] bg-[#f2ecff]"],
       ...(mine.some((d) => !d.returnToHub && d.stage === STAGE.FAILED)
         ? [[`${mine.filter((d) => !d.returnToHub && d.stage === STAGE.FAILED).length} failed`, "text-[#d94747] bg-[#fff1f1]"]]
         : []),
     ],
-  }[stage];
+  }[stage] || [];
 
   // ---- Ang laman ayon sa stage
   let body;
@@ -810,7 +877,7 @@ export default function RiderDeliveries() {
         text={search ? "Try a different name, address or transaction number." : copy.emptyText}
       />
     );
-  } else if (stage === STAGE.TO_DELIVER) {
+  } else if (stage === STAGE.TO_DELIVER || stage === STAGE.RESCHEDULED) {
     if (byArea) {
       const groups = new Map();
       shown.forEach((d) => {
@@ -1041,20 +1108,71 @@ export default function RiderDeliveries() {
                   className={inputCls}
                 >
                   <option value="">Select a reason…</option>
-                  {FAIL_REASONS.map((r) => (
-                    <option key={r}>{r}</option>
-                  ))}
+                  <optgroup label="Automatic Next-Day Reschedule (Max 2 Attempts)">
+                    {RESCHEDULE_REASONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Immediate Return to Hub (RTH - Proof Required)">
+                    {IMMEDIATE_RTH_REASONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
 
-                {isRecipientRefusal(reason) && (
-                  <div className="mt-3 rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
+                {reason && !isImmediateRthReason(reason) && !modalWillReturnToHub && (
+                  <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
                     <strong className="block font-bold">
-                      <Icon name="shield-check" className="mr-1.5" />
-                      Recipient Refusal Protocol
+                      <Icon name="calendar-days" className="mr-1.5" />
+                      Automatic Reschedule (Attempt {modalReschedCount + 1} of {MAX_RESCHEDULES})
                     </strong>
                     <p className="mt-1">
-                      Keep the parcel sealed. Do not collect any payment. A direct failed-delivery report will be sent to the Coordinator in Messages for Return-to-Hub review.
+                      This parcel will automatically be rescheduled for delivery on{" "}
+                      <strong>{formatDay(modalNextDate)}</strong> and moved to the <strong>Rescheduled</strong> tab.
                     </p>
+                  </div>
+                )}
+
+                {isImmediateRthReason(reason) && (
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
+                      <strong className="block font-bold">
+                        <Icon name="undo-2" className="mr-1.5" />
+                        Automatic Return to Hub (RTH)
+                      </strong>
+                      <p className="mt-1">
+                        Selecting <strong>{reason}</strong> will automatically mark this parcel as{" "}
+                        <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
+                      <label className={labelCls} htmlFor="rthProofPhoto">
+                        Upload Proof Photo (Required)
+                      </label>
+                      <input
+                        id="rthProofPhoto"
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={pickPhoto}
+                        className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
+                      />
+                      {busy && <p className="mt-2 text-[12px] text-[#888]">Processing proof photo…</p>}
+                      {proof && (
+                        <div className="mt-3">
+                          <img
+                            src={proof}
+                            alt="Return to Hub proof preview"
+                            className="max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1093,12 +1211,10 @@ export default function RiderDeliveries() {
               </button>
               <button onClick={confirm} disabled={busy} className={btnPrimary}>
                 {action.type === "delivered"
-                  ? "Confirm delivered"
-                  : isRecipientRefusal(reason)
-                  ? "Classify for Return to Hub"
-                  : modalWillReturnToHub
-                  ? "Confirm & Mark Return to Hub"
-                  : `Reschedule Next Day – ${formatShortDay(modalNextDate)}`}
+                  ? "Confirm Delivered"
+                  : isImmediateRthReason(reason) || modalWillReturnToHub
+                  ? "Submit & Mark Return to Hub"
+                  : `Submit & Reschedule (${formatShortDay(modalNextDate)})`}
               </button>
             </div>
           </>

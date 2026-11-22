@@ -71,22 +71,30 @@ export const MAX_RESCHEDULES = 2;
 export const STAGE = {
   TO_DELIVER: "to_deliver",
   DELIVERED: "delivered",
+  RESCHEDULED: "rescheduled",
   FAILED: "failed",
   RETURN_TO_HUB: "return_to_hub",
 };
 
-export const FAIL_REASONS = [
-  "Recipient Refused Parcel",
-  "Recipient Unavailable",
-  "Recipient Not Answering",
+export const RESCHEDULE_REASONS = [
   "No One Available to Receive Parcel",
-  "Wrong or incomplete address",
-  "Cannot contact the recipient",
-  "Parcel damaged",
-  "Other",
+  "Recipient Unavailable (Wala sa Bahay)",
+  "Recipient Not Answering",
+  "Cannot Contact the Recipient",
 ];
 
-export function isRecipientRefusal(reason) {
+export const IMMEDIATE_RTH_REASONS = [
+  "Recipient Refused Parcel",
+  "Parcel Damaged",
+  "Wrong or Incomplete Address",
+];
+
+export const FAIL_REASONS = [
+  ...RESCHEDULE_REASONS,
+  ...IMMEDIATE_RTH_REASONS,
+];
+
+export function isImmediateRthReason(reason) {
   if (!reason) return false;
   const s = String(reason).trim().toLowerCase();
   return (
@@ -101,9 +109,19 @@ export function isRecipientRefusal(reason) {
     s.includes("cancelled order") ||
     s.includes("cancelled delivery") ||
     s.includes("wrong recipient") ||
-    s.includes("unknown consignee")
+    s.includes("unknown consignee") ||
+    s.includes("parcel damaged") ||
+    s.includes("damaged item") ||
+    s.includes("damaged") ||
+    s.includes("wrong or incomplete address") ||
+    s.includes("wrong address") ||
+    s.includes("incomplete address") ||
+    s.includes("incorrect address") ||
+    s.includes("cannot be located")
   );
 }
+
+export const isRecipientRefusal = isImmediateRthReason;
 
 export const isCleared = (parcel) =>
   parcel?.status === "VERIFIED" ||
@@ -204,8 +222,16 @@ export function syncAutomaticReschedules() {
 
     const elapsedDays = diffCalendarDays(initialDate, today);
 
+    // Huwag i-reset kung manual na ni-reschedule o minarkahang Return to Hub ng rider
+    if (d.returnToHub || d.stage === STAGE.RETURN_TO_HUB) {
+      return raw;
+    }
+    if (d.rescheduled && Number(d.rescheduleCount || 0) > 0 && d.attempts.some((a) => a && !a.auto)) {
+      return raw;
+    }
+
     if (elapsedDays <= 0) {
-      if (d.rescheduled || d.returnToHub || d.rescheduleCount > 0) {
+      if ((d.rescheduled || d.rescheduleCount > 0) && d.attempts.every((a) => !a || a.auto)) {
         d.scheduledFor = initialDate;
         d.rescheduled = false;
         d.rescheduleCount = 0;
@@ -1061,7 +1087,7 @@ export const markDelivered = (parcelId, { proof, note }) => {
 // - Kung naabot na ang 3-day rescheduling limit (>= 3), hindi na pwedeng i-reschedule:
 //   awtomatikong magiging "Return to Hub", tatanggalin sa pending deliveries ng rider,
 //   at aabisuhan ang coordinator para ma-coordinate ang pagbabalik sa seller.
-export const markFailed = (parcelId, { reason, note, customDate }) => {
+export const markFailed = (parcelId, { reason, note, proof = "", customDate }) => {
   const current = store.get().find(
     (d) => isSameRider(d, me()) && isSameParcelItem(d, { parcel_id: parcelId, transaction_number: parcelId })
   );
@@ -1073,35 +1099,39 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
   const txn = current.transaction_number || parcelId;
   const targetId = current.parcel_id || txn;
   const riderName = getUser()?.name || current.rider_name || "Rider";
+  const nowTs = Date.now();
 
-  // 1. RECIPIENT REFUSAL:
-  // Immediately marks parcel for Return to Hub without requiring coordinator approval.
-  if (isRecipientRefusal(reason)) {
+  // 1. IMMEDIATE RETURN TO HUB REASONS (Recipient Refused Parcel, Parcel Damaged, Wrong or Incomplete Address):
+  if (isImmediateRthReason(reason)) {
     const attemptEntry = {
-      id: `att-${parcelId}-refusal-${Date.now()}`,
+      id: `att-${parcelId}-rth-${nowTs}`,
       attempt: (current.attempts?.length || 0) + 1,
-      failedAt: Date.now(),
+      failedAt: nowTs,
       scheduledDate: baseDate,
       rescheduledTo: null,
       rescheduleDay: count,
       reason,
-      note: note || "Recipient refused delivery. Immediately marked for Return to Hub.",
+      note: note || `${reason}. Immediately marked for Return to Hub.`,
+      proof: proof || "",
       auto: false,
-      outcome: "recipient_refused",
+      outcome: "return_to_hub",
     };
     const nextAttempts = [...(current.attempts || []), attemptEntry];
 
     patch(parcelId, {
       stage: STAGE.RETURN_TO_HUB,
-      doneAt: Date.now(),
+      doneAt: nowTs,
+      returnToHubAt: nowTs,
       rescheduled: false,
       returnToHub: true,
       return_to_hub: true,
+      rth_status: "PENDING",
+      rth_reason: reason,
       lastFailure: reason,
       lastNote: note || "",
       reason,
       note: note || "",
-      proof: "",
+      proof: proof || current.proof || "",
       attempts: nextAttempts,
     });
 
@@ -1109,14 +1139,15 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
     if (txn !== parcelId) updateParcelRecord(txn, { status: "Return to Hub", returnToHub: true });
 
     addNotification({
-      id: `refusal-${parcelId}-${Date.now()}`,
-      kind: "delivery",
+      id: `rth-imm-${parcelId}-${nowTs}`,
+      kind: "rider",
+      category: "parcel",
       icon: "undo-2",
       tone: "red",
-      title: `Return to Hub: ${txn}`,
-      text: `${riderName} reported "${reason}". Parcel immediately marked for Return to Hub.`,
+      title: `Return to Hub Pending: ${txn}`,
+      text: `${riderName} reported "${reason}". Awaiting physical arrival confirmation at Hub.`,
       read: false,
-      to: "/notifications",
+      to: "/verification",
     });
 
     sync(async () => {
@@ -1127,30 +1158,9 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
         rescheduleCount: count,
         returnToHub: true,
         status: "RETURN_TO_HUB",
+        proof: proof || undefined,
         attempts: nextAttempts,
-      }).catch(() => { });
-
-      try {
-        const contacts = await listContacts();
-        const coordinator = contacts.find((c) => c.role === "coordinator");
-        if (coordinator) {
-          const msg = `[RETURN TO HUB - RECIPIENT REFUSAL]
-Tracking / Txn: ${txn}
-Parcel ID: ${current.parcel_id || txn}
-Receiver: ${current.receiver || "Consignee"}
-Contact: ${current.contact || "N/A"}
-Address: ${current.address || "N/A"}
-Refusal Reason: ${reason}
-Rider: ${riderName} (ID: ${me()})
-Notes: ${note || "Recipient refused parcel."}
-
-Status: Immediately marked for Return to Hub. Please verify physical arrival when parcel is returned to the hub.`;
-          await sendMessage(coordinator.user_id, msg);
-        }
-      } catch (err) {
-        console.warn("Could not send refusal message to coordinator:", err);
-      }
-
+      }).catch(() => {});
       await syncRiderDeliveriesWithServer(me());
     });
 
@@ -1162,18 +1172,19 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
     };
   }
 
+  // 2. AUTO-RESCHEDULE REASONS (up to 2 reschedule attempts: e.g. Nov 22 -> Nov 23 -> Nov 24)
   if (count < MAX_RESCHEDULES) {
     const nextCount = count + 1;
     const nextDate = customDate && customDate > baseDate ? customDate : addDaysIso(baseDate, 1);
     const attemptEntry = {
-      id: `att-${parcelId}-${Date.now()}`,
+      id: `att-${parcelId}-${nowTs}`,
       attempt: (current.attempts?.length || 0) + 1,
-      failedAt: Date.now(),
+      failedAt: nowTs,
       scheduledDate: baseDate,
       rescheduledTo: nextDate,
       rescheduleDay: nextCount,
       reason,
-      note: note || `Automatically rescheduled to ${nextDate} (Day ${nextCount} of ${MAX_RESCHEDULES}).`,
+      note: note || `Automatically rescheduled to ${nextDate} (Attempt ${nextCount} of ${MAX_RESCHEDULES}).`,
       auto: false,
       outcome: "rescheduled",
     };
@@ -1187,7 +1198,8 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
       scheduledFor: nextDate,
       lastFailure: reason,
       lastNote: note || "",
-      lastRescheduledAt: Date.now(),
+      lastRescheduledAt: nowTs,
+      updated_at: new Date(nowTs).toISOString(),
       reason: "",
       note: note || "",
       proof: "",
@@ -1199,13 +1211,14 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
 
     addNotification({
       id: `resched-${parcelId}-${nextCount}`,
-      kind: "delivery",
+      kind: "rider",
+      category: "parcel",
       icon: "calendar-days",
       tone: "orange",
-      title: `Rescheduled (Day ${nextCount}/${MAX_RESCHEDULES}): ${txn}`,
-      text: `${riderName} reported "${reason}". New delivery date assigned: ${nextDate}.`,
+      title: `Rescheduled (Attempt ${nextCount}/${MAX_RESCHEDULES}): ${txn}`,
+      text: `${riderName} reported "${reason}". Next delivery date: ${nextDate}.`,
       read: false,
-      to: "/notifications",
+      to: "/parcels",
     });
 
     sync(async () => {
@@ -1216,23 +1229,30 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
         rescheduleCount: nextCount,
         returnToHub: false,
         attempts: nextAttempts,
-      });
+      }).catch(() => {});
       await syncRiderDeliveriesWithServer(me());
     });
 
-    return { outcome: "rescheduled", scheduledFor: nextDate, rescheduleCount: nextCount, maxReschedules: MAX_RESCHEDULES };
+    return {
+      outcome: "rescheduled",
+      scheduledFor: nextDate,
+      rescheduleCount: nextCount,
+      maxReschedules: MAX_RESCHEDULES,
+      rescheduledAt: nowTs,
+    };
   }
 
-  // Naabot na ang 3-day rescheduling limit -> Return to Hub
+  // 3. Naabot na ang 2-attempt reschedule limit -> Automatic Return to Hub
   const attemptEntry = {
-    id: `att-${parcelId}-${Date.now()}`,
+    id: `att-${parcelId}-${nowTs}`,
     attempt: (current.attempts?.length || 0) + 1,
-    failedAt: Date.now(),
+    failedAt: nowTs,
     scheduledDate: baseDate,
     rescheduledTo: null,
     rescheduleDay: MAX_RESCHEDULES,
     reason,
-    note: note || `Maximum ${MAX_RESCHEDULES}-day rescheduling limit reached. Marked as Return to Hub.`,
+    note: note || `Maximum ${MAX_RESCHEDULES}-attempt reschedule limit reached. Marked as Return to Hub.`,
+    proof: proof || "",
     auto: false,
     outcome: "return_to_hub",
   };
@@ -1240,14 +1260,18 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
 
   patch(parcelId, {
     stage: STAGE.RETURN_TO_HUB,
+    rescheduled: false,
     returnToHub: true,
-    returnToHubAt: Date.now(),
-    doneAt: Date.now(),
+    return_to_hub: true,
+    rth_status: "PENDING",
+    rth_reason: `Max ${MAX_RESCHEDULES} reschedule attempts reached (${reason})`,
+    returnToHubAt: nowTs,
+    doneAt: nowTs,
     reason,
     lastFailure: reason,
     lastNote: note || "",
     note: note || "",
-    proof: "",
+    proof: proof || current.proof || "",
     attempts: nextAttempts,
   });
 
@@ -1256,27 +1280,29 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
 
   addNotification({
     id: `rth-${parcelId}`,
-    kind: "delivery",
+    kind: "rider",
+    category: "parcel",
     icon: "undo-2",
     tone: "red",
-    title: `Return to Hub: ${txn}`,
-    text: `${riderName} · Reached maximum ${MAX_RESCHEDULES}-day rescheduling limit (${reason}). Coordinate return to hub and seller (${current.seller || "Seller"}).`,
+    title: `Return to Hub Pending: ${txn}`,
+    text: `${riderName} · Reached maximum ${MAX_RESCHEDULES}-attempt reschedule limit (${reason}). Awaiting physical arrival confirmation at Hub.`,
     read: false,
-    to: "/notifications",
+    to: "/verification",
   });
 
   sync(async () => {
     await reportFailed(targetId, reason, note, {
       outcome: "return_to_hub",
       scheduledFor: baseDate,
-      rescheduled: true,
+      rescheduled: false,
       rescheduleCount: MAX_RESCHEDULES,
       returnToHub: true,
+      proof: proof || undefined,
       attempts: nextAttempts,
-    });
+    }).catch(() => {});
     await syncRiderDeliveriesWithServer(me());
   });
-  return { outcome: "return_to_hub", scheduledFor: null, rescheduleCount: count, maxReschedules: MAX_RESCHEDULES };
+  return { outcome: "return_to_hub", scheduledFor: null, rescheduleCount: MAX_RESCHEDULES, maxReschedules: MAX_RESCHEDULES };
 };
 
 // Subukan ulit ang failed delivery — HINDING-HINDI pwede kapag Return to Hub / lampas na sa 3-day limit

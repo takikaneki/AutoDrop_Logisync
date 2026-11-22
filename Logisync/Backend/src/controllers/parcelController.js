@@ -2150,8 +2150,24 @@ function isRecipientRefusal(reason) {
     s.includes("cancelled order") ||
     s.includes("cancelled delivery") ||
     s.includes("wrong recipient") ||
-    s.includes("unknown consignee")
+    s.includes("unknown consignee") ||
+    s.includes("parcel damaged") ||
+    s.includes("damaged item") ||
+    s.includes("damaged") ||
+    s.includes("wrong or incomplete address") ||
+    s.includes("wrong address") ||
+    s.includes("incomplete address") ||
+    s.includes("incorrect address") ||
+    s.includes("cannot be located")
   );
+}
+
+function addOneDayIso(dateStr) {
+  const clean = String(dateStr || new Date().toISOString().slice(0, 10)).slice(0, 10);
+  const [y, m, d] = clean.split("-").map(Number);
+  if (!y || !m || !d) return new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const dt = new Date(Date.UTC(y, m - 1, d + 1, 12, 0, 0));
+  return dt.toISOString().slice(0, 10);
 }
 
 async function finishDelivery(req, res, outcome) {
@@ -2247,46 +2263,37 @@ async function finishDelivery(req, res, outcome) {
         finalDeliveryStatus = "RETURN_TO_HUB";
         newStatusLabel = "Return to Hub";
       } else {
-        // Scenario B: Other Failed Delivery Reasons -> Next Day Delivery
+        // Scenario B: Other Failed Delivery Reasons -> Next Day Delivery (max 2 reschedule attempts)
         if (parcel.rth_status === "PENDING" || parcel.rth_status === "PENDING_CONFIRMATION" || parcel.status === "RETURN_TO_HUB" || parcel.status === "RTH_PENDING") {
           await connection.rollback();
           return res.status(400).json({ success: false, message: "Maximum delivery attempts reached. This parcel is already marked for Return to Hub." });
         }
 
-        const isCurrentlyRescheduled = Boolean(parcel.rescheduled || parcel.status === "RESCHEDULED");
-        if (isCurrentlyRescheduled && nextDayCount >= 2) {
-          await connection.rollback();
-          return res.status(400).json({
-            success: false,
-            message: "Maximum of 2 next-day delivery attempts reached. This parcel must be returned to the hub."
-          });
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const baseDate = parcel.scheduled_for && String(parcel.scheduled_for).slice(0, 10) >= todayStr
+          ? String(parcel.scheduled_for).slice(0, 10)
+          : todayStr;
+        const computedNextDate = addOneDayIso(baseDate);
+        if (!req.body?.scheduledFor || String(req.body.scheduledFor).slice(0, 10) <= baseDate) {
+          scheduledFor = computedNextDate;
         }
 
-        if (isCurrentlyRescheduled) {
-          // This is a next-day delivery attempt that failed
-          nextDayCount = nextDayCount + 1;
-          rescheduleCount = rescheduleCount + 1;
+        const currentReschedCount = Math.max(Number(parcel.reschedule_count || 0), Number(parcel.next_day_attempt_count || 0));
 
-          if (nextDayCount >= 2) {
-            // SECOND next-day attempt failed! Automatically move to RETURN_TO_HUB
-            isReturnToHub = true;
-            isRescheduled = false;
-            rthReason = "Maximum delivery attempts reached";
-            finalStatus = "RETURN_TO_HUB";
-            finalDeliveryStatus = "RETURN_TO_HUB";
-            newStatusLabel = "Return to Hub";
-          } else {
-            // FIRST next-day attempt failed -> remains RESCHEDULED for next day
-            isReturnToHub = false;
-            isRescheduled = true;
-            finalStatus = "RESCHEDULED";
-            finalDeliveryStatus = "TO_DELIVER";
-            newStatusLabel = "Rescheduled for Delivery";
-          }
+        if (currentReschedCount >= 2) {
+          // Already rescheduled 2 times and failed again -> Automatic Return to Hub
+          isReturnToHub = true;
+          isRescheduled = false;
+          rescheduleCount = 2;
+          nextDayCount = 2;
+          rthReason = `Maximum 2 reschedule attempts reached (${reason || note || "Buyer Unavailable"})`;
+          finalStatus = "RETURN_TO_HUB";
+          finalDeliveryStatus = "RETURN_TO_HUB";
+          newStatusLabel = "Return to Hub";
         } else {
-          // Initial failed delivery: do NOT count as one of the two next-day attempts
-          nextDayCount = 0;
-          rescheduleCount = 1;
+          // Reschedule Attempt 1 of 2 (Nov 23) or Attempt 2 of 2 (Nov 24)
+          rescheduleCount = currentReschedCount + 1;
+          nextDayCount = rescheduleCount;
           isReturnToHub = false;
           isRescheduled = true;
           finalStatus = "RESCHEDULED";
@@ -3289,54 +3296,44 @@ async function riderReschedule(req, res) {
       });
     }
 
-    // Scenario B: Other Failed Delivery Reasons (Next Day Delivery)
+    // Scenario B: Other Failed Delivery Reasons (Next Day Delivery - max 2 reschedule attempts)
     if (p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION" || p.status === "RETURN_TO_HUB" || p.status === "RTH_PENDING") {
       await connection.rollback();
       return res.status(400).json({ success: false, message: "Maximum delivery attempts reached. This parcel is already marked for Return to Hub." });
     }
 
-    const isCurrentlyRescheduled = Boolean(p.rescheduled || p.status === "RESCHEDULED");
-    const currentNextDay = Number(p.next_day_attempt_count || 0);
-
-    if (isCurrentlyRescheduled && currentNextDay >= 2) {
-      await connection.rollback();
-      return res.status(400).json({
-        success: false,
-        message: "Maximum of 2 next-day delivery attempts reached. This parcel must be returned to the hub."
-      });
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const baseDate = p.scheduled_for && String(p.scheduled_for).slice(0, 10) >= todayStr
+      ? String(p.scheduled_for).slice(0, 10)
+      : todayStr;
+    const computedNextDate = addOneDayIso(baseDate);
+    if (!req.body?.scheduledFor || String(scheduledFor).slice(0, 10) <= baseDate) {
+      scheduledFor = computedNextDate;
     }
 
-    let nextDayCount = currentNextDay;
-    let nextRescheduleCount = Number(p.reschedule_count || 0);
+    const currentReschedCount = Math.max(Number(p.reschedule_count || 0), Number(p.next_day_attempt_count || 0));
+
+    let nextDayCount = currentReschedCount;
+    let nextRescheduleCount = currentReschedCount;
     let finalStatus = "RESCHEDULED";
     let finalDeliveryStatus = "TO_DELIVER";
     let isReturnToHub = false;
     let rthReason = null;
     let statusLabel = "Rescheduled for Delivery";
 
-    if (isCurrentlyRescheduled) {
-      // This is an actual Next Day Delivery Attempt
-      nextDayCount = currentNextDay + 1;
-      nextRescheduleCount = nextRescheduleCount + 1;
-
-      if (nextDayCount >= 2) {
-        // SECOND next-day attempt failed! Automatically move to RETURN_TO_HUB
-        finalStatus = "RETURN_TO_HUB";
-        finalDeliveryStatus = "RETURN_TO_HUB";
-        isReturnToHub = true;
-        rthReason = "Maximum delivery attempts reached";
-        statusLabel = "Return to Hub";
-      } else {
-        // FIRST next-day attempt failed -> remains RESCHEDULED
-        finalStatus = "RESCHEDULED";
-        finalDeliveryStatus = "TO_DELIVER";
-        isReturnToHub = false;
-        statusLabel = "Rescheduled for Delivery";
-      }
+    if (currentReschedCount >= 2) {
+      // Already rescheduled 2 times and failed again -> Automatic Return to Hub
+      nextDayCount = 2;
+      nextRescheduleCount = 2;
+      finalStatus = "RETURN_TO_HUB";
+      finalDeliveryStatus = "RETURN_TO_HUB";
+      isReturnToHub = true;
+      rthReason = `Maximum 2 reschedule attempts reached (${reason || "Buyer Unavailable"})`;
+      statusLabel = "Return to Hub";
     } else {
-      // Initial failed delivery: do NOT count as one of the two next-day attempts
-      nextDayCount = 0;
-      nextRescheduleCount = 1;
+      // Reschedule Attempt 1 of 2 (Nov 23) or Attempt 2 of 2 (Nov 24)
+      nextRescheduleCount = currentReschedCount + 1;
+      nextDayCount = nextRescheduleCount;
       finalStatus = "RESCHEDULED";
       finalDeliveryStatus = "TO_DELIVER";
       isReturnToHub = false;
@@ -3463,6 +3460,7 @@ async function riderRequestRth(req, res) {
     const parcelId = String(req.params.parcelId || "").trim();
     const reason = String(req.body?.reason || "Recipient Refused Parcel").trim();
     const notes = String(req.body?.notes || req.body?.delivery_note || "").trim().slice(0, 500);
+    const proof = req.body?.proof ? String(req.body.proof) : null;
 
     if (!reason) {
       return res.status(400).json({ success: false, message: "A cancellation or return reason is required." });
@@ -3522,6 +3520,7 @@ async function riderRequestRth(req, res) {
       scheduledDate: p.scheduled_for || new Date().toISOString().slice(0, 10),
       reason: reason,
       notes: notes,
+      proof: proof || undefined,
       status: "Return to Hub",
       outcome: "recipient_refused",
       riderId: req.user.user_id,
@@ -3534,6 +3533,7 @@ async function riderRequestRth(req, res) {
        SET status = 'RETURN_TO_HUB',
            delivery_status = 'RETURN_TO_HUB',
            rider_id = COALESCE(rider_id, ?),
+           delivery_proof = COALESCE(?, delivery_proof),
            return_to_hub = TRUE,
            return_to_hub_at = NOW(),
            rth_status = 'PENDING',
@@ -3551,6 +3551,7 @@ async function riderRequestRth(req, res) {
        WHERE parcel_id = ?`,
       [
         req.user.user_id,
+        proof,
         req.user.user_id,
         reason,
         reason,

@@ -15,26 +15,23 @@ import {
 } from "../../services/parcelService.js";
 import { logScan, useRiderScans } from "../../store/riderScans.js";
 import {
+  IMMEDIATE_RTH_REASONS,
+  MAX_RESCHEDULES,
+  RESCHEDULE_REASONS,
   addToDeliver,
   findAssigned,
+  isImmediateRthReason,
   markDelivered,
+  markFailed,
   syncRiderDeliveriesWithServer,
   todayIso,
   addDaysIso,
 } from "../../store/riderDeliveries.js";
+import { reportFailure } from "../../store/failedDeliveries.js";
 import { compressImage } from "../../utils/image.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
-
-const RTH_REASONS = [
-  "Recipient Refused Parcel",
-  "Buyer refused delivery",
-  "Buyer cancelled order",
-  "Incorrect address / Cannot be located",
-  "Damaged item upon arrival",
-  "Other valid return reasons",
-];
 
 const same = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
 
@@ -47,11 +44,11 @@ export default function RiderScan() {
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
 
-  // Modals for Rider Actions
-  const [actionModal, setActionModal] = useState(null); // "delivered" | "reschedule" | "rth"
+  // Modals for Rider Actions ("delivered" | "failed")
+  const [actionModal, setActionModal] = useState(null);
   const [proof, setProof] = useState("");
   const [proofBusy, setProofBusy] = useState(false);
-  const [rthReason, setRthReason] = useState(RTH_REASONS[0]);
+  const [failedReason, setFailedReason] = useState("");
   const [actionNotes, setActionNotes] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -182,89 +179,114 @@ export default function RiderScan() {
     }
   };
 
-  // Action: Buyer Unavailable (Reschedule for Delivery)
-  const handleRescheduleSubmit = async () => {
+  // Action: Failed Delivery (Automatic Reschedule up to 2 attempts OR Immediate Return to Hub with Proof Photo)
+  const currentReschedCount = Number(
+    parcel?.rescheduleCount ?? parcel?.reschedule_count ?? parcel?.next_day_attempt_count ?? 0
+  );
+  const baseSchedDate =
+    (parcel?.scheduledFor || parcel?.scheduled_for) &&
+    String(parcel?.scheduledFor || parcel?.scheduled_for).slice(0, 10) >= todayIso()
+      ? String(parcel?.scheduledFor || parcel?.scheduled_for).slice(0, 10)
+      : todayIso();
+  const nextScheduledDay = addDaysIso(baseSchedDate, 1);
+  const willAutoRthByLimit = currentReschedCount >= MAX_RESCHEDULES;
+  const isImmediateRth = isImmediateRthReason(failedReason);
+
+  const handleFailedSubmit = async () => {
+    if (!failedReason) {
+      setActionError("Please select a failure reason.");
+      return;
+    }
+    if (isImmediateRth && !proof) {
+      setActionError("Please upload or capture a proof photo before submitting Return to Hub.");
+      return;
+    }
+
     setActionBusy(true);
     setActionError("");
     try {
       const pid = parcel.parcel_id || parcel.transaction_number;
-      const nextDay = addDaysIso(todayIso(), 1);
-      const res = await riderRescheduleParcel(pid, {
-        reason: "Buyer Unavailable",
-        scheduledFor: nextDay,
-        notes: actionNotes.trim(),
+      const localRes = markFailed(pid, {
+        reason: failedReason,
+        note: actionNotes.trim(),
+        proof,
+        customDate: nextScheduledDay,
       });
-      if (res?.success) {
-        if (res.rth_required || res.status === "RETURN_TO_HUB" || res.status === "RTH_PENDING") {
+      reportFailure(parcel, {
+        reason: failedReason,
+        note: actionNotes.trim(),
+        proof,
+        result: localRes,
+      });
+
+      if (isImmediateRth || willAutoRthByLimit || localRes?.outcome === "return_to_hub" || localRes?.outcome === "recipient_refused") {
+        await riderRequestRth(pid, {
+          reason: failedReason,
+          notes: actionNotes.trim(),
+          proof,
+        }).catch(() => {});
+
+        toast(
+          `${parcel.transaction_number} marked as Return to Hub (${failedReason}). Coordinator notified for hub confirmation.`,
+          "error"
+        );
+        setParcel((prev) => ({
+          ...prev,
+          status: "RETURN_TO_HUB",
+          delivery_status: "RETURN_TO_HUB",
+          return_to_hub: true,
+          rth_status: "PENDING",
+          rth_reason: failedReason,
+          rth_requested_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          delivery_proof: proof || prev?.delivery_proof,
+        }));
+      } else {
+        const res = await riderRescheduleParcel(pid, {
+          reason: failedReason,
+          scheduledFor: nextScheduledDay,
+          notes: actionNotes.trim(),
+        }).catch(() => null);
+
+        if (res?.return_to_hub || res?.status === "RETURN_TO_HUB") {
           toast(
-            `${parcel.transaction_number} reached maximum next-day delivery attempts (2 attempts). Automatically marked for Return to Hub.`,
+            `${parcel.transaction_number} reached the 2-attempt reschedule limit and was marked for Return to Hub.`,
             "error"
           );
           setParcel((prev) => ({
             ...prev,
             status: "RETURN_TO_HUB",
+            delivery_status: "RETURN_TO_HUB",
+            return_to_hub: true,
             rth_status: "PENDING",
             rth_reason: "Maximum delivery attempts reached",
+            updated_at: new Date().toISOString(),
           }));
         } else {
+          const nextAttemptNum = Math.min(MAX_RESCHEDULES, currentReschedCount + 1);
+          const resolvedDate = res?.scheduled_for || localRes?.scheduledFor || nextScheduledDay;
           toast(
-            `${parcel.transaction_number} rescheduled for next delivery day (${formatDay(nextDay)}). Attempt count recorded.`,
+            `${parcel.transaction_number} rescheduled for ${formatDay(resolvedDate)} (Attempt ${nextAttemptNum} of ${MAX_RESCHEDULES}).`,
             "info"
           );
           setParcel((prev) => ({
             ...prev,
             status: "RESCHEDULED",
             rescheduled: true,
-            scheduledFor: nextDay,
-            next_day_attempt_count: res.next_day_attempt_count ?? (Number(prev.next_day_attempt_count || 0) + 1),
-            rescheduleCount: Number(prev.rescheduleCount || 0) + 1,
+            scheduledFor: resolvedDate,
+            scheduled_for: resolvedDate,
+            lastFailure: failedReason,
+            rescheduleCount: nextAttemptNum,
+            reschedule_count: nextAttemptNum,
+            next_day_attempt_count: nextAttemptNum,
+            updated_at: new Date().toISOString(),
           }));
         }
-        syncRiderDeliveriesWithServer();
-        setActionModal(null);
-      } else {
-        setActionError(res?.message || "Failed to reschedule delivery.");
       }
+      syncRiderDeliveriesWithServer();
+      setActionModal(null);
     } catch (err) {
-      setActionError(err.message || "Failed to reschedule delivery.");
-    } finally {
-      setActionBusy(false);
-    }
-  };
-
-  // Action: Return to Hub (RTH) - Buyer Cancelled / Refused / Damaged
-  const handleRthSubmit = async () => {
-    if (!rthReason) {
-      setActionError("Please select a valid return reason.");
-      return;
-    }
-    setActionBusy(true);
-    setActionError("");
-    try {
-      const pid = parcel.parcel_id || parcel.transaction_number;
-      const res = await riderRequestRth(pid, {
-        reason: rthReason,
-        notes: actionNotes.trim(),
-      });
-      if (res?.success) {
-        toast(
-          `${parcel.transaction_number} marked for Return to Hub. Removed from active queue.`,
-          "error"
-        );
-        setParcel((prev) => ({
-          ...prev,
-          status: "RETURN_TO_HUB",
-          rth_status: "PENDING",
-          rth_reason: rthReason,
-          rth_requested_at: new Date().toISOString(),
-        }));
-        syncRiderDeliveriesWithServer();
-        setActionModal(null);
-      } else {
-        setActionError(res?.message || "Failed to submit Return to Hub request.");
-      }
-    } catch (err) {
-      setActionError(err.message || "Failed to submit Return to Hub request.");
+      setActionError(err.message || "Failed to record failed delivery attempt.");
     } finally {
       setActionBusy(false);
     }
@@ -430,13 +452,13 @@ export default function RiderScan() {
             ]}
           />
 
-          {/* Active Rider Action Buttons */}
+          {/* Active Rider Action Buttons: ONLY Delivered or Failed Delivery */}
           {isAssigned && isReady && (
             <div className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc] p-4 dark:border-night-line dark:bg-night-soft">
               <h4 className="mb-3 text-[14px] font-bold text-[#1e293b] dark:text-white">
                 Available Delivery Actions
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1. Delivered */}
                 <button
                   type="button"
@@ -446,39 +468,26 @@ export default function RiderScan() {
                     setActionNotes("");
                     setActionError("");
                   }}
-                  className={`${btnPrimary} !bg-[#16a34a] hover:!bg-[#15803d] flex items-center justify-center gap-2`}
+                  className={`${btnPrimary} !bg-[#16a34a] hover:!bg-[#15803d] flex items-center justify-center gap-2 !py-3`}
                 >
                   <Icon name="circle-check" />
                   <span>Delivered</span>
                 </button>
 
-                {/* 2. Buyer Unavailable (Reschedule) */}
+                {/* 2. Failed Delivery */}
                 <button
                   type="button"
                   onClick={() => {
-                    setActionModal("reschedule");
+                    setActionModal("failed");
+                    setFailedReason("");
+                    setProof("");
                     setActionNotes("");
                     setActionError("");
                   }}
-                  className={`${btnPrimary} !bg-[#d97706] hover:!bg-[#b45309] flex items-center justify-center gap-2`}
+                  className={`${btnPrimary} !bg-[#dc2626] hover:!bg-[#b91c1c] flex items-center justify-center gap-2 !py-3`}
                 >
-                  <Icon name="calendar-days" />
-                  <span>Buyer Unavailable (Reschedule)</span>
-                </button>
-
-                {/* 3. Return to Hub (RTH) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActionModal("rth");
-                    setRthReason(RTH_REASONS[0]);
-                    setActionNotes("");
-                    setActionError("");
-                  }}
-                  className={`${btnPrimary} !bg-[#dc2626] hover:!bg-[#b91c1c] flex items-center justify-center gap-2`}
-                >
-                  <Icon name="undo-2" />
-                  <span>Return to Hub (RTH)</span>
+                  <Icon name="circle-x" />
+                  <span>Failed Delivery</span>
                 </button>
               </div>
             </div>
@@ -583,17 +592,17 @@ export default function RiderScan() {
         </div>
       </Modal>
 
-      {/* ACTION MODAL: Reschedule (Buyer Unavailable) */}
+      {/* ACTION MODAL: Failed Delivery (Auto-Reschedule or Immediate RTH with Proof Photo) */}
       <Modal
-        open={actionModal === "reschedule"}
+        open={actionModal === "failed"}
         onClose={() => setActionModal(null)}
         z="z-[3500]"
-        className="w-full max-w-[460px] p-6 dark:bg-night-panel"
+        className="max-h-[90vh] w-full max-w-[480px] overflow-y-auto p-6 dark:bg-night-panel"
       >
         <div className="mb-4 flex items-center justify-between border-b pb-3 dark:border-night-line">
           <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            <Icon name="calendar-days" className="mr-2 text-amber-600" />
-            Reschedule for Delivery
+            <Icon name="circle-x" className="mr-2 text-rose-600" />
+            Report Failed Delivery
           </h3>
           <button
             onClick={() => setActionModal(null)}
@@ -604,110 +613,113 @@ export default function RiderScan() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-          <strong className="block font-bold">Buyer Unavailable Protocol:</strong>
-          <p className="mt-1">
-            The parcel transaction will NOT be cancelled. It will be scheduled for the next delivery day, your attempt count will be incremented, and the parcel remains in your delivery queue.
-          </p>
-        </div>
+        <p className="mb-3 text-[13px] text-[#64748b]">
+          {parcel?.transaction_number} · {parcel?.receiver || parcel?.receiver_name}
+        </p>
 
-        <div className="mt-4">
-          <p className="text-[13px] text-[#64748b]">
-            Next Delivery Day: <strong>{formatDay(addDaysIso(todayIso(), 1))}</strong>
-          </p>
-        </div>
-
-        <div className="mt-3">
-          <label className={labelCls} htmlFor="reschedNote">
-            Attempt Notes (Optional)
-          </label>
-          <input
-            id="reschedNote"
-            type="text"
-            value={actionNotes}
-            onChange={(e) => setActionNotes(e.target.value)}
-            placeholder="e.g. Buyer not home; gate locked; phoned 2x"
-            className={inputCls}
-          />
-        </div>
-
-        {actionError && (
-          <div className="mt-3 text-[12.5px] font-semibold text-red-600">
-            {actionError}
+        {willAutoRthByLimit && !isImmediateRth && (
+          <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
+            <strong className="block font-bold">
+              <Icon name="undo-2" className="mr-1.5" />
+              2-Attempt Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Attempts)
+            </strong>
+            <p className="mt-1">
+              This parcel has already been rescheduled {MAX_RESCHEDULES} times and will automatically be marked for Return to Hub.
+            </p>
           </div>
         )}
 
-        <div className="mt-5 flex justify-end gap-2.5">
-          <button type="button" onClick={() => setActionModal(null)} className={btnGhost}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleRescheduleSubmit}
-            disabled={actionBusy}
-            className={`${btnPrimary} !bg-amber-600 hover:!bg-amber-700`}
-          >
-            {actionBusy ? "Rescheduling…" : "Confirm Reschedule"}
-          </button>
-        </div>
-      </Modal>
-
-      {/* ACTION MODAL: Return to Hub (RTH) */}
-      <Modal
-        open={actionModal === "rth"}
-        onClose={() => setActionModal(null)}
-        z="z-[3500]"
-        className="w-full max-w-[460px] p-6 dark:bg-night-panel"
-      >
-        <div className="mb-4 flex items-center justify-between border-b pb-3 dark:border-night-line">
-          <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            <Icon name="undo-2" className="mr-2 text-rose-600" />
-            Return to Hub (RTH) Request
-          </h3>
-          <button
-            onClick={() => setActionModal(null)}
-            aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
-          >
-            <Icon name="x" className="text-sm" />
-          </button>
-        </div>
-
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[13px] text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
-          <strong className="block font-bold">Buyer Cancelled / Refused / Damaged:</strong>
-          <p className="mt-1">
-            This will immediately mark the parcel as <strong>Return to Hub</strong> and remove it from your active delivery queue. The Coordinator will physically verify and confirm receipt upon arrival at the Hub.
-          </p>
-        </div>
-
-        <div className="mt-4">
-          <label className={labelCls} htmlFor="rthReason">
-            Return Reason (Required)
+        <div>
+          <label className={labelCls} htmlFor="scanFailedReason">
+            Failure Reason (Required)
           </label>
           <select
-            id="rthReason"
-            value={rthReason}
-            onChange={(e) => setRthReason(e.target.value)}
+            id="scanFailedReason"
+            value={failedReason}
+            onChange={(e) => {
+              setFailedReason(e.target.value);
+              setActionError("");
+            }}
             className={inputCls}
           >
-            {RTH_REASONS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
+            <option value="">Select a reason…</option>
+            <optgroup label="Automatic Next-Day Reschedule (Max 2 Attempts)">
+              {RESCHEDULE_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Immediate Return to Hub (RTH - Proof Required)">
+              {IMMEDIATE_RTH_REASONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </div>
 
+        {failedReason && !isImmediateRth && !willAutoRthByLimit && (
+          <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+            <strong className="block font-bold">
+              <Icon name="calendar-days" className="mr-1.5" />
+              Automatic Reschedule (Attempt {currentReschedCount + 1} of {MAX_RESCHEDULES})
+            </strong>
+            <p className="mt-1">
+              Next Delivery Date: <strong>{formatDay(nextScheduledDay)}</strong>. The parcel will move to the{" "}
+              <strong>Rescheduled</strong> filter tab in My Deliveries.
+            </p>
+          </div>
+        )}
+
+        {isImmediateRth && (
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[12.5px] text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
+              <strong className="block font-bold">
+                <Icon name="undo-2" className="mr-1.5" />
+                Automatic Return to Hub (RTH)
+              </strong>
+              <p className="mt-1">
+                Selecting <strong>{failedReason}</strong> will immediately mark this parcel as{" "}
+                <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
+              <label className={labelCls} htmlFor="scanRthProof">
+                Upload Proof Photo (Required)
+              </label>
+              <input
+                id="scanRthProof"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={pickProofPhoto}
+                className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
+              />
+              {proofBusy && <p className="mt-2 text-xs text-[#888]">Processing photo…</p>}
+              {proof && (
+                <img
+                  src={proof}
+                  alt="RTH proof preview"
+                  className="mt-3 max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
+                />
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-3">
-          <label className={labelCls} htmlFor="rthNote">
-            Explanation / Specific Remarks
+          <label className={labelCls} htmlFor="scanFailNote">
+            Additional Notes (Optional)
           </label>
           <textarea
-            id="rthNote"
+            id="scanFailNote"
             rows={2}
             value={actionNotes}
             onChange={(e) => setActionNotes(e.target.value)}
-            placeholder="e.g. Buyer explicitly refused to receive the package and pay COD."
+            placeholder="Add details about the delivery attempt..."
             className={textareaCls}
           />
         </div>
@@ -724,11 +736,19 @@ export default function RiderScan() {
           </button>
           <button
             type="button"
-            onClick={handleRthSubmit}
-            disabled={actionBusy}
-            className={`${btnPrimary} !bg-rose-600 hover:!bg-rose-700`}
+            onClick={handleFailedSubmit}
+            disabled={actionBusy || proofBusy}
+            className={`${btnPrimary} ${
+              isImmediateRth || willAutoRthByLimit
+                ? "!bg-rose-600 hover:!bg-rose-700"
+                : "!bg-amber-600 hover:!bg-amber-700"
+            }`}
           >
-            {actionBusy ? "Submitting…" : "Confirm Return to Hub"}
+            {actionBusy
+              ? "Submitting…"
+              : isImmediateRth || willAutoRthByLimit
+              ? "Submit & Mark Return to Hub"
+              : `Submit & Reschedule (${formatDay(nextScheduledDay)})`}
           </button>
         </div>
       </Modal>

@@ -35,6 +35,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
   const requestedAt = parcel.rth_requested_at || parcel.updated_at;
   const confirmedAt = parcel.rth_confirmed_at;
   const confirmedNotes = parcel.rth_confirmed_notes;
+  const proofPhoto = parcel.delivery_proof || parcel.proof || "";
 
   const handleConfirm = async () => {
     if (isConfirmed) {
@@ -146,6 +147,21 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
             )}
           </div>
         </div>
+
+        {/* Rider RTH Proof Photo (if uploaded by Rider) */}
+        {proofPhoto && (
+          <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-3.5 dark:border-night-line dark:bg-night-soft">
+            <span className="mb-2 block text-[12px] font-bold text-[#1e293b] dark:text-white">
+              <Icon name="image" className="mr-1.5 text-brand" />
+              Rider Submitted RTH Proof Photo
+            </span>
+            <img
+              src={proofPhoto}
+              alt="Rider Return to Hub proof"
+              className="max-h-[220px] w-full rounded-lg border border-[#e5e7eb] bg-white object-contain dark:border-night-line"
+            />
+          </div>
+        )}
 
         {/* Confirmation status message */}
         {isConfirmed ? (
