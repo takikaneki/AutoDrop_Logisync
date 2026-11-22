@@ -49,10 +49,10 @@ export default function Analytics() {
   }, [parcels, riders, days]);
 
   const kpis = [
-    ["Delivery success rate", `${data.rate}%`, "circle-check", "bg-[#eaf8ef] text-[#25a35a]", "Delivered vs. failed"],
-    ["Avg. delivery time", `${data.avg} hrs`, "timer", "bg-[#fff0e7] text-[#ff6818]", "For delivered parcels"],
-    ["Flagged rate", `${data.flagged}%`, "flag", "bg-[#fff0f0] text-[#d94747]", "Flagged during verification"],
-    ["Active riders", riders.filter((r) => r.status !== "Off-duty").length, "bike", "bg-[#eaf3ff] text-[#4285c5]", `of ${riders.length} riders`],
+    ["Delivery success rate", `${data.rate}%`, "package-check", "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]", "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]", "Delivered vs. failed"],
+    ["Avg. delivery time", `${data.avg} hrs`, "timer", "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]", "!border-[#cbd5e1] !border-t-[3px] !border-t-[#64748b] dark:!border-slate-700 dark:!border-t-[#64748b]", "For delivered parcels"],
+    ["Flagged rate", `${data.flagged}%`, "flag", "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]", "!border-[#fecaca] !border-t-[3px] !border-t-[#dc2626] dark:!border-[#991b1b]/70 dark:!border-t-[#dc2626]", "Flagged during verification"],
+    ["Active riders", riders.filter((r) => r.status !== "Off-duty").length, "bike", "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]", "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]", `of ${riders.length} riders`],
   ];
 
   return (
@@ -60,8 +60,8 @@ export default function Analytics() {
       <Topbar title="Analytics" subtitle="Delivery performance across all parcels." />
 
       <section className="grid grid-cols-4 gap-5 mb-7 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
-        {kpis.map(([l, v, ic, t, note]) => (
-          <div key={l} className={`${panel} p-6 flex items-center gap-4`}>
+        {kpis.map(([l, v, ic, t, borderCls, note]) => (
+          <div key={l} className={`${panel} ${borderCls} p-6 flex items-center gap-4`}>
             <span className={`w-[54px] h-[54px] shrink-0 rounded-2xl flex items-center justify-center text-[22px] ${t}`}><Icon name={ic} /></span>
             <div className="min-w-0"><small className="text-[13px] text-[#999]">{l}</small><strong className="block text-[26px] leading-tight">{v}</strong><small className="text-[11px] text-[#aaa]">{note}</small></div>
           </div>

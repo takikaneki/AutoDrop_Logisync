@@ -118,7 +118,7 @@ export default function RiderAnalytics() {
           <div className="divide-y divide-slate-100 px-4 text-[14px] dark:divide-night-line">
             {[
               { label: "Total Parcels", value: stats.total, icon: "package", tone: "text-[#0f172a] dark:text-white", to: "/rider/deliveries" },
-              { label: "To Be Delivered", value: stats.toDeliver, icon: "truck", tone: "text-brand", to: "/rider/deliveries" },
+              { label: "To Be Delivered", value: stats.toDeliver, icon: "truck", tone: "text-[#3b82f6] dark:text-[#60a5fa]", to: "/rider/deliveries" },
               { label: "Delivered", value: stats.delivered, icon: "package-check", tone: "text-emerald-600 dark:text-emerald-400", to: "/rider/deliveries?tab=delivered" },
               { label: "Rescheduled", value: rescheduledCount, icon: "calendar-days", tone: "text-amber-600 dark:text-amber-400", to: "/rider/deliveries" },
               { label: "Failed / Return to Hub", value: stats.failed, icon: "undo-2", tone: "text-red-600 dark:text-red-400", to: "/rider/deliveries?tab=failed" },

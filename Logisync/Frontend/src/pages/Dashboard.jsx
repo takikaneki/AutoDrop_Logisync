@@ -227,10 +227,10 @@ export default function Dashboard() {
             <PortalHeroBanner
               role="coordinator"
               pipeline={[
-                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "video", to: "/verification?status=VIDEO_SUBMITTED" },
-                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "circle-check", to: "/verification?status=VERIFIED" },
-                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", to: "/parcels" },
-                { label: "Failed / Return", count: v(stats.flagged), icon: "triangle-alert", to: "/parcels" },
+                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "video", tone: "yellow", to: "/verification?status=VIDEO_SUBMITTED" },
+                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "circle-check", tone: "green", to: "/verification?status=VERIFIED" },
+                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", tone: "blue", to: "/parcels" },
+                { label: "Failed / Return", count: v(stats.flagged), icon: "triangle-alert", tone: "red", to: "/parcels" },
               ]}
             />
           </div>

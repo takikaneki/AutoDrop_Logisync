@@ -119,8 +119,8 @@ export default function Verification() {
   const flaggedCount = parcels.filter((p) => Boolean(p.declaration_flagged)).length;
 
   const summary = [
-    { label: "Under verification", value: count("VIDEO_SUBMITTED"), icon: "clock", tone: "blue" },
-    { label: "Discreet requests pending", value: discreetPendingCount, icon: "shield-check", tone: "orange" },
+    { label: "Under verification", value: count("VIDEO_SUBMITTED"), icon: "clock", tone: "yellow" },
+    { label: "Discreet requests pending", value: discreetPendingCount, icon: "shield-check", tone: "yellow" },
     { label: "Verified", value: count("VERIFIED"), icon: "circle-check", tone: "green" },
     { label: "Flagged / Rejected", value: flaggedCount + count("REJECTED"), icon: "circle-x", tone: "red" },
   ];

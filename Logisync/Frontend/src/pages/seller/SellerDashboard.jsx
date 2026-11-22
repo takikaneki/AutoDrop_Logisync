@@ -115,10 +115,10 @@ export default function SellerDashboard() {
             <PortalHeroBanner
               role="seller"
               pipeline={[
-                { label: "Needs Video", count: v(needsVideoParcels.length), icon: "video", to: "/seller/parcels?status=NEEDS_VIDEO" },
-                { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "clock", to: "/seller/parcels?status=UNDER_VERIFICATION" },
-                { label: "Verified", count: v(count("VERIFIED")), icon: "circle-check", to: "/seller/parcels?status=VERIFIED" },
-                { label: "Delivered", count: v(count("DELIVERED")), icon: "package-check", to: "/seller/parcels" },
+                { label: "Needs Video", count: v(needsVideoParcels.length), icon: "video", tone: "blue", to: "/seller/parcels?status=NEEDS_VIDEO" },
+                { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "clock", tone: "yellow", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+                { label: "Verified", count: v(count("VERIFIED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
+                { label: "Delivered", count: v(count("DELIVERED")), icon: "package-check", tone: "green", to: "/seller/parcels" },
               ]}
             />
           </div>

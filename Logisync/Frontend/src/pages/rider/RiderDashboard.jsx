@@ -73,10 +73,10 @@ export default function RiderDashboard() {
   ];
 
   const pipelineSteps = [
-    { label: "To Deliver", count: stats.toDeliver, icon: "truck", to: "/rider/deliveries" },
-    { label: "Delivered", count: stats.delivered, icon: "package-check", to: "/rider/deliveries?tab=delivered" },
-    { label: "Rescheduled", count: rescheduledCount, icon: "calendar-days", to: "/rider/deliveries" },
-    { label: "Failed", count: stats.failed, icon: "triangle-alert", to: "/rider/deliveries?tab=failed" },
+    { label: "To Deliver", count: stats.toDeliver, icon: "truck", tone: "blue", to: "/rider/deliveries" },
+    { label: "Delivered", count: stats.delivered, icon: "package-check", tone: "green", to: "/rider/deliveries?tab=delivered" },
+    { label: "Rescheduled", count: rescheduledCount, icon: "calendar-days", tone: "yellow", to: "/rider/deliveries" },
+    { label: "Failed", count: stats.failed, icon: "triangle-alert", tone: "red", to: "/rider/deliveries?tab=failed" },
   ];
 
   return (

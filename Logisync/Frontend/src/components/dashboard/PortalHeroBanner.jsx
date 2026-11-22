@@ -36,6 +36,15 @@ const ROLE_CONFIG = {
   },
 };
 
+const PIPELINE_TONES = {
+  blue: "bg-[#dbeafe] text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+  yellow: "bg-[#fef9c3] text-[#ca8a04] dark:bg-yellow-500/20 dark:text-[#facc15]",
+  green: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
+  red: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+  gray: "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]",
+  orange: "bg-[#fff0e5] text-[#ee4d2d] dark:bg-brand/20",
+};
+
 export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }) {
   const { name } = useProfile();
   const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.coordinator;
@@ -102,7 +111,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
               className="group flex items-center justify-between gap-2 border-r border-[#edf0f4] px-4 py-3 transition last:border-r-0 hover:bg-[#fffaf7] dark:border-night-line dark:hover:bg-night-panel max-[600px]:border-b max-[600px]:even:border-r-0"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-[12px] font-bold text-[#ee4d2d] dark:bg-brand/20">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold ${PIPELINE_TONES[step.tone || "orange"]}`}>
                   <Icon name={step.icon} />
                 </span>
                 <div className="min-w-0">
