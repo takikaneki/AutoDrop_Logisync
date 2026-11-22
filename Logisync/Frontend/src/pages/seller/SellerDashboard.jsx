@@ -91,7 +91,7 @@ export default function SellerDashboard() {
               {
                 label: "Needs Video",
                 value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
-                tone: "light",
+                tone: "blue",
                 to: "/seller/parcels?status=NEEDS_VIDEO",
                 badge: "Action Required",
                 icon: "fa-video",
@@ -100,7 +100,7 @@ export default function SellerDashboard() {
               {
                 label: "Verified / In Delivery",
                 value: v(verifiedOrInDelivery),
-                tone: "orange",
+                tone: "green",
                 to: "/seller/parcels?status=VERIFIED",
                 badge: "Cleared",
                 icon: "fa-circle-check",

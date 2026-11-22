@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 
 const TONE_STYLES = {
   dark: {
-    card: "bg-[#0f172a] text-white border-[#1e293b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.5)] dark:bg-[#0b1120] dark:border-slate-800",
+    card: "bg-[#0f172a] text-white border-[#334155] border-t-[4px] border-t-[#64748b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.5)] dark:bg-[#0b1120] dark:border-slate-800 dark:border-t-[#64748b]",
     arrow: "bg-white/10 text-white group-hover:bg-white/20",
-    label: "text-slate-200",
+    label: "text-slate-100",
     sub: "text-slate-400",
-    badge: "bg-white/10 text-orange-300",
+    badge: "bg-slate-700/80 text-slate-200",
   },
   light: {
     card: "bg-white text-[#1e293b] border-[#e5e8ee] shadow-sm dark:bg-night-panel dark:border-night-line dark:text-[#f1eeeb]",
@@ -14,6 +14,34 @@ const TONE_STYLES = {
     label: "text-[#27364f] dark:text-[#f1eeeb]",
     sub: "text-[#64748b] dark:text-[#b8b0a8]",
     badge: "bg-[#f3f5f9] text-[#52627a] dark:bg-night-head dark:text-[#d1c9c2]",
+  },
+  yellow: {
+    card: "bg-white text-[#1e293b] border-[#fde047] border-t-[4px] border-t-[#facc15] shadow-sm dark:bg-night-panel dark:border-yellow-500/40 dark:border-t-[#facc15] dark:text-[#f1eeeb]",
+    arrow: "bg-[#fef9c3] text-[#a16207] group-hover:bg-[#fef08a] dark:bg-yellow-500/20 dark:text-[#facc15]",
+    label: "text-[#27364f] dark:text-[#f1eeeb]",
+    sub: "text-[#64748b] dark:text-[#b8b0a8]",
+    badge: "bg-[#fef9c3] text-[#a16207] dark:bg-yellow-500/20 dark:text-[#facc15]",
+  },
+  blue: {
+    card: "bg-white text-[#1e293b] border-[#bfdbfe] border-t-[4px] border-t-[#3b82f6] shadow-sm dark:bg-night-panel dark:border-blue-500/40 dark:border-t-[#3b82f6] dark:text-[#f1eeeb]",
+    arrow: "bg-[#dbeafe] text-[#1d4ed8] group-hover:bg-[#bfdbfe] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+    label: "text-[#27364f] dark:text-[#f1eeeb]",
+    sub: "text-[#64748b] dark:text-[#b8b0a8]",
+    badge: "bg-[#dbeafe] text-[#1d4ed8] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+  },
+  green: {
+    card: "bg-[#16a34a] text-white border-[#15803d] shadow-[0_14px_30px_-12px_rgba(22,163,74,0.45)] dark:bg-[#15803d] dark:border-[#166534]",
+    arrow: "bg-white/20 text-white group-hover:bg-white/30",
+    label: "text-white",
+    sub: "text-green-100",
+    badge: "bg-white/20 text-white",
+  },
+  red: {
+    card: "bg-white text-[#1e293b] border-[#fecaca] border-t-[4px] border-t-[#dc2626] shadow-sm dark:bg-night-panel dark:border-red-500/40 dark:border-t-[#dc2626] dark:text-[#f1eeeb]",
+    arrow: "bg-[#fee2e2] text-[#dc2626] group-hover:bg-[#fecaca] dark:bg-red-500/20 dark:text-[#f87171]",
+    label: "text-[#27364f] dark:text-[#f1eeeb]",
+    sub: "text-[#64748b] dark:text-[#b8b0a8]",
+    badge: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
   },
   orange: {
     card: "bg-[#ee4d2d] text-white border-[#d73211] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.45)] dark:bg-[#c2410c] dark:border-[#9a3412]",

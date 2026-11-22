@@ -416,7 +416,7 @@ export default function Parcels() {
     {
       label: "In Transit",
       icon: "fa-truck",
-      tone: "orange",
+      tone: "blue",
     },
     {
       label: "Delivered",

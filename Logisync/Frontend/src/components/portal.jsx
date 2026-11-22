@@ -6,20 +6,20 @@ import { panel } from "./styles.js";
 
 const tones = {
   orange: "bg-[#fff0e5] text-orange-500",
-  yellow: "bg-[#fff4d8] text-[#e99a00]",
-  green: "bg-[#d9f4e5] text-[#0c9b58]",
-  red: "bg-[#ffe2e2] text-[#ef4444]",
-  blue: "bg-[#eaf3ff] text-[#4285c5]",
-  gray: "bg-[#f1f1f1] text-[#999] dark:bg-night-head",
+  yellow: "bg-[#fef9c3] text-[#ca8a04] dark:bg-yellow-500/20 dark:text-[#facc15]",
+  green: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
+  red: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+  blue: "bg-[#dbeafe] text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+  gray: "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]",
 };
 
 const cardBorders = {
   orange: "!border-brand-line !border-t-[3px] !border-t-brand dark:!border-[#9a3412]/70 dark:!border-t-brand",
-  yellow: "!border-[#fde68a] !border-t-[3px] !border-t-[#f59e0b] dark:!border-[#92400e]/70 dark:!border-t-[#f59e0b]",
+  yellow: "!border-[#fde047] !border-t-[3px] !border-t-[#facc15] dark:!border-[#a16207]/70 dark:!border-t-[#facc15]",
   green: "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]",
-  red: "!border-[#fecaca] !border-t-[3px] !border-t-[#ef4444] dark:!border-[#991b1b]/70 dark:!border-t-[#ef4444]",
+  red: "!border-[#fecaca] !border-t-[3px] !border-t-[#dc2626] dark:!border-[#991b1b]/70 dark:!border-t-[#dc2626]",
   blue: "!border-[#bfdbfe] !border-t-[3px] !border-t-[#3b82f6] dark:!border-[#1e40af]/70 dark:!border-t-[#3b82f6]",
-  gray: "!border-[#e2e8f0] !border-t-[3px] !border-t-[#64748b] dark:!border-night-line dark:!border-t-[#64748b]",
+  gray: "!border-[#cbd5e1] !border-t-[3px] !border-t-[#64748b] dark:!border-slate-700 dark:!border-t-[#64748b]",
 };
 
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).

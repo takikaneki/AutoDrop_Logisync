@@ -203,7 +203,7 @@ export default function Dashboard() {
                 {
                   label: "Needs Verification",
                   value: v(stats.flagged),
-                  tone: "light",
+                  tone: "yellow",
                   to: "/verification?status=VIDEO_SUBMITTED",
                   badge: "Pending Review",
                   icon: "fa-hourglass-half",
@@ -212,7 +212,7 @@ export default function Dashboard() {
                 {
                   label: "Verified Parcels",
                   value: v(stats.pending),
-                  tone: "orange",
+                  tone: "green",
                   to: "/verification?status=VERIFIED",
                   badge: "Cleared",
                   icon: "fa-circle-check",

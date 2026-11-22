@@ -55,7 +55,7 @@ export default function RiderDashboard() {
     {
       label: "To Be Delivered",
       value: stats.toDeliver,
-      tone: "light",
+      tone: "blue",
       to: "/rider/deliveries",
       badge: "Active Route",
       icon: "fa-truck-fast",
@@ -64,7 +64,7 @@ export default function RiderDashboard() {
     {
       label: "Delivered",
       value: stats.delivered,
-      tone: "orange",
+      tone: "green",
       to: "/rider/deliveries?tab=delivered",
       badge: "Completed",
       icon: "fa-circle-check",

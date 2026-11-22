@@ -393,7 +393,7 @@ export default function Sellers() {
             label="Total sellers"
             value={loading ? "…" : sellers.length}
             icon="fa-store"
-            tone="orange"
+            tone="gray"
           />
           <StatCard
             label="Active"

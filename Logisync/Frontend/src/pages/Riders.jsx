@@ -389,7 +389,7 @@ export default function Riders() {
             label="Total riders"
             value={loading ? "…" : riders.length}
             icon="fa-motorcycle"
-            tone="orange"
+            tone="gray"
           />
           <StatCard
             label="Active"

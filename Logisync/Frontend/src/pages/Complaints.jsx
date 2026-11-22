@@ -11,9 +11,9 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 
 const statusTone = {
-  Open: "bg-[#fff0f0] text-[#d94747]",
-  "In Progress": "bg-[#fef3c7] text-[#d97706]",
-  Resolved: "bg-[#eaf8ef] text-[#29945a]",
+  Open: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+  "In Progress": "bg-[#dbeafe] text-[#2563eb] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+  Resolved: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
 };
 
 const prioTone = {
@@ -268,9 +268,9 @@ export default function Complaints() {
         {counts.map(([s, n]) => {
           const topBorder =
             s === "Open"
-              ? "!border-[#fecaca] !border-t-[3px] !border-t-[#ef4444] dark:!border-[#991b1b]/70 dark:!border-t-[#ef4444]"
+              ? "!border-[#fecaca] !border-t-[3px] !border-t-[#dc2626] dark:!border-[#991b1b]/70 dark:!border-t-[#dc2626]"
               : s === "In Progress"
-              ? "!border-[#fde68a] !border-t-[3px] !border-t-[#f59e0b] dark:!border-[#92400e]/70 dark:!border-t-[#f59e0b]"
+              ? "!border-[#bfdbfe] !border-t-[3px] !border-t-[#3b82f6] dark:!border-[#1e40af]/70 dark:!border-t-[#3b82f6]"
               : "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]";
           return (
             <button
