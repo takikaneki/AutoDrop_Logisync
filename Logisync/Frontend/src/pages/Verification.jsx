@@ -21,6 +21,7 @@ import { toast } from "../store/toast.js";
 import { formatDate, formatSize } from "../utils/format.js";
 import { statusInfo } from "../utils/parcelStatus.js";
 import { getParcelAddress } from "../store/customers.js";
+import Icon from "../components/Icon.jsx";
 
 const PAGE_SIZE = 8;
 const FILTERS = [
@@ -46,20 +47,20 @@ function DiscreetStatusBadge({ discreteItem, discreetStatus }) {
   if (status === "APPROVED") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
-        <i className="fa-solid fa-user-shield text-[10px]" /> Discreet: Approved
+        <Icon name="shield-check" className="text-[10px]" /> Discreet: Approved
       </span>
     );
   }
   if (status === "REJECTED") {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-[#fdecec] px-2.5 py-0.5 text-[11px] font-semibold text-[#c53030] dark:bg-[#d94a4a]/20 dark:text-[#f5a3a3]">
-        <i className="fa-solid fa-ban text-[10px]" /> Discreet: Rejected
+        <Icon name="circle-x" className="text-[10px]" /> Discreet: Rejected
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-[#fff4e5] px-2.5 py-0.5 text-[11px] font-semibold text-[#b45309] dark:bg-[#c97c10]/20 dark:text-[#f2c278]">
-      <i className="fa-solid fa-clock text-[10px]" /> Discreet: Pending Review
+      <Icon name="clock" className="text-[10px]" /> Discreet: Pending Review
     </span>
   );
 }
@@ -118,10 +119,10 @@ export default function Verification() {
   const flaggedCount = parcels.filter((p) => Boolean(p.declaration_flagged)).length;
 
   const summary = [
-    { label: "Under verification", value: count("VIDEO_SUBMITTED"), icon: "fa-hourglass-half", tone: "blue" },
-    { label: "Discreet requests pending", value: discreetPendingCount, icon: "fa-user-shield", tone: "orange" },
-    { label: "Verified", value: count("VERIFIED"), icon: "fa-check", tone: "green" },
-    { label: "Flagged / Rejected", value: flaggedCount + count("REJECTED"), icon: "fa-triangle-exclamation", tone: "red" },
+    { label: "Under verification", value: count("VIDEO_SUBMITTED"), icon: "clock", tone: "blue" },
+    { label: "Discreet requests pending", value: discreetPendingCount, icon: "shield-check", tone: "orange" },
+    { label: "Verified", value: count("VERIFIED"), icon: "circle-check", tone: "green" },
+    { label: "Flagged / Rejected", value: flaggedCount + count("REJECTED"), icon: "circle-x", tone: "red" },
   ];
 
   const filterLabel = (f) => {
@@ -301,9 +302,9 @@ export default function Verification() {
   return (
     <>
       <Topbar title="Verification" subtitle="Review seller content declarations, discreet handling requests, and video proofs.">
-        <button className={btnGhost} onClick={load}><i className="fa-solid fa-rotate" /> Refresh</button>
+        <button className={btnGhost} onClick={load}><Icon name="refresh-cw" /> Refresh</button>
         <button className={btnPrimary} onClick={() => { setScanOpen((v) => !v); setLookupError(""); }}>
-          <i className="fa-solid fa-qrcode" /> {scanOpen ? "Close scanner" : "Scan parcel QR"}
+          <Icon name="qr-code" /> {scanOpen ? "Close scanner" : "Scan parcel QR"}
         </button>
       </Topbar>
 
@@ -329,7 +330,7 @@ export default function Verification() {
           <StatCard
             label="Under verification"
             value={loading ? "…" : count("VIDEO_SUBMITTED")}
-            icon="fa-hourglass-half"
+            icon="clock"
             tone="yellow"
           />
         </button>
@@ -343,7 +344,7 @@ export default function Verification() {
           <StatCard
             label="Discreet requests pending"
             value={loading ? "…" : discreetPendingCount}
-            icon="fa-user-shield"
+            icon="shield-check"
             tone="yellow"
           />
         </button>
@@ -357,7 +358,7 @@ export default function Verification() {
           <StatCard
             label="Verified"
             value={loading ? "…" : count("VERIFIED")}
-            icon="fa-check"
+            icon="check"
             tone="green"
           />
         </button>
@@ -371,7 +372,7 @@ export default function Verification() {
           <StatCard
             label="Flagged / Rejected"
             value={loading ? "…" : flaggedCount + count("REJECTED")}
-            icon="fa-triangle-exclamation"
+            icon="triangle-alert"
             tone="red"
           />
         </button>
@@ -380,7 +381,7 @@ export default function Verification() {
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         <div className="mb-4 grid grid-cols-[1fr_240px] gap-3 max-[640px]:grid-cols-1">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parcel ID, transaction no., seller, receiver, category..." aria-label="Search" className={`${inputCls} pl-9`} />
           </div>
           <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Status filter" className={inputCls}>
@@ -417,7 +418,7 @@ export default function Verification() {
                     <div>{r.parcel_id}</div>
                     {r.declaration_flagged && (
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#fff1f1] px-2 py-0.5 font-sans text-[10.5px] font-bold text-[#d94a4a] dark:bg-[#d94a4a]/20 dark:text-[#f5a3a3]">
-                        <i className="fa-solid fa-triangle-exclamation text-[9px]" /> Flagged Declaration
+                        <Icon name="triangle-alert" className="text-[9px]" /> Flagged Declaration
                       </span>
                     )}
                   </td>
@@ -470,7 +471,7 @@ export default function Verification() {
                 />
                 {r.declaration_flagged && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1f1] px-2.5 py-0.5 text-[11px] font-bold text-[#d94a4a]">
-                    <i className="fa-solid fa-triangle-exclamation text-[10px]" /> Flagged Declaration
+                    <Icon name="triangle-alert" className="text-[10px]" /> Flagged Declaration
                   </span>
                 )}
               </div>
@@ -490,7 +491,7 @@ export default function Verification() {
         </div>
 
         {!loading && rows.length === 0 && (
-          <EmptyState icon="fa-clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
+          <EmptyState icon="clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
         )}
       </section>
 
@@ -518,7 +519,7 @@ export default function Verification() {
                 className="mb-5 rounded-xl border border-[#f5bcbc] bg-[#fff5f5] p-4 text-[13px] text-[#9b2c2c] dark:border-[#d94a4a]/40 dark:bg-[#d94a4a]/10 dark:text-[#f5a3a3]"
               >
                 <strong className="flex items-center gap-2 text-[14px] font-bold">
-                  <i className="fa-solid fa-triangle-exclamation text-[#d94a4a]" />
+                  <Icon name="triangle-alert" className="text-[#d94a4a]" />
                   Flagged Declaration — Requires Careful Coordinator Inspection
                 </strong>
                 <p className="mt-1 leading-relaxed">
@@ -545,7 +546,7 @@ export default function Verification() {
             <div className="mb-6 rounded-xl border border-[#eadfd8] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#eadfd8] pb-2.5 dark:border-night-line">
                 <h3 className="flex items-center gap-2 text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                  <i className="fa-solid fa-clipboard-check text-brand" />
+                  <Icon name="clipboard-check" className="text-brand" />
                   Content Declaration &amp; Discreet Handling Review
                 </h3>
                 <DiscreetStatusBadge
@@ -628,7 +629,7 @@ export default function Verification() {
                       onClick={() => handleDiscreetDecision("APPROVE")}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-[#29945a] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:bg-[#217a49] disabled:opacity-50"
                     >
-                      <i className="fa-solid fa-user-check" /> Approve Discreet Request
+                      <Icon name="user-check" /> Approve Discreet Request
                     </button>
                     <button
                       type="button"
@@ -636,7 +637,7 @@ export default function Verification() {
                       onClick={() => handleDiscreetDecision("REJECT")}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-[#d94747] px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:bg-[#b83737] disabled:opacity-50"
                     >
-                      <i className="fa-solid fa-ban" /> Reject Discreet Request
+                      <Icon name="circle-x" /> Reject Discreet Request
                     </button>
                     <span className="text-[11.5px] text-[#777]">
                       Approving discreet handling does not automatically verify the parcel. You must still verify the packing video below.
@@ -704,9 +705,9 @@ export default function Verification() {
                 <textarea id="remarks" rows={3} value={remarks} onChange={(e) => { setRemarks(e.target.value); setRemarksError(""); }} className={textareaCls} placeholder="e.g. The video is too dark. Please record the sealing again." />
                 {remarksError && <p role="alert" className="mt-1 text-[13px] text-[#d94a4a]">{remarksError}</p>}
                 <div className="mt-4 flex flex-wrap gap-2.5">
-                  <button disabled={deciding} className={btnPrimary} onClick={() => decide("verify", "Verified parcel")}><i className="fa-solid fa-check" /> Verify Parcel</button>
-                  <button disabled={deciding} className={btnGhost} onClick={() => decide("request-reupload", "Requested reupload")}><i className="fa-solid fa-rotate-left" /> Request reupload</button>
-                  <button disabled={deciding} className={btnDanger} onClick={() => decide("reject", "Rejected parcel")}><i className="fa-solid fa-ban" /> Reject Parcel</button>
+                  <button disabled={deciding} className={btnPrimary} onClick={() => decide("verify", "Verified parcel")}><Icon name="check" /> Verify Parcel</button>
+                  <button disabled={deciding} className={btnGhost} onClick={() => decide("request-reupload", "Requested reupload")}><Icon name="undo-2" /> Request reupload</button>
+                  <button disabled={deciding} className={btnDanger} onClick={() => decide("reject", "Rejected parcel")}><Icon name="circle-x" /> Reject Parcel</button>
                 </div>
               </div>
             ) : (
@@ -716,7 +717,7 @@ export default function Verification() {
             )}
 
             <div className="mt-5 text-right">
-              <Link to={`/messages?contact=${p.seller_id}`} onClick={close} className="text-[14px] text-brand hover:underline"><i className="fa-regular fa-message mr-1" />Message seller</Link>
+              <Link to={`/messages?contact=${p.seller_id}`} onClick={close} className="text-[14px] text-brand hover:underline"><Icon name="message-circle" className="mr-1" />Message seller</Link>
             </div>
           </div>
         )}

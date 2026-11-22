@@ -5,6 +5,7 @@ import { PanelTitle } from "../portal.jsx";
 import { panel, stickyThead, tableScrollCompact, td, th } from "../styles.js";
 import { formatDate } from "../../utils/format.js";
 import { STAGE, useMyDeliveries } from "../../store/riderDeliveries.js";
+import Icon from "../Icon.jsx";
 
 const stageBadge = {
   [STAGE.TO_DELIVER]: ["To be delivered", "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"],
@@ -21,9 +22,9 @@ export default function RecentScans({ scans, limit = 5, action }) {
 
   return (
     <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
-      <PanelTitle icon="fa-clock-rotate-left" action={action}>Recent Scans</PanelTitle>
+      <PanelTitle icon="history" action={action}>Recent Scans</PanelTitle>
       {rows.length === 0 ? (
-        <EmptyState icon="fa-qrcode" title="No scans yet" text="Parcels you scan will show up here, then move to To Be Delivered." />
+        <EmptyState icon="qr-code" title="No scans yet" text="Parcels you scan will show up here, then move to To Be Delivered." />
       ) : (
         <>
           {/* Mobile Cards View (max-[820px] ONLY) */}
@@ -86,7 +87,7 @@ export default function RecentScans({ scans, limit = 5, action }) {
                       className="inline-flex items-center gap-1 text-[12.5px] font-bold text-brand hover:underline"
                     >
                       <span>Check again</span>
-                      <i className="fa-solid fa-arrow-right text-[10px]" />
+                      <Icon name="arrow-right" className="text-[10px]" />
                     </Link>
                   </div>
                 </article>

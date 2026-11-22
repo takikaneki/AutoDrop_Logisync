@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { panel } from "../components/styles.js";
+import Icon from "../components/Icon.jsx";
 
 const faqs = [
   ["How do I verify a parcel?", "Open Verification, press the scan button on a parcel, review the seller's video and details, then choose Verify, Return to Seller or Flag."],
@@ -46,11 +47,7 @@ export default function Help() {
                   }`}
                 >
                   <span>{q}</span>
-                  <i
-                    className={`fa-solid fa-chevron-down shrink-0 text-[12px] text-[#aaa] transition-transform ${
-                      open === i ? "rotate-180 text-brand" : ""
-                    }`}
-                  />
+                  <Icon name="chevron-down" className={`shrink-0 text-[12px] text-[#aaa] transition-transform ${ open === i ? "rotate-180 text-brand" : "" }`} />
                 </button>
                 {open === i && (
                   <p className="px-2 pb-4 text-[14px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
@@ -64,7 +61,7 @@ export default function Help() {
 
         <section className={`${panel} w-full p-6 text-center`}>
           <span className="mx-auto mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-line">
-            <i className="fa-solid fa-headset" />
+            <Icon name="headset" />
           </span>
           <h3 className="mb-1 text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
             Still need help?

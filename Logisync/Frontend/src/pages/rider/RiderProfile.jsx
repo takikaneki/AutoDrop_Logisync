@@ -4,6 +4,7 @@ import UserAvatar from "../../components/Avatar.jsx";
 import ContactUsModal from "../../components/auth/ContactUsModal.jsx";
 import LogoutModal from "../../components/LogoutModal.jsx";
 import { syncProfileFromServer, useProfile } from "../../store/profile.js";
+import Icon from "../../components/Icon.jsx";
 
 function formatRiderId(profile) {
   if (profile.riderCode) return profile.riderCode;
@@ -31,43 +32,43 @@ export default function RiderProfile() {
     {
       key: "personal",
       label: "Personal Information",
-      icon: "fa-regular fa-user",
+      icon: "user-round",
       to: "/rider/settings?section=account",
     },
     {
       key: "faqs",
       label: "FAQs",
-      icon: "fa-regular fa-circle-question",
+      icon: "circle-help",
       to: "/rider/help#faq",
     },
     {
       key: "analytics",
       label: "Analytics",
-      icon: "fa-solid fa-chart-simple",
+      icon: "chart-no-axes-column",
       to: "/rider/analytics",
     },
     {
       key: "complaints",
       label: "Complaints",
-      icon: "fa-solid fa-triangle-exclamation",
+      icon: "clipboard-list",
       to: "/rider/complaints",
     },
     {
       key: "settings",
       label: "Settings",
-      icon: "fa-solid fa-gear",
+      icon: "settings",
       to: "/rider/settings",
     },
     {
       key: "privacy",
       label: "Privacy Policy",
-      icon: "fa-solid fa-shield-halved",
+      icon: "shield-check",
       to: "/rider/settings?section=privacy",
     },
     {
       key: "about",
       label: "About LOGISYNC",
-      icon: "fa-solid fa-circle-info",
+      icon: "info",
       to: "/rider/settings?section=about",
     },
   ];
@@ -98,7 +99,7 @@ export default function RiderProfile() {
               title="Edit Profile"
               className="absolute right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#0f172a] text-white shadow-md transition active:scale-95 hover:bg-brand dark:border-night-panel"
             >
-              <i className="fa-solid fa-pen text-[11px]" />
+              <Icon name="pencil" className="text-[11px]" />
             </button>
           </div>
 
@@ -119,7 +120,7 @@ export default function RiderProfile() {
             onClick={() => navigate("/rider/settings?section=account")}
             className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-brand/35 bg-white px-5 py-2 text-[13px] font-bold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand"
           >
-            <i className="fa-solid fa-user-pen text-[12px]" />
+            <Icon name="user-pen" className="text-[12px]" />
             <span>Edit Profile</span>
           </button>
         </section>
@@ -136,13 +137,13 @@ export default function RiderProfile() {
               >
                 <span className="flex min-w-0 items-center gap-3.5">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                    <i className={`${item.icon} text-[15px]`} />
+                    <Icon name={item.icon} className="text-[15px]" />
                   </span>
                   <span className="truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
                     {item.label}
                   </span>
                 </span>
-                <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-slate-400" />
+                <Icon name="chevron-right" className="shrink-0 text-[12px] text-slate-400" />
               </Link>
             ))}
           </div>
@@ -155,7 +156,7 @@ export default function RiderProfile() {
           >
             <span className="flex min-w-0 items-center gap-3.5">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/90 text-brand shadow-2xs dark:bg-night-panel">
-                <i className="fa-solid fa-headset text-[15px]" />
+                <Icon name="headset" className="text-[15px]" />
               </span>
               <span className="min-w-0">
                 <strong className="block truncate text-[14.5px] font-bold text-[#0f172a] dark:text-white">
@@ -166,7 +167,7 @@ export default function RiderProfile() {
                 </small>
               </span>
             </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-brand" />
+            <Icon name="chevron-right" className="shrink-0 text-[12px] text-brand" />
           </button>
 
           {/* Log Out Row */}
@@ -177,13 +178,13 @@ export default function RiderProfile() {
           >
             <span className="flex min-w-0 items-center gap-3.5">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#d94747] shadow-2xs dark:bg-red-950/50 dark:text-red-300">
-                <i className="fa-solid fa-right-from-bracket text-[15px]" />
+                <Icon name="log-out" className="text-[15px]" />
               </span>
               <span className="truncate text-[14.5px] font-bold text-[#c23a3a] dark:text-red-300">
                 Log Out
               </span>
             </span>
-            <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-[#d94747]/70" />
+            <Icon name="chevron-right" className="shrink-0 text-[12px] text-[#d94747]/70" />
           </button>
         </nav>
       </div>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Icon from "../Icon.jsx";
 
 const TONE_STYLES = {
   dark: {
@@ -71,14 +72,14 @@ export default function BentoKpiRow({ cards = [] }) {
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] transition ${s.arrow}`}
                 aria-hidden="true"
               >
-                <i className="fa-solid fa-arrow-up-right-from-square" />
+                <Icon name="external-link" />
               </span>
             </div>
 
             <div className="mt-5 max-[600px]:mt-3.5">
               {c.badge && (
                 <span className={`mb-1.5 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${s.badge}`}>
-                  {c.icon && <i className={`fa-solid ${c.icon}`} />}
+                  {c.icon && <Icon name={c.icon} />}
                   {c.badge}
                 </span>
               )}

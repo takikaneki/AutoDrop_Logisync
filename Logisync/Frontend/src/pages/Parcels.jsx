@@ -33,17 +33,18 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { getParcelAddress, syncCustomersFromParcels } from "../store/customers.js";
 import { enrichParcel } from "../services/parcelService.js";
+import Icon from "../components/Icon.jsx";
 
 const statusIcons = {
-  "In Transit": "fa-truck",
-  "Ready for Delivery": "fa-circle-check",
-  "Rescheduled for Delivery": "fa-calendar-day",
-  Rescheduled: "fa-calendar-day",
-  Delivered: "fa-check",
-  "Return to Hub – Pending Confirmation": "fa-clock-rotate-left",
-  "Return to Hub – Confirmed": "fa-warehouse",
-  "Return to Hub": "fa-warehouse",
-  "Failed Delivery": "fa-triangle-exclamation",
+  "In Transit": "truck",
+  "Ready for Delivery": "circle-check",
+  "Rescheduled for Delivery": "calendar-days",
+  Rescheduled: "calendar-days",
+  Delivered: "check",
+  "Return to Hub – Pending Confirmation": "history",
+  "Return to Hub – Confirmed": "undo-2",
+  "Return to Hub": "undo-2",
+  "Failed Delivery": "triangle-alert",
 };
 
 const PAGE_SIZE = 10;
@@ -415,17 +416,17 @@ export default function Parcels() {
   const cards = [
     {
       label: "In Transit",
-      icon: "fa-truck",
+      icon: "truck",
       tone: "blue",
     },
     {
       label: "Delivered",
-      icon: "fa-circle-check",
+      icon: "package-check",
       tone: "green",
     },
     {
       label: "Failed / Return to Hub",
-      icon: "fa-warehouse",
+      icon: "undo-2",
       tone: "red",
     },
   ];
@@ -436,14 +437,9 @@ export default function Parcels() {
       onClick={() => toggleSort(k)}
     >
       {children}
-      <i
-        className={`fa-solid ml-1.5 text-[10px] ${
-          sort.key === k
-            ? sort.dir === "asc"
-              ? "fa-arrow-up text-brand"
-              : "fa-arrow-down text-brand"
-            : "fa-sort opacity-40"
-        }`}
+      <Icon
+        name={sort.key === k ? (sort.dir === "asc" ? "arrow-up" : "arrow-down") : "arrow-up-down"}
+        className={`ml-1.5 h-3 w-3 ${sort.key === k ? "text-brand" : "opacity-40"}`}
       />
     </th>
   );
@@ -462,7 +458,7 @@ export default function Parcels() {
           aria-expanded={reportOpen}
           className={reportOpen ? btnGhost : btnPrimary}
         >
-          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"}`} />{" "}
+          <Icon name={reportOpen ? "x" : "file-text"} />{" "}
           {reportOpen ? "Hide Report" : "Generate Report"}
         </button>
       </Topbar>
@@ -474,7 +470,7 @@ export default function Parcels() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand dark:bg-night-head">
-                  <i className="fa-solid fa-file-lines" />
+                  <Icon name="file-text" />
                 </span>
                 <h2 className="text-[18px] font-bold">{reportResult.id}</h2>
               </div>
@@ -491,10 +487,10 @@ export default function Parcels() {
                 }}
                 className={btnGhost}
               >
-                <i className="fa-solid fa-file-csv text-[#29945a]" /> Export CSV
+                <Icon name="file-spreadsheet" className="text-[#29945a]" /> Export CSV
               </button>
               <button onClick={() => window.print()} className={btnPrimary}>
-                <i className="fa-solid fa-file-pdf" /> Save as PDF
+                <Icon name="file-text" /> Save as PDF
               </button>
               <button
                 type="button"
@@ -503,7 +499,7 @@ export default function Parcels() {
                 title="Close report"
                 className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white text-[#777] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-head"
               >
-                <i className="fa-solid fa-xmark" />
+                <Icon name="x" />
               </button>
             </div>
           </div>
@@ -511,7 +507,7 @@ export default function Parcels() {
           {/* Report Filters */}
           <div className="mb-6 rounded-xl bg-[#fafafa] p-4 print:hidden dark:bg-night-head">
             <h3 className="mb-3 text-[13px] font-bold text-[#555] dark:text-[#d1c9c2]">
-              <i className="fa-solid fa-sliders mr-1.5 text-brand" /> Report Filters
+              <Icon name="sliders-horizontal" className="mr-1.5 text-brand" /> Report Filters
             </h3>
             <div className="grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-1">
               <div>
@@ -551,7 +547,7 @@ export default function Parcels() {
             </div>
             <div className="mt-4 flex flex-wrap gap-2.5">
               <button onClick={generateReport} className={btnPrimary}>
-                <i className="fa-solid fa-rotate" /> Update & Save Report
+                <Icon name="refresh-cw" /> Update & Save Report
               </button>
               <button onClick={resetReport} className={btnGhost}>
                 Reset Filters
@@ -578,7 +574,7 @@ export default function Parcels() {
           {/* Report Rows Table */}
           {reportResult.rows.length === 0 ? (
             <EmptyState
-              icon="fa-file-circle-xmark"
+              icon="file-x"
               title="No parcels match these report filters"
               text="Change the filters above and update the report."
             />
@@ -642,7 +638,7 @@ export default function Parcels() {
           {history.length > 0 && (
             <div className="mt-6 border-t border-[#eee] pt-5 print:hidden dark:border-night-line">
               <h3 className="mb-3 text-[15px] font-bold">
-                <i className="fa-solid fa-clock-rotate-left mr-1.5 text-brand" /> Recent Saved Reports
+                <Icon name="history" className="mr-1.5 text-brand" /> Recent Saved Reports
               </h3>
               <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
                 <table className="w-full min-w-[600px] border-collapse">
@@ -670,7 +666,7 @@ export default function Parcels() {
                               toast("CSV downloaded.");
                             }}
                           >
-                            <i className="fa-solid fa-download mr-1" /> CSV
+                            <Icon name="download" className="mr-1" /> CSV
                           </button>
                         </td>
                       </tr>
@@ -745,7 +741,7 @@ export default function Parcels() {
               : "bg-brand text-white shadow-xs hover:bg-brand-dark"
           }`}
         >
-          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"} text-[12px]`} />
+          <Icon name={reportOpen ? "x" : "file-text"} className="text-[13px]" />
           <span>{reportOpen ? "Hide Report" : "Generate Report"}</span>
         </button>
       </div>
@@ -805,7 +801,7 @@ export default function Parcels() {
 
         <div className="grid grid-cols-[1fr_190px] gap-3 mb-[18px] max-[900px]:grid-cols-1">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input
               value={search}
               onChange={reset(setSearch)}
@@ -899,7 +895,7 @@ export default function Parcels() {
                       />
                       {parcel.deliveryHold && (
                         <span className="mt-1 block text-[11.5px] font-semibold text-[#b45309]">
-                          <i className="fa-solid fa-hand mr-1" />
+                          <Icon name="hand" className="mr-1" />
                           Delivery Hold{parcel.deliveryHoldReason ? ` (${parcel.deliveryHoldReason})` : ""}
                         </span>
                       )}
@@ -923,7 +919,7 @@ export default function Parcels() {
                         aria-label={`View full details for ${parcel.id}`}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand/30 bg-brand-softer text-brand transition hover:bg-brand hover:text-white dark:border-night-line dark:bg-night-head"
                       >
-                        <i className="fa-regular fa-eye text-[13.5px]" />
+                        <Icon name="eye" className="text-[13.5px]" />
                       </Link>
                     </td>
                   </tr>
@@ -974,28 +970,28 @@ export default function Parcels() {
 
                 {parcel.rescheduled && !parcel.returnToHub && parcel.scheduledFor && (
                   <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
-                    <i className="fa-solid fa-calendar-day mr-1" />
+                    <Icon name="calendar-days" className="mr-1" />
                     Rescheduled · {formatDay(parcel.scheduledFor)}
                   </p>
                 )}
                 {parcel.returnToHub && (
                   <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
-                    <i className="fa-solid fa-warehouse mr-1" />
+                    <Icon name="undo-2" className="mr-1" />
                     Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                   </p>
                 )}
 
                 <div className="mt-3 space-y-1.5 text-[13px] text-[#555] dark:text-[#d1c9c2]">
                   <p className="flex items-center gap-2">
-                    <i className="fa-solid fa-store w-4 text-center text-[#999]" />
+                    <Icon name="store" className="h-4 w-4 text-[#999]" />
                     <span>Seller: <strong className="text-[#333] dark:text-[#f1eeeb]">{parcel.seller}</strong></span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <i className="fa-regular fa-user w-4 text-center text-[#999]" />
+                    <Icon name="user-round" className="h-4 w-4 text-[#999]" />
                     <span>Recipient: <strong className="text-[#333] dark:text-[#f1eeeb]">{parcel.recipient}</strong></span>
                   </p>
                   <p className="flex items-center gap-2">
-                    <i className="fa-solid fa-motorcycle w-4 text-center text-[#999]" />
+                    <Icon name="bike" className="h-4 w-4 text-[#999]" />
                     <span>Rider: <strong>{parcel.rider}</strong></span>
                   </p>
                 </div>
@@ -1003,7 +999,7 @@ export default function Parcels() {
                 <div className="mt-3 flex items-center justify-between border-t border-[#eee] pt-2.5 text-[12px] dark:border-night-line">
                   <span className="text-[#999]">{parcel.dateLabel}</span>
                   <span className="font-semibold text-brand">
-                    View details <i className="fa-solid fa-chevron-right ml-1 text-[10px]" />
+                    View details <Icon name="chevron-right" className="ml-1 text-[10px]" />
                   </span>
                 </div>
               </article>

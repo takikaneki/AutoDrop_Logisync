@@ -8,6 +8,7 @@ import { formatDate, formatDay, formatSize } from "../../utils/format.js";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
 import UnifiedQrModal from "../qr/UnifiedQrModal.jsx";
 import StatusBadge from "../StatusBadge.jsx";
+import Icon from "../Icon.jsx";
 
 function shortParcelId(id) {
   const str = String(id || "").trim();
@@ -180,7 +181,7 @@ function resolveDeliveryBanner(parcel) {
       timestamp: formatDate(parcel?.rth_confirmed_at || parcel?.updated_at),
       bg: "bg-[#f3e8ff] border-[#d8b4fe] text-[#6b21a8] dark:bg-[#581c87]/30 dark:border-[#9333ea]/40 dark:text-[#d8b4fe]",
       iconBg: "bg-[#7c3aed] text-white",
-      icon: "fa-warehouse",
+      icon: "undo-2",
     };
   }
 
@@ -190,7 +191,7 @@ function resolveDeliveryBanner(parcel) {
       timestamp: formatDate(parcel?.rth_requested_at || parcel?.updated_at),
       bg: "bg-[#fff7ed] border-[#fed7aa] text-[#9a3412] dark:bg-[#7c2d12]/30 dark:border-[#ea580c]/40 dark:text-[#fed7aa]",
       iconBg: "bg-[#ea580c] text-white",
-      icon: "fa-clock-rotate-left",
+      icon: "history",
     };
   }
 
@@ -200,7 +201,7 @@ function resolveDeliveryBanner(parcel) {
       timestamp: formatDate(parcel?.delivered_at || parcel?.updated_at),
       bg: "bg-[#d6f2e2] border-[#b5e4c9] text-[#145a35] dark:bg-[#145a35]/30 dark:border-[#29945a]/40 dark:text-[#8ce9b5]",
       iconBg: "bg-[#29945a] text-white",
-      icon: "fa-check",
+      icon: "check",
     };
   }
 
@@ -214,7 +215,7 @@ function resolveDeliveryBanner(parcel) {
       timestamp: formatDate(parcel?.return_to_hub_at || parcel?.updated_at || parcel?.created_at),
       bg: "bg-[#fde8e8] border-[#f6c3c3] text-[#9b2c2c] dark:bg-[#9b2c2c]/30 dark:border-[#d94747]/40 dark:text-[#fca5a5]",
       iconBg: "bg-[#d94747] text-white",
-      icon: "fa-xmark",
+      icon: "x",
     };
   }
 
@@ -225,7 +226,7 @@ function resolveDeliveryBanner(parcel) {
       : formatDate(parcel?.updated_at || parcel?.created_at),
     bg: "bg-[#fff2d6] border-[#f5d598] text-[#8a4f00] dark:bg-[#8a4f00]/30 dark:border-[#c98200]/40 dark:text-[#fcd34d]",
     iconBg: "bg-[#d98218] text-white",
-    icon: "fa-clock",
+    icon: "clock",
   };
 }
 
@@ -393,7 +394,7 @@ function SidebarWidgets({ parcel, lifecycleTimestamps = [], compactIllustration 
           <p className="mt-0.5 truncate text-[11.5px] font-medium opacity-85">{banner.timestamp}</p>
         </div>
         <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] shadow-sm ${banner.iconBg}`}>
-          <i className={`fa-solid ${banner.icon}`} />
+          <Icon name={banner.icon} />
         </span>
       </div>
 
@@ -401,7 +402,7 @@ function SidebarWidgets({ parcel, lifecycleTimestamps = [], compactIllustration 
       <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
         <div className="mb-2 flex items-center gap-2">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
-            <i className="fa-solid fa-user text-[11px]" />
+            <Icon name="user-round" className="text-[11px]" />
           </span>
           <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Receiver Information</h3>
         </div>
@@ -425,7 +426,7 @@ function SidebarWidgets({ parcel, lifecycleTimestamps = [], compactIllustration 
       <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
         <div className="mb-2 flex items-center gap-2">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
-            <i className="fa-solid fa-motorcycle text-[11px]" />
+            <Icon name="bike" className="text-[11px]" />
           </span>
           <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Rider Information</h3>
         </div>
@@ -450,7 +451,7 @@ function SidebarWidgets({ parcel, lifecycleTimestamps = [], compactIllustration 
         <section className="rounded-2xl border border-[#eceef2] bg-white p-3.5 shadow-sm dark:border-night-line dark:bg-night-panel">
           <div className="mb-2.5 flex items-center gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fff0e5] text-[#d97736] dark:bg-brand/15">
-              <i className="fa-regular fa-clock text-[11px]" />
+              <Icon name="clock" className="text-[11px]" />
             </span>
             <h3 className="text-[13px] font-bold text-[#1e293b] dark:text-white">Shipment Timestamps</h3>
           </div>
@@ -630,8 +631,8 @@ export default function ShipmentDetailsView({
   const TABS = [
     { id: "shipment", label: "Shipment" },
     { id: "details", label: "Details" },
-    { id: "history", label: "Movement History", icon: "fa-solid fa-clock-rotate-left" },
-    { id: "documents", label: "Documents", icon: "fa-regular fa-file-lines" },
+    { id: "history", label: "Movement History", icon: "history" },
+    { id: "documents", label: "Documents", icon: "file-text" },
   ];
 
   return (
@@ -647,7 +648,7 @@ export default function ShipmentDetailsView({
                 onClick={onBack}
                 className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#64748b] transition hover:text-brand dark:text-[#b8b0a8]"
               >
-                <i className="fa-solid fa-chevron-left text-[10px]" />
+                <Icon name="chevron-left" className="text-[10px]" />
                 <span>{backLabel}</span>
               </button>
             ) : (
@@ -655,7 +656,7 @@ export default function ShipmentDetailsView({
                 to={backTo}
                 className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#64748b] transition hover:text-brand dark:text-[#b8b0a8]"
               >
-                <i className="fa-solid fa-chevron-left text-[10px]" />
+                <Icon name="chevron-left" className="text-[10px]" />
                 <span>{backLabel}</span>
               </Link>
             )}
@@ -668,7 +669,7 @@ export default function ShipmentDetailsView({
                 onClick={() => setQrModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-2 text-[13px] font-bold text-orange-700 shadow-sm transition hover:bg-orange-100 dark:border-brand/40 dark:bg-brand/10 dark:text-orange-300"
               >
-                <i className="fa-solid fa-qrcode" />
+                <Icon name="qr-code" />
                 <span>View Unified QR Code</span>
               </button>
             </div>
@@ -695,7 +696,7 @@ export default function ShipmentDetailsView({
                       : "text-[#64748b] hover:text-[#1e293b] dark:text-[#9c948c] dark:hover:text-white"
                   }`}
                 >
-                  {tab.icon && <i className={`${tab.icon} text-[13px]`} />}
+                  {tab.icon && <Icon name={tab.icon} className="text-[13px]" />}
                   <span>{tab.label}</span>
                 </button>
               );
@@ -725,12 +726,12 @@ export default function ShipmentDetailsView({
                       : "bg-[#e5e7eb] text-[#94a3b8] border-[#d1d5db] dark:bg-night-head dark:border-night-line";
 
                     const icon = isDone
-                      ? "fa-check"
+                      ? "check"
                       : isFail
-                      ? "fa-xmark"
+                      ? "x"
                       : isCurrent
-                      ? "fa-check"
-                      : "fa-circle text-[6px]";
+                      ? "check"
+                      : "circle";
 
                     return (
                       <li key={step.label} className="relative flex items-start gap-3.5">
@@ -745,7 +746,7 @@ export default function ShipmentDetailsView({
                         <span
                           className={`relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] ${circleCls}`}
                         >
-                          <i className={`fa-solid ${icon}`} />
+                          <Icon name={icon} className={icon === "circle" ? "h-2 w-2" : "h-3 w-3"} />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-[14px] font-bold leading-snug text-[#1e293b] dark:text-white">
@@ -762,7 +763,7 @@ export default function ShipmentDetailsView({
                               onClick={() => setActiveTab("documents")}
                               className="mt-1.5 inline-flex items-center gap-1.5 text-[12px] font-bold text-brand hover:underline"
                             >
-                              <i className="fa-solid fa-cloud-arrow-up" />
+                              <Icon name="upload" />
                               Upload packing video in Documents tab
                             </button>
                           )}
@@ -791,7 +792,7 @@ export default function ShipmentDetailsView({
                 {/* ONLY ONE orange section heading at the top of the card */}
                 <div className="mb-4 flex items-center gap-2.5">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#fff0e5] text-brand dark:bg-brand/15">
-                    <i className="fa-solid fa-box text-xs" />
+                    <Icon name="package" className="text-xs" />
                   </span>
                   <h2 className="text-[16px] font-bold text-brand">Parcel Info</h2>
                 </div>
@@ -942,12 +943,12 @@ export default function ShipmentDetailsView({
 
                 {historyLoading ? (
                   <div className="py-10 text-center text-[13px] text-[#64748b]">
-                    <i className="fa-solid fa-circle-notch fa-spin mr-2 text-brand" />
+                    <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
                     Loading movement history…
                   </div>
                 ) : historyList.length === 0 ? (
                   <div className="py-8 text-center text-[13px] text-[#64748b]">
-                    <i className="fa-solid fa-clock-rotate-left mb-2 block text-2xl text-[#94a3b8]" />
+                    <Icon name="history" className="mb-2 block text-2xl text-[#94a3b8]" />
                     No movement events recorded yet.
                   </div>
                 ) : (
@@ -971,7 +972,7 @@ export default function ShipmentDetailsView({
 
                           {item.reason && (
                             <div className="mt-2 rounded-lg bg-red-50 p-2 text-xs font-semibold text-red-800 dark:bg-red-950/30 dark:text-red-300">
-                              <i className="fa-solid fa-triangle-exclamation mr-1.5" />
+                              <Icon name="triangle-alert" className="mr-1.5" />
                               Reason: {item.reason}
                             </div>
                           )}
@@ -1032,18 +1033,18 @@ export default function ShipmentDetailsView({
                     )}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/20 transition group-hover:bg-black/30">
                       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/80 text-[#1e293b] shadow-md backdrop-blur-sm transition group-hover:scale-105">
-                        <i className="fa-solid fa-play ml-0.5 text-sm" />
+                        <Icon name="play" className="ml-0.5 text-sm" />
                       </span>
                     </span>
                   </button>
 
                   <div className="mt-3.5 space-y-1.5 text-[13px]">
                     <p className="flex items-center gap-2 font-semibold text-[#1e293b] dark:text-white">
-                      <i className="fa-regular fa-file-video text-[#64748b]" />
+                      <Icon name="file-video" className="text-[#64748b]" />
                       <span className="truncate">{latestVideo?.file_name || "parcel_proof_video.mp4"}</span>
                     </p>
                     <p className="flex items-center gap-2 text-[12px] text-[#64748b] dark:text-[#9c948c]">
-                      <i className="fa-regular fa-clock" />
+                      <Icon name="clock" />
                       <span>
                         {latestVideo?.uploaded_at
                           ? formatDate(latestVideo.uploaded_at)
@@ -1118,7 +1119,7 @@ export default function ShipmentDetailsView({
                         disabled={!uploadProps.file || uploadProps.uploading}
                         className={`${btnPrimary} mt-3 w-full justify-center py-2 text-[13px]`}
                       >
-                        <i className="fa-solid fa-cloud-arrow-up" />{" "}
+                        <Icon name="upload" />{" "}
                         {uploadProps.uploading ? "Uploading…" : "Submit Video"}
                       </button>
                     </div>
@@ -1162,13 +1163,13 @@ export default function ShipmentDetailsView({
 
                   <div className="mt-3.5 space-y-1.5 text-[13px]">
                     <p className="flex items-center gap-2 font-semibold text-[#1e293b] dark:text-white">
-                      <i className="fa-regular fa-image text-[#64748b]" />
+                      <Icon name="image" className="text-[#64748b]" />
                       <span className="truncate">
                         {proofPhotoSrc || isDelivered ? "delivery_proof_photo.jpg" : "delivery_proof_photo.jpg"}
                       </span>
                     </p>
                     <p className="flex items-center gap-2 text-[12px] text-[#64748b] dark:text-[#9c948c]">
-                      <i className="fa-regular fa-clock" />
+                      <Icon name="clock" />
                       <span>
                         {proofTimestamp ? formatDate(proofTimestamp) : "Pending delivery completion"}
                       </span>
@@ -1204,7 +1205,7 @@ export default function ShipmentDetailsView({
             title={rightCollapsed ? "Expand panel" : "Collapse panel"}
             className="absolute -left-4 top-20 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-[#e2e8f0] bg-white text-[#64748b] shadow-md transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
           >
-            <i className={`fa-solid ${rightCollapsed ? "fa-angles-left" : "fa-angles-right"} text-[11px]`} />
+            <Icon name={rightCollapsed ? "chevrons-left" : "chevrons-right"} className="h-3.5 w-3.5" />
           </button>
 
           {!rightCollapsed && (
@@ -1236,7 +1237,7 @@ export default function ShipmentDetailsView({
                 aria-label="Close video modal"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[#64748b] hover:bg-[#f1f5f9] dark:hover:bg-night-head"
               >
-                <i className="fa-solid fa-xmark" />
+                <Icon name="x" />
               </button>
             </div>
             <div className="p-5">
@@ -1275,7 +1276,7 @@ export default function ShipmentDetailsView({
                 aria-label="Close photo modal"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[#64748b] hover:bg-[#f1f5f9] dark:hover:bg-night-head"
               >
-                <i className="fa-solid fa-xmark" />
+                <Icon name="x" />
               </button>
             </div>
             <div className="p-5">
@@ -1287,7 +1288,7 @@ export default function ShipmentDetailsView({
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-[#64748b]">
-                  <i className="fa-solid fa-box-circle-check mb-2 text-3xl text-[#29945a]" />
+                  <Icon name="package-check" className="mb-2 text-3xl text-[#29945a]" />
                   <p className="font-semibold text-[#1e293b] dark:text-white">
                     {isDelivered
                       ? `Delivered on ${formatDate(proofTimestamp)}`

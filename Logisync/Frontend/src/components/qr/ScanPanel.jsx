@@ -1,5 +1,6 @@
 import { useState } from "react";
 import QrScanner from "./QrScanner.jsx";
+import Icon from "../Icon.jsx";
 import { parseTransactionNumber } from "../../utils/qr.js";
 import { inputCls } from "../styles.js";
 
@@ -62,7 +63,7 @@ export default function ScanPanel({
           }}
         >
           <div className="relative min-w-0 flex-1">
-            <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
+            <Icon name="hash" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
             <input
               value={manual}
               onChange={(e) => {
@@ -86,18 +87,15 @@ export default function ScanPanel({
         {error && <p className="mt-2 text-center text-[12px] font-medium text-[#d94747]">{error}</p>}
       </div>
 
-      {/* Subtle QR + Parcel Figure */}
-      <div className="flex items-center justify-center pt-1">
-        <svg viewBox="0 0 110 72" className="h-14 w-24 opacity-95" fill="none" aria-hidden="true">
-          <rect x="14" y="14" width="32" height="32" rx="6" fill="#fff8f3" stroke="#1e293b" strokeWidth="2" />
-          <rect x="20" y="20" width="8" height="8" rx="1.5" stroke="#ff6818" strokeWidth="2" />
-          <rect x="32" y="20" width="8" height="8" rx="1.5" stroke="#1e293b" strokeWidth="2" />
-          <rect x="20" y="32" width="8" height="8" rx="1.5" stroke="#1e293b" strokeWidth="2" />
-          <rect x="33" y="33" width="6" height="6" rx="1" fill="#ff6818" />
-          <rect x="54" y="24" width="36" height="34" rx="6" fill="#ff6818" stroke="#1e293b" strokeWidth="2" />
-          <path d="M54 35h36M72 24v34" stroke="#fff8f3" strokeWidth="2" />
-          <circle cx="92" cy="20" r="4" fill="#fff0e7" stroke="#ff6818" strokeWidth="1.5" />
-        </svg>
+      {/* Clean Lucide QR + Parcel Indicator */}
+      <div className="flex items-center justify-center gap-3 pt-1 text-slate-400 dark:text-slate-500" aria-hidden="true">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-[#0f172a] dark:border-night-line dark:bg-night-head dark:text-slate-200">
+          <Icon name="qr-code" className="h-5 w-5" />
+        </span>
+        <Icon name="arrow-right" className="h-4 w-4 text-brand" />
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-brand/25 bg-brand-soft text-brand dark:bg-brand/15">
+          <Icon name="package" className="h-5 w-5" />
+        </span>
       </div>
     </div>
   );

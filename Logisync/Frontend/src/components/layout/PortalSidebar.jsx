@@ -7,11 +7,12 @@ import { useProfile } from "../../store/profile.js";
 import { ROLE_LABEL, TOP_LINKS, navFor, toPath } from "./navConfig.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import { useSidebarTooltip } from "./SidebarTooltip.jsx";
+import Icon from "../Icon.jsx";
 
 const TOP_ICONS = {
-  about: "fa-circle-info",
-  contact: "fa-envelope",
-  help: "fa-circle-question",
+  about: "info",
+  contact: "mail",
+  help: "circle-help",
 };
 
 // Sidebar for Seller and Rider portals, matching Coordinator's responsive behavior:
@@ -71,7 +72,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 className="hidden min-[821px]:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/95 transition hover:bg-white/15 hover:text-white"
               >
-                <i className="fa-solid fa-bars text-[17px]" />
+                <Icon name="menu" className="h-[18px] w-[18px]" />
               </button>
               <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
                 <button
@@ -81,7 +82,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                   title={dark ? "Switch to light mode" : "Switch to dark mode"}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
                 >
-                  <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
+                  <Icon name={dark ? "sun" : "moon"} className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
@@ -90,7 +91,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                   title="Close sidebar"
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/15 hover:text-white"
                 >
-                  <i className="fa-solid fa-xmark text-base" />
+                  <Icon name="x" className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -131,7 +132,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 >
                   {({ isActive }) => (
                     <>
-                      <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                      <Icon name={l.icon} className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                       <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
                       {l.soon && (
                         <span className={`rounded-full bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-bold uppercase text-[#aaa] dark:bg-night-head ${collapsed ? "min-[821px]:hidden" : ""}`}>Soon</span>
@@ -167,7 +168,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 aria-label={l.label}
                 {...tipProps(l.label)}
               >
-                <i className={`fa-solid ${TOP_ICONS[l.path] || "fa-circle-info"} w-5 text-center`} />
+                <Icon name={TOP_ICONS[l.path] || "info"} className="h-[18px] w-[18px]" />
                 <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
               </NavLink>
             ))}
@@ -185,7 +186,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           >
             {({ isActive }) => (
               <>
-                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                <Icon name="settings" className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
               </>
             )}
@@ -202,7 +203,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
               collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
             }`}
           >
-            <i className="fa-solid fa-right-from-bracket w-5 text-center" />
+            <Icon name="log-out" className="h-[18px] w-[18px]" />
             <span className={collapsed ? "min-[821px]:hidden" : ""}>Logout</span>
           </button>
         </div>

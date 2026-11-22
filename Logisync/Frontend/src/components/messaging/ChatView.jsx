@@ -7,6 +7,7 @@ import { getDeliveryRecordForParcel, initiateReturnToHubLocal } from "../../stor
 import { toast } from "../../store/toast.js";
 import { formatDate } from "../../utils/format.js";
 import CallUserModal from "./CallUserModal.jsx";
+import Icon from "../Icon.jsx";
 
 const POLL_MS = 15000;
 
@@ -319,7 +320,7 @@ export default function ChatView({
       <section className={`min-h-0 flex-col ${directMode || active ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div className="m-auto p-6 text-center text-slate-500">
-            <i className="fa-regular fa-comments text-4xl opacity-50" />
+            <Icon name="message-circle" className="text-4xl opacity-50" />
             <p className="mt-3 text-sm">
               {directMode ? "No coordinator is available right now." : "Select a conversation to start messaging."}
             </p>
@@ -338,7 +339,7 @@ export default function ChatView({
                     aria-label="Back"
                     className="md:hidden text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                   >
-                    <i className="fa-solid fa-arrow-left" />
+                    <Icon name="arrow-left" />
                   </button>
                 )}
                 <div className="min-w-0">
@@ -354,7 +355,7 @@ export default function ChatView({
                 aria-label={`Call ${active.name}`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-brand hover:text-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-brand dark:hover:text-brand"
               >
-                <i className="fa-solid fa-phone text-brand text-xs" />
+                <Icon name="phone" className="text-brand text-xs" />
                 <span>Call</span>
               </button>
             </header>
@@ -388,7 +389,7 @@ export default function ChatView({
                         <div className="flex items-start justify-between gap-2 border-b border-rose-200/70 pb-2.5 dark:border-rose-900/40">
                           <div className="flex items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-white shadow-xs">
-                              <i className="fa-solid fa-triangle-exclamation text-sm" />
+                              <Icon name="triangle-alert" className="text-sm" />
                             </span>
                             <div>
                               <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
@@ -445,7 +446,7 @@ export default function ChatView({
                           <div className="mt-4 border-t border-rose-200/70 pt-3 dark:border-rose-900/40">
                             {isRthInitiated ? (
                               <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                                <i className="fa-solid fa-circle-check" />
+                                <Icon name="circle-check" />
                                 <span>Return to Hub Approved</span>
                               </div>
                             ) : (
@@ -456,7 +457,7 @@ export default function ChatView({
                                   onClick={() => handleInitiateRth(refusalReport)}
                                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-3.5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-700 active:scale-[0.99] disabled:opacity-50"
                                 >
-                                  <i className="fa-solid fa-warehouse" />
+                                  <Icon name="undo-2" />
                                   {initiatingRthId === (refusalReport.parcelId || refusalReport.txn)
                                     ? "Initiating Return to Hub…"
                                     : "Initiate Return to Hub"}

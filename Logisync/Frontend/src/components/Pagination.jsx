@@ -1,3 +1,4 @@
+import Icon from "./Icon.jsx";
 export default function Pagination({ page, pageSize, total, onPage }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -23,7 +24,7 @@ export default function Pagination({ page, pageSize, total, onPage }) {
           aria-label="Previous page"
           className={`${btn} border-[#eee] bg-white text-[#777] hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-[#eee] disabled:hover:text-[#777] dark:bg-night-head dark:border-night-line`}
         >
-          <i className="fa-solid fa-chevron-left text-[11px]" />
+          <Icon name="chevron-left" className="text-[11px]" />
         </button>
         {nums.map((n, i) =>
           n === "…" ? (
@@ -48,7 +49,7 @@ export default function Pagination({ page, pageSize, total, onPage }) {
           aria-label="Next page"
           className={`${btn} border-[#eee] bg-white text-[#777] hover:border-brand hover:text-brand disabled:opacity-40 disabled:hover:border-[#eee] disabled:hover:text-[#777] dark:bg-night-head dark:border-night-line`}
         >
-          <i className="fa-solid fa-chevron-right text-[11px]" />
+          <Icon name="chevron-right" className="text-[11px]" />
         </button>
       </div>
     </div>

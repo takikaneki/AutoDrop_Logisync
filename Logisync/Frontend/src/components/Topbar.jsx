@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useT } from "../store/prefs.js";
 import useBase from "../hooks/useBase.js";
+import Icon from "./Icon.jsx";
 
 // Pangalan ng bawat bahagi ng URL para sa breadcrumbs
 const names = {
@@ -135,7 +136,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
                 aria-label="Go back"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
               >
-                <i className="fa-solid fa-arrow-left text-[17px]" />
+                <Icon name="arrow-left" className="text-[17px]" />
               </button>
             )}
             <h1 className="min-w-0 flex-1 truncate px-2 text-center text-[16.5px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
@@ -183,7 +184,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
             <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-1.5 text-[12px] text-[#999]">
               {crumbs.map((c, i) => (
                 <span key={i} className="flex items-center gap-1.5">
-                  {i > 0 && <i className="fa-solid fa-chevron-right text-[9px]" />}
+                  {i > 0 && <Icon name="chevron-right" className="text-[9px]" />}
                   {c.to ? (
                     <Link to={c.to} className="hover:text-brand">{c.label}</Link>
                   ) : (
@@ -220,7 +221,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
           <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-1.5 text-[12px] text-[#999]">
             {crumbs.map((c, i) => (
               <span key={i} className="flex items-center gap-1.5">
-                {i > 0 && <i className="fa-solid fa-chevron-right text-[9px]" />}
+                {i > 0 && <Icon name="chevron-right" className="text-[9px]" />}
                 {c.to ? (
                   <Link to={c.to} className="hover:text-brand">{c.label}</Link>
                 ) : (

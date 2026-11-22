@@ -11,6 +11,7 @@ import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 import { bucketOf } from "../../utils/stats.js";
 import { getParcelAddress } from "../../store/customers.js";
+import Icon from "../../components/Icon.jsx";
 
 const PAGE_SIZE = 10;
 const PENDING = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
@@ -23,10 +24,10 @@ function shortParcelId(id) {
 }
 
 const FILTERS = [
-  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "fa-video", tone: "blue", match: (p) => PENDING.includes(p.status) },
-  { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "fa-hourglass-half", tone: "yellow", match: (p) => p.status === "VIDEO_SUBMITTED" },
-  { key: "VERIFIED", label: "Verified / In Delivery", icon: "fa-circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) && !p.returnToHub && !p.rth_status },
-  { key: "RETURN_TO_HUB", label: "Return to Hub / Failed", icon: "fa-warehouse", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED", "RTH_PENDING", "RTH_CONFIRMED"].includes(p.status) || Boolean(p.returnToHub || p.rth_status) },
+  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "video", tone: "blue", match: (p) => PENDING.includes(p.status) },
+  { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "clock", tone: "yellow", match: (p) => p.status === "VIDEO_SUBMITTED" },
+  { key: "VERIFIED", label: "Verified / In Delivery", icon: "circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) && !p.returnToHub && !p.rth_status },
+  { key: "RETURN_TO_HUB", label: "Return to Hub / Failed", icon: "undo-2", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED", "RTH_PENDING", "RTH_CONFIRMED"].includes(p.status) || Boolean(p.returnToHub || p.rth_status) },
 ];
 const BUCKETS = { FLAGGED: "Flagged", PENDING: "Pending", DELIVERED: "Delivered" };
 
@@ -107,14 +108,14 @@ export default function ParcelRecords() {
     <>
       <Topbar title="Parcel Records" subtitle="All the parcels you registered, with their verification & delivery status and report generation.">
         <Link to="/seller/create" className={btnGhost}>
-          <i className="fa-solid fa-plus" /> Create Parcel
+          <Icon name="plus" /> Create Parcel
         </Link>
         <button
           onClick={toggleReport}
           aria-expanded={reportOpen}
           className={reportOpen ? btnGhost : btnPrimary}
         >
-          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"}`} />{" "}
+          <Icon name={reportOpen ? "x" : "file-text"} />{" "}
           {reportOpen ? "Hide Report" : "Generate Report"}
         </button>
       </Topbar>
@@ -132,7 +133,7 @@ export default function ParcelRecords() {
 
       {error && (
         <div className="mb-4">
-          <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+          <Notice tone="error" icon="circle-alert" role="alert">
             {error} <button onClick={load} className="font-bold underline">Try again</button>
           </Notice>
         </div>
@@ -222,7 +223,7 @@ export default function ParcelRecords() {
             onClick={() => setStatus("ALL")}
             className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-600 transition active:scale-95 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
           >
-            <i className="fa-solid fa-xmark text-[10px]" />
+            <Icon name="x" className="text-[10px]" />
             <span>Show All ({parcels.length})</span>
           </button>
         ) : (
@@ -238,7 +239,7 @@ export default function ParcelRecords() {
               : "bg-brand text-white shadow-xs hover:bg-brand-dark"
           }`}
         >
-          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"} text-[12px]`} />
+          <Icon name={reportOpen ? "x" : "file-text"} className="text-[13px]" />
           <span>{reportOpen ? "Hide Report" : "Generate Report"}</span>
         </button>
       </div>
@@ -257,7 +258,7 @@ export default function ParcelRecords() {
       <section className={`${tableCard} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         <div className="mb-[18px] grid grid-cols-[1fr_190px_170px] gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative max-[900px]:col-span-2 max-[600px]:col-span-1">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ID, transaction no., customer, address, contact, category or contents..." aria-label="Search" className={`${inputCls} pl-9`} />
           </div>
           <select value={isBucket ? "ALL" : status} onChange={(e) => setStatus(e.target.value)} aria-label="Status filter" className={inputCls}>
@@ -324,7 +325,7 @@ export default function ParcelRecords() {
                               : "bg-[#fff4e5] text-[#b45309]"
                           }`}
                         >
-                          <i className="fa-solid fa-user-shield text-[9px]" />
+                          <Icon name="shield-check" className="text-[9px]" />
                           Discreet:{" "}
                           {p.discreet_status === "APPROVED"
                             ? "Approved"
@@ -371,20 +372,14 @@ export default function ParcelRecords() {
             to="/seller/create"
             className="group flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#fdba74] bg-[#fffaf5] p-5 text-center transition hover:border-[#ee4d2d] hover:bg-[#fff3e8] dark:border-[#9a3412]/70 dark:bg-night-head/60 dark:hover:border-[#ee4d2d] max-[1080px]:hidden"
           >
-            <svg viewBox="0 0 120 96" className="mb-3 h-24 w-28" fill="none" aria-hidden="true">
-              <ellipse cx="60" cy="84" rx="40" ry="7" fill="#ffedd5" />
-              <rect x="34" y="34" width="46" height="40" rx="6" fill="#cbd5e1" stroke="#64748b" strokeWidth="2" />
-              <path d="M34 45h46M57 34v40" stroke="#94a3b8" strokeWidth="2" />
-              <rect x="20" y="22" width="26" height="19" rx="5" fill="#ee4d2d" />
-              <circle cx="33" cy="31.5" r="4.5" fill="#ffffff" />
-              <path d="M88 22c-6.6 0-12 5.4-12 12 0 8.5 12 20 12 20s12-11.5 12-20c0-6.6-5.4-12-12-12z" fill="#f97316" />
-              <circle cx="88" cy="34" r="4.5" fill="#ffffff" />
-            </svg>
+            <span className="mb-3.5 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-white text-brand shadow-xs transition group-hover:scale-105 dark:bg-night-panel">
+              <Icon name="package-open" className="text-[24px]" />
+            </span>
             <p className="mb-4 text-[12.5px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
               Ready to ship a new order? Register your parcel to get started.
             </p>
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ee4d2d] px-4 py-2 text-[13px] font-bold text-white shadow-xs transition group-hover:bg-[#d94122]">
-              <i className="fa-solid fa-plus text-[11px]" /> Create Parcel
+              <Icon name="plus" className="text-[11px]" /> Create Parcel
             </span>
           </Link>
         </div>
@@ -421,30 +416,30 @@ export default function ParcelRecords() {
                   </div>
                   {p.rescheduled && !p.returnToHub && p.status !== "DELIVERED" && p.scheduledFor && (
                     <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
-                      <i className="fa-solid fa-calendar-day mr-1" />
+                      <Icon name="calendar-days" className="mr-1" />
                       Rescheduled (Day {p.rescheduleCount || 1}/3) · {formatDay(p.scheduledFor)}
                     </p>
                   )}
                   {p.returnToHub && (
                     <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
-                      <i className="fa-solid fa-warehouse mr-1" />
+                      <Icon name="undo-2" className="mr-1" />
                       Return to Hub · {p.returnCoordinated ? "Return to Seller Coordinated" : "Reached 3-Day Reschedule Limit"}
                     </p>
                   )}
                   <div className="mt-3 space-y-1.5 text-[13px] text-[#555] dark:text-[#d1c9c2]">
                     <p className="flex items-center gap-2">
-                      <i className="fa-regular fa-user w-4 text-center text-[#999]" />
+                      <Icon name="user-round" className="h-4 w-4 text-[#999]" />
                       <strong className="text-[#333] dark:text-[#f1eeeb]">{p.receiver_name}</strong>
                       {p.receiver_contact && <span className="text-[#888]">· {p.receiver_contact}</span>}
                     </p>
                     {addr && (
                       <p className="flex items-start gap-2">
-                        <i className="fa-solid fa-location-dot mt-0.5 w-4 text-center text-brand" />
+                        <Icon name="map-pin" className="mt-0.5 h-4 w-4 text-brand" />
                         <span className="flex-1 break-words text-[12.5px]">{addr}</span>
                       </p>
                     )}
                     <p className="flex items-center gap-2">
-                      <i className="fa-solid fa-box-open w-4 text-center text-[#999]" />
+                      <Icon name="package-open" className="h-4 w-4 text-[#999]" />
                       <span>
                         {p.content_category ? `${p.content_category}: ` : ""}
                         {p.contents || "—"}
@@ -452,7 +447,7 @@ export default function ParcelRecords() {
                     </p>
                     {p.discrete_item && (
                       <p className="flex items-center gap-2 text-[12px] font-semibold text-[#b45309]">
-                        <i className="fa-solid fa-user-shield w-4 text-center text-brand" />
+                        <Icon name="shield-check" className="h-4 w-4 text-brand" />
                         <span>
                           Discreet:{" "}
                           {p.discreet_status === "APPROVED"
@@ -472,7 +467,7 @@ export default function ParcelRecords() {
                           needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
                         }`}
                       >
-                        <i className={`fa-solid ${needsVideo ? "fa-video" : "fa-arrow-right"}`} />
+                        <Icon name={needsVideo ? "video" : "arrow-right"} />
                         {needsVideo ? "Upload video" : "View details"}
                       </Link>
                   </div>

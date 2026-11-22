@@ -1,30 +1,31 @@
 import { useEffect, useState } from "react";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import Icon from "../Icon.jsx";
 
 export const CONTACT_DETAILS = [
   {
-    icon: "fa-envelope",
+    icon: "mail",
     label: "Email Address",
     value: "support@logisync.example",
     sub: "Official system & coordinator support",
     href: "mailto:support@logisync.example",
   },
   {
-    icon: "fa-phone",
+    icon: "phone",
     label: "Contact Number",
     value: "(02) 8123 4567",
     sub: "Direct landline for hub inquiries",
     href: "tel:+63281234567",
   },
   {
-    icon: "fa-location-dot",
+    icon: "map-pin",
     label: "Office / Hub Address",
     value: "Cavite State University, Cavite",
     sub: "SPX Express Partner Coordination Hub",
     href: null,
   },
   {
-    icon: "fa-clock",
+    icon: "clock",
     label: "Support Hours",
     value: "Mon–Sat, 8:00 AM – 6:00 PM",
     sub: "24/7 automated QR & parcel logging",
@@ -102,7 +103,7 @@ export function ContactUsContent({
       >
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-base text-white shadow-sm shadow-orange-500/25">
-            <i className="fa-solid fa-headset" />
+            <Icon name="headset" />
           </span>
           <div>
             <h2
@@ -125,7 +126,7 @@ export function ContactUsContent({
               "dark:border-night-line dark:text-[#d1c9c2] dark:hover:border-night-line dark:hover:bg-night-head dark:hover:text-white"
             )}`}
           >
-            <i className="fa-solid fa-xmark text-base" />
+            <Icon name="x" className="text-base" />
           </button>
         )}
       </div>
@@ -164,7 +165,7 @@ export function ContactUsContent({
                       "dark:bg-night-line"
                     )}`}
                   >
-                    <i className={`fa-solid ${contactItem.icon}`} />
+                    <Icon name={contactItem.icon} />
                   </span>
                   <div className="min-w-0">
                     <span
@@ -206,7 +207,7 @@ export function ContactUsContent({
                     {copied === contactItem.label ? (
                       <span className="text-emerald-600">Copied</span>
                     ) : (
-                      <i className="fa-regular fa-copy" />
+                      <Icon name="copy" />
                     )}
                   </button>
                 )}
@@ -224,7 +225,7 @@ export function ContactUsContent({
           {sent ? (
             <div className="flex h-full flex-col items-center justify-center py-8 text-center">
               <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600">
-                <i className="fa-solid fa-check" />
+                <Icon name="check" />
               </span>
               <h3 className={`text-lg font-extrabold text-slate-900 ${dk("dark:text-white")}`}>Message Sent!</h3>
               <p className={`mt-1 max-w-xs text-xs leading-relaxed text-slate-500 ${dk("dark:text-[#a8a099]")}`}>
@@ -351,7 +352,7 @@ export function ContactUsContent({
                   type="submit"
                   className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:bg-brand-dark"
                 >
-                  <i className="fa-solid fa-paper-plane text-[11px]" />
+                  <Icon name="send" className="text-[11px]" />
                   <span>Send Message</span>
                 </button>
               </div>

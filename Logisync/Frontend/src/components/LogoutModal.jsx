@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../api.js";
+import Icon from "./Icon.jsx";
 
 export default function LogoutModal({ open, onClose }) {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function LogoutModal({ open, onClose }) {
         className="w-[380px] max-w-full rounded-2xl border-[1.5px] border-brand/35 bg-white p-7 text-center shadow-[0_20px_50px_rgba(0,0,0,.18)] animate-popup dark:border-brand/30 dark:bg-[#2c2724] dark:text-[#f5f1ed]"
       >
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand ring-4 ring-brand/10 dark:bg-night-head">
-          <i className="fa-solid fa-right-from-bracket text-[19px]" />
+          <Icon name="log-out" className="text-[19px]" />
         </div>
         <h3 id="logout-modal-title" className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f5f1ed]">
           Log out of LogiSync?

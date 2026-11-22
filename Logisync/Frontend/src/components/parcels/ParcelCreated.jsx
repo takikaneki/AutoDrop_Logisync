@@ -4,6 +4,7 @@ import StatusBadge from "../StatusBadge.jsx";
 import { DetailList, Notice } from "../portal.jsx";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
 import { getParcelAddress } from "../../store/customers.js";
+import Icon from "../Icon.jsx";
 
 // Ipinapakita pagkatapos matagumpay na ma-register ang parcel.
 // Lahat ng laman ay galing sa sagot ng backend (+ saved address).
@@ -33,7 +34,7 @@ export default function ParcelCreated({ parcel, onReset }) {
 
   return (
     <section className={`${panel} max-w-4xl space-y-6 p-[30px] max-[600px]:p-5`}>
-      <Notice tone="success" icon="fa-circle-check" role="status">
+      <Notice tone="success" icon="circle-check" role="status">
         <strong>Parcel registered successfully.</strong> Next step: upload the packing video proof so the Coordinator can verify your parcel and declaration.
       </Notice>
 
@@ -66,22 +67,22 @@ export default function ParcelCreated({ parcel, onReset }) {
 
       {parcel.discrete_item && (
         <div className="rounded-xl border border-[#f5d0a9] bg-[#fff8f0] p-3.5 text-[12.5px] leading-relaxed text-[#8a4b14] dark:border-[#c97c10]/40 dark:bg-[#c97c10]/10 dark:text-[#f2c278]">
-          <i className="fa-solid fa-user-shield mr-2 text-[#c97c10]" />
+          <Icon name="shield-check" className="mr-2 text-[#c97c10]" />
           <strong>Discreet handling is pending Coordinator verification.</strong> Please upload a clear packing video showing the declared item ({categoryDisplay}) before sealing the parcel.
         </div>
       )}
 
       <p className="rounded-xl bg-[#fafafa] p-3.5 text-[13px] text-[#777] dark:bg-night-head dark:text-[#d1c9c2]">
-        <i className="fa-solid fa-qrcode mr-2 text-brand" />
+        <Icon name="qr-code" className="mr-2 text-brand" />
         Use the Shopee QR already on the parcel. SPX Express / LogiSync uses the parcel&apos;s existing transaction QR.
       </p>
 
       <div className="flex flex-wrap gap-3">
         <Link to={`/seller/scan?txn=${encodeURIComponent(parcel.transaction_number)}`} className={btnPrimary}>
-          <i className="fa-solid fa-video" /> Upload video now
+          <Icon name="video" /> Upload video now
         </Link>
         <button type="button" onClick={copyId} className={btnGhost}>
-          <i className="fa-regular fa-copy" /> {copied ? "Copied!" : "Copy parcel ID"}
+          <Icon name="copy" /> {copied ? "Copied!" : "Copy parcel ID"}
         </button>
         <button type="button" onClick={onReset} className={btnGhost}>Register another parcel</button>
       </div>

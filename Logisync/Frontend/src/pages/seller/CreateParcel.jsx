@@ -27,24 +27,25 @@ import ParcelCreated from "../../components/parcels/ParcelCreated.jsx";
 import QrScanner from "../../components/qr/QrScanner.jsx";
 import { isValidTransactionNumber, parseTransactionNumber } from "../../utils/qr.js";
 import { findCustomerByName, searchCustomers, useCustomers } from "../../store/customers.js";
+import Icon from "../../components/Icon.jsx";
 
 const STEPS = [
-  ["fa-qrcode", "Scan or type", "Scan the Shopee QR on the parcel to fill in the transaction number."],
-  ["fa-user-check", "Enter customer details", "Type an existing customer name to auto-fill their saved address and contact, or enter a new customer."],
-  ["fa-map-location-dot", "Trece Martires address", "Province and city are fixed to Trece Martires City, Cavite. Select your barangay and enter house/unit & street."],
-  ["fa-clipboard-check", "Declare contents & privacy", "Select the accurate content category and provide a valid reason if discreet handling is needed."],
-  ["fa-video", "Upload video proof", "Record the packing of the parcel and upload it for Coordinator verification."],
-  ["fa-circle-check", "Coordinator verifies", "The coordinator reviews your declaration, discreet request, and video proof before approving."],
+  ["qr-code", "Scan or type", "Scan the Shopee QR on the parcel to fill in the transaction number."],
+  ["user-check", "Enter customer details", "Type an existing customer name to auto-fill their saved address and contact, or enter a new customer."],
+  ["map", "Trece Martires address", "Province and city are fixed to Trece Martires City, Cavite. Select your barangay and enter house/unit & street."],
+  ["clipboard-check", "Declare contents & privacy", "Select the accurate content category and provide a valid reason if discreet handling is needed."],
+  ["video", "Upload video proof", "Record the packing of the parcel and upload it for Coordinator verification."],
+  ["circle-check", "Coordinator verifies", "The coordinator reviews your declaration, discreet request, and video proof before approving."],
 ];
 
 const CATEGORY_ICONS = {
-  "Clothing and Accessories": "fa-shirt",
-  "Beauty and Personal Care": "fa-spray-can-sparkles",
-  "Health and Wellness Products": "fa-heart-pulse",
-  "Personal or Intimate Products": "fa-user-shield",
-  "Electronics and Gadgets": "fa-mobile-screen-button",
-  "Household Items": "fa-house-chimney",
-  Other: "fa-box-open",
+  "Clothing and Accessories": "shirt",
+  "Beauty and Personal Care": "sparkles",
+  "Health and Wellness Products": "heart-pulse",
+  "Personal or Intimate Products": "shield-check",
+  "Electronics and Gadgets": "smartphone",
+  "Household Items": "house",
+  Other: "package-open",
 };
 
 export default function CreateParcel() {
@@ -457,7 +458,7 @@ export default function CreateParcel() {
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-2xl border-b border-[#f3e4da] bg-[#fff5ee] px-6 py-3.5 dark:border-night-line dark:bg-night-head max-[600px]:px-4">
             <div className="flex items-center gap-2.5">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand text-[12px] text-white">
-                <i className="fa-solid fa-plus" />
+                <Icon name="plus" />
               </span>
               <h2 className="text-[15.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
                 Parcel Details
@@ -466,7 +467,7 @@ export default function CreateParcel() {
             <div className="flex items-center gap-2.5">
               {scanned && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
-                  <i className="fa-solid fa-circle-check text-[10px]" /> QR Scanned
+                  <Icon name="circle-check" className="text-[10px]" /> QR Scanned
                 </span>
               )}
               <button
@@ -474,14 +475,14 @@ export default function CreateParcel() {
                 onClick={() => setInstructionsOpen(true)}
                 className={`${btnGhost} !border-[#f1d5c4] !bg-[#fffaf7] !px-3 !py-1.5 !text-[12.5px] !text-brand shadow-xs hover:!border-brand hover:!bg-[#fff2ea] dark:!border-night-line dark:!bg-night-head dark:!text-[#ffb58a]`}
               >
-                <i className="fa-regular fa-circle-question text-brand" /> Instructions
+                <Icon name="circle-help" className="text-brand" /> Instructions
               </button>
             </div>
           </div>
 
           <div className="space-y-5 p-6 max-[600px]:p-4">
             {apiError && (
-              <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+              <Notice tone="error" icon="circle-alert" role="alert">
                 {apiError}
               </Notice>
             )}
@@ -520,7 +521,7 @@ export default function CreateParcel() {
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="relative min-w-0 flex-1">
-                      <i className="fa-solid fa-hashtag pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
+                      <Icon name="hash" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[12px] text-[#999]" />
                       <input
                         id="transaction_number"
                         name="transaction_number"
@@ -569,12 +570,12 @@ export default function CreateParcel() {
                 </label>
                 {matchedCustomer && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
-                    <i className="fa-solid fa-user-check text-[10px]" /> Existing customer found
+                    <Icon name="user-check" className="text-[10px]" /> Existing customer found
                   </span>
                 )}
                 {!matchedCustomer && values.receiver_name.trim() && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[#eaf3ff] px-2.5 py-0.5 text-[11px] font-semibold text-[#3a6ea5] dark:bg-[#4285c5]/20 dark:text-[#9cc3ea]">
-                    <i className="fa-solid fa-user-plus text-[10px]" /> New customer
+                    <Icon name="user-plus" className="text-[10px]" /> New customer
                   </span>
                 )}
               </div>
@@ -652,7 +653,7 @@ export default function CreateParcel() {
                 <div className="mt-2 rounded-xl border border-[#cbead8] bg-[#f3fbf6] px-3.5 py-2.5 text-[12.5px] text-[#1f7f4a] dark:border-[#29945a]/30 dark:bg-[#29945a]/10 dark:text-[#8fd6ae]">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span>
-                      <i className="fa-solid fa-circle-check mr-1.5" />
+                      <Icon name="circle-check" className="mr-1.5" />
                       Saved details for <strong>{matchedCustomer.name}</strong> were populated automatically. You can review and edit any address field below.
                     </span>
                   </div>
@@ -681,7 +682,7 @@ export default function CreateParcel() {
                 </label>
                 {isContactAutoFilled && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand dark:bg-night-head">
-                    <i className="fa-solid fa-wand-magic-sparkles text-[10px]" /> Auto-filled (editable)
+                    <Icon name="wand-sparkles" className="text-[10px]" /> Auto-filled (editable)
                   </span>
                 )}
               </div>
@@ -709,7 +710,7 @@ export default function CreateParcel() {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-night-line">
                 <div className="flex items-center gap-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                    <i className="fa-solid fa-location-dot text-sm" />
+                    <Icon name="map-pin" className="text-sm" />
                   </span>
                   <div>
                     <h3 className="text-[14.5px] font-bold text-slate-800 dark:text-white leading-tight">
@@ -722,7 +723,7 @@ export default function CreateParcel() {
                 </div>
                 {isAddressAutoFilled && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-semibold text-brand dark:bg-night-head">
-                    <i className="fa-solid fa-wand-magic-sparkles text-[10px]" /> Auto-filled (editable)
+                    <Icon name="wand-sparkles" className="text-[10px]" /> Auto-filled (editable)
                   </span>
                 )}
               </div>
@@ -733,7 +734,7 @@ export default function CreateParcel() {
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_province" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      1. Province <i className="fa-solid fa-lock text-[10px] text-slate-400 ml-1" title="Fixed service hub province" />
+                      1. Province <Icon name="lock" className="text-[10px] text-slate-400 ml-1" title="Fixed service hub province" />
                     </label>
                     <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide dark:bg-night-head dark:text-slate-400">
                       Pre-filled &bull; Read-only
@@ -750,7 +751,7 @@ export default function CreateParcel() {
                       className={`${inputCls} !bg-[#f8fafc] !text-slate-700 !font-medium !cursor-not-allowed !border-slate-200 select-none pr-9 dark:!bg-night-head dark:!border-night-line dark:!text-slate-200`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-                      <i className="fa-solid fa-lock text-xs" />
+                      <Icon name="lock" className="text-xs" />
                     </div>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-400">
@@ -762,7 +763,7 @@ export default function CreateParcel() {
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_city" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      2. Municipality / City <i className="fa-solid fa-lock text-[10px] text-slate-400 ml-1" title="Fixed service hub municipality" />
+                      2. Municipality / City <Icon name="lock" className="text-[10px] text-slate-400 ml-1" title="Fixed service hub municipality" />
                     </label>
                     <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide dark:bg-night-head dark:text-slate-400">
                       Pre-filled &bull; Read-only
@@ -779,7 +780,7 @@ export default function CreateParcel() {
                       className={`${inputCls} !bg-[#f8fafc] !text-slate-700 !font-medium !cursor-not-allowed !border-slate-200 select-none pr-9 dark:!bg-night-head dark:!border-night-line dark:!text-slate-200`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-                      <i className="fa-solid fa-lock text-xs" />
+                      <Icon name="lock" className="text-xs" />
                     </div>
                   </div>
                   <p className="mt-1 text-[11px] text-slate-400">
@@ -818,7 +819,7 @@ export default function CreateParcel() {
                       className={`${inputCls} pr-9 ${errors.receiver_barangay ? "!border-[#d94747]" : ""}`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
-                      <i className="fa-solid fa-chevron-down text-xs" />
+                      <Icon name="chevron-down" className="text-xs" />
                     </div>
                   </div>
 
@@ -831,7 +832,7 @@ export default function CreateParcel() {
                     >
                       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-slate-50/95 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 backdrop-blur-sm dark:border-night-line dark:bg-night-head/95 dark:text-slate-400">
                         <span className="flex items-center gap-1.5">
-                          <i className="fa-solid fa-map-pin text-brand text-xs" />
+                          <Icon name="map-pin" className="text-brand text-xs" />
                           Trece Martires City Barangays ({barangaySuggestions.length} found)
                         </span>
                         <button
@@ -861,7 +862,7 @@ export default function CreateParcel() {
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <i className={`fa-solid fa-location-dot text-xs ${isSelected ? "text-brand" : "text-slate-400"}`} />
+                                <Icon name="map-pin" className={`text-xs ${isSelected ? "text-brand" : "text-slate-400"}`} />
                                 <span>{brgy}</span>
                               </div>
                               <span className="text-[11px] font-medium text-slate-400 shrink-0">
@@ -925,7 +926,7 @@ export default function CreateParcel() {
               <div className="rounded-xl border border-slate-200/90 bg-[#fafafa] p-3.5 dark:border-night-line dark:bg-night-head/70">
                 <div className="flex items-start gap-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                    <i className="fa-solid fa-map-location-dot text-sm" />
+                    <Icon name="map" className="text-sm" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
@@ -934,7 +935,7 @@ export default function CreateParcel() {
                       </span>
                       {fullAddressPreview && (
                         <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                          <i className="fa-solid fa-circle-check mr-1" /> Formatted for Waybill & Rider Dispatch
+                          <Icon name="circle-check" className="mr-1" /> Formatted for Waybill & Rider Dispatch
                         </span>
                       )}
                     </div>
@@ -1028,14 +1029,14 @@ export default function CreateParcel() {
                   <span className="flex min-w-0 items-center gap-2">
                     {selectedCategoryMeta ? (
                       <>
-                        <i className={`fa-solid ${CATEGORY_ICONS[selectedCategoryMeta.value] || "fa-box"} text-brand shrink-0`} />
+                        <Icon name={CATEGORY_ICONS[selectedCategoryMeta.value] || "package"} className="text-brand shrink-0" />
                         <strong className="truncate font-medium">{selectedCategoryMeta.label}</strong>
                       </>
                     ) : (
                       <span className="text-[#999]">— Select parcel content category —</span>
                     )}
                   </span>
-                  <i className={`fa-solid fa-chevron-down text-[11px] text-[#999] transition-transform ${categoryOpen ? "rotate-180 text-brand" : ""}`} />
+                  <Icon name="chevron-down" className={`text-[11px] text-[#999] transition-transform ${categoryOpen ? "rotate-180 text-brand" : ""}`} />
                 </button>
 
                 {categoryOpen && (
@@ -1072,7 +1073,7 @@ export default function CreateParcel() {
                                 : "bg-brand/10 text-brand dark:bg-brand/20"
                             }`}
                           >
-                            <i className={`fa-solid ${CATEGORY_ICONS[cat.value] || "fa-box"} text-[14px]`} />
+                            <Icon name={CATEGORY_ICONS[cat.value] || "package"} className="text-[14px]" />
                           </span>
                           <div className="min-w-0 flex-1">
                             <span className="block truncate text-[13px] font-bold leading-snug">
@@ -1087,7 +1088,7 @@ export default function CreateParcel() {
                             </small>
                           </div>
                           {isSelected && (
-                            <i className="fa-solid fa-check text-[13px] text-white shrink-0 pr-1" />
+                            <Icon name="check" className="text-[13px] text-white shrink-0 pr-1" />
                           )}
                         </button>
                       );
@@ -1214,7 +1215,7 @@ export default function CreateParcel() {
                   </div>
 
                   <div className="rounded-lg border border-amber-300/80 bg-amber-50 p-2.5 text-[12px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                    <i className="fa-solid fa-shield-halved mr-1.5 text-amber-600" />
+                    <Icon name="shield-check" className="mr-1.5 text-amber-600" />
                     <strong>Coordinator Inspection Notice:</strong> Discreet handling only masks item names from rider view. You must still provide a complete packaging video proof. If contents conflict with the declaration, the parcel will be rejected.
                   </div>
                 </div>
@@ -1225,7 +1226,7 @@ export default function CreateParcel() {
             {liveWarnings.length > 0 && (
               <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-[12.5px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
                 <strong className="flex items-center gap-1.5 font-bold">
-                  <i className="fa-solid fa-triangle-exclamation text-amber-600" />
+                  <Icon name="triangle-alert" className="text-amber-600" />
                   Declaration Review Notice
                 </strong>
                 <ul className="mt-1 list-inside list-disc space-y-0.5 text-[12px]">
@@ -1237,7 +1238,7 @@ export default function CreateParcel() {
             )}
 
             <button type="submit" disabled={submitting} className={`${btnPrimary} w-full py-3 text-[14px]`}>
-              <i className="fa-solid fa-check" />
+              <Icon name="check" />
               {submitting ? "Registering parcel..." : "Register Parcel"}
             </button>
           </div>
@@ -1258,7 +1259,7 @@ export default function CreateParcel() {
           <div className={`${panel} w-full max-w-lg max-h-[85vh] overflow-y-auto p-6 shadow-2xl max-[600px]:p-5`}>
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#eee] pb-3 dark:border-night-line">
               <h2 id="create-parcel-instructions-title" className="text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                <i className="fa-regular fa-circle-question mr-2 text-brand" />
+                <Icon name="circle-help" className="mr-2 text-brand" />
                 How parcel creation works
               </h2>
               <button
@@ -1267,7 +1268,7 @@ export default function CreateParcel() {
                 aria-label="Close instructions"
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-[#777] transition hover:bg-[#f5f5f5] hover:text-[#222] dark:text-[#b8b0a8] dark:hover:bg-night-head dark:hover:text-white"
               >
-                <i className="fa-solid fa-xmark text-base" />
+                <Icon name="x" className="text-base" />
               </button>
             </div>
 
@@ -1279,7 +1280,7 @@ export default function CreateParcel() {
                   </span>
                   <div>
                     <strong className="block text-[13.5px] leading-snug text-[#27364f] dark:text-[#f1eeeb]">
-                      <i className={`fa-solid ${icon} mr-1.5 text-brand`} />
+                      <Icon name={icon} className="mr-1.5 text-brand" />
                       {title}
                     </strong>
                     <p className="mt-0.5 text-[12px] leading-relaxed text-[#777] dark:text-[#b8b0a8]">{desc}</p>

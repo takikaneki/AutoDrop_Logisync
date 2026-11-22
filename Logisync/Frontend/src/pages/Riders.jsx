@@ -10,6 +10,7 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { formatDate } from "../utils/format.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
+import Icon from "../components/Icon.jsx";
 
 const tone = {
   Active: "bg-[#eaf8ef] text-[#29945a]",
@@ -297,10 +298,10 @@ export default function Riders() {
         right={
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={loadData} className={btnGhost}>
-              <i className="fa-solid fa-rotate" /> Refresh
+              <Icon name="refresh-cw" /> Refresh
             </button>
             <button type="button" onClick={openCreate} className={btnPrimary}>
-              <i className="fa-solid fa-plus" /> Add Rider
+              <Icon name="plus" /> Add Rider
             </button>
           </div>
         }
@@ -362,7 +363,7 @@ export default function Riders() {
           onClick={loadData}
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-bold text-slate-600 transition active:scale-95 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
         >
-          <i className="fa-solid fa-rotate text-[11px]" />
+          <Icon name="refresh-cw" className="text-[11px]" />
           <span>Refresh</span>
         </button>
         <button
@@ -370,14 +371,14 @@ export default function Riders() {
           onClick={openCreate}
           className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-[12.5px] font-bold text-white shadow-xs transition active:scale-95 hover:bg-brand-dark"
         >
-          <i className="fa-solid fa-plus text-[11px]" />
+          <Icon name="plus" className="text-[11px]" />
           <span>Add Rider</span>
         </button>
       </div>
 
       {error && (
         <div className="mb-5">
-          <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+          <Notice tone="error" icon="circle-alert" role="alert">
             {error}
           </Notice>
         </div>
@@ -388,19 +389,19 @@ export default function Riders() {
           <StatCard
             label="Total riders"
             value={loading ? "…" : riders.length}
-            icon="fa-motorcycle"
+            icon="bike"
             tone="gray"
           />
           <StatCard
             label="Active"
             value={loading ? "…" : riders.filter((r) => r.status === "Active").length}
-            icon="fa-circle-check"
+            icon="circle-check"
             tone="green"
           />
           <StatCard
             label="On Delivery"
             value={loading ? "…" : riders.filter((r) => r.status === "On Delivery").length}
-            icon="fa-truck"
+            icon="truck"
             tone="blue"
           />
         </StatGrid>
@@ -409,7 +410,7 @@ export default function Riders() {
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         <div className="mb-5 grid grid-cols-[1fr_170px_150px_150px] gap-3 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input
               value={search}
               onChange={(e) => {
@@ -549,7 +550,7 @@ export default function Riders() {
           </table>
           {!loading && rows.length === 0 && (
             <EmptyState
-              icon="fa-motorcycle"
+              icon="bike"
               title="No riders found"
               text={
                 riders.length === 0
@@ -566,7 +567,7 @@ export default function Riders() {
             <div className="py-8 text-center text-[13px] text-[#888]">Loading riders…</div>
           ) : pageRows.length === 0 ? (
             <EmptyState
-              icon="fa-motorcycle"
+              icon="bike"
               title="No riders found"
               text={
                 riders.length === 0
@@ -642,11 +643,11 @@ export default function Riders() {
               aria-label="Close"
               className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <div className="mb-5 flex items-center gap-4">
               <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-brand-soft text-[22px] text-brand">
-                <i className="fa-solid fa-motorcycle" />
+                <Icon name="bike" />
               </span>
               <div>
                 <h3 className="text-[18px] font-bold">{current.name}</h3>
@@ -739,7 +740,7 @@ export default function Riders() {
                 to={`/messages?contact=${encodeURIComponent(current.name)}`}
                 className={btnPrimary}
               >
-                <i className="fa-solid fa-comment" /> Message
+                <Icon name="message-circle" /> Message
               </Link>
             </div>
           </>
@@ -760,7 +761,7 @@ export default function Riders() {
               aria-label="Close"
               className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <h3 className="mb-1 pr-8 text-[18px] font-bold">
               {form.userId ? "Edit Rider Account" : "Add Rider Account"}
@@ -876,7 +877,7 @@ export default function Riders() {
 
             {formError && (
               <div className="mt-4">
-                <Notice tone="error" icon="fa-circle-exclamation" role="alert">{formError}</Notice>
+                <Notice tone="error" icon="circle-alert" role="alert">{formError}</Notice>
               </div>
             )}
 
@@ -899,7 +900,7 @@ export default function Riders() {
         {created && (
           <>
             <h3 className="mb-1 text-[18px] font-bold">
-              <i className="fa-solid fa-circle-check mr-2 text-[#29945a]" />
+              <Icon name="circle-check" className="mr-2 text-[#29945a]" />
               Rider account created
             </h3>
             <p className="mb-4 text-[13px] text-[#999]">Give these test login credentials to the rider. The password will not be shown again.</p>
@@ -919,7 +920,7 @@ export default function Riders() {
                 }}
                 className={btnGhost}
               >
-                <i className="fa-regular fa-copy" /> Copy
+                <Icon name="copy" /> Copy
               </button>
               <button type="button" onClick={() => setCreated(null)} className={btnPrimary}>Done</button>
             </div>

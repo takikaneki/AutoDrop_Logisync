@@ -1,27 +1,28 @@
 import { NavLink, useLocation } from "react-router-dom";
+import Icon from "../Icon.jsx";
 
 const SELLER_MOBILE_ITEMS = [
-  { to: "/seller", end: true, icon: "fa-house", label: "Home" },
-  { to: "/seller/parcels", icon: "fa-box", label: "Parcels" },
-  { to: "/seller/create", icon: "fa-plus", label: "Create", featured: true, featuredKind: "plus" },
-  { to: "/seller/messages", icon: "fa-comment-dots", label: "Messages" },
-  { to: "/seller/profile", icon: "fa-user", label: "Profile" },
+  { to: "/seller", end: true, icon: "house", label: "Home" },
+  { to: "/seller/parcels", icon: "package", label: "Parcels" },
+  { to: "/seller/create", icon: "plus", label: "Create", featured: true },
+  { to: "/seller/messages", icon: "message-circle", label: "Messages" },
+  { to: "/seller/profile", icon: "user-round", label: "Profile" },
 ];
 
 const RIDER_MOBILE_ITEMS = [
-  { to: "/rider", end: true, icon: "fa-house", label: "Home" },
-  { to: "/rider/deliveries", icon: "fa-box", label: "My Deliveries" },
-  { to: "/rider/scan", icon: "fa-qrcode", label: "Scan QR", featured: true, featuredKind: "qr" },
-  { to: "/rider/messages", icon: "fa-comment-dots", label: "Messages" },
-  { to: "/rider/profile", icon: "fa-user", label: "Profile" },
+  { to: "/rider", end: true, icon: "house", label: "Home" },
+  { to: "/rider/deliveries", icon: "truck", label: "My Deliveries" },
+  { to: "/rider/scan", icon: "scan-line", label: "Scan QR", featured: true },
+  { to: "/rider/messages", icon: "message-circle", label: "Messages" },
+  { to: "/rider/profile", icon: "user-round", label: "Profile" },
 ];
 
 const COORDINATOR_MOBILE_ITEMS = [
-  { to: "/dashboard", end: true, icon: "fa-house", label: "Home" },
-  { to: "/parcels", icon: "fa-box", label: "Parcels" },
-  { to: "/verification", icon: "fa-qrcode", label: "Verify", featured: true, featuredKind: "qr" },
-  { to: "/messages", icon: "fa-comment-dots", label: "Messages" },
-  { to: "/profile", icon: "fa-user", label: "Profile" },
+  { to: "/dashboard", end: true, icon: "house", label: "Home" },
+  { to: "/parcels", icon: "package", label: "Parcels" },
+  { to: "/verification", icon: "scan-line", label: "Verify", featured: true },
+  { to: "/messages", icon: "message-circle", label: "Messages" },
+  { to: "/profile", icon: "user-round", label: "Profile" },
 ];
 
 function ModernFiveTabNav({ items, ariaLabel, isFeaturedActive, isProfileActive, profilePath }) {
@@ -48,17 +49,7 @@ function ModernFiveTabNav({ items, ariaLabel, isFeaturedActive, isProfileActive,
                       : "bg-[#0f172a] text-white group-hover:bg-[#1e293b] dark:bg-brand"
                   }`}
                 >
-                  {item.featuredKind === "plus" ? (
-                    <i className="fa-solid fa-plus text-[20px]" aria-hidden="true" />
-                  ) : (
-                    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M4 8V6a2 2 0 0 1 2-2h2" />
-                      <path d="M16 4h2a2 2 0 0 1 2 2v2" />
-                      <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
-                      <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
-                      <line x1="7" y1="12" x2="17" y2="12" />
-                    </svg>
-                  )}
+                  <Icon name={item.icon} className="h-[22px] w-[22px]" strokeWidth={2.1} />
                 </span>
                 <span
                   className={`whitespace-nowrap leading-none tracking-tight ${
@@ -94,7 +85,7 @@ function ModernFiveTabNav({ items, ariaLabel, isFeaturedActive, isProfileActive,
                         active ? "bg-brand/12 text-brand" : ""
                       }`}
                     >
-                      <i className={`fa-solid ${item.icon} text-[16px]`} />
+                      <Icon name={item.icon} className="h-[19px] w-[19px]" strokeWidth={active ? 2.2 : 1.85} />
                     </span>
                     <span className="max-w-full whitespace-nowrap px-0.5 leading-none tracking-tight">
                       {item.label}

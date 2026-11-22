@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveCo
 import Topbar from "../components/Topbar.jsx";
 import { inputCls, panel } from "../components/styles.js";
 import { useParcels, useRiders } from "../store/records.js";
+import Icon from "../components/Icon.jsx";
 
 const COLORS = { Delivered: "#16a34a", "In Transit": "#f97316", "Failed Delivery": "#d94747" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
@@ -48,10 +49,10 @@ export default function Analytics() {
   }, [parcels, riders, days]);
 
   const kpis = [
-    ["Delivery success rate", `${data.rate}%`, "fa-circle-check", "bg-[#eaf8ef] text-[#25a35a]", "Delivered vs. failed"],
-    ["Avg. delivery time", `${data.avg} hrs`, "fa-stopwatch", "bg-[#fff0e7] text-[#ff6818]", "For delivered parcels"],
-    ["Flagged rate", `${data.flagged}%`, "fa-flag", "bg-[#fff0f0] text-[#d94747]", "Flagged during verification"],
-    ["Active riders", riders.filter((r) => r.status !== "Off-duty").length, "fa-motorcycle", "bg-[#eaf3ff] text-[#4285c5]", `of ${riders.length} riders`],
+    ["Delivery success rate", `${data.rate}%`, "circle-check", "bg-[#eaf8ef] text-[#25a35a]", "Delivered vs. failed"],
+    ["Avg. delivery time", `${data.avg} hrs`, "timer", "bg-[#fff0e7] text-[#ff6818]", "For delivered parcels"],
+    ["Flagged rate", `${data.flagged}%`, "flag", "bg-[#fff0f0] text-[#d94747]", "Flagged during verification"],
+    ["Active riders", riders.filter((r) => r.status !== "Off-duty").length, "bike", "bg-[#eaf3ff] text-[#4285c5]", `of ${riders.length} riders`],
   ];
 
   return (
@@ -61,7 +62,7 @@ export default function Analytics() {
       <section className="grid grid-cols-4 gap-5 mb-7 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
         {kpis.map(([l, v, ic, t, note]) => (
           <div key={l} className={`${panel} p-6 flex items-center gap-4`}>
-            <span className={`w-[54px] h-[54px] shrink-0 rounded-2xl flex items-center justify-center text-[22px] ${t}`}><i className={`fa-solid ${ic}`} /></span>
+            <span className={`w-[54px] h-[54px] shrink-0 rounded-2xl flex items-center justify-center text-[22px] ${t}`}><Icon name={ic} /></span>
             <div className="min-w-0"><small className="text-[13px] text-[#999]">{l}</small><strong className="block text-[26px] leading-tight">{v}</strong><small className="text-[11px] text-[#aaa]">{note}</small></div>
           </div>
         ))}

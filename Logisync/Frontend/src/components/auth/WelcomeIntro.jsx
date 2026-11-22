@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import ContactUsModal from "./ContactUsModal.jsx";
+import Icon from "../Icon.jsx";
 
 // One-time scroll reveal hook: animates an element once when it enters the viewport and never repeats.
 function useRevealOnce(threshold = 0.15) {
@@ -79,10 +80,10 @@ const NAV_LINKS = [
 ];
 
 const HERO_STEPS = [
-  { icon: "fa-box-open", label: "Parcel Registered", sub: "Seller books & uploads video", active: false },
-  { icon: "fa-shield-halved", label: "Hub Verified", sub: "Coordinator checks condition", active: false },
-  { icon: "fa-qrcode", label: "In Transit (QR)", sub: "Rider scans & dispatches", active: false },
-  { icon: "fa-circle-check", label: "Delivered", sub: "Verified proof of handoff", active: true },
+  { icon: "package-open", label: "Parcel Registered", sub: "Seller books & uploads video", active: false },
+  { icon: "shield-check", label: "Hub Verified", sub: "Coordinator checks condition", active: false },
+  { icon: "qr-code", label: "In Transit (QR)", sub: "Rider scans & dispatches", active: false },
+  { icon: "circle-check", label: "Delivered", sub: "Verified proof of handoff", active: true },
 ];
 
 const SERVICES_CARDS = [
@@ -92,7 +93,7 @@ const SERVICES_CARDS = [
     description:
       "Dedicated SPX Express road transport connecting regional sorting hubs to local delivery zones with full route visibility.",
     image: "/images/spx-trucks-fleet.jpg",
-    icon: "fa-truck-fast",
+    icon: "truck",
   },
   {
     title: "Hub Parcel Verification",
@@ -100,7 +101,7 @@ const SERVICES_CARDS = [
     description:
       "Every package is logged, weighed, and verified through photo and video inspection inside the sorting hub before dispatch.",
     image: "/images/spx-sorting-center.jpg",
-    icon: "fa-warehouse",
+    icon: "undo-2",
   },
   {
     title: "Last-Mile Rider Sync",
@@ -108,43 +109,43 @@ const SERVICES_CARDS = [
     description:
       "Riders scan parcel QR codes for instant manifest assignment, smart 3-day rescheduling, and photo proof of delivery.",
     image: "/images/spx-doorstep-delivery.jpg",
-    icon: "fa-motorcycle",
+    icon: "bike",
   },
 ];
 
 const FEATURES_LIST = [
   {
-    icon: "fa-video",
+    icon: "video",
     title: "Photo & Video Parcel Verification",
     description:
       "Sellers attach clear packaging photos and inspection videos upon booking so coordinators can verify parcel integrity before dispatch.",
   },
   {
-    icon: "fa-qrcode",
+    icon: "qr-code",
     title: "Instant QR Code Scanning",
     description:
       "Each transaction generates a unique printable QR waybill. Riders scan the code to claim deliveries and update status in real time.",
   },
   {
-    icon: "fa-calendar-check",
+    icon: "calendar-check",
     title: "3-Day Reschedule & Return-to-Hub Guard",
     description:
       "Undelivered parcels automatically reschedule up to 3 days and transition to Return to Hub once the policy limit is reached.",
   },
   {
-    icon: "fa-user-check",
+    icon: "user-check",
     title: "Automatic Customer Info Filling",
     description:
       "Returning customer names automatically populate saved delivery addresses and contact numbers to speed up seller booking.",
   },
   {
-    icon: "fa-chart-pie",
+    icon: "chart-pie",
     title: "Integrated Parcel Records & Reports",
     description:
       "Generate comprehensive delivery, verification, and rider performance reports directly inside the Parcel Records view.",
   },
   {
-    icon: "fa-bell",
+    icon: "bell",
     title: "Role-Based Real-Time Alerts",
     description:
       "Sellers, Hub Coordinators, and Riders receive instant notifications for reschedules, failed attempts, and hub returns.",
@@ -408,7 +409,7 @@ export default function WelcomeIntro({ onComplete }) {
               onClick={openContactModal}
               className="inline-flex items-center gap-1.5 transition hover:text-white"
             >
-              <i className="fa-solid fa-phone text-[10px] text-brand" />
+              <Icon name="phone" className="text-[10px] text-brand" />
               <span>(02) 8123 4567</span>
             </button>
             <button
@@ -416,7 +417,7 @@ export default function WelcomeIntro({ onComplete }) {
               onClick={openContactModal}
               className="inline-flex items-center gap-1.5 transition hover:text-white"
             >
-              <i className="fa-regular fa-envelope text-[10px] text-brand" />
+              <Icon name="mail" className="text-[10px] text-brand" />
               <span className="truncate">support@logisync.example</span>
             </button>
           </div>
@@ -479,7 +480,7 @@ export default function WelcomeIntro({ onComplete }) {
               onClick={openContactModal}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-brand hover:text-brand"
             >
-              <i className="fa-solid fa-headset text-[11px] text-brand" />
+              <Icon name="headset" className="text-[11px] text-brand" />
               <span>Contact Us</span>
             </button>
             <button
@@ -488,7 +489,7 @@ export default function WelcomeIntro({ onComplete }) {
               className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-brand active:scale-[0.98]"
             >
               <span>Let&apos;s Get Started</span>
-              <i className="fa-solid fa-arrow-right text-[10px]" />
+              <Icon name="arrow-right" className="text-[10px]" />
             </button>
           </div>
 
@@ -508,7 +509,7 @@ export default function WelcomeIntro({ onComplete }) {
               aria-expanded={mobileMenuOpen}
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
             >
-              <i className={`fa-solid ${mobileMenuOpen ? "fa-xmark" : "fa-bars"} text-base`} />
+              <Icon name={mobileMenuOpen ? "x" : "menu"} className="text-base" />
             </button>
           </div>
         </div>
@@ -525,7 +526,7 @@ export default function WelcomeIntro({ onComplete }) {
                   className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-orange-50 hover:text-brand"
                 >
                   <span>{link.label}</span>
-                  <i className="fa-solid fa-chevron-right text-[10px] text-slate-300" />
+                  <Icon name="chevron-right" className="text-[10px] text-slate-300" />
                 </a>
               ))}
               <button
@@ -534,7 +535,7 @@ export default function WelcomeIntro({ onComplete }) {
                 className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-orange-50 hover:text-brand"
               >
                 <span className="inline-flex items-center gap-2">
-                  <i className="fa-solid fa-headset text-brand" />
+                  <Icon name="headset" className="text-brand" />
                   <span>Contact Us</span>
                 </span>
                 <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-brand">
@@ -548,7 +549,7 @@ export default function WelcomeIntro({ onComplete }) {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20"
                 >
                   <span>Let&apos;s Get Started</span>
-                  <i className="fa-solid fa-arrow-right text-xs" />
+                  <Icon name="arrow-right" className="text-xs" />
                 </button>
               </div>
             </nav>
@@ -587,10 +588,10 @@ export default function WelcomeIntro({ onComplete }) {
           <div className="mb-3.5 h-2 w-20 rounded-full bg-slate-100" />
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[11px] font-bold text-white shadow-sm">
-              <i className="fa-solid fa-video text-[9px]" />
+              <Icon name="video" className="text-[9px]" />
               Picked Up &amp; Verified
             </span>
-            <i className="fa-solid fa-location-arrow rotate-90 text-xs text-brand" />
+            <Icon name="navigation" className="rotate-90 text-xs text-brand" />
           </div>
         </div>
 
@@ -643,7 +644,7 @@ export default function WelcomeIntro({ onComplete }) {
               }`}
               style={{ transitionDelay: "360ms" }}
             >
-              <i className="fa-regular fa-clock text-base sm:text-2xl lg:text-3xl" />
+              <Icon name="clock" className="text-base sm:text-2xl lg:text-3xl" />
               <span>On-Time</span>
             </span>
             <span className="mt-1.5 block">Every Single Parcel</span>
@@ -673,14 +674,14 @@ export default function WelcomeIntro({ onComplete }) {
               className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-brand px-8 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-xl hover:shadow-orange-500/35 active:scale-[0.98] sm:py-4 sm:text-base"
             >
               <span>Let&apos;s Get Started</span>
-              <i className="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1" />
+              <Icon name="arrow-right" className="text-xs transition-transform duration-300 group-hover:translate-x-1" />
             </button>
             <a
               href="#verification"
               onClick={(e) => scrollToSection(e, "#verification")}
               className="inline-flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand hover:text-brand sm:py-4 sm:text-base"
             >
-              <i className="fa-solid fa-location-dot text-brand" />
+              <Icon name="map-pin" className="text-brand" />
               <span>How LogiSync Works</span>
             </a>
           </div>
@@ -721,7 +722,7 @@ export default function WelcomeIntro({ onComplete }) {
                           : "bg-slate-900 text-white"
                       } ${stepVisible ? "scale-100" : "scale-50"}`}
                     >
-                      <i className={`fa-solid ${s.icon}`} />
+                      <Icon name={s.icon} />
                     </div>
                     <span className="mt-2.5 text-xs font-extrabold text-slate-900 sm:mt-3 sm:text-sm">
                       {s.label}
@@ -849,7 +850,7 @@ export default function WelcomeIntro({ onComplete }) {
               <ul className="mt-5 space-y-3 text-sm font-medium text-slate-700 sm:mt-6">
                 <li className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] text-white">
-                    <i className="fa-solid fa-check" />
+                    <Icon name="check" />
                   </span>
                   <span>
                     <strong className="font-bold text-slate-900">Pre-Dispatch Evidence:</strong> High-resolution
@@ -858,7 +859,7 @@ export default function WelcomeIntro({ onComplete }) {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] text-white">
-                    <i className="fa-solid fa-check" />
+                    <Icon name="check" />
                   </span>
                   <span>
                     <strong className="font-bold text-slate-900">Automated Return-to-Hub Protection:</strong> Parcels
@@ -867,7 +868,7 @@ export default function WelcomeIntro({ onComplete }) {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-[10px] text-white">
-                    <i className="fa-solid fa-check" />
+                    <Icon name="check" />
                   </span>
                   <span>
                     <strong className="font-bold text-slate-900">One-Click Parcel Reports:</strong> Export and review
@@ -918,21 +919,21 @@ export default function WelcomeIntro({ onComplete }) {
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-white sm:mt-6 sm:gap-8 sm:text-sm">
             <span className="inline-flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
-                <i className="fa-solid fa-check" />
+                <Icon name="check" />
               </span>
               Hassle-free seller booking
             </span>
             <span className="hidden h-4 w-px bg-white/30 sm:inline-block" />
             <span className="inline-flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
-                <i className="fa-solid fa-check" />
+                <Icon name="check" />
               </span>
               Video &amp; QR verification
             </span>
             <span className="hidden h-4 w-px bg-white/30 sm:inline-block" />
             <span className="inline-flex items-center gap-2">
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
-                <i className="fa-solid fa-check" />
+                <Icon name="check" />
               </span>
               Real-time rider coordination
             </span>
@@ -947,7 +948,7 @@ export default function WelcomeIntro({ onComplete }) {
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <i className="fa-solid fa-barcode text-lg text-brand" />
+                <Icon name="barcode" className="text-lg text-brand" />
                 <input
                   type="text"
                   value={demoTracking}
@@ -966,17 +967,17 @@ export default function WelcomeIntro({ onComplete }) {
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#ee4d2d] px-6 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#d73211]"
               >
                 <span>Track Shipment</span>
-                <i className="fa-solid fa-box-open" />
+                <Icon name="package-open" />
               </button>
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1.5">
-                <i className="fa-solid fa-circle-info shrink-0 text-brand" />
+                <Icon name="info" className="shrink-0 text-brand" />
                 <span>The transaction number &amp; QR code are located on the upper-right of your LogiSync Waybill.</span>
               </span>
               {demoTracked && (
                 <span className="inline-flex animate-popup items-center gap-1.5 font-bold text-emerald-600">
-                  <i className="fa-solid fa-circle-check shrink-0" />
+                  <Icon name="circle-check" className="shrink-0" />
                   <span>Verified at SPX Hub • Ready for Rider Dispatch</span>
                 </span>
               )}
@@ -1012,7 +1013,7 @@ export default function WelcomeIntro({ onComplete }) {
                     }`}
                   />
                   <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-full bg-slate-950/80 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-sm">
-                    <i className={`fa-solid ${card.icon} text-brand`} />
+                    <Icon name={card.icon} className="text-brand" />
                     {card.category}
                   </span>
                 </div>
@@ -1026,7 +1027,7 @@ export default function WelcomeIntro({ onComplete }) {
                       Explore portal
                     </span>
                     <span className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-300 group-hover:border-brand group-hover:bg-brand group-hover:text-white">
-                      <i className="fa-solid fa-arrow-right -rotate-45 text-xs transition-transform duration-300 group-hover:rotate-0" />
+                      <Icon name="arrow-right" className="-rotate-45 text-xs transition-transform duration-300 group-hover:rotate-0" />
                     </span>
                   </div>
                 </div>
@@ -1126,7 +1127,7 @@ export default function WelcomeIntro({ onComplete }) {
               className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:bg-brand-dark"
             >
               <span>Access Platform</span>
-              <i className="fa-solid fa-arrow-right" />
+              <Icon name="arrow-right" />
             </button>
           </div>
 
@@ -1137,7 +1138,7 @@ export default function WelcomeIntro({ onComplete }) {
                 className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm sm:p-6"
               >
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-xl text-brand">
-                  <i className={`fa-solid ${feat.icon}`} />
+                  <Icon name={feat.icon} />
                 </span>
                 <h3 className="mt-4 text-base font-extrabold text-slate-900 sm:mt-5 sm:text-lg">{feat.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{feat.description}</p>
@@ -1220,7 +1221,7 @@ export default function WelcomeIntro({ onComplete }) {
                           : "border-slate-200 bg-white text-slate-500"
                       }`}
                     >
-                      <i className="fa-solid fa-chevron-down text-xs" />
+                      <Icon name="chevron-down" className="text-xs" />
                     </span>
                   </button>
                   <div
@@ -1243,7 +1244,7 @@ export default function WelcomeIntro({ onComplete }) {
           <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-[#f8fafc] p-6 text-center sm:flex-row sm:text-left">
             <div className="flex flex-col items-center gap-3 sm:flex-row">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-xl text-brand">
-                <i className="fa-solid fa-comments" />
+                <Icon name="message-circle" />
               </span>
               <div>
                 <h3 className="text-base font-extrabold text-slate-900">Still have questions?</h3>
@@ -1257,7 +1258,7 @@ export default function WelcomeIntro({ onComplete }) {
               onClick={openContactModal}
               className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-extrabold text-white transition hover:bg-brand sm:w-auto"
             >
-              <i className="fa-solid fa-headset" />
+              <Icon name="headset" />
               <span>Contact Support</span>
             </button>
           </div>
@@ -1283,7 +1284,7 @@ export default function WelcomeIntro({ onComplete }) {
               className="inline-flex w-full shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand px-8 py-4 text-base font-extrabold text-white shadow-lg shadow-orange-500/25 transition hover:bg-brand-dark active:scale-[0.98] sm:w-auto"
             >
               <span>Let&apos;s Get Started</span>
-              <i className="fa-solid fa-arrow-right text-sm" />
+              <Icon name="arrow-right" className="text-sm" />
             </button>
           </div>
         </div>
@@ -1349,19 +1350,19 @@ export default function WelcomeIntro({ onComplete }) {
               <h3 className="text-xs font-extrabold uppercase tracking-widest text-brand">Contact Us</h3>
               <ul className="mt-4 space-y-3 text-sm text-slate-400">
                 <li className="flex items-start gap-2.5">
-                  <i className="fa-solid fa-location-dot mt-1 text-brand" />
+                  <Icon name="map-pin" className="mt-1 text-brand" />
                   <span>Cavite State University, Cavite</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <i className="fa-solid fa-phone text-brand" />
+                  <Icon name="phone" className="text-brand" />
                   <span>(02) 8123 4567</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <i className="fa-regular fa-envelope text-brand" />
+                  <Icon name="mail" className="text-brand" />
                   <span className="break-all">support@logisync.example</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <i className="fa-regular fa-clock text-brand" />
+                  <Icon name="clock" className="text-brand" />
                   <span>Mon–Sat, 8:00 AM – 6:00 PM</span>
                 </li>
               </ul>

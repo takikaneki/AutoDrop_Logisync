@@ -11,6 +11,7 @@ import {
 import { getUser } from "../api.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
+import Icon from "../components/Icon.jsx";
 
 const dateValue = (v) => {
   if (!v) return "—";
@@ -99,7 +100,7 @@ export default function ParcelDetails() {
   if (error || !parcel) {
     return (
       <section className={`${panel} mx-auto max-w-5xl p-8`}>
-        <EmptyState icon="fa-box-open" title="Shipment details unavailable" text={error || "Parcel not found."} />
+        <EmptyState icon="package-open" title="Shipment details unavailable" text={error || "Parcel not found."} />
         <div className="mt-4 text-center">
           <Link to="/parcels" className={btnGhost}>
             Back to Parcel Records
@@ -141,7 +142,7 @@ export default function ParcelDetails() {
             onClick={() => handleDiscreetDecision("APPROVE")}
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#29945a] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#217a49] disabled:opacity-50"
           >
-            <i className="fa-solid fa-user-check" /> Approve Discreet Handling
+            <Icon name="user-check" /> Approve Discreet Handling
           </button>
           <button
             type="button"
@@ -149,7 +150,7 @@ export default function ParcelDetails() {
             onClick={() => handleDiscreetDecision("REJECT")}
             className="inline-flex items-center gap-1.5 rounded-lg bg-[#d94747] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#b83737] disabled:opacity-50"
           >
-            <i className="fa-solid fa-ban" /> Reject Discreet Handling
+            <Icon name="circle-x" /> Reject Discreet Handling
           </button>
         </div>
       </section>

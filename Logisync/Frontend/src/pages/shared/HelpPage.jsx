@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import { panel } from "../../components/styles.js";
 import { getRole } from "../../api.js";
+import Icon from "../../components/Icon.jsx";
 
 // Mga tanong at sagot na tugma sa kayang gawin ng sistema ngayon (walang ipinapangakong wala pa)
 const FAQS = {
@@ -48,11 +49,7 @@ export default function HelpPage() {
                   }`}
                 >
                   <span>{q}</span>
-                  <i
-                    className={`fa-solid fa-chevron-down shrink-0 text-[12px] text-[#aaa] transition-transform ${
-                      open === i ? "rotate-180 text-brand" : ""
-                    }`}
-                  />
+                  <Icon name="chevron-down" className={`shrink-0 text-[12px] text-[#aaa] transition-transform ${ open === i ? "rotate-180 text-brand" : "" }`} />
                 </button>
                 {open === i && (
                   <p className="px-2 pb-4 text-[14px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
@@ -66,7 +63,7 @@ export default function HelpPage() {
 
         <section className={`${panel} w-full p-6 text-center`}>
           <span className="mx-auto mb-3 flex h-[48px] w-[48px] items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-line">
-            <i className="fa-solid fa-headset" />
+            <Icon name="headset" />
           </span>
           <h3 className="mb-1 text-[16px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
             Still need help?

@@ -9,6 +9,7 @@ import { MAX_RESCHEDULES, STAGE, useAssignedParcels, useMyDeliveries } from "../
 import { toast } from "../../store/toast.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { downloadCsv, groupByPeriod, isoDay, pct } from "../../utils/report.js";
+import Icon from "../../components/Icon.jsx";
 
 const PAGE_SIZE = 10;
 const reportHistoryStore = createStore([], "pt-rider-reports");
@@ -213,7 +214,7 @@ export default function RiderParcels() {
     <>
       <Topbar title="My Parcels" subtitle="Every parcel assigned to you, its delivery status, and your delivery reports.">
         <Link to="/rider/scan" className={btnGhost}>
-          <i className="fa-solid fa-qrcode" /> Scan QR Code
+          <Icon name="qr-code" /> Scan QR Code
         </Link>
         <button
           type="button"
@@ -221,7 +222,7 @@ export default function RiderParcels() {
           aria-expanded={reportOpen}
           className={reportOpen ? btnGhost : btnPrimary}
         >
-          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"}`} />{" "}
+          <Icon name={reportOpen ? "x" : "file-text"} />{" "}
           {reportOpen ? "Hide Report" : "Generate Report"}
         </button>
       </Topbar>
@@ -233,7 +234,7 @@ export default function RiderParcels() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand dark:bg-night-head">
-                  <i className="fa-solid fa-file-lines" />
+                  <Icon name="file-text" />
                 </span>
                 <h2 className="text-[18px] font-bold">{reportResult.id}</h2>
               </div>
@@ -244,10 +245,10 @@ export default function RiderParcels() {
             </div>
             <div className="flex flex-wrap items-center gap-2 print:hidden">
               <button onClick={() => exportCsv(reportResult.id, reportResult.rows, reportResult.query)} className={btnGhost}>
-                <i className="fa-solid fa-file-csv text-[#29945a]" /> Export CSV
+                <Icon name="file-spreadsheet" className="text-[#29945a]" /> Export CSV
               </button>
               <button onClick={() => window.print()} className={btnPrimary}>
-                <i className="fa-solid fa-file-pdf" /> Save as PDF
+                <Icon name="file-text" /> Save as PDF
               </button>
               <button
                 type="button"
@@ -255,14 +256,14 @@ export default function RiderParcels() {
                 aria-label="Close report"
                 className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white text-[#777] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-head"
               >
-                <i className="fa-solid fa-xmark" />
+                <Icon name="x" />
               </button>
             </div>
           </div>
 
           <div className="mb-6 rounded-xl bg-[#fafafa] p-4 print:hidden dark:bg-night-head">
             <h3 className="mb-3 text-[13px] font-bold text-[#555] dark:text-[#d1c9c2]">
-              <i className="fa-solid fa-sliders mr-1.5 text-brand" /> Report Filters
+              <Icon name="sliders-horizontal" className="mr-1.5 text-brand" /> Report Filters
             </h3>
             <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[540px]:grid-cols-1">
               <div>
@@ -291,7 +292,7 @@ export default function RiderParcels() {
             </div>
             <div className="mt-4 flex flex-wrap gap-2.5">
               <button onClick={generateReport} className={btnPrimary}>
-                <i className="fa-solid fa-rotate" /> Update Report
+                <Icon name="refresh-cw" /> Update Report
               </button>
               <button onClick={resetReport} className={btnGhost}>Reset Filters</button>
             </div>
@@ -312,7 +313,7 @@ export default function RiderParcels() {
           </div>
 
           {reportResult.rows.length === 0 ? (
-            <EmptyState icon="fa-file-circle-xmark" title="No completed deliveries in this period" text="Completed (delivered or Return to Hub) parcels will appear in your delivery report." />
+            <EmptyState icon="file-x" title="No completed deliveries in this period" text="Completed (delivered or Return to Hub) parcels will appear in your delivery report." />
           ) : (
             <div className="space-y-6">
               <div>
@@ -399,7 +400,7 @@ export default function RiderParcels() {
       <section className={`${tableCard} overflow-hidden p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
         {list.length === 0 ? (
           <EmptyState
-            icon="fa-box-open"
+            icon="package-open"
             title="No parcels here"
             text={filter === "all" ? "Parcels the coordinator assigns to you will show up here." : "Nothing matches this filter yet."}
           />
@@ -435,7 +436,7 @@ export default function RiderParcels() {
                         <td className={`${td} whitespace-nowrap`}>{p.at ? formatDate(p.at) : "—"}</td>
                         <td className={`${td} whitespace-nowrap text-right`}>
                           {a.primary ? (
-                            <Link to={a.to} className={btnPrimary}><i className="fa-solid fa-qrcode" /> {a.label}</Link>
+                            <Link to={a.to} className={btnPrimary}><Icon name="qr-code" /> {a.label}</Link>
                           ) : (
                             <Link to={a.to} className="font-semibold text-brand hover:underline">{a.label}</Link>
                           )}
@@ -491,13 +492,13 @@ export default function RiderParcels() {
                     <div className="mt-3 space-y-1.5 text-[13px] text-[#555] dark:text-[#d1c9c2]">
                       {p.receiver && String(p.receiver).trim() !== "-" && String(p.receiver).trim() !== "—" && (
                         <p className="flex items-center gap-2">
-                          <i className="fa-regular fa-user w-4 text-center text-[#999]" />
+                          <Icon name="user-round" className="h-4 w-4 text-[#999]" />
                           <strong className="text-[#333] dark:text-[#f1eeeb]">{p.receiver}</strong>
                         </p>
                       )}
                       {validContact && (
                         <p className="flex items-center gap-2">
-                          <i className="fa-solid fa-phone w-4 text-center text-brand" />
+                          <Icon name="phone" className="h-4 w-4 text-brand" />
                           <a href={`tel:${validContact}`} className="hover:text-brand hover:underline">
                             {validContact}
                           </a>
@@ -505,13 +506,13 @@ export default function RiderParcels() {
                       )}
                       {validAddress && (
                         <p className="flex items-start gap-2">
-                          <i className="fa-solid fa-location-dot mt-0.5 w-4 text-center text-brand" />
+                          <Icon name="map-pin" className="mt-0.5 h-4 w-4 text-brand" />
                           <span className="flex-1 break-words text-[12.5px]">{validAddress}</span>
                         </p>
                       )}
                       {validSeller && (
                         <p className="flex items-center gap-2">
-                          <i className="fa-solid fa-store w-4 text-center text-[#999]" />
+                          <Icon name="store" className="h-4 w-4 text-[#999]" />
                           <span>{validSeller}</span>
                         </p>
                       )}
@@ -520,11 +521,11 @@ export default function RiderParcels() {
                       <span className="text-[#999]">{p.at ? formatDate(p.at) : ""}</span>
                       {a.primary ? (
                         <Link to={a.to} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12.5px] font-bold text-white">
-                          <i className="fa-solid fa-qrcode" /> {a.label}
+                          <Icon name="qr-code" /> {a.label}
                         </Link>
                       ) : (
                         <Link to={a.to} className="inline-flex items-center gap-1 rounded-lg bg-brand-soft px-3 py-1.5 text-[12.5px] font-bold text-brand dark:bg-night-panel">
-                          {a.label} <i className="fa-solid fa-chevron-right text-[10px]" />
+                          {a.label} <Icon name="chevron-right" className="text-[10px]" />
                         </Link>
                       )}
                     </div>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Icon from "./Icon.jsx";
 
 const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -12,7 +13,7 @@ export default function AnnouncementsPanel({ items, onOpen, manageTo, heading = 
   return (
     <section className="mb-6 overflow-hidden rounded-2xl border border-[#ffd2b8] bg-[#fff4ec] dark:border-[#5a4030] dark:bg-[#3f3128]" aria-label={heading}>
       <div className="flex items-center gap-2.5 border-b border-[#ffd9c4] px-6 py-4 dark:border-[#5a4030]">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white"><i className="fa-solid fa-bullhorn" /></span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white"><Icon name="megaphone" /></span>
         <h2 className="text-[17px] font-bold text-[#c2410c] dark:text-[#ffb27a]">{heading}</h2>
         <span className="ml-auto rounded-full bg-brand px-2.5 py-0.5 text-[12px] font-bold text-white">{items.length}</span>
       </div>

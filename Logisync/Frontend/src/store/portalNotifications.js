@@ -45,7 +45,7 @@ export function usePortalNotifications(role) {
           next.push({
             id: `msg:${m.message_id}`,
             kind: "message",
-            icon: "fa-message",
+            icon: "message-circle",
             tone: "blue",
             title: `New message from ${m.sender_name || "Coordinator"}`,
             text: String(m.message || "").slice(0, 90),
@@ -64,7 +64,7 @@ export function usePortalNotifications(role) {
             next.push({
               id: `parcel:${p.parcel_id}:${p.status}`,
               kind: "parcel",
-              icon: p.status === "REJECTED" ? "fa-ban" : "fa-rotate-left",
+              icon: p.status === "REJECTED" ? "circle-x" : "undo-2",
               tone: p.status === "REJECTED" ? "red" : "orange",
               title: p.status === "REJECTED" ? "Parcel rejected" : "Reupload requested",
               text: p.transaction_number || p.parcel_id,
@@ -92,7 +92,7 @@ export function usePortalNotifications(role) {
     announcements
       .filter((a) => (role === "rider" ? a.toRiders : a.toSellers))
       .forEach((a) =>
-        list.push({ id: `an:${a.id}`, kind: "announcement", icon: "fa-bullhorn", tone: "orange", title: a.title, text: a.message, ts: a.ts, to: `/${role}/notifications` })
+        list.push({ id: `an:${a.id}`, kind: "announcement", icon: "megaphone", tone: "orange", title: a.title, text: a.message, ts: a.ts, to: `/${role}/notifications` })
       );
 
     // Sagot ng coordinator sa mga complaint/request ng user na ito
@@ -103,7 +103,7 @@ export function usePortalNotifications(role) {
         list.push({
           id: `cp:${c.id}:${c.status}:${c.notes?.length || 0}`,
           kind: "complaint",
-          icon: c.status === "Resolved" ? "fa-circle-check" : "fa-headset",
+          icon: c.status === "Resolved" ? "circle-check" : "headset",
           tone: c.status === "Resolved" ? "green" : "purple",
           title: `${c.id} is ${c.status.toLowerCase()}`,
           text: c.notes?.length ? c.notes[c.notes.length - 1] : c.subject,
@@ -120,7 +120,7 @@ export function usePortalNotifications(role) {
           list.push({
             id: `rth-rider:${d.parcel_id}:${d.returnCoordinated ? "coord" : "hub"}`,
             kind: "parcel",
-            icon: "fa-warehouse",
+            icon: "undo-2",
             tone: "red",
             title: `Return to Hub: ${txn}`,
             text: d.returnCoordinated
@@ -134,7 +134,7 @@ export function usePortalNotifications(role) {
           list.push({
             id: `resched-rider:${d.parcel_id}:${dayNum}:${d.scheduledFor}`,
             kind: "parcel",
-            icon: "fa-calendar-check",
+            icon: "calendar-check",
             tone: "orange",
             title: `New delivery date assigned: ${formatDay(d.scheduledFor)} (Day ${dayNum} of ${MAX_RESCHEDULES})`,
             text: `${txn} · ${d.receiver || "Customer"} — ${d.lastFailure || "Scheduled for next available delivery day"}.`,
@@ -162,7 +162,7 @@ export function usePortalNotifications(role) {
             list.push({
               id: `rth-seller:${d.parcel_id}:${d.returnCoordinated ? "coord" : "hub"}`,
               kind: "parcel",
-              icon: d.returnCoordinated ? "fa-rotate-left" : "fa-warehouse",
+              icon: d.returnCoordinated ? "circle-check" : "undo-2",
               tone: d.returnCoordinated ? "blue" : "red",
               title: d.returnCoordinated
                 ? `Return to Seller Coordinated: ${txn}`
@@ -178,7 +178,7 @@ export function usePortalNotifications(role) {
             list.push({
               id: `resched-seller:${d.parcel_id}:${dayNum}:${d.scheduledFor}`,
               kind: "parcel",
-              icon: "fa-calendar-day",
+              icon: "calendar-days",
               tone: "orange",
               title: `Delivery Rescheduled (Day ${dayNum}/${MAX_RESCHEDULES}): ${txn}`,
               text: `${d.receiver || "Customer"} · New delivery date: ${formatDay(d.scheduledFor)} (${d.lastFailure || "Delivery attempt failed"}).`,
@@ -193,7 +193,7 @@ export function usePortalNotifications(role) {
       list.push({
         id: `assigned:${assigned.map((a) => a.parcel_id).join(",")}`,
         kind: "parcel",
-        icon: "fa-box",
+        icon: "package",
         tone: "orange",
         title: `${assigned.length} parcel${assigned.length > 1 ? "s" : ""} waiting to be scanned`,
         text: "Assigned to you by the coordinator.",

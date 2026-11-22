@@ -8,6 +8,7 @@ import { formatDate } from "../../utils/format.js";
 import { downloadCsv, groupByPeriod, isoDay } from "../../utils/report.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 import { getParcelAddress } from "../../store/customers.js";
+import Icon from "../Icon.jsx";
 
 const STATUSES = ["WAITING_FOR_VIDEO", "VIDEO_SUBMITTED", "VERIFIED", "REJECTED", "REUPLOAD_REQUESTED"];
 const monthsAgo = (n) => {
@@ -113,7 +114,7 @@ export default function ParcelReport({ parcels, onClose }) {
         <div>
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-soft text-brand dark:bg-night-head">
-              <i className="fa-solid fa-file-lines" />
+              <Icon name="file-text" />
             </span>
             <h2 className="text-[18px] font-bold">{result?.id || "Parcel Report"}</h2>
           </div>
@@ -124,10 +125,10 @@ export default function ParcelReport({ parcels, onClose }) {
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
           <button onClick={exportCsv} className={btnGhost}>
-            <i className="fa-solid fa-file-csv text-[#29945a]" /> Export CSV
+            <Icon name="file-spreadsheet" className="text-[#29945a]" /> Export CSV
           </button>
           <button onClick={() => window.print()} className={btnPrimary}>
-            <i className="fa-solid fa-file-pdf" /> Save as PDF
+            <Icon name="file-text" /> Save as PDF
           </button>
           <button
             onClick={onClose}
@@ -135,7 +136,7 @@ export default function ParcelReport({ parcels, onClose }) {
             title="Close report"
             className="ml-1 flex h-9 w-9 items-center justify-center rounded-lg border border-[#e5e5e5] bg-white text-[#777] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-head"
           >
-            <i className="fa-solid fa-xmark" />
+            <Icon name="x" />
           </button>
         </div>
       </div>
@@ -144,7 +145,7 @@ export default function ParcelReport({ parcels, onClose }) {
       <div className="mb-6 rounded-xl bg-[#fafafa] p-4 print:hidden dark:bg-night-head">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <span className="text-[13px] font-bold text-[#555] dark:text-[#d1c9c2]">
-            <i className="fa-solid fa-sliders mr-1.5 text-brand" /> Report Filters
+            <Icon name="sliders-horizontal" className="mr-1.5 text-brand" /> Report Filters
           </span>
           <div className="flex flex-wrap gap-1.5 text-[12px]">
             <button type="button" onClick={() => applyQuickRange(1)} className="rounded-md border border-[#e5e5e5] bg-white px-2.5 py-1 font-semibold text-[#666] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]">
@@ -184,7 +185,7 @@ export default function ParcelReport({ parcels, onClose }) {
         </div>
         <div className="mt-4 flex flex-wrap gap-2.5">
           <button onClick={generate} className={btnPrimary}>
-            <i className="fa-solid fa-rotate" /> Update Report
+            <Icon name="refresh-cw" /> Update Report
           </button>
           <button onClick={resetFilters} className={btnGhost}>Reset Filters</button>
         </div>
@@ -203,12 +204,12 @@ export default function ParcelReport({ parcels, onClose }) {
           </div>
 
           {result.rows.length === 0 ? (
-            <EmptyState icon="fa-file-circle-xmark" title="No parcels match these report filters" text="Adjust the status or date range above and update the report." />
+            <EmptyState icon="file-x" title="No parcels match these report filters" text="Adjust the status or date range above and update the report." />
           ) : (
             <div className="space-y-6">
               <div>
                 <h3 className="mb-2.5 text-[15px] font-bold">
-                  <i className="fa-regular fa-calendar mr-1.5 text-brand" />
+                  <Icon name="calendar-days" className="mr-1.5 text-brand" />
                   {result.query.by === "week" ? "Summary by Week" : "Summary by Month"}
                 </h3>
                 <div className="w-full overflow-x-auto rounded-[10px] border border-[#eee] dark:border-night-line">
@@ -234,7 +235,7 @@ export default function ParcelReport({ parcels, onClose }) {
 
               <div>
                 <h3 className="mb-2.5 text-[15px] font-bold">
-                  <i className="fa-solid fa-list-check mr-1.5 text-brand" />
+                  <Icon name="list-checks" className="mr-1.5 text-brand" />
                   Included Parcels ({result.rows.length})
                 </h3>
                 <div className={tableScrollCompact}>

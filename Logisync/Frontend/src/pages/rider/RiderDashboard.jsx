@@ -26,7 +26,7 @@ export default function RiderDashboard() {
     title: p.parcel_id,
     subtitle: `${p.receiver || "Customer"} · ${p.address || "Assigned route"}`,
     meta: "Scan QR",
-    icon: "fa-qrcode",
+    icon: "qr-code",
     tone: "warn",
     to: `/rider/scan?expect=${encodeURIComponent(p.parcel_id)}`,
   }));
@@ -49,7 +49,7 @@ export default function RiderDashboard() {
       tone: "dark",
       to: "/rider/deliveries",
       badge: "All Assigned",
-      icon: "fa-box",
+      icon: "package",
       subtext: `${stats.failed} failed delivery`,
     },
     {
@@ -58,7 +58,7 @@ export default function RiderDashboard() {
       tone: "blue",
       to: "/rider/deliveries",
       badge: "Active Route",
-      icon: "fa-truck-fast",
+      icon: "truck",
       subtext: "Ready for doorstep handoff",
     },
     {
@@ -67,16 +67,16 @@ export default function RiderDashboard() {
       tone: "green",
       to: "/rider/deliveries?tab=delivered",
       badge: "Completed",
-      icon: "fa-circle-check",
+      icon: "package-check",
       subtext: "Successfully handed off",
     },
   ];
 
   const pipelineSteps = [
-    { label: "To Deliver", count: stats.toDeliver, icon: "fa-truck-fast", to: "/rider/deliveries" },
-    { label: "Delivered", count: stats.delivered, icon: "fa-circle-check", to: "/rider/deliveries?tab=delivered" },
-    { label: "Rescheduled", count: rescheduledCount, icon: "fa-calendar-day", to: "/rider/deliveries" },
-    { label: "Failed", count: stats.failed, icon: "fa-triangle-exclamation", to: "/rider/deliveries?tab=failed" },
+    { label: "To Deliver", count: stats.toDeliver, icon: "truck", to: "/rider/deliveries" },
+    { label: "Delivered", count: stats.delivered, icon: "package-check", to: "/rider/deliveries?tab=delivered" },
+    { label: "Rescheduled", count: rescheduledCount, icon: "calendar-days", to: "/rider/deliveries" },
+    { label: "Failed", count: stats.failed, icon: "triangle-alert", to: "/rider/deliveries?tab=failed" },
   ];
 
   return (

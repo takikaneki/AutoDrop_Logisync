@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { classifyNotification, markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
 import { usePrefs } from "../store/prefs.js";
 import { notifyPopup } from "../store/toast.js";
+import Icon from "./Icon.jsx";
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#ff6818]",
@@ -52,7 +53,7 @@ export default function NotificationBell() {
       notifyPopup({
         title: n.title,
         message: n.text,
-        icon: n.icon || "fa-bell",
+        icon: n.icon || "bell",
         to: n.to || "/notifications",
         category: classifyNotification(n),
       });
@@ -97,7 +98,7 @@ export default function NotificationBell() {
           open ? "bg-brand-soft text-brand dark:bg-night-line" : "bg-[#f5f5f5] text-[#555] dark:bg-night-line dark:text-[#d1c9c2]"
         }`}
       >
-        <i className="fa-regular fa-bell" />
+        <Icon name="bell" />
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}
@@ -142,12 +143,12 @@ export default function NotificationBell() {
           <div className="max-h-[360px] overflow-y-auto border-t border-[#f1f1f1] dark:border-night-line">
             {!bellEnabled ? (
               <div className="px-5 py-9 text-center text-[12.5px] text-[#888]">
-                <i className="fa-regular fa-bell-slash mb-2 block text-[22px] text-[#bbb]" />
+                <Icon name="bell-off" className="mb-2 block text-[22px] text-[#bbb]" />
                 In-App Notifications in the header bell are turned off. Existing history is preserved.
               </div>
             ) : list.length === 0 ? (
               <div className="py-10 text-center text-[12px] text-[#aaa]">
-                <i className="fa-regular fa-bell-slash mb-2 block text-[22px]" />
+                <Icon name="bell-off" className="mb-2 block text-[22px]" />
                 No notifications here yet.
               </div>
             ) : (
@@ -160,7 +161,7 @@ export default function NotificationBell() {
                   }`}
                 >
                   <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}>
-                    <i className={`fa-solid ${n.icon}`} />
+                    <Icon name={n.icon} />
                   </span>
                   <span className="flex-1 min-w-0">
                     <strong className="block text-[13px] leading-snug">{n.title}</strong>
@@ -180,7 +181,7 @@ export default function NotificationBell() {
             }}
             className="w-full py-3 text-[12px] font-bold text-brand border-t border-[#f1f1f1] hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-line"
           >
-            View all notifications <i className="fa-solid fa-arrow-right ml-1" />
+            View all notifications <Icon name="arrow-right" className="ml-1" />
           </button>
         </div>
       )}

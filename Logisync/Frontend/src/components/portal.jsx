@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { panel } from "./styles.js";
+import Icon from "./Icon.jsx";
 
 // Mga maliliit na piraso na pinagsasaluhan ng mga page ng Seller at Rider.
 // Kapareho ng itsura ng mga card at panel ng Coordinator.
@@ -33,7 +34,7 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
       <div
         className={`flex h-[56px] w-[56px] max-[1280px]:h-[48px] max-[1280px]:w-[48px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-full text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}
       >
-        <i className={`fa-solid ${icon}`} />
+        <Icon name={icon} />
       </div>
       <div className="min-w-0 flex-1">
         <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[14.5px] max-[1280px]:text-[13.5px] max-[480px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
@@ -71,9 +72,9 @@ export function StatGrid({ cols = 4, children, className = "mb-7 max-[600px]:mb-
 export function PanelTitle({ icon, children, action }) {
   return (
     <div className="mb-5 max-[600px]:mb-4 flex items-center justify-between gap-3">
-      <h2 className="text-[19px] max-[600px]:text-[17px] font-bold">
-        {icon && <i className={`fa-solid ${icon} mr-2 text-orange-500`} />}
-        {children}
+      <h2 className="flex items-center gap-2 text-[19px] max-[600px]:text-[17px] font-bold">
+        {icon && <Icon name={icon} className="text-orange-500" />}
+        <span>{children}</span>
       </h2>
       {action}
     </div>
@@ -129,7 +130,7 @@ const noticeTones = {
 export function Notice({ tone = "info", icon, children, ...rest }) {
   return (
     <div className={`flex gap-3 rounded-xl px-4 py-3 text-[14px] ${noticeTones[tone]}`} {...rest}>
-      {icon && <i className={`fa-solid ${icon} mt-0.5`} />}
+      {icon && <Icon name={icon} className="mt-0.5 text-[16px]" />}
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
@@ -142,7 +143,7 @@ const dot = {
   fail: "bg-[#d94747] text-white",
   todo: "bg-[#eee] text-[#aaa] dark:bg-night-head",
 };
-const dotIcon = { done: "fa-check", current: "fa-ellipsis", fail: "fa-xmark", todo: "fa-circle" };
+const dotIcon = { done: "check", current: "ellipsis", fail: "x", todo: "circle" };
 
 export function Steps({ steps }) {
   return (
@@ -151,7 +152,7 @@ export function Steps({ steps }) {
         <li key={s.label} className="flex gap-3.5">
           <div className="flex flex-col items-center">
             <span className={`flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-[13px] ${dot[s.state]}`}>
-              <i className={`fa-solid ${dotIcon[s.state]} ${s.state === "todo" ? "text-[7px]" : ""}`} />
+              <Icon name={dotIcon[s.state]} className={s.state === "todo" ? "h-2 w-2" : "h-3.5 w-3.5"} />
             </span>
             {i < steps.length - 1 && <span className={`my-1 w-0.5 flex-1 ${s.state === "done" ? "bg-[#29945a]/40" : "bg-[#eee] dark:bg-night-line"}`} />}
           </div>

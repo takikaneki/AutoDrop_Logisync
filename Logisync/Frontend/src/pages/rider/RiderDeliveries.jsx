@@ -29,6 +29,7 @@ import {
 } from "../../utils/format.js";
 import { latestFor, reportFailure, useFailedDeliveries, withdrawFailure } from "../../store/failedDeliveries.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../../components/Icon.jsx";
 
 const STEP = 15; // ilang card ang idinadagdag ng "Show more"
 
@@ -37,21 +38,21 @@ const COPY = {
     title: "To Be Delivered",
     subtitle:
       "Parcels you scanned. Undelivered parcels are automatically rescheduled for up to 2 next-day attempts before being marked Return to Hub.",
-    icon: "fa-truck-fast",
+    icon: "truck",
     empty: "Nothing to deliver",
     emptyText: "Scan a parcel's QR code and it will appear here.",
   },
   [STAGE.DELIVERED]: {
     title: "Delivered",
     subtitle: "Your delivery history, with proof of delivery.",
-    icon: "fa-circle-check",
+    icon: "package-check",
     empty: "No delivered parcels yet",
     emptyText: "Completed deliveries will be listed here.",
   },
   [STAGE.FAILED]: {
     title: "Failed & Return to Hub",
     subtitle: "Parcels that reached the 2-attempt limit (Return to Hub) or failed delivery attempts.",
-    icon: "fa-warehouse",
+    icon: "undo-2",
     empty: "No failed or Return to Hub parcels",
     emptyText: "Parcels that reach the 2-attempt limit will appear here as Return to Hub.",
   },
@@ -134,7 +135,7 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
             }`}
             aria-hidden="true"
           >
-            <i className="fa-solid fa-chevron-down" />
+            <Icon name="chevron-down" />
           </span>
         </button>
         {badge}
@@ -204,7 +205,7 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
                   onClick={() => onCopyAddress?.(cardKey, address)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-1 text-[12px] font-semibold text-[#2563eb] transition hover:bg-[#dbeafe] dark:border-[#1e3a8a] dark:bg-[#172554] dark:text-[#60a5fa]"
                 >
-                  <i className={isCopied ? "fa-solid fa-check" : "fa-regular fa-copy"} />
+                  <Icon name={isCopied ? "check" : "copy"} />
                   {isCopied ? "Copied!" : "Copy Address"}
                 </button>
               </div>
@@ -227,7 +228,7 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
     <div className="mt-3 rounded-xl border border-[#eee] bg-[#fafafa] p-3 text-[12.5px] dark:border-night-line dark:bg-night-soft">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-bold text-[#445268] dark:text-[#e5e0db]">
-          <i className="fa-solid fa-clock-rotate-left mr-1.5 text-brand" />
+          <Icon name="history" className="mr-1.5 text-brand" />
           Delivery Attempts & Reschedule History ({attempts.length})
         </span>
         <span
@@ -498,10 +499,10 @@ export default function RiderDeliveries() {
     const actionButtons = (
       <div className="grid grid-cols-2 gap-3">
         <button type="button" onClick={() => open("delivered", d)} className={`${btnPrimary} ${bigBtn}`}>
-          <i className="fa-solid fa-circle-check" /> Delivered
+          <Icon name="circle-check" /> Delivered
         </button>
         <button type="button" onClick={() => open("failed", d)} className={`${btnGhost} ${bigBtn}`}>
-          <i className="fa-solid fa-xmark" /> Failed
+          <Icon name="x" /> Failed
         </button>
       </div>
     );
@@ -517,7 +518,7 @@ export default function RiderDeliveries() {
           badge={
             isResched ? (
               <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
-                <i className="fa-solid fa-calendar-day mr-1" />
+                <Icon name="calendar-days" className="mr-1" />
                 Rescheduled (Day {reschedCount}/{MAX_RESCHEDULES}) · {formatDay(d.scheduledFor)}
               </span>
             ) : (
@@ -530,7 +531,7 @@ export default function RiderDeliveries() {
 
         {(d.delivery_hold || d.deliveryHold) && (
           <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
-            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
         )}
@@ -545,7 +546,7 @@ export default function RiderDeliveries() {
                 className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <i className="fa-solid fa-chevron-down text-[11px]" />
+                <Icon name="chevron-down" className="text-[11px]" />
               </button>
             </div>
           </>
@@ -554,7 +555,7 @@ export default function RiderDeliveries() {
             {isResched && (
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
                 <span>
-                  <i className="fa-solid fa-bell mr-1.5" />
+                  <Icon name="bell" className="mr-1.5" />
                   Latest Rescheduled Date: <strong>{formatDay(d.scheduledFor)}</strong>
                 </span>
                 <span className="font-bold">
@@ -567,7 +568,7 @@ export default function RiderDeliveries() {
 
             {cleanText(d.lastFailure) && (
               <p className="mb-2 text-[13px] font-semibold text-[#d94747]">
-                <i className="fa-solid fa-rotate-left mr-1.5" />
+                <Icon name="undo-2" className="mr-1.5" />
                 Last attempt failed: {cleanText(d.lastFailure)}
               </p>
             )}
@@ -614,7 +615,7 @@ export default function RiderDeliveries() {
 
         {(d.delivery_hold || d.deliveryHold) && (
           <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
-            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
         )}
@@ -628,7 +629,7 @@ export default function RiderDeliveries() {
                   onClick={() => setViewer(d)}
                   className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
                 >
-                  <i className="fa-regular fa-image" /> View Proof of Delivery
+                  <Icon name="image" /> View Proof of Delivery
                 </button>
               </div>
             )}
@@ -639,7 +640,7 @@ export default function RiderDeliveries() {
                 className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <i className="fa-solid fa-chevron-down text-[11px]" />
+                <Icon name="chevron-down" className="text-[11px]" />
               </button>
             </div>
           </>
@@ -671,7 +672,7 @@ export default function RiderDeliveries() {
                   onClick={() => setViewer(d)}
                   className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
                 >
-                  <i className="fa-regular fa-image" /> View Proof of Delivery
+                  <Icon name="image" /> View Proof of Delivery
                 </button>
               </div>
             )}
@@ -699,7 +700,7 @@ export default function RiderDeliveries() {
           badge={
             isReturnToHub ? (
               <span className="shrink-0 rounded-full bg-[#f2ecff] px-3 py-1 text-[12px] font-bold text-[#7c3aed]">
-                <i className="fa-solid fa-warehouse mr-1.5" />
+                <Icon name="undo-2" className="mr-1.5" />
                 Return to Hub
               </span>
             ) : (
@@ -710,7 +711,7 @@ export default function RiderDeliveries() {
 
         {(d.delivery_hold || d.deliveryHold) && (
           <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
-            <i className="fa-solid fa-pause-circle mr-1.5 font-bold" />
+            <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
         )}
@@ -719,7 +720,7 @@ export default function RiderDeliveries() {
           <>
             {canRetry && (
               <button type="button" onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-4`}>
-                <i className="fa-solid fa-rotate-left" /> Try again
+                <Icon name="undo-2" /> Try again
               </button>
             )}
             <div className="mt-3.5 border-t border-[#f0f2f6] pt-2.5 text-center dark:border-night-line">
@@ -729,7 +730,7 @@ export default function RiderDeliveries() {
                 className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <i className="fa-solid fa-chevron-down text-[11px]" />
+                <Icon name="chevron-down" className="text-[11px]" />
               </button>
             </div>
           </>
@@ -757,11 +758,11 @@ export default function RiderDeliveries() {
               </span>
               {d.returnCoordinated ? (
                 <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[12px] font-bold text-[#29945a]">
-                  <i className="fa-solid fa-circle-check" /> Coordinator coordinated return to seller
+                  <Icon name="circle-check" /> Coordinator coordinated return to seller
                 </span>
               ) : isReturnToHub ? (
                 <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[12px] font-bold text-[#c98200]">
-                  <i className="fa-solid fa-bell" /> Coordinator notified · Return parcel to the hub
+                  <Icon name="bell" /> Coordinator notified · Return parcel to the hub
                 </span>
               ) : null}
             </div>
@@ -775,7 +776,7 @@ export default function RiderDeliveries() {
             {isReturnToHub && (
               <div className="mt-3">
                 <span className="text-[12px] font-semibold text-[#888]">
-                  <i className="fa-solid fa-lock mr-1" /> Maximum {MAX_RESCHEDULES}-attempt limit reached (cannot reschedule again)
+                  <Icon name="lock" className="mr-1" /> Maximum {MAX_RESCHEDULES}-attempt limit reached (cannot reschedule again)
                 </span>
               </div>
             )}
@@ -783,7 +784,7 @@ export default function RiderDeliveries() {
             {canRetry && (
               <div className="mt-4 border-t border-[#f0f2f6] pt-4 dark:border-night-line">
                 <button type="button" onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn}`}>
-                  <i className="fa-solid fa-rotate-left" /> Try again
+                  <Icon name="undo-2" /> Try again
                 </button>
               </div>
             )}
@@ -838,7 +839,7 @@ export default function RiderDeliveries() {
       body = [...groups].map(([area, items]) => (
         <div key={area}>
           <GroupTitle count={items.length}>
-            <i className="fa-solid fa-map-pin text-brand" /> {area}
+            <Icon name="map-pin" className="text-brand" /> {area}
           </GroupTitle>
           <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{items.map(deliverCard)}</div>
         </div>
@@ -872,7 +873,7 @@ export default function RiderDeliveries() {
               count={list.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length}
               tone="text-[#7c3aed]"
             >
-              <i className="fa-solid fa-warehouse" /> Return to Hub (2-Attempt Limit Reached)
+              <Icon name="undo-2" /> Return to Hub (2-Attempt Limit Reached)
             </GroupTitle>
             <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{rthItems.map(failedCard)}</div>
           </div>
@@ -880,7 +881,7 @@ export default function RiderDeliveries() {
         {otherFailed.length > 0 && (
           <div>
             <GroupTitle count={otherFailed.length} tone="text-[#d94747]">
-              <i className="fa-solid fa-circle-exclamation" /> Failed Attempts
+              <Icon name="circle-alert" /> Failed Attempts
             </GroupTitle>
             <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{otherFailed.map(failedCard)}</div>
           </div>
@@ -907,15 +908,15 @@ export default function RiderDeliveries() {
             }}
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2 text-[13px] font-bold text-[#b45309] transition hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
           >
-            <i className="fa-solid fa-triangle-exclamation" /> Report Incident
+            <Icon name="triangle-alert" /> Report Incident
           </button>
           {stage !== STAGE.TO_DELIVER ? (
             <Link to="/rider/parcels?report=1" className={btnGhost}>
-              <i className="fa-solid fa-file-lines" /> Generate Report
+              <Icon name="file-text" /> Generate Report
             </Link>
           ) : (
             <Link to="/rider/scan" className={btnPrimary}>
-              <i className="fa-solid fa-qrcode" /> Scan QR Code
+              <Icon name="qr-code" /> Scan QR Code
             </Link>
           )}
         </div>
@@ -935,7 +936,7 @@ export default function RiderDeliveries() {
             onClick={() => switchTab(STAGE.FAILED)}
             className="rounded-full bg-[#f2ecff] px-3.5 py-1.5 text-[13px] font-bold text-[#7c3aed] transition hover:bg-[#e5d8ff]"
           >
-            <i className="fa-solid fa-warehouse mr-1.5" />
+            <Icon name="undo-2" className="mr-1.5" />
             {returnToHubCount} Return to Hub (removed from pending) →
           </button>
         )}
@@ -943,7 +944,7 @@ export default function RiderDeliveries() {
 
       <div className="mb-5 flex flex-wrap gap-3">
         <div className="relative min-w-[220px] flex-1">
-          <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+          <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
           <input
             value={search}
             onChange={(e) => {
@@ -961,7 +962,7 @@ export default function RiderDeliveries() {
             aria-pressed={byArea}
             className={`${byArea ? btnPrimary : btnGhost} !px-5`}
           >
-            <i className="fa-solid fa-map-pin" /> Group by area
+            <Icon name="map-pin" /> Group by area
           </button>
         )}
         <button
@@ -972,7 +973,7 @@ export default function RiderDeliveries() {
           }}
           className="ml-auto inline-flex min-[821px]:hidden items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2.5 text-[13px] font-bold text-[#b45309] transition active:scale-95 hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
         >
-          <i className="fa-solid fa-triangle-exclamation" /> Report Incident
+          <Icon name="triangle-alert" /> Report Incident
         </button>
       </div>
 
@@ -1001,7 +1002,7 @@ export default function RiderDeliveries() {
               aria-label="Close"
               className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <h3 className="mb-1 pr-8 text-[18px] font-bold">
               {action.type === "delivered" ? "Mark as delivered" : "Report Failed Delivery Attempt"}
@@ -1037,7 +1038,7 @@ export default function RiderDeliveries() {
                 {modalWillReturnToHub && (
                   <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
                     <strong className="block font-bold">
-                      <i className="fa-solid fa-warehouse mr-1.5" />
+                      <Icon name="undo-2" className="mr-1.5" />
                       2-Attempt Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Attempts)
                     </strong>
                     <p className="mt-1">
@@ -1067,7 +1068,7 @@ export default function RiderDeliveries() {
                 {isRecipientRefusal(reason) && (
                   <div className="mt-3 rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
                     <strong className="block font-bold">
-                      <i className="fa-solid fa-shield-halved mr-1.5" />
+                      <Icon name="shield-check" className="mr-1.5" />
                       Recipient Refusal Protocol
                     </strong>
                     <p className="mt-1">
@@ -1099,7 +1100,7 @@ export default function RiderDeliveries() {
 
             {error && (
               <div className="mt-4">
-                <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+                <Notice tone="error" icon="circle-alert" role="alert">
                   {error}
                 </Notice>
               </div>
@@ -1137,7 +1138,7 @@ export default function RiderDeliveries() {
               aria-label="Close"
               className="absolute right-3 top-3 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <p className="mb-3 pr-8 text-[14px] font-bold">{viewer.transaction_number} · Proof of delivery</p>
             <img src={viewer.proof} alt="Proof of delivery" className="max-h-[70vh] w-full rounded-xl object-contain" />
@@ -1158,11 +1159,11 @@ export default function RiderDeliveries() {
           aria-label="Close"
           className="absolute right-3.5 top-3.5 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
         >
-          <i className="fa-solid fa-xmark" />
+          <Icon name="x" />
         </button>
         <div className="mb-3 flex items-center gap-2.5 text-[#d97706]">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fef3c7] text-[18px]">
-            <i className="fa-solid fa-triangle-exclamation" />
+            <Icon name="triangle-alert" />
           </span>
           <h2 className="text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb]">Report Incident</h2>
         </div>
@@ -1199,7 +1200,7 @@ export default function RiderDeliveries() {
 
         {incidentError && (
           <div className="mt-4">
-            <Notice tone="error" icon="fa-circle-exclamation">{incidentError}</Notice>
+            <Notice tone="error" icon="circle-alert">{incidentError}</Notice>
           </div>
         )}
 

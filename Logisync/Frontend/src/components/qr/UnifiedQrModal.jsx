@@ -4,6 +4,7 @@ import { Modal } from "../ui.jsx";
 import StatusBadge from "../StatusBadge.jsx";
 import { btnGhost, btnPrimary } from "../styles.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../Icon.jsx";
 
 export default function UnifiedQrModal({ parcel, open, onClose }) {
   const [copied, setCopied] = useState(false);
@@ -48,7 +49,7 @@ export default function UnifiedQrModal({ parcel, open, onClose }) {
           aria-label="Close"
           className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] hover:text-[#1e293b] dark:bg-night-line dark:hover:text-white"
         >
-          <i className="fa-solid fa-xmark text-sm" />
+          <Icon name="x" className="text-sm" />
         </button>
       </div>
 
@@ -86,17 +87,17 @@ export default function UnifiedQrModal({ parcel, open, onClose }) {
       </div>
 
       <div className="mt-3 rounded-lg bg-orange-50 p-2 text-left text-[11.5px] text-orange-800 dark:bg-orange-950/30 dark:text-orange-300">
-        <i className="fa-solid fa-circle-info mr-1.5" />
+        <Icon name="info" className="mr-1.5" />
         <strong>Permanent QR:</strong> Used for Rider Delivery, Rider Return to Hub, and Coordinator Physical Verification. Does not change with status updates.
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-2.5">
         <button type="button" onClick={handleCopy} className={btnGhost}>
-          <i className={copied ? "fa-solid fa-check" : "fa-regular fa-copy"} />
+          <Icon name={copied ? "check" : "copy"} />
           {copied ? "Copied" : "Copy Code"}
         </button>
         <button type="button" onClick={handlePrint} className={btnPrimary}>
-          <i className="fa-solid fa-print" /> Print Waybill
+          <Icon name="printer" /> Print Waybill
         </button>
       </div>
     </Modal>

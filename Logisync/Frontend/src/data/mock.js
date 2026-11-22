@@ -1,10 +1,10 @@
 // Mock data muna. Palitan ng fetch("/api/...") kapag ready na ang Express API.
 
 export const summaryCards = [
-  { title: "Total Parcels", value: 250, change: "↑ 12%", up: true, icon: "fa-box", tone: "orange" },
-  { title: "Pending Verification", value: 35, change: "↓ 5%", up: false, icon: "fa-clock", tone: "yellow" },
-  { title: "Verified Parcels", value: 180, change: "↑ 18%", up: true, icon: "fa-circle-check", tone: "green" },
-  { title: "Flagged Parcels", value: 12, change: "↑ 3%", up: false, icon: "fa-triangle-exclamation", tone: "red" },
+  { title: "Total Parcels", value: 250, change: "↑ 12%", up: true, icon: "package", tone: "orange" },
+  { title: "Pending Verification", value: 35, change: "↓ 5%", up: false, icon: "clock", tone: "yellow" },
+  { title: "Verified Parcels", value: 180, change: "↑ 18%", up: true, icon: "circle-check", tone: "green" },
+  { title: "Flagged Parcels", value: 12, change: "↑ 3%", up: false, icon: "flag", tone: "red" },
 ];
 
 export const activityBars = [40, 60, 48, 72, 55, 85, 65];
@@ -20,9 +20,9 @@ export const recentParcels = [
 ];
 
 export const parcelStatusCards = [
-  { label: "In Transit", value: 156, note: "Currently being delivered", icon: "fa-truck", tone: "orange" },
-  { label: "Delivered", value: 82, note: "Successfully delivered", icon: "fa-circle-check", tone: "green" },
-  { label: "Failed Delivery", value: 10, note: "Delivery needs attention", icon: "fa-triangle-exclamation", tone: "red" },
+  { label: "In Transit", value: 156, note: "Currently being delivered", icon: "truck", tone: "orange" },
+  { label: "Delivered", value: 82, note: "Successfully delivered", icon: "package-check", tone: "green" },
+  { label: "Failed Delivery", value: 10, note: "Delivery needs attention", icon: "triangle-alert", tone: "red" },
 ];
 
 export const parcelRecords = [
@@ -62,10 +62,10 @@ export const contacts = [
 
 // Pinakabago muna. Unang 2 lang ang makikita sa Messages; "View all" ang nagpapakita ng lahat.
 export const urgentConcerns = [
-  { id: "u1", name: "Mark Cruz", time: "2 mins ago", type: "Vehicle Problem", icon: "fa-car-burst", text: "Unable to continue my delivery route.", isNew: true },
-  { id: "u2", name: "John Reyes", time: "8 mins ago", type: "Emergency", icon: "fa-kit-medical", text: "Needs immediate assistance.", isNew: true },
-  { id: "u3", name: "Carlo Mendoza", time: "2 hrs ago", type: "Route Concern", icon: "fa-route", text: "There is a road closure along the route.", isNew: false },
-  { id: "u4", name: "Mark Cruz", time: "Yesterday", type: "Vehicle Problem", icon: "fa-car-burst", text: "Flat tire, waiting for a replacement.", isNew: false },
+  { id: "u1", name: "Mark Cruz", time: "2 mins ago", type: "Vehicle Problem", icon: "car", text: "Unable to continue my delivery route.", isNew: true },
+  { id: "u2", name: "John Reyes", time: "8 mins ago", type: "Emergency", icon: "briefcase-medical", text: "Needs immediate assistance.", isNew: true },
+  { id: "u3", name: "Carlo Mendoza", time: "2 hrs ago", type: "Route Concern", icon: "route", text: "There is a road closure along the route.", isNew: false },
+  { id: "u4", name: "Mark Cruz", time: "Yesterday", type: "Vehicle Problem", icon: "car", text: "Flat tire, waiting for a replacement.", isNew: false },
 ];
 
 export const getInitials = (name) =>

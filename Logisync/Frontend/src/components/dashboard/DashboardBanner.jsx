@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getUser } from "../../api.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import Icon from "../Icon.jsx";
 
 // Welcome-inspired banner shared by Coordinator, Seller and Rider dashboards.
 // Same visual design (white + SPX orange, route-line motif, photo card, step tracker);
@@ -14,15 +15,15 @@ const ROLE_CONTENT = {
     image: "/images/spx-sorting-center.jpg",
     imageAlt: "SPX Express sorting center",
     steps: [
-      ["fa-box-open", "Registered"],
-      ["fa-shield-halved", "Verify"],
-      ["fa-qrcode", "Dispatch"],
-      ["fa-circle-check", "Delivered"],
+      ["package-open", "Registered"],
+      ["shield-check", "Verify"],
+      ["qr-code", "Dispatch"],
+      ["circle-check", "Delivered"],
     ],
     activeStep: 1,
     actions: [
-      { to: "/verification", label: "Review parcels", icon: "fa-clipboard-check", primary: true },
-      { to: "/parcels", label: "Parcel records", icon: "fa-box" },
+      { to: "/verification", label: "Review parcels", icon: "clipboard-check", primary: true },
+      { to: "/parcels", label: "Parcel records", icon: "package" },
     ],
   },
   seller: {
@@ -32,15 +33,15 @@ const ROLE_CONTENT = {
     image: "/images/spx-courier-box.jpg",
     imageAlt: "SPX Express courier with parcel",
     steps: [
-      ["fa-square-plus", "Register"],
-      ["fa-video", "Upload video"],
-      ["fa-shield-halved", "Verified"],
-      ["fa-circle-check", "Delivered"],
+      ["square-plus", "Register"],
+      ["video", "Upload video"],
+      ["shield-check", "Verified"],
+      ["circle-check", "Delivered"],
     ],
     activeStep: 0,
     actions: [
-      { to: "/seller/create", label: "Create parcel", icon: "fa-square-plus", primary: true },
-      { to: "/seller/scan", label: "Upload video", icon: "fa-video" },
+      { to: "/seller/create", label: "Create parcel", icon: "square-plus", primary: true },
+      { to: "/seller/scan", label: "Upload video", icon: "video" },
     ],
   },
   rider: {
@@ -50,15 +51,15 @@ const ROLE_CONTENT = {
     image: "/images/spx-doorstep-delivery.jpg",
     imageAlt: "SPX Express rider delivering a parcel",
     steps: [
-      ["fa-box-open", "Assigned"],
-      ["fa-qrcode", "Scan QR"],
-      ["fa-truck-fast", "On the way"],
-      ["fa-circle-check", "Delivered"],
+      ["package-open", "Assigned"],
+      ["qr-code", "Scan QR"],
+      ["truck", "On the way"],
+      ["circle-check", "Delivered"],
     ],
     activeStep: 1,
     actions: [
-      { to: "/rider/scan", label: "Scan parcel", icon: "fa-qrcode", primary: true },
-      { to: "/rider/deliveries", label: "My deliveries", icon: "fa-truck-fast" },
+      { to: "/rider/scan", label: "Scan parcel", icon: "qr-code", primary: true },
+      { to: "/rider/deliveries", label: "My deliveries", icon: "truck" },
     ],
   },
 };
@@ -105,7 +106,7 @@ export default function DashboardBanner({ role, highlights = [] }) {
                       : "bg-white text-[#64748b] ring-1 ring-[#eadfd8] dark:bg-night-head dark:text-[#d1c9c2] dark:ring-night-line"
                   }`}
                 >
-                  <i className={`fa-solid ${icon} text-[11px]`} /> {label}
+                  <Icon name={icon} className="text-[11px]" /> {label}
                 </span>
                 {i < c.steps.length - 1 && <span className="h-px w-3 border-t border-dashed border-[#d9c6ba] max-[700px]:hidden" aria-hidden="true" />}
               </li>
@@ -123,8 +124,8 @@ export default function DashboardBanner({ role, highlights = [] }) {
                     : "border border-[#eadfd8] bg-white text-[#27364f] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-head dark:text-[#f1eeeb]"
                 }`}
               >
-                <i className={`fa-solid ${a.icon}`} /> {a.label}
-                <i className="fa-solid fa-arrow-right text-[11px] transition-transform group-hover:translate-x-0.5" />
+                <Icon name={a.icon} /> {a.label}
+                <Icon name="arrow-right" className="text-[11px] transition-transform group-hover:translate-x-0.5" />
               </Link>
             ))}
           </div>
@@ -157,7 +158,7 @@ export default function DashboardBanner({ role, highlights = [] }) {
               {highlights.map(([label, value, icon, to]) => {
                 const inner = (
                   <>
-                    <i className={`fa-solid ${icon} text-[13px] text-brand`} />
+                    <Icon name={icon} className="text-[13px] text-brand" />
                     <strong className="mt-1 block text-[20px] leading-none text-[#1b2437] dark:text-[#f1eeeb]">{value}</strong>
                     <span className="mt-1 block text-[11px] leading-tight text-[#64748b] dark:text-[#d1c9c2]">{label}</span>
                   </>

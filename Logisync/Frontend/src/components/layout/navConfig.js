@@ -7,24 +7,24 @@ export const NAV = {
     {
       title: "Overview",
       links: [
-        { path: "", label: "Dashboard", icon: "fa-chart-pie" },
-        { path: "activity", label: "Activity Log", icon: "fa-clipboard-list" },
+        { path: "", label: "Dashboard", icon: "house" },
+        { path: "activity", label: "Activity Log", icon: "history" },
       ],
     },
     {
       title: "Parcels",
       links: [
-        { path: "parcels", label: "Parcel Records", icon: "fa-box-open" },
-        { path: "create", label: "Create Parcel", icon: "fa-square-plus" },
-        { path: "scan", label: "Scan QR / Upload Video", icon: "fa-qrcode" },
+        { path: "parcels", label: "Parcel Records", icon: "package" },
+        { path: "create", label: "Create Parcel", icon: "square-plus" },
+        { path: "scan", label: "Scan QR / Upload Video", icon: "scan-line" },
       ],
     },
     {
       title: "Communication",
       links: [
-        { path: "messages", label: "Messages", icon: "fa-comments" },
-        { path: "complaints", label: "Complaints / Requests", icon: "fa-headset" },
-        { path: "notifications", label: "Notifications", icon: "fa-bell" },
+        { path: "messages", label: "Messages", icon: "message-circle" },
+        { path: "complaints", label: "Complaints / Requests", icon: "clipboard-list" },
+        { path: "notifications", label: "Notifications", icon: "bell" },
       ],
     },
   ],
@@ -32,23 +32,23 @@ export const NAV = {
     {
       title: "Overview",
       links: [
-        { path: "", label: "Dashboard", icon: "fa-chart-pie" },
-        { path: "activity", label: "Activity Log", icon: "fa-clipboard-list" },
+        { path: "", label: "Dashboard", icon: "house" },
+        { path: "activity", label: "Activity Log", icon: "history" },
       ],
     },
     {
       title: "Deliveries",
       links: [
-        { path: "scan", label: "Scan QR Code", icon: "fa-qrcode" },
-        { path: "deliveries", label: "Deliveries", icon: "fa-truck-fast" },
+        { path: "scan", label: "Scan QR Code", icon: "scan-line" },
+        { path: "deliveries", label: "Deliveries", icon: "truck" },
       ],
     },
     {
       title: "Communication",
       links: [
-        { path: "messages", label: "Messages", icon: "fa-comments" },
-        { path: "complaints", label: "Complaints / Urgent Request", icon: "fa-headset" },
-        { path: "notifications", label: "Notifications", icon: "fa-bell" },
+        { path: "messages", label: "Messages", icon: "message-circle" },
+        { path: "complaints", label: "Complaints / Urgent Request", icon: "clipboard-list" },
+        { path: "notifications", label: "Notifications", icon: "bell" },
       ],
     },
   ],

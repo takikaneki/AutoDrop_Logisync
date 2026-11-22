@@ -6,6 +6,7 @@ import { Notice } from "../portal.jsx";
 import { inputCls, panel, stickyThead, tableScroll, td, th } from "../styles.js";
 import { listAudit } from "../../services/auditService.js";
 import { CATEGORIES, ROLE_BADGE, metaOf } from "../../utils/activity.js";
+import Icon from "../Icon.jsx";
 
 const FETCH_LIMIT = 200;
 
@@ -56,11 +57,11 @@ export default function AuditTable({ note }) {
 
   return (
     <section className={`${panel} p-6`}>
-      {note && <p className="mb-4 text-[13px] text-[#999]"><i className="fa-solid fa-lock mr-1.5" />{note}</p>}
+      {note && <p className="mb-4 text-[13px] text-[#999]"><Icon name="lock" className="mr-1.5" />{note}</p>}
 
       <div className="mb-5 grid grid-cols-[1fr_200px] gap-3 max-[700px]:grid-cols-1">
         <div className="relative">
-          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search action, parcel, person or detail..." aria-label="Search" className={`${inputCls} pl-9`} />
         </div>
         <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category" className={inputCls}>
@@ -68,7 +69,7 @@ export default function AuditTable({ note }) {
         </select>
       </div>
 
-      {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
+      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
 
       {!error && (
         <>
@@ -99,7 +100,7 @@ export default function AuditTable({ note }) {
                       </td>
                       <td className={td}>
                         <span className="inline-flex items-center gap-2 font-semibold text-[#333] dark:text-[#f1eeeb]">
-                          <i className={`fa-solid ${m.icon} w-4 text-[13px] text-brand`} />{l.action}
+                          <Icon name={m.icon} className="h-4 w-4 text-[13px] text-brand" />{l.action}
                         </span>
                       </td>
                       <td className={`${td} font-mono text-[13px]`}>{l.target || "—"}</td>
@@ -109,7 +110,7 @@ export default function AuditTable({ note }) {
                 })}
               </tbody>
             </table>
-            {!loading && data.logs.length === 0 && <EmptyState icon="fa-clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
+            {!loading && data.logs.length === 0 && <EmptyState icon="clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
           </div>
 
           {/* Mobile Card List */}
@@ -117,7 +118,7 @@ export default function AuditTable({ note }) {
             {loading ? (
               <div className="py-8 text-center text-[13px] text-[#888]">Loading activity…</div>
             ) : data.logs.length === 0 ? (
-              <EmptyState icon="fa-clipboard-list" title="No log entries" text="Nothing matches your search yet." />
+              <EmptyState icon="clipboard-list" title="No log entries" text="Nothing matches your search yet." />
             ) : (
               data.logs.map((l) => {
                 const m = metaOf(l.category);
@@ -130,7 +131,7 @@ export default function AuditTable({ note }) {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <span className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                          <i className={`fa-solid ${m.icon} text-brand text-[12px]`} />
+                          <Icon name={m.icon} className="text-brand text-[12px]" />
                           {l.action}
                         </span>
                         {l.target && l.target !== "—" && (

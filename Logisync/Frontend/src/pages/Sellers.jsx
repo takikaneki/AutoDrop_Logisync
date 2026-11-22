@@ -10,6 +10,7 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { formatDate } from "../utils/format.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
+import Icon from "../components/Icon.jsx";
 
 const tone = {
   Active: "bg-[#eaf8ef] text-[#29945a]",
@@ -297,14 +298,14 @@ export default function Sellers() {
               title="Coming soon: bulk import of sellers via CSV or Excel (planned for deployment)."
               className={`${btnGhost} cursor-not-allowed opacity-60`}
             >
-              <i className="fa-solid fa-file-import" /> Import Sellers
+              <Icon name="file-input" /> Import Sellers
               <span className="ml-1 rounded-full bg-[#f1f1f1] px-2 py-0.5 text-[10px] font-bold text-[#777]">Coming soon</span>
             </button>
             <button type="button" onClick={loadData} className={btnGhost}>
-              <i className="fa-solid fa-rotate" /> Refresh
+              <Icon name="refresh-cw" /> Refresh
             </button>
             <button type="button" onClick={openCreate} className={btnPrimary}>
-              <i className="fa-solid fa-plus" /> Add Seller
+              <Icon name="plus" /> Add Seller
             </button>
           </div>
         }
@@ -366,7 +367,7 @@ export default function Sellers() {
           onClick={loadData}
           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-bold text-slate-600 transition active:scale-95 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
         >
-          <i className="fa-solid fa-rotate text-[11px]" />
+          <Icon name="refresh-cw" className="text-[11px]" />
           <span>Refresh</span>
         </button>
         <button
@@ -374,14 +375,14 @@ export default function Sellers() {
           onClick={openCreate}
           className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3.5 py-2 text-[12.5px] font-bold text-white shadow-xs transition active:scale-95 hover:bg-brand-dark"
         >
-          <i className="fa-solid fa-plus text-[11px]" />
+          <Icon name="plus" className="text-[11px]" />
           <span>Add Seller</span>
         </button>
       </div>
 
       {error && (
         <div className="mb-5">
-          <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+          <Notice tone="error" icon="circle-alert" role="alert">
             {error}
           </Notice>
         </div>
@@ -392,19 +393,19 @@ export default function Sellers() {
           <StatCard
             label="Total sellers"
             value={loading ? "…" : sellers.length}
-            icon="fa-store"
+            icon="store"
             tone="gray"
           />
           <StatCard
             label="Active"
             value={loading ? "…" : sellers.filter((x) => x.status === "Active").length}
-            icon="fa-circle-check"
+            icon="circle-check"
             tone="green"
           />
           <StatCard
             label="Inactive"
             value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
-            icon="fa-ban"
+            icon="circle-x"
             tone="red"
           />
         </StatGrid>
@@ -413,7 +414,7 @@ export default function Sellers() {
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         <div className="mb-5 grid grid-cols-[1fr_200px] gap-3 max-[700px]:grid-cols-1">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input
               value={search}
               onChange={(e) => {
@@ -522,7 +523,7 @@ export default function Sellers() {
           </table>
           {!loading && rows.length === 0 && (
             <EmptyState
-              icon="fa-store"
+              icon="store"
               title="No sellers found"
               text={
                 sellers.length === 0
@@ -539,7 +540,7 @@ export default function Sellers() {
             <div className="py-8 text-center text-[13px] text-[#888]">Loading sellers…</div>
           ) : pageRows.length === 0 ? (
             <EmptyState
-              icon="fa-store"
+              icon="store"
               title="No sellers found"
               text={
                 sellers.length === 0
@@ -620,7 +621,7 @@ export default function Sellers() {
               aria-label="Close"
               className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <div className="mb-5 flex items-center gap-4">
               <Avatar initials={current.initials} tone={current.tone} className="h-14 w-14 text-[18px]" />
@@ -691,7 +692,7 @@ export default function Sellers() {
                 to={`/messages?contact=${encodeURIComponent(current.name)}`}
                 className={btnPrimary}
               >
-                <i className="fa-solid fa-comment" /> Message
+                <Icon name="message-circle" /> Message
               </Link>
             </div>
           </>
@@ -712,7 +713,7 @@ export default function Sellers() {
               aria-label="Close"
               className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <h3 className="mb-1 pr-8 text-[18px] font-bold">
               {form.userId ? "Edit Seller Account" : "Add Seller Account"}
@@ -805,7 +806,7 @@ export default function Sellers() {
 
             {formError && (
               <div className="mt-4">
-                <Notice tone="error" icon="fa-circle-exclamation" role="alert">{formError}</Notice>
+                <Notice tone="error" icon="circle-alert" role="alert">{formError}</Notice>
               </div>
             )}
 
@@ -828,7 +829,7 @@ export default function Sellers() {
         {created && (
           <>
             <h3 className="mb-1 text-[18px] font-bold">
-              <i className="fa-solid fa-circle-check mr-2 text-[#29945a]" />
+              <Icon name="circle-check" className="mr-2 text-[#29945a]" />
               Seller account created
             </h3>
             <p className="mb-4 text-[13px] text-[#999]">Give these test login credentials to the seller. The password will not be shown again.</p>
@@ -847,7 +848,7 @@ export default function Sellers() {
                 }}
                 className={btnGhost}
               >
-                <i className="fa-regular fa-copy" /> Copy
+                <Icon name="copy" /> Copy
               </button>
               <button type="button" onClick={() => setCreated(null)} className={btnPrimary}>Done</button>
             </div>

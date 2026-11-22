@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import { tableScroll } from "../components/styles.js";
 
 export default function SellerVerification() {
@@ -204,28 +205,10 @@ export default function SellerVerification() {
                   : "bg-red-100 text-red-600"
               }`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
+              <Icon
+                name={isApproving ? "circle-check" : "triangle-alert"}
                 className="h-7 w-7"
-                aria-hidden="true"
-              >
-                {isApproving ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m5 12 4 4L19 6"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 9v4m0 4h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z"
-                  />
-                )}
-              </svg>
+              />
             </div>
 
             <h2

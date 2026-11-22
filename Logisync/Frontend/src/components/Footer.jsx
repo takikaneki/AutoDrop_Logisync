@@ -4,6 +4,7 @@ import TermsModal from "./TermsModal.jsx";
 import { useT } from "../store/prefs.js";
 import useBase from "../hooks/useBase.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
+import Icon from "./Icon.jsx";
 
 // Quick links ng bawat role (Coordinator = walang base)
 const QUICK = {
@@ -59,11 +60,11 @@ export default function Footer() {
             <h4 className="mb-2 text-[12px] font-bold uppercase tracking-wide max-[800px]:hidden">{t("Contact")}</h4>
             <ul className="space-y-1.5 text-[13px] text-[#888] max-[800px]:flex max-[800px]:flex-wrap max-[800px]:items-center max-[800px]:gap-x-5 max-[800px]:gap-y-1.5 max-[800px]:space-y-0 max-[800px]:text-[12px]">
               <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
-                <i className="fa-solid fa-envelope w-4 text-center text-brand" />
+                <Icon name="mail" className="h-4 w-4 text-brand" />
                 <span>support@logisync.example</span>
               </li>
               <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
-                <i className="fa-solid fa-phone w-4 text-center text-brand" />
+                <Icon name="phone" className="h-4 w-4 text-brand" />
                 <span>(02) 8123 4567</span>
               </li>
             </ul>

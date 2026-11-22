@@ -54,7 +54,7 @@ export default function SellerDashboard() {
       title: p.transaction_number || p.parcel_id,
       subtitle: `${p.receiver_name || "Customer"} · ${isReturn ? "Return to Hub" : "Needs Video"}`,
       meta: formatDay(p.created_at),
-      icon: isReturn ? "fa-box-archive" : "fa-video",
+      icon: isReturn ? "undo-2" : "video",
       tone: isReturn ? "danger" : "warn",
       to: link(p),
     };
@@ -72,7 +72,7 @@ export default function SellerDashboard() {
     <>
       <Topbar title="Dashboard" />
 
-      {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
+      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
 
       {/* BENTO OVERVIEW GRID (No Maps) — Mobile: Banner -> Cards -> Action Needed; Desktop: Cards -> Banner + Right Rail */}
       <section className="mb-7 max-[820px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
@@ -86,7 +86,7 @@ export default function SellerDashboard() {
                   tone: "dark",
                   to: "/seller/parcels",
                   badge: "All Orders",
-                  icon: "fa-box",
+                  icon: "package",
                   subtext: `${v(returnToHubParcels.length)} return to hub`,
                 },
                 {
@@ -95,7 +95,7 @@ export default function SellerDashboard() {
                   tone: "blue",
                   to: "/seller/parcels?status=NEEDS_VIDEO",
                   badge: "Action Required",
-                  icon: "fa-video",
+                  icon: "video",
                   subtext: `${v(count("VIDEO_SUBMITTED"))} under verification`,
                 },
                 {
@@ -104,7 +104,7 @@ export default function SellerDashboard() {
                   tone: "green",
                   to: "/seller/parcels?status=VERIFIED",
                   badge: "Cleared",
-                  icon: "fa-circle-check",
+                  icon: "circle-check",
                   subtext: "Approved for SPX dispatch",
                 },
               ]}
@@ -115,10 +115,10 @@ export default function SellerDashboard() {
             <PortalHeroBanner
               role="seller"
               pipeline={[
-                { label: "Needs Video", count: v(needsVideoParcels.length), icon: "fa-video", to: "/seller/parcels?status=NEEDS_VIDEO" },
-                { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "fa-hourglass-half", to: "/seller/parcels?status=UNDER_VERIFICATION" },
-                { label: "Verified", count: v(count("VERIFIED")), icon: "fa-circle-check", to: "/seller/parcels?status=VERIFIED" },
-                { label: "Delivered", count: v(count("DELIVERED")), icon: "fa-truck-fast", to: "/seller/parcels" },
+                { label: "Needs Video", count: v(needsVideoParcels.length), icon: "video", to: "/seller/parcels?status=NEEDS_VIDEO" },
+                { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "clock", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+                { label: "Verified", count: v(count("VERIFIED")), icon: "circle-check", to: "/seller/parcels?status=VERIFIED" },
+                { label: "Delivered", count: v(count("DELIVERED")), icon: "package-check", to: "/seller/parcels" },
               ]}
             />
           </div>
@@ -141,7 +141,7 @@ export default function SellerDashboard() {
 
       {/* RECENT PARCELS (Desktop only; mobile Home shows Banner -> Cards -> Action Needed) */}
       <section className={`hidden min-[821px]:block ${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
-        <PanelTitle icon="fa-box" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
+        <PanelTitle icon="package" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
 
         {loading ? (
           <LoadingRow />

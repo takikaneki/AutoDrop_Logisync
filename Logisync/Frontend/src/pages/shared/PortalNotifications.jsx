@@ -7,6 +7,7 @@ import { btnGhost, panel } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { timeAgo } from "../../store/notifications.js";
 import { markAllPortalRead, markPortalRead, usePortalNotifications } from "../../store/portalNotifications.js";
+import Icon from "../../components/Icon.jsx";
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#ff6818]",
@@ -57,14 +58,14 @@ export default function PortalNotifications() {
           ))}
         </div>
         <button onClick={() => markAllPortalRead(items.map((n) => n.id))} disabled={!unread} className={`${btnGhost} !py-2 disabled:opacity-50`}>
-          <i className="fa-solid fa-check-double" /> Mark all as read
+          <Icon name="check-check" /> Mark all as read
         </button>
       </div>
 
       <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
         {list.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <EmptyState icon="fa-bell-slash" title="No notifications here" />
+            <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
           list.map((n) => (
@@ -73,7 +74,7 @@ export default function PortalNotifications() {
               onClick={() => { markPortalRead(n.id); if (n.to) navigate(n.to); }}
               className={`flex w-full items-center gap-4 border-b border-[#edf0f4] px-5 py-3.5 text-left last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
             >
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] ${tones[n.tone] || tones.orange}`}><Icon name={n.icon} /></span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2">
                   <strong className="truncate text-[14px]">{n.title}</strong>

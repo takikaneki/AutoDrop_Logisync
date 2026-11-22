@@ -3,6 +3,7 @@ import { btnPrimary, inputCls, labelCls } from "./styles.js";
 import { changePassword } from "../services/userService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
+import Icon from "./Icon.jsx";
 
 function strength(pw) {
   let s = 0;
@@ -136,13 +137,13 @@ export default function ChangePasswordForm({ desktopSplit = false }) {
 
           {error && (
             <p role="alert" className="mt-3 text-[13px] font-semibold text-[#d94747]">
-              <i className="fa-solid fa-circle-exclamation mr-1" />
+              <Icon name="circle-alert" className="mr-1" />
               {error}
             </p>
           )}
           {success && (
             <p role="status" className="mt-3 text-[13px] font-semibold text-[#29945a]">
-              <i className="fa-solid fa-circle-check mr-1" />
+              <Icon name="circle-check" className="mr-1" />
               {success}
             </p>
           )}
@@ -159,7 +160,7 @@ export default function ChangePasswordForm({ desktopSplit = false }) {
               Show passwords
             </label>
             <button type="submit" disabled={saving} className={`${btnPrimary} disabled:opacity-60`}>
-              <i className="fa-solid fa-key" /> {saving ? "Updating…" : "Update password"}
+              <Icon name="key-round" /> {saving ? "Updating…" : "Update password"}
             </button>
           </div>
         </div>
@@ -195,9 +196,9 @@ export default function ChangePasswordForm({ desktopSplit = false }) {
         </div>
       ))}
       <label className="flex items-center gap-2 mb-5 text-[13px] text-[#777] cursor-pointer dark:text-[#d1c9c2]"><input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} className="accent-brand" /> Show passwords</label>
-      {error && <p role="alert" className="mb-4 text-[13px] font-semibold text-[#d94747]"><i className="fa-solid fa-circle-exclamation mr-1" />{error}</p>}
-      {success && <p role="status" className="mb-4 text-[13px] font-semibold text-[#29945a]"><i className="fa-solid fa-circle-check mr-1" />{success}</p>}
-      <button type="submit" disabled={saving} className={`${btnPrimary} disabled:opacity-60`}><i className="fa-solid fa-key" /> {saving ? "Updating…" : "Update password"}</button>
+      {error && <p role="alert" className="mb-4 text-[13px] font-semibold text-[#d94747]"><Icon name="circle-alert" className="mr-1" />{error}</p>}
+      {success && <p role="status" className="mb-4 text-[13px] font-semibold text-[#29945a]"><Icon name="circle-check" className="mr-1" />{success}</p>}
+      <button type="submit" disabled={saving} className={`${btnPrimary} disabled:opacity-60`}><Icon name="key-round" /> {saving ? "Updating…" : "Update password"}</button>
     </form>
   );
 }

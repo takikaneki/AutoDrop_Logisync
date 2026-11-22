@@ -5,6 +5,7 @@ import { btnGhost, btnPrimary, inputCls, labelCls, textareaCls } from "../styles
 import { confirmCoordinatorRth } from "../../services/parcelService.js";
 import { formatDate } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../Icon.jsx";
 
 export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed }) {
   const [notes, setNotes] = useState("");
@@ -79,7 +80,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
           aria-label="Close"
           className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] hover:text-[#1e293b] dark:bg-night-line dark:hover:text-white"
         >
-          <i className="fa-solid fa-xmark text-sm" />
+          <Icon name="x" className="text-sm" />
         </button>
       </div>
 
@@ -149,7 +150,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
         {/* Confirmation status message */}
         {isConfirmed ? (
           <div className="rounded-xl border border-[#c4b5fd] bg-[#f5f3ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
-            <i className="fa-solid fa-circle-check mr-2 font-bold" />
+            <Icon name="circle-check" className="mr-2 font-bold" />
             <strong>Physical Return Confirmed:</strong> This parcel has been safely received and confirmed at the Hub. No further action is required.
           </div>
         ) : (
@@ -170,7 +171,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-[13px] text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-            <i className="fa-solid fa-circle-exclamation mr-1.5" />
+            <Icon name="circle-alert" className="mr-1.5" />
             {error}
           </div>
         )}
@@ -187,7 +188,7 @@ export default function CoordinatorRthModal({ parcel, open, onClose, onConfirmed
             disabled={busy}
             className={`${btnPrimary} !bg-[#7c3aed] hover:!bg-[#6d28d9]`}
           >
-            <i className="fa-solid fa-warehouse mr-1.5" />
+            <Icon name="undo-2" className="mr-1.5" />
             {busy ? "Confirming…" : "Confirm Physical Arrival at Hub"}
           </button>
         )}

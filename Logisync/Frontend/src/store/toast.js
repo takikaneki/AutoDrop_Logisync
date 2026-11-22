@@ -27,7 +27,7 @@ export function toast(message, type = "success") {
   setTimeout(() => store.set((l) => l.filter((t) => t.id !== id)), 3200);
 }
 
-export function notifyPopup({ title, message, icon = "fa-bell", to = "", category = "parcel" }) {
+export function notifyPopup({ title, message, icon = "bell", to = "", category = "parcel" }) {
   const prefs = getPrefs();
   if (prefs.notificationsEnabled === false) return;
   playNotificationCategorySound(category);

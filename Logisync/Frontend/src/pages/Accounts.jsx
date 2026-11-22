@@ -13,6 +13,7 @@ import {
   sanitizeLocalMobileDigits,
   validateMobileNumber,
 } from "../utils/phone.js";
+import Icon from "../components/Icon.jsx";
 
 const ROLES = [
   ["seller", "Seller", "Registers parcels and uploads video proof."],
@@ -131,14 +132,14 @@ export default function Accounts() {
       <div className="grid grid-cols-[400px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[1100px]:grid-cols-1">
         <section className="border-r border-brand-line bg-[#f8fafc]/70 p-6 dark:border-night-line dark:bg-[#1d1a17]/60 max-[1100px]:border-r-0 max-[1100px]:border-b">
           <h2 className="mb-1 text-[17px] font-bold">
-            <i className="fa-solid fa-user-plus mr-2 text-orange-500" />
+            <Icon name="user-plus" className="mr-2 text-orange-500" />
             New account
           </h2>
           <p className="mb-5 text-[13px] text-[#999]">Give the person their email and password so they can sign in.</p>
 
           {created && (
             <div className="mb-5">
-              <Notice tone="success" icon="fa-circle-check" role="status">
+              <Notice tone="success" icon="circle-check" role="status">
                 <strong className="block">Account created</strong>
                 <span className="block break-all">
                   {created.email} · <span className="capitalize">{created.role}</span>
@@ -308,7 +309,7 @@ export default function Accounts() {
                   aria-label="Show or hide password"
                   className={`${btnGhost} shrink-0`}
                 >
-                  <i className={`fa-regular ${showPw ? "fa-eye-slash" : "fa-eye"}`} />
+                  <Icon name={showPw ? "eye-off" : "eye"} />
                 </button>
               </div>
               <button
@@ -331,7 +332,7 @@ export default function Accounts() {
 
             {apiError && (
               <div className="mb-4">
-                <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+                <Notice tone="error" icon="circle-alert" role="alert">
                   {apiError}
                 </Notice>
               </div>
@@ -353,7 +354,7 @@ export default function Accounts() {
               All accounts <span className="ml-1 text-[14px] font-normal text-[#999]">({users.length})</span>
             </h2>
             <button onClick={load} className={btnGhost}>
-              <i className="fa-solid fa-rotate" /> Refresh
+              <Icon name="refresh-cw" /> Refresh
             </button>
           </div>
 
@@ -388,7 +389,7 @@ export default function Accounts() {
           </div>
 
           {loadError && (
-            <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+            <Notice tone="error" icon="circle-alert" role="alert">
               {loadError}
             </Notice>
           )}
@@ -432,7 +433,7 @@ export default function Accounts() {
                       ))}
                   </tbody>
                 </table>
-                {!loading && rows.length === 0 && <EmptyState icon="fa-users" title="No accounts found" />}
+                {!loading && rows.length === 0 && <EmptyState icon="users" title="No accounts found" />}
               </div>
 
               {/* Mobile Card List */}
@@ -440,7 +441,7 @@ export default function Accounts() {
                 {loading ? (
                   <div className="py-8 text-center text-[13px] text-[#888]">Loading accounts…</div>
                 ) : rows.length === 0 ? (
-                  <EmptyState icon="fa-users" title="No accounts found" />
+                  <EmptyState icon="users" title="No accounts found" />
                 ) : (
                   rows.map((u) => (
                     <div

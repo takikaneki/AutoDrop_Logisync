@@ -7,6 +7,7 @@ import AnnouncementsPanel from "../components/AnnouncementsPanel.jsx";
 import FailedDeliveryReview from "../components/delivery/FailedDeliveryReview.jsx";
 import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
 import { markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
+import Icon from "../components/Icon.jsx";
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#ff6818]",
@@ -86,7 +87,7 @@ export default function Notifications() {
           ))}
         </div>
         <button onClick={markAllRead} disabled={!unread} className={`${btnGhost} !py-2 disabled:opacity-50`}>
-          <i className="fa-solid fa-check-double" /> Mark all as read
+          <Icon name="check-check" /> Mark all as read
         </button>
       </div>
 
@@ -96,7 +97,7 @@ export default function Notifications() {
       <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
         {list.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <EmptyState icon="fa-bell-slash" title="No notifications here" />
+            <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
           list.map((n) => (
@@ -105,7 +106,7 @@ export default function Notifications() {
               onClick={() => { markRead(n.id); if (n.to) navigate(n.to); }}
               className={`w-full flex items-center gap-4 px-5 py-3.5 text-left border-b border-[#edf0f4] last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
             >
-              <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}><i className={`fa-solid ${n.icon}`} /></span>
+              <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}><Icon name={n.icon} /></span>
               <span className="flex-1 min-w-0">
                 <span className="flex items-center justify-between gap-2">
                   <strong className="truncate text-[14px]">{n.title}</strong>

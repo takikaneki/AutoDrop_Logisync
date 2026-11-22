@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Icon from "../Icon.jsx";
 
 export default function DashboardRightRail({
   variant = "slate",
@@ -38,7 +39,7 @@ export default function DashboardRightRail({
         {tasks.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-[#e5e8ee] px-4 py-8 text-center dark:border-night-line">
             <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-              <i className="fa-solid fa-check" />
+              <Icon name="check" />
             </span>
             <p className="text-[13px] text-[#64748b] dark:text-[#b8b0a8]">{emptyText}</p>
           </div>
@@ -60,7 +61,7 @@ export default function DashboardRightRail({
                           : "bg-[#fff0e5] text-[#ee4d2d] dark:bg-brand/20 dark:text-[#ffb98a]"
                       }`}
                     >
-                      <i className={`fa-solid ${item.icon || "fa-box"}`} />
+                      <Icon name={item.icon || "package"} />
                     </span>
                     <div className="min-w-0">
                       <strong className="block truncate text-[13.5px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">

@@ -27,6 +27,7 @@ import {
   sanitizeMobileNumber,
   validateMobileNumber,
 } from "../../utils/phone.js";
+import Icon from "../Icon.jsx";
 
 const SIZES = [
   ["sm", "Small"],
@@ -380,7 +381,7 @@ export default function UnifiedSettings() {
 
           {/* Search Settings */}
           <div className="relative my-3.5 shrink-0">
-            <i className="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#94a3b8]" />
+            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#94a3b8]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -402,10 +403,10 @@ export default function UnifiedSettings() {
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <i className="fa-solid fa-user-shield text-[13px]" />
+                <Icon name="shield-check" className="text-[13px]" />
                 <span>Account &amp; Security</span>
               </span>
-              <i className={`fa-solid fa-chevron-${isAccountActive ? "down" : "right"} text-[10px] opacity-70`} />
+              <Icon name={isAccountActive ? "chevron-down" : "chevron-right"} className="h-3 w-3 opacity-70" />
             </button>
 
             {(isAccountActive || isSearching) && (
@@ -463,7 +464,7 @@ export default function UnifiedSettings() {
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-bell text-[13px]" />
+              <Icon name="bell" className="text-[13px]" />
               <span>Notifications</span>
             </button>
 
@@ -476,7 +477,7 @@ export default function UnifiedSettings() {
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-palette text-[13px]" />
+              <Icon name="palette" className="text-[13px]" />
               <span>Appearance &amp; Display</span>
             </button>
 
@@ -489,14 +490,14 @@ export default function UnifiedSettings() {
                   : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
               }`}
             >
-              <i className="fa-solid fa-universal-access text-[13px]" />
+              <Icon name="accessibility" className="text-[13px]" />
               <span>Accessibility</span>
             </button>
 
             <div className="my-2 border-t border-brand-line/70 pt-2 dark:border-night-line">
               {[
-                ["privacy", "Privacy Policy", "fa-shield-halved", privacyRef],
-                ["about", "About LOGISYNC", "fa-circle-info", aboutRef],
+                ["privacy", "Privacy Policy", "shield-check", privacyRef],
+                ["about", "About LOGISYNC", "info", aboutRef],
               ].map(([navKey, label, icon, ref]) => (
                 <button
                   key={navKey}
@@ -508,7 +509,7 @@ export default function UnifiedSettings() {
                       : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
                   }`}
                 >
-                  <i className={`fa-solid ${icon} text-[13px]`} />
+                  <Icon name={icon} className="text-[13px]" />
                   <span>{label}</span>
                 </button>
               ))}
@@ -522,7 +523,7 @@ export default function UnifiedSettings() {
               onClick={() => setLogoutOpen(true)}
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-bold text-[#c23a3a] transition hover:bg-red-50 dark:text-[#f2a1a1] dark:hover:bg-red-950/30"
             >
-              <i className="fa-solid fa-right-from-bracket text-[13px]" />
+              <Icon name="log-out" className="text-[13px]" />
               <span>Log Out</span>
             </button>
           </div>
@@ -554,7 +555,7 @@ export default function UnifiedSettings() {
                   Account Info
                 </h2>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-[11.5px] font-bold text-brand capitalize">
-                  <i className="fa-solid fa-circle-check text-[10px]" />
+                  <Icon name="circle-check" className="text-[10px]" />
                   {profile.role} · {formattedUserId}
                 </span>
               </div>
@@ -562,7 +563,7 @@ export default function UnifiedSettings() {
               {/* Warm Orange Hub / Portal Notice */}
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-soft/75 px-4 py-3 dark:border-night-line dark:bg-night-head">
                 <div className="flex items-center gap-2.5 text-[13px] font-semibold text-[#7c2d12] dark:text-[#ffb98a]">
-                  <i className="fa-solid fa-warehouse text-brand" />
+                  <Icon name="undo-2" className="text-brand" />
                   <span>LogiSync × SPX Express · {profile.role} Portal Account</span>
                 </div>
                 <button
@@ -580,7 +581,7 @@ export default function UnifiedSettings() {
                     <UserAvatar className="h-16 w-16 text-[22px]" />
                     <div className="flex flex-wrap gap-2">
                       <button type="button" onClick={() => fileRef.current?.click()} className={btnGhost}>
-                        <i className="fa-solid fa-camera" /> Change photo
+                        <Icon name="camera" /> Change photo
                       </button>
                       {profile.avatar && (
                         <button
@@ -637,7 +638,7 @@ export default function UnifiedSettings() {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button type="submit" className={btnPrimary}>
-                      <i className="fa-solid fa-floppy-disk" /> Save Changes
+                      <Icon name="save" /> Save Changes
                     </button>
                     <button type="button" onClick={() => setEditingProfile(false)} className={btnGhost}>
                       Cancel
@@ -1060,19 +1061,19 @@ export default function UnifiedSettings() {
                       key: "light",
                       label: "Light",
                       hint: "Bright, clean daytime workspace.",
-                      icon: "fa-sun",
+                      icon: "sun",
                     },
                     {
                       key: "dark",
                       label: "Dark",
                       hint: "Low-glare dark workspace for night use.",
-                      icon: "fa-moon",
+                      icon: "moon",
                     },
                     {
                       key: "system",
                       label: "System Default",
                       hint: "Automatically follow your device's light or dark mode.",
-                      icon: "fa-arrows-rotate",
+                      icon: "refresh-cw",
                     },
                   ].map((item) => {
                     const active = themeMode === item.key;
@@ -1098,7 +1099,7 @@ export default function UnifiedSettings() {
                                   : "border-[#cbd5e1] bg-white text-[#f59e0b]"
                             }`}
                           >
-                            <i className={`fa-solid ${item.icon}`} />
+                            <Icon name={item.icon} />
                           </span>
                           <div className="min-w-0">
                             <strong className="block text-[13.5px] font-semibold text-[#1e293b] dark:text-[#f1eeeb]">
@@ -1118,7 +1119,7 @@ export default function UnifiedSettings() {
                               : "border-[#cbd5e1] bg-white dark:border-night-line dark:bg-night-panel"
                           }`}
                         >
-                          {active && <i className="fa-solid fa-check text-[10px]" />}
+                          {active && <Icon name="check" className="text-[10px]" />}
                         </span>
                       </button>
                     );
@@ -1282,7 +1283,7 @@ export default function UnifiedSettings() {
                     className="rounded-xl border border-brand-line bg-brand-softer/20 p-3.5 dark:border-night-line dark:bg-night-head/40"
                   >
                     <div className="mb-1 flex items-center gap-2 text-[12px] font-extrabold text-brand">
-                      <i className={`fa-solid ${act.icon}`} />
+                      <Icon name={act.icon} />
                       <span>{act.code}</span>
                     </div>
                     <strong className="block text-[12.5px] text-[#1e293b] dark:text-[#f1eeeb]">

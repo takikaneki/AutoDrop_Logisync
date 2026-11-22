@@ -8,6 +8,7 @@ import { logAction } from "../../store/audit.js";
 import { toast } from "../../store/toast.js";
 import { formatDay } from "../../utils/format.js";
 import { timeAgo } from "../../store/notifications.js";
+import Icon from "../Icon.jsx";
 
 // Coordinator: Return to Hub parcels (lampas sa 3-day rescheduling limit) at active rescheduled deliveries.
 export default function FailedDeliveryReview({ mode = "all" }) {
@@ -70,7 +71,7 @@ export default function FailedDeliveryReview({ mode = "all" }) {
 
   return (
     <section className={`${panel} mb-6 p-[26px] max-[600px]:p-5`} aria-label="Rescheduling & Return to Hub">
-      <PanelTitle icon="fa-warehouse">
+      <PanelTitle icon="undo-2">
         Delivery Rescheduling & Return-to-Hub
         {returnToHub.length > 0 && (
           <span className="ml-2 rounded-full bg-[#f2ecff] px-2.5 py-0.5 align-middle text-[12px] font-bold text-[#7c3aed]">
@@ -112,7 +113,7 @@ export default function FailedDeliveryReview({ mode = "all" }) {
                   }}
                   className={`${btnPrimary} !py-2 !px-3.5 text-[12.5px]`}
                 >
-                  <i className="fa-solid fa-rotate-left" /> Coordinate Return to Seller
+                  <Icon name="undo-2" /> Coordinate Return to Seller
                 </button>
               </li>
             ))}
@@ -146,7 +147,7 @@ export default function FailedDeliveryReview({ mode = "all" }) {
                   <div className="flex flex-wrap gap-2">
                     {e.status === "pending" && count < MAX_RESCHEDULES && (
                       <button onClick={() => confirmReschedule(e)} className={`${btnPrimary} !py-2 !px-3.5 text-[12.5px]`}>
-                        <i className="fa-solid fa-calendar-check" /> Confirm ({formatDay(nextDay(e.failedAt))})
+                        <Icon name="calendar-check" /> Confirm ({formatDay(nextDay(e.failedAt))})
                       </button>
                     )}
                     <button
@@ -156,7 +157,7 @@ export default function FailedDeliveryReview({ mode = "all" }) {
                       }}
                       className={`${btnGhost} !py-2 !px-3.5 text-[12.5px]`}
                     >
-                      <i className="fa-solid fa-warehouse" /> Return to Hub
+                      <Icon name="undo-2" /> Return to Hub
                     </button>
                   </div>
                 </li>
@@ -168,7 +169,7 @@ export default function FailedDeliveryReview({ mode = "all" }) {
 
       {returnToHub.length === 0 && rescheduled.length === 0 && (
         <EmptyState
-          icon="fa-circle-check"
+          icon="circle-check"
           title="No pending Return-to-Hub or rescheduled items"
           text="Parcels that reach the 3-day rescheduling limit will appear here so you can coordinate their return to the seller."
         />
@@ -192,12 +193,12 @@ export default function FailedDeliveryReview({ mode = "all" }) {
                 </span>
                 {e.returnCoordinated || e.status === "return_coordinated" ? (
                   <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-[12px] font-semibold text-[#4b78b5]">
-                    <i className="fa-solid fa-rotate-left mr-1" />
+                    <Icon name="undo-2" className="mr-1" />
                     Return to Seller Coordinated
                   </span>
                 ) : e.status === "confirmed" ? (
                   <span className="rounded-full bg-[#eaf8ef] px-3 py-1 text-[12px] font-semibold text-[#29945a]">
-                    <i className="fa-solid fa-calendar-check mr-1" />
+                    <Icon name="calendar-check" className="mr-1" />
                     Rescheduled · {formatDay(e.scheduledFor)}
                   </span>
                 ) : (

@@ -4,6 +4,7 @@ import { EmptyState } from "../../components/ui.jsx";
 import { panel } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { syncAnnouncementsFromServer, useAnnouncements } from "../../store/announcements.js";
+import Icon from "../../components/Icon.jsx";
 
 const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
@@ -21,13 +22,13 @@ export default function PortalAnnouncements() {
       <Topbar title="Announcements" subtitle="Notices from your coordinator." />
       <section className={`${panel} p-2`}>
         {list.length === 0 ? (
-          <EmptyState icon="fa-bullhorn" title="No announcements yet" text="Notices from the coordinator will show up here." />
+          <EmptyState icon="megaphone" title="No announcements yet" text="Notices from the coordinator will show up here." />
         ) : (
           <ul>
             {list.map((a, i) => (
               <li key={a.id} className="flex gap-4 border-b border-[#f3f3f3] p-5 last:border-0 dark:border-night-line">
                 <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand dark:bg-night-line">
-                  <i className="fa-solid fa-bullhorn" />
+                  <Icon name="megaphone" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -38,7 +39,7 @@ export default function PortalAnnouncements() {
                     <small className="text-[13px] text-[#aaa]">{when(a.ts)}</small>
                   </div>
                   <p className="mt-1.5 text-[15px] leading-relaxed text-[#777] dark:text-[#d1c9c2]">{a.message}</p>
-                  <p className="mt-2 text-[13px] text-[#aaa]"><i className="fa-solid fa-user-tie mr-1" />From the Coordinator</p>
+                  <p className="mt-2 text-[13px] text-[#aaa]"><Icon name="users" className="mr-1" />From the Coordinator</p>
                 </div>
               </li>
             ))}

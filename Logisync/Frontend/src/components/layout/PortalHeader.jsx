@@ -9,6 +9,7 @@ import { useProfile } from "../../store/profile.js";
 import { ROLE_LABEL, toPath } from "./navConfig.js";
 import NotificationMenu from "./NotificationMenu.jsx";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import Icon from "../Icon.jsx";
 
 const iconBtn =
   "flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
@@ -42,7 +43,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                 collapsed ? "flex" : "flex min-[821px]:hidden"
               } ${isModernMobile ? "max-[820px]:hidden" : ""}`}
             >
-              <i className="fa-solid fa-bars text-[18px]" />
+              <Icon name="menu" className="text-[18px]" />
             </button>
             <Link to={toPath(role, "")} className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[821px]:hidden"}`}>
               <img
@@ -73,7 +74,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-[14px] sm:text-[15px]`} />
+              <Icon name={dark ? "sun" : "moon"} className="text-[15px]" />
             </button>
 
             <NotificationMenu role={role} />
@@ -94,7 +95,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     {profile.role}
                   </small>
                 </span>
-                <i className="fa-solid fa-chevron-down text-[10px] text-[#999] max-[820px]:hidden" />
+                <Icon name="chevron-down" className="text-[10px] text-[#999] max-[820px]:hidden" />
               </button>
 
               {menuOpen && (
@@ -110,7 +111,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
-                    <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
+                    <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
                   </Link>
                   <button
                     type="button"
@@ -120,14 +121,14 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     }}
                     className={item}
                   >
-                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
+                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
                   </button>
                   <Link
                     to={`${toPath(role, "help")}#faq`}
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
-                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
+                    <Icon name="circle-help" className="h-4 w-4 text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
@@ -136,7 +137,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     }}
                     className={`${item} border-t border-[#f1f1f1] text-[#d94747] dark:border-night-line`}
                   >
-                    <i className="fa-solid fa-right-from-bracket w-4 text-center" /> Logout
+                    <Icon name="log-out" className="h-4 w-4" /> Logout
                   </button>
                 </div>
               )}

@@ -6,6 +6,7 @@ import { classifyNotification, timeAgo } from "../../store/notifications.js";
 import { usePrefs } from "../../store/prefs.js";
 import { notifyPopup } from "../../store/toast.js";
 import { toPath } from "./navConfig.js";
+import Icon from "../Icon.jsx";
 
 const iconBtn =
   "relative w-[40px] h-[40px] max-[480px]:w-9 max-[480px]:h-9 shrink-0 rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
@@ -54,7 +55,7 @@ export default function NotificationMenu({ role, btnClass }) {
       notifyPopup({
         title: n.title,
         message: n.text,
-        icon: n.icon || "fa-bell",
+        icon: n.icon || "bell",
         to: n.to || toPath(role, "notifications"),
         category: classifyNotification(n, n.kind === "announcement"),
       });
@@ -78,7 +79,7 @@ export default function NotificationMenu({ role, btnClass }) {
         aria-expanded={open}
         className={btnClass || iconBtn}
       >
-        <i className="fa-regular fa-bell" />
+        <Icon name="bell" />
         {unread > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1 text-[11px] font-bold text-white">
             {unread}
@@ -108,7 +109,7 @@ export default function NotificationMenu({ role, btnClass }) {
                 <li key={n.id}>
                   <button onClick={() => go(n)} className="flex w-full gap-3 border-b border-[#ffe3d2] border-l-4 border-l-brand bg-[#fff4ec] px-4 py-3 text-left text-[14px] hover:bg-[#ffede0] dark:border-[#5a4030] dark:bg-[#3f3128] dark:hover:bg-[#4a382c]">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-                      <i className="fa-solid fa-bullhorn" />
+                      <Icon name="megaphone" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <small className="block text-[11px] font-bold uppercase tracking-wide text-brand">Announcement</small>
@@ -124,7 +125,7 @@ export default function NotificationMenu({ role, btnClass }) {
                 <li key={n.id}>
                   <button onClick={() => go(n)} className={`flex w-full gap-3 px-4 py-3 text-left text-[14px] hover:bg-[#fff3e8] dark:hover:bg-night-line ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`}>
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-head">
-                      <i className={`fa-solid ${n.icon}`} />
+                      <Icon name={n.icon} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <strong className="block truncate">{n.title}</strong>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
+import Icon from "../Icon.jsx";
 
 export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }) {
   const [email, setEmail] = useState("");
@@ -78,7 +79,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
         <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md sm:px-7 sm:py-5">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-base text-white shadow-sm shadow-orange-500/25">
-              <i className="fa-solid fa-key" />
+              <Icon name="key-round" />
             </span>
             <div>
               <h2 id="forgot-password-title" className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
@@ -95,7 +96,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
             aria-label="Close Password Reset Modal"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
           >
-            <i className="fa-solid fa-xmark text-base" />
+            <Icon name="x" className="text-base" />
           </button>
         </div>
 
@@ -104,7 +105,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
           {sent ? (
             <div className="text-center animate-popup">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600 ring-8 ring-emerald-50/50">
-                <i className="fa-solid fa-envelope-circle-check" />
+                <Icon name="mail-check" />
               </div>
               <h3 className="text-lg font-extrabold text-slate-900">
                 Recovery Instructions Sent
@@ -115,7 +116,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
 
               <div className="mt-5 rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 text-left text-xs leading-relaxed text-amber-900">
                 <div className="flex items-start gap-2.5">
-                  <i className="fa-solid fa-circle-info mt-0.5 shrink-0 text-amber-600" />
+                  <Icon name="info" className="mt-0.5 shrink-0 text-amber-600" />
                   <div className="space-y-1">
                     <p className="font-bold">Next Steps:</p>
                     <ul className="list-disc pl-4 space-y-0.5 text-amber-800">
@@ -163,7 +164,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
                   role="alert"
                   className="mb-4 flex animate-popup items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-600"
                 >
-                  <i className="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-sm" />
+                  <Icon name="circle-alert" className="mt-0.5 shrink-0 text-sm" />
                   <span className="leading-snug">{error}</span>
                 </div>
               )}
@@ -176,7 +177,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
                   Registered Email Address
                 </label>
                 <div className={inputWrap}>
-                  <i className="fa-regular fa-envelope shrink-0 text-base text-slate-400" />
+                  <Icon name="mail" className="shrink-0 text-base text-slate-400" />
                   <input
                     id="forgot-password-email"
                     type="email"
@@ -202,12 +203,12 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
                 >
                   {loading ? (
                     <>
-                      <i className="fa-solid fa-circle-notch animate-spin text-sm" />
+                      <Icon name="loader-2" className="animate-spin text-sm" />
                       <span>Sending Link...</span>
                     </>
                   ) : (
                     <>
-                      <i className="fa-solid fa-paper-plane text-xs" />
+                      <Icon name="send" className="text-xs" />
                       <span>Send Reset Link</span>
                     </>
                   )}

@@ -422,7 +422,7 @@ export function syncAutomaticReschedules() {
         pendingCoordinatorNotifs.push({
           id: `rth-${d.parcel_id}`,
           kind: "delivery",
-          icon: "fa-warehouse",
+          icon: "undo-2",
           tone: "red",
           title: `Return to Hub: ${d.transaction_number || d.parcel_id}`,
           text: `${d.receiver || "Customer"} (${typeof d.seller === "object" ? d.seller?.name || "Seller" : d.seller || "Seller"}) remained undelivered after the ${MAX_RESCHEDULES}-day rescheduling limit and must be returned to the hub.`,
@@ -1111,7 +1111,7 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
     addNotification({
       id: `refusal-${parcelId}-${Date.now()}`,
       kind: "delivery",
-      icon: "fa-warehouse",
+      icon: "undo-2",
       tone: "red",
       title: `Return to Hub: ${txn}`,
       text: `${riderName} reported "${reason}". Parcel immediately marked for Return to Hub.`,
@@ -1134,7 +1134,7 @@ export const markFailed = (parcelId, { reason, note, customDate }) => {
         const contacts = await listContacts();
         const coordinator = contacts.find((c) => c.role === "coordinator");
         if (coordinator) {
-          const msg = `🚨 [RETURN TO HUB - RECIPIENT REFUSAL]
+          const msg = `[RETURN TO HUB - RECIPIENT REFUSAL]
 Tracking / Txn: ${txn}
 Parcel ID: ${current.parcel_id || txn}
 Receiver: ${current.receiver || "Consignee"}
@@ -1200,7 +1200,7 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
     addNotification({
       id: `resched-${parcelId}-${nextCount}`,
       kind: "delivery",
-      icon: "fa-calendar-day",
+      icon: "calendar-days",
       tone: "orange",
       title: `Rescheduled (Day ${nextCount}/${MAX_RESCHEDULES}): ${txn}`,
       text: `${riderName} reported "${reason}". New delivery date assigned: ${nextDate}.`,
@@ -1257,7 +1257,7 @@ Status: Immediately marked for Return to Hub. Please verify physical arrival whe
   addNotification({
     id: `rth-${parcelId}`,
     kind: "delivery",
-    icon: "fa-warehouse",
+    icon: "undo-2",
     tone: "red",
     title: `Return to Hub: ${txn}`,
     text: `${riderName} · Reached maximum ${MAX_RESCHEDULES}-day rescheduling limit (${reason}). Coordinate return to hub and seller (${current.seller || "Seller"}).`,

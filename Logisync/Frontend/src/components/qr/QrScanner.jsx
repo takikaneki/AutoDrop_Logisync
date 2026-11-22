@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { btnGhost } from "../styles.js";
+import Icon from "../Icon.jsx";
 
 function friendlyError(e) {
   const msg = String(e?.message || e || "");
@@ -104,7 +105,7 @@ export default function QrScanner({
         {!running && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 p-6 text-center text-slate-300">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 text-brand ring-1 ring-white/10">
-              <i className="fa-solid fa-qrcode text-3xl" />
+              <Icon name="qr-code" className="text-3xl" />
             </span>
             <div>
               <p className="text-[13.5px] font-semibold text-white/90">
@@ -135,12 +136,12 @@ export default function QrScanner({
             disabled={starting}
             className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[13.5px] font-bold text-white shadow-xs transition disabled:opacity-60 ${btnClass}`}
           >
-            <i className="fa-solid fa-camera" />
+            <Icon name="camera" />
             <span>{starting ? "Starting…" : startLabel}</span>
           </button>
         ) : (
           <button type="button" onClick={stop} className={btnGhost}>
-            <i className="fa-solid fa-stop mr-1.5" />
+            <Icon name="square" className="mr-1.5" />
             Stop camera
           </button>
         )}

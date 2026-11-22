@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { getRole } from "../../api.js";
 import { listContacts } from "../../services/messageService.js";
 import CallUserModal from "../messaging/CallUserModal.jsx";
+import Icon from "../Icon.jsx";
 
 /**
  * Mobile-only floating Call button for Rider account.
@@ -83,7 +84,7 @@ export default function RiderFloatingCallButton() {
         title="Call Coordinator"
         className="fixed bottom-[82px] right-4 z-30 min-[821px]:hidden flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow-[0_6px_20px_rgba(238,77,45,0.42)] ring-2 ring-white/80 transition-all active:scale-95 hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:ring-night-panel dark:focus:ring-offset-night-bg print:hidden"
       >
-        <i className="fa-solid fa-phone text-[18px]" />
+        <Icon name="phone" className="text-[18px]" />
       </button>
 
       {/* Call Coordinator Modal */}

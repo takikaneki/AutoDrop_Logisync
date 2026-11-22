@@ -5,6 +5,7 @@ import { publishAnnouncement } from "../store/announcements.js";
 import { logAction } from "../store/audit.js";
 import { getPrefs } from "../store/prefs.js";
 import { toast } from "../store/toast.js";
+import Icon from "./Icon.jsx";
 
 const input =
   "w-full rounded-lg border border-[#e8e8e8] bg-white px-[11px] py-2.5 text-[13px] outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/10 text-ink";
@@ -45,7 +46,7 @@ export default function AnnouncementModal({ open, onClose }) {
       toast("Announcement sent.");
       addNotification({
         kind: "system",
-        icon: "fa-bullhorn",
+        icon: "megaphone",
         tone: "orange",
         title: `Announcement sent: ${finalTitle}`,
         text: `Sent to ${recipients}.`,
@@ -79,7 +80,7 @@ export default function AnnouncementModal({ open, onClose }) {
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-[42px] h-[42px] rounded-[10px] bg-brand-soft text-brand flex items-center justify-center">
-                  <i className="fa-solid fa-bullhorn" />
+                  <Icon name="megaphone" />
                 </div>
                 <div>
                   <h2 className="text-[17px] font-bold">Delivery Announcement</h2>
@@ -91,7 +92,7 @@ export default function AnnouncementModal({ open, onClose }) {
                 aria-label="Close"
                 className="w-8 h-8 shrink-0 rounded-lg bg-[#f5f5f5] text-[#555] hover:bg-[#eee] hover:text-brand dark:bg-night-line dark:text-[#d1c9c2]"
               >
-                <i className="fa-solid fa-xmark" />
+                <Icon name="x" />
               </button>
             </div>
 
@@ -122,7 +123,7 @@ export default function AnnouncementModal({ open, onClose }) {
 
               {error && (
                 <p className="mb-3 text-[12px] font-semibold text-[#d94747]">
-                  <i className="fa-solid fa-circle-exclamation mr-1" /> {error}
+                  <Icon name="circle-alert" className="mr-1" /> {error}
                 </p>
               )}
 
@@ -141,7 +142,7 @@ export default function AnnouncementModal({ open, onClose }) {
                   disabled={sending}
                   className="px-[15px] py-2.5 rounded-lg bg-brand text-white text-[12px] font-bold hover:bg-brand-dark disabled:opacity-60"
                 >
-                  <i className="fa-solid fa-paper-plane" /> {sending ? "Sending..." : "Send Alert"}
+                  <Icon name="send" /> {sending ? "Sending..." : "Send Alert"}
                 </button>
               </div>
             </div>
@@ -153,7 +154,7 @@ export default function AnnouncementModal({ open, onClose }) {
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(35,35,35,.48)]">
           <div className="w-[390px] max-w-[calc(100%-30px)] p-7 text-center rounded-[17px] bg-white shadow-[0_20px_60px_rgba(0,0,0,.18)] animate-popup dark:bg-night-panel">
             <div className="w-[55px] h-[55px] mx-auto mb-3 rounded-full bg-brand-soft text-brand flex items-center justify-center text-[21px]">
-              <i className="fa-solid fa-bullhorn" />
+              <Icon name="megaphone" />
             </div>
             <span className="text-[9px] font-extrabold tracking-[1px] text-brand">SYSTEM ANNOUNCEMENT</span>
             <h2 className="my-[9px] text-[19px] font-bold">{popup.title}</h2>

@@ -12,39 +12,40 @@ import { listMessages } from "../services/messageService.js";
 import { fetchUnreadComplaintCount } from "../services/complaintService.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 import { useSidebarTooltip } from "./layout/SidebarTooltip.jsx";
+import Icon from "./Icon.jsx";
 
 const groups = [
   {
     title: "Overview",
     links: [
-      { to: "/dashboard", icon: "fa-chart-pie", label: "Dashboard" },
-      { to: "/audit", icon: "fa-clipboard-list", label: "Activity Log" },
+      { to: "/dashboard", icon: "house", label: "Dashboard" },
+      { to: "/audit", icon: "history", label: "Activity Log" },
     ],
   },
   {
     title: "Operations",
     links: [
-      { to: "/parcels", icon: "fa-box-open", label: "Parcel Records" },
-      { to: "/verification", icon: "fa-circle-check", label: "Verification" },
-      { to: "/riders", icon: "fa-motorcycle", label: "Riders" },
-      { to: "/sellers", icon: "fa-store", label: "Sellers" },
-      { to: "/accounts", icon: "fa-user-plus", label: "Accounts" },
+      { to: "/parcels", icon: "package", label: "Parcel Records" },
+      { to: "/verification", icon: "circle-check", label: "Verification" },
+      { to: "/riders", icon: "bike", label: "Riders" },
+      { to: "/sellers", icon: "store", label: "Sellers" },
+      { to: "/accounts", icon: "users", label: "Accounts" },
     ],
   },
   {
     title: "Communication",
     links: [
-      { to: "/messages", icon: "fa-comments", label: "Messages" },
-      { to: "/complaints", icon: "fa-triangle-exclamation", label: "Complaints", badge: "complaints" },
-      { to: "/notifications", icon: "fa-bell", label: "Notifications", badge: "notifications" },
+      { to: "/messages", icon: "message-circle", label: "Messages" },
+      { to: "/complaints", icon: "clipboard-list", label: "Complaints", badge: "complaints" },
+      { to: "/notifications", icon: "bell", label: "Notifications", badge: "notifications" },
     ],
   },
 ];
 
 const infoLinks = [
-  { to: "/about", icon: "fa-circle-info", label: "About Us" },
-  { to: "/contact", icon: "fa-envelope", label: "Contact" },
-  { to: "/help", icon: "fa-circle-question", label: "Help" },
+  { to: "/about", icon: "info", label: "About Us" },
+  { to: "/contact", icon: "mail", label: "Contact" },
+  { to: "/help", icon: "circle-help", label: "Help" },
 ];
 
 export default function Sidebar({ collapsed, mobileOpen = false, onClose, onCloseDesktop, onToggleSidebar }) {
@@ -135,7 +136,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                 title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 className="hidden min-[821px]:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/95 transition hover:bg-white/15 hover:text-white"
               >
-                <i className="fa-solid fa-bars text-[17px]" />
+                <Icon name="menu" className="h-[18px] w-[18px]" />
               </button>
               <div className="flex shrink-0 items-center gap-1.5 min-[821px]:hidden">
               <button
@@ -145,7 +146,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                 title={dark ? "Switch to light mode" : "Switch to dark mode"}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
-                <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-xs`} />
+                <Icon name={dark ? "sun" : "moon"} className="h-4 w-4" />
               </button>
               <button
                 type="button"
@@ -157,7 +158,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                 title="Send announcement"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-brand transition hover:bg-white/90"
               >
-                <i className="fa-solid fa-bullhorn text-xs" />
+                <Icon name="megaphone" className="h-4 w-4" />
               </button>
               <button
                 type="button"
@@ -169,7 +170,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                 title="Close sidebar"
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white hover:text-brand"
               >
-                <i className="fa-solid fa-xmark text-sm" />
+                <Icon name="x" className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -212,7 +213,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   >
                     {({ isActive }) => (
                       <>
-                        <i className={`fa-solid ${l.icon} w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                        <Icon name={l.icon} className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                         <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                         {count > 0 && (
                           <span className={`min-w-[18px] h-[18px] px-1 rounded-full bg-white text-brand text-[11px] font-bold flex items-center justify-center shadow-xs ${collapsed ? "min-[821px]:hidden" : ""}`}>
@@ -253,7 +254,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   aria-label={labelText}
                   {...tipProps(labelText)}
                 >
-                  <i className={`fa-solid ${l.icon} w-5 text-center`} />
+                  <Icon name={l.icon} className="h-[18px] w-[18px]" />
                   <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                 </NavLink>
               );
@@ -273,7 +274,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
           >
             {({ isActive }) => (
               <>
-                <i className={`fa-solid fa-gear w-5 text-center ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                <Icon name="settings" className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
               </>
             )}
@@ -290,7 +291,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
               collapsed ? "min-[821px]:justify-center min-[821px]:px-0 max-[820px]:gap-[13px] max-[820px]:px-3.5" : "gap-[13px] px-3.5"
             }`}
           >
-            <i className="fa-solid fa-right-from-bracket w-5 text-center" />
+            <Icon name="log-out" className="h-[18px] w-[18px]" />
             <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Logout")}</span>
           </button>
         </div>

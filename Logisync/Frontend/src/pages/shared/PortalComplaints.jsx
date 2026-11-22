@@ -9,6 +9,7 @@ import { createComplaint, fetchComplaints } from "../../services/complaintServic
 import { addComplaint, useComplaints } from "../../store/records.js";
 import { addNotification } from "../../store/notifications.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../../components/Icon.jsx";
 
 const statusTone = {
   Open: "bg-[#fff0f0] text-[#d94747]",
@@ -159,7 +160,7 @@ export default function PortalComplaints() {
 
       addNotification({
         kind: role,
-        icon: urgent ? "fa-triangle-exclamation" : "fa-headset",
+        icon: urgent ? "triangle-alert" : "headset",
         tone: urgent ? "red" : "orange",
         read: false,
         title: `${user?.name || cfg.role} sent ${urgent ? "an urgent request" : form.type === "Request" ? "a request" : "a complaint"}`,
@@ -184,10 +185,10 @@ export default function PortalComplaints() {
       <Topbar title={cfg.title} subtitle={cfg.subtitle} />
 
       <section className={`${panel} mb-6 p-[26px] max-[600px]:p-5`}>
-        <h2 className="mb-4 text-[17px] font-bold"><i className="fa-solid fa-pen-to-square mr-2 text-brand" />New submission</h2>
+        <h2 className="mb-4 text-[17px] font-bold"><Icon name="square-pen" className="mr-2 text-brand" />New submission</h2>
         {urgent && (
           <div className="mb-4">
-            <Notice tone="error" icon="fa-triangle-exclamation">
+            <Notice tone="error" icon="triangle-alert">
               Urgent requests are marked <strong>High priority</strong> for the coordinator. For life-threatening emergencies, call emergency services first.
             </Notice>
           </div>
@@ -222,15 +223,15 @@ export default function PortalComplaints() {
             <label className={labelCls} htmlFor="c-desc">Details</label>
             <textarea id="c-desc" rows={4} value={form.description} onChange={set("description")} maxLength={1000} placeholder="What happened? Include your location if it is urgent." className={textareaCls} />
           </div>
-          {error && <p role="alert" className="text-[13px] font-semibold text-[#d94747]"><i className="fa-solid fa-circle-exclamation mr-1" />{error}</p>}
-          <button type="submit" className={btnPrimary}><i className="fa-solid fa-paper-plane" /> Submit to coordinator</button>
+          {error && <p role="alert" className="text-[13px] font-semibold text-[#d94747]"><Icon name="circle-alert" className="mr-1" />{error}</p>}
+          <button type="submit" className={btnPrimary}><Icon name="send" /> Submit to coordinator</button>
         </form>
       </section>
 
       <section className={`${panel} p-[26px] max-[600px]:p-5`}>
-        <h2 className="mb-4 text-[17px] font-bold"><i className="fa-solid fa-clock-rotate-left mr-2 text-brand" />My submissions</h2>
+        <h2 className="mb-4 text-[17px] font-bold"><Icon name="history" className="mr-2 text-brand" />My submissions</h2>
         {mine.length === 0 ? (
-          <EmptyState icon="fa-inbox" title="Nothing submitted yet" text="Your complaints and requests will be listed here with the coordinator's response." />
+          <EmptyState icon="inbox" title="Nothing submitted yet" text="Your complaints and requests will be listed here with the coordinator's response." />
         ) : (
           <>
             <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
@@ -291,7 +292,7 @@ export default function PortalComplaints() {
             <p className="mt-1 whitespace-pre-line text-[#777] dark:text-[#d1c9c2]">{current.description}</p>
             <h4 className="mb-1.5 mt-3 text-[13px] font-bold">Updates from the coordinator</h4>
             {current.notes?.length ? (
-              <ul className="space-y-1.5">{current.notes.map((n, i) => <li key={i} className="rounded-lg bg-white px-3 py-2 text-[13px] dark:bg-night-panel"><i className="fa-solid fa-user-tie mr-1.5 text-brand" />{n}</li>)}</ul>
+              <ul className="space-y-1.5">{current.notes.map((n, i) => <li key={i} className="rounded-lg bg-white px-3 py-2 text-[13px] dark:bg-night-panel"><Icon name="users" className="mr-1.5 text-brand" />{n}</li>)}</ul>
             ) : (
               <p className="text-[13px] text-[#999]">No updates yet.</p>
             )}

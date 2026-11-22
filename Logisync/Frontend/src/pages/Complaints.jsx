@@ -9,6 +9,7 @@ import {
 } from "../services/complaintService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
+import Icon from "../components/Icon.jsx";
 
 const statusTone = {
   Open: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
@@ -296,7 +297,7 @@ export default function Complaints() {
         {/* Filters */}
         <div className="grid grid-cols-[1fr_170px_170px] gap-3 mb-5 max-[800px]:grid-cols-1">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
+            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
             <input
               value={search}
               onChange={(e) => {
@@ -406,7 +407,7 @@ export default function Complaints() {
           </table>
           {!loading && rows.length === 0 && (
             <EmptyState
-              icon="fa-inbox"
+              icon="inbox"
               title="No complaints found"
               text="No complaints match your active filters."
             />
@@ -417,12 +418,12 @@ export default function Complaints() {
         <div className="min-[768px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3.5 pr-1">
           {loading ? (
             <div className="py-10 text-center text-[13px] text-[#888]">
-              <i className="fa-solid fa-spinner fa-spin mr-2 text-brand" />
+              <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
               Loading complaints…
             </div>
           ) : rows.length === 0 ? (
             <EmptyState
-              icon="fa-inbox"
+              icon="inbox"
               title="No complaints found"
               text="No complaints match your active filters."
             />
@@ -478,7 +479,7 @@ export default function Complaints() {
                 <div className="mt-3.5 flex items-center justify-between border-t border-[#f4f6f8] pt-3 text-[12px] dark:border-night-line">
                   <div className="flex items-center gap-2 text-[#9ca3af]">
                     <span className={`font-bold ${prioTone[c.priority]}`}>
-                      <i className="fa-solid fa-circle text-[8px] mr-1" />
+                      <Icon name="circle" className="text-[8px] mr-1" />
                       {c.priority} Priority
                     </span>
                     <span>·</span>
@@ -489,7 +490,7 @@ export default function Complaints() {
                     className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-brand-soft px-3.5 py-1.5 text-[12.5px] font-bold text-brand transition hover:bg-brand hover:text-white dark:bg-night-line dark:hover:bg-brand"
                   >
                     <span>Open Ticket</span>
-                    <i className="fa-solid fa-arrow-right text-[11px]" />
+                    <Icon name="arrow-right" className="text-[11px]" />
                   </button>
                 </div>
               </div>
@@ -519,7 +520,7 @@ export default function Complaints() {
               aria-label="Close"
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] flex items-center justify-center dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <strong className="text-[14px] text-brand">{current.id}</strong>
@@ -577,7 +578,7 @@ export default function Complaints() {
             />
             <div className="flex gap-2.5 flex-wrap mt-4">
               <button onClick={addNote} className={btnGhost}>
-                <i className="fa-solid fa-plus mr-1" /> Add note
+                <Icon name="plus" className="mr-1" /> Add note
               </button>
               {current.status === "Open" && (
                 <button onClick={() => setStatusFor(current, "In Progress")} className={btnGhost}>
@@ -586,7 +587,7 @@ export default function Complaints() {
               )}
               {current.status !== "Resolved" && (
                 <button onClick={() => setStatusFor(current, "Resolved")} className={btnPrimary}>
-                  <i className="fa-solid fa-check mr-1" /> Mark resolved
+                  <Icon name="check" className="mr-1" /> Mark resolved
                 </button>
               )}
               {current.status === "Resolved" && (

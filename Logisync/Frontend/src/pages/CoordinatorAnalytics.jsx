@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listParcels } from "../services/parcelService.js";
+import Icon from "../components/Icon.jsx";
 
 const VERIFIED_STATUSES = new Set(["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"]);
 
@@ -57,7 +58,7 @@ export default function CoordinatorAnalytics() {
           aria-label="Go back"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
         >
-          <i className="fa-solid fa-arrow-left text-[17px]" />
+          <Icon name="arrow-left" className="text-[17px]" />
         </button>
         <h1 className="min-w-0 flex-1 truncate text-center text-[16.5px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
           Analytics
@@ -153,7 +154,7 @@ export default function CoordinatorAnalytics() {
           <div className="divide-y divide-slate-100 px-4 dark:divide-night-line">
             <div className="flex items-center gap-3.5 py-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand dark:bg-night-head">
-                <i className="fa-solid fa-boxes-stacked text-[15px]" />
+                <Icon name="package" className="text-[15px]" />
               </span>
               <div className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
@@ -167,7 +168,7 @@ export default function CoordinatorAnalytics() {
 
             <div className="flex items-center gap-3.5 py-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-                <i className="fa-solid fa-circle-check text-[15px]" />
+                <Icon name="circle-check" className="text-[15px]" />
               </span>
               <div className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
@@ -181,7 +182,7 @@ export default function CoordinatorAnalytics() {
 
             <div className="flex items-center gap-3.5 py-3.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]">
-                <i className="fa-solid fa-hourglass-half text-[15px]" />
+                <Icon name="clock" className="text-[15px]" />
               </span>
               <div className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">

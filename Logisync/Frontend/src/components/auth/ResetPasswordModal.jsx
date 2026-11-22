@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
+import Icon from "../Icon.jsx";
 
 export default function ResetPasswordModal({ open, token, onClose, onSuccess, onRequestNewLink }) {
   const [verifying, setVerifying] = useState(true);
@@ -99,7 +100,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
         <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md sm:px-7 sm:py-5">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-base text-white shadow-sm shadow-orange-500/25">
-              <i className="fa-solid fa-lock" />
+              <Icon name="lock" />
             </span>
             <div>
               <h2 id="reset-password-title" className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
@@ -116,7 +117,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
             aria-label="Close Reset Password Modal"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
           >
-            <i className="fa-solid fa-xmark text-base" />
+            <Icon name="x" className="text-base" />
           </button>
         </div>
 
@@ -124,13 +125,13 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
         <div className="p-6 sm:p-7">
           {verifying ? (
             <div className="py-8 text-center text-slate-500">
-              <i className="fa-solid fa-circle-notch animate-spin text-3xl text-brand" />
+              <Icon name="loader-2" className="animate-spin text-3xl text-brand" />
               <p className="mt-3 text-sm font-semibold">Verifying reset token...</p>
             </div>
           ) : !tokenValid ? (
             <div className="text-center animate-popup">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-2xl text-red-600 ring-8 ring-red-50/50">
-                <i className="fa-solid fa-link-slash" />
+                <Icon name="unlink" />
               </div>
               <h3 className="text-lg font-extrabold text-slate-900">
                 Invalid or Expired Link
@@ -169,7 +170,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
                   role="alert"
                   className="mb-4 flex animate-popup items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-600"
                 >
-                  <i className="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-sm" />
+                  <Icon name="circle-alert" className="mt-0.5 shrink-0 text-sm" />
                   <span className="leading-snug">{error}</span>
                 </div>
               )}
@@ -184,7 +185,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
                     New Password
                   </label>
                   <div className={inputWrap}>
-                    <i className="fa-solid fa-lock shrink-0 text-base text-slate-400" />
+                    <Icon name="lock" className="shrink-0 text-base text-slate-400" />
                     <input
                       id="reset-new-password"
                       type={showPassword ? "text" : "password"}
@@ -201,7 +202,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
                       onClick={() => setShowPassword((v) => !v)}
                       className="p-1 text-base text-slate-400 transition-colors hover:text-slate-700 focus:outline-none"
                     >
-                      <i className={`fa-regular ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+                      <Icon name={showPassword ? "eye-off" : "eye"} />
                     </button>
                   </div>
                 </div>
@@ -215,7 +216,7 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
                     Confirm New Password
                   </label>
                   <div className={inputWrap}>
-                    <i className="fa-solid fa-shield-halved shrink-0 text-base text-slate-400" />
+                    <Icon name="shield-check" className="shrink-0 text-base text-slate-400" />
                     <input
                       id="reset-confirm-password"
                       type={showPassword ? "text" : "password"}
@@ -231,23 +232,25 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
 
                 {/* Password requirement helper */}
                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                  <i
-                    className={`fa-solid ${
-                      newPassword.length >= 8
-                        ? "fa-circle-check text-emerald-600"
-                        : "fa-circle text-slate-300"
-                    }`}
+                  <Icon
+                    name={newPassword.length >= 8 ? "circle-check" : "circle"}
+                    className={newPassword.length >= 8 ? "text-emerald-600" : "text-slate-300"}
                   />
                   <span>Minimum 8 characters</span>
                   {confirmPassword && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <i
-                        className={`fa-solid ${
+                      <Icon
+                        name={
                           newPassword === confirmPassword && confirmPassword.length > 0
-                            ? "fa-circle-check text-emerald-600"
-                            : "fa-circle text-slate-300"
-                        }`}
+                            ? "circle-check"
+                            : "circle"
+                        }
+                        className={
+                          newPassword === confirmPassword && confirmPassword.length > 0
+                            ? "text-emerald-600"
+                            : "text-slate-300"
+                        }
                       />
                       <span>Passwords match</span>
                     </>
@@ -263,12 +266,12 @@ export default function ResetPasswordModal({ open, token, onClose, onSuccess, on
                 >
                   {submitting ? (
                     <>
-                      <i className="fa-solid fa-circle-notch animate-spin text-sm" />
+                      <Icon name="loader-2" className="animate-spin text-sm" />
                       <span>Updating Password...</span>
                     </>
                   ) : (
                     <>
-                      <i className="fa-solid fa-check text-xs" />
+                      <Icon name="check" className="text-xs" />
                       <span>Save New Password</span>
                     </>
                   )}

@@ -8,6 +8,7 @@ import UserAvatar from "./Avatar.jsx";
 import { toggleDark, usePrefs } from "../store/prefs.js";
 import { useProfile } from "../store/profile.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
+import Icon from "./Icon.jsx";
 
 const iconBtn =
   "flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f5f5] text-[#555] hover:bg-brand-soft hover:text-brand transition dark:bg-night-line dark:text-[#d1c9c2]";
@@ -52,7 +53,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                 collapsed ? "flex" : "hidden"
               }`}
             >
-              <i className="fa-solid fa-bars text-[18px]" />
+              <Icon name="menu" className="text-[18px]" />
             </button>
             <Link to="/dashboard" className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[821px]:hidden"}`}>
               <img
@@ -79,7 +80,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
-              <i className={`fa-solid ${dark ? "fa-sun" : "fa-moon"} text-[14px] sm:text-[15px]`} />
+              <Icon name={dark ? "sun" : "moon"} className="text-[15px]" />
             </button>
 
             <button
@@ -88,7 +89,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
               aria-label="Send announcement"
               className="flex h-10 w-10 max-[480px]:h-9 max-[480px]:w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand hover:bg-brand hover:text-white transition dark:bg-night-line"
             >
-              <i className="fa-solid fa-bullhorn text-[14px] sm:text-[15px]" />
+              <Icon name="megaphone" className="text-[14px] sm:text-[15px]" />
             </button>
 
             <NotificationBell />
@@ -109,7 +110,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                     {profile.role}
                   </small>
                 </span>
-                <i className="fa-solid fa-chevron-down text-[10px] text-[#999] max-[820px]:hidden" />
+                <Icon name="chevron-down" className="text-[10px] text-[#999] max-[820px]:hidden" />
               </button>
 
               {menuOpen && (
@@ -121,7 +122,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                     </small>
                   </div>
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
-                    <i className="fa-solid fa-gear w-4 text-center text-[#888]" /> Settings
+                    <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
                   </Link>
                   <button
                     type="button"
@@ -131,10 +132,10 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                     }}
                     className={item}
                   >
-                    <i className="fa-solid fa-headset w-4 text-center text-[#888]" /> Contact Us
+                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
                   </button>
                   <Link to="/help#faq" onClick={() => setMenuOpen(false)} className={item}>
-                    <i className="fa-regular fa-circle-question w-4 text-center text-[#888]" /> FAQ
+                    <Icon name="circle-help" className="h-4 w-4 text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
@@ -143,7 +144,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                     }}
                     className={`${item} border-t border-[#f1f1f1] text-[#d94747] dark:border-night-line`}
                   >
-                    <i className="fa-solid fa-right-from-bracket w-4 text-center" /> Logout
+                    <Icon name="log-out" className="h-4 w-4" /> Logout
                   </button>
                 </div>
               )}

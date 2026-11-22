@@ -7,6 +7,7 @@ import {
   TERMS_SECTIONS,
 } from "../data/terms.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
+import Icon from "./Icon.jsx";
 
 /**
  * Modal for displaying LogiSync's Terms and Conditions and Privacy Policy,
@@ -67,10 +68,9 @@ export default function TermsModal({
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 pt-5 pb-4 sm:px-7">
           <div className="flex items-center gap-3.5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-[#f97316] border border-orange-200/70">
-              <i
-                className={`fa-solid ${
-                  isTerms ? "fa-file-contract" : "fa-user-shield"
-                } text-lg`}
+              <Icon
+                name={isTerms ? "file-text" : "shield-check"}
+                className="h-5 w-5"
               />
             </span>
             <div>
@@ -97,7 +97,7 @@ export default function TermsModal({
             aria-label="Close modal"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-orange-50 hover:text-[#f97316]"
           >
-            <i className="fa-solid fa-xmark text-base" />
+            <Icon name="x" className="text-base" />
           </button>
         </div>
 
@@ -112,7 +112,7 @@ export default function TermsModal({
                 : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#f97316]"
             }`}
           >
-            <i className="fa-solid fa-file-contract text-xs" />
+            <Icon name="file-text" className="text-xs" />
             <span>Terms and Conditions</span>
           </button>
           <button
@@ -124,7 +124,7 @@ export default function TermsModal({
                 : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#f97316]"
             }`}
           >
-            <i className="fa-solid fa-user-shield text-xs" />
+            <Icon name="shield-check" className="text-xs" />
             <span>Privacy Policy</span>
           </button>
         </div>
@@ -139,7 +139,7 @@ export default function TermsModal({
           {/* Applicable Philippine Republic Acts Reference Box */}
           <div className="mb-6 rounded-2xl border border-orange-200/80 bg-gradient-to-br from-orange-50/70 via-white to-amber-50/40 p-4 sm:p-5">
             <div className="mb-3 flex items-center gap-2">
-              <i className="fa-solid fa-scale-balanced text-[#ea580c]" />
+              <Icon name="scale" className="text-[#ea580c]" />
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 sm:text-sm">
                 Applicable Philippine Legal Framework
               </h3>
@@ -152,7 +152,7 @@ export default function TermsModal({
                 >
                   <div className="flex items-center gap-2">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#f97316]">
-                      <i className={`fa-solid ${act.icon} text-xs`} />
+                      <Icon name={act.icon} className="text-xs" />
                     </span>
                     <div>
                       <p className="text-xs font-extrabold text-[#ea580c]">{act.code}</p>
@@ -172,7 +172,7 @@ export default function TermsModal({
           {/* Role Scope Pill */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-600">
             <span className="font-semibold">
-              <i className="fa-solid fa-users-gear mr-1.5 text-brand" />
+              <Icon name="user-cog" className="mr-1.5 text-brand" />
               Applies to all system roles:{" "}
               <strong className="text-slate-800">Coordinator, Seller, and Rider</strong>
             </span>
@@ -203,7 +203,7 @@ export default function TermsModal({
                       const hasLead = colonIdx > 0 && colonIdx < 45;
                       return (
                         <li key={idx} className="flex items-start gap-2.5">
-                          <i className="fa-solid fa-circle-check mt-1 shrink-0 text-[11px] text-[#f97316]" />
+                          <Icon name="circle-check" className="mt-1 shrink-0 text-[11px] text-[#f97316]" />
                           <span>
                             {hasLead ? (
                               <>
@@ -269,7 +269,7 @@ export default function TermsModal({
                 onClick={onAgree}
                 className="w-full rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:from-[#ea580c] hover:to-[#c2410c] sm:w-auto sm:text-sm"
               >
-                <i className="fa-solid fa-check mr-1.5" />
+                <Icon name="check" className="mr-1.5" />
                 {alreadyAccepted ? "Accepted" : "Accept & Continue"}
               </button>
             )}

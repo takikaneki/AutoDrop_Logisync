@@ -268,7 +268,7 @@ export function coordinateReturn(parcelId, { note = "", by } = {}) {
   addNotification({
     id: `rth-coord-${parcelId}`,
     kind: "parcel",
-    icon: "fa-rotate-left",
+    icon: "undo-2",
     tone: "blue",
     title: `Return to seller coordinated: ${updated?.transaction_number || parcelId}`,
     text: `Coordinated by ${coordinatorName} for ${updated?.seller || "Seller"}. ${note || ""}`.trim(),

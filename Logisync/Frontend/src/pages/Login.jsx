@@ -19,6 +19,7 @@ import {
   getRememberedCredentials,
   saveRememberedCredentials,
 } from "../utils/rememberMe.js";
+import Icon from "../components/Icon.jsx";
 
 const REMEMBER_ACCOUNTS_KEY = "logisync_remembered_accounts";
 
@@ -204,7 +205,7 @@ function LogisticsGraphicBackground() {
       <div className="hidden xl:flex absolute left-[6%] top-[18%] flex-col gap-5">
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-            <i className="fa-solid fa-clipboard-check text-base" />
+            <Icon name="clipboard-check" className="text-base" />
           </span>
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Hub Verification</p>
@@ -214,7 +215,7 @@ function LogisticsGraphicBackground() {
 
         <div className="ml-6 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#f97316]">
-            <i className="fa-solid fa-qrcode text-base" />
+            <Icon name="qr-code" className="text-base" />
           </span>
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Smart Dispatch</p>
@@ -225,7 +226,7 @@ function LogisticsGraphicBackground() {
 
       <div className="hidden xl:flex absolute bottom-[16%] left-[7%] items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-          <i className="fa-solid fa-truck-fast text-base" />
+          <Icon name="truck" className="text-base" />
         </span>
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Live Fleet</p>
@@ -235,7 +236,7 @@ function LogisticsGraphicBackground() {
 
       <div className="hidden xl:flex absolute right-[6%] top-[20%] items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-          <i className="fa-solid fa-calendar-check text-base" />
+          <Icon name="calendar-check" className="text-base" />
         </span>
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Retry Protection</p>
@@ -246,7 +247,7 @@ function LogisticsGraphicBackground() {
       <div className="hidden xl:flex absolute bottom-[18%] right-[6%] flex-col gap-4">
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#f97316]">
-            <i className="fa-solid fa-shield-halved text-base" />
+            <Icon name="shield-check" className="text-base" />
           </span>
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Proof of Handoff</p>
@@ -531,7 +532,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
               onClick={() => setContactOpen(true)}
               className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#f97316] sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
             >
-              <i className="fa-solid fa-headset text-[11px] text-[#f97316] sm:text-xs" />
+              <Icon name="headset" className="text-[11px] text-[#f97316] sm:text-xs" />
               <span>Contact Us</span>
             </button>
             <button
@@ -539,7 +540,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
               onClick={() => setShowIntro(true)}
               className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200 sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
             >
-              <i className="fa-solid fa-arrow-left text-[10px]" />
+              <Icon name="arrow-left" className="text-[10px]" />
               <span>Back to Website</span>
             </button>
           </div>
@@ -572,7 +573,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   Email / Username
                 </label>
                 <div className={inputWrap}>
-                  <i className="fa-regular fa-envelope shrink-0 text-base text-slate-400" />
+                  <Icon name="mail" className="shrink-0 text-base text-slate-400" />
                   <input
                     id="email"
                     name="email"
@@ -604,7 +605,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   Password
                 </label>
                 <div className={inputWrap}>
-                  <i className="fa-solid fa-lock shrink-0 text-base text-slate-400" />
+                  <Icon name="lock" className="shrink-0 text-base text-slate-400" />
                   <input
                     id="password"
                     name="password"
@@ -628,7 +629,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                     onClick={() => setShowPassword((v) => !v)}
                     className="p-1 text-base text-slate-400 transition-colors hover:text-slate-700 focus:outline-none"
                   >
-                    <i className={`fa-regular ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+                    <Icon name={showPassword ? "eye-off" : "eye"} />
                   </button>
                 </div>
 
@@ -654,7 +655,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   role="status"
                   className="mb-4 flex animate-popup items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700"
                 >
-                  <i className="fa-solid fa-circle-check mt-0.5 shrink-0 text-sm text-emerald-600" />
+                  <Icon name="circle-check" className="mt-0.5 shrink-0 text-sm text-emerald-600" />
                   <span className="leading-snug">{successMessage}</span>
                 </div>
               )}
@@ -665,7 +666,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
                   role="alert"
                   className="mb-4 flex animate-popup items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-600"
                 >
-                  <i className="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-sm" />
+                  <Icon name="circle-alert" className="mt-0.5 shrink-0 text-sm" />
                   <span className="leading-snug">{error}</span>
                 </div>
               )}
@@ -721,13 +722,13 @@ export default function Login({ portalRole: propPortalRole } = {}) {
               >
                 {loading ? (
                   <>
-                    <i className="fa-solid fa-circle-notch fa-spin text-base" />
+                    <Icon name="loader-2" className="text-base animate-spin" />
                     <span>Signing in...</span>
                   </>
                 ) : (
                   <>
                     <span>Sign In</span>
-                    <i className="fa-solid fa-arrow-right text-xs" />
+                    <Icon name="arrow-right" className="text-xs" />
                   </>
                 )}
               </button>
@@ -747,7 +748,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
             {/* Information notice + SPX Express Branding + Footer */}
             <div className="mt-6 border-t border-slate-100 pt-4">
               <p className="mb-3 flex items-start gap-2 text-xs leading-snug text-slate-500">
-                <i className="fa-solid fa-circle-info mt-0.5 shrink-0 text-sm text-brand" />
+                <Icon name="info" className="mt-0.5 shrink-0 text-sm text-brand" />
                 <span>Seller and Rider accounts are created and managed by the Hub Coordinator.</span>
               </p>
 

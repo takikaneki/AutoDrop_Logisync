@@ -13,21 +13,21 @@ export const REPUBLIC_ACTS = [
   {
     code: "R.A. No. 10173",
     title: "Data Privacy Act of 2012",
-    icon: "fa-user-shield",
+    icon: "shield-check",
     summary:
       "Governs the collection, processing, storage, protection, and role-based access of personal information (account credentials, receiver names, contact numbers, delivery addresses in Trece Martires City, Cavite, and packing video proofs) under the principles of transparency, legitimate purpose, and proportionality.",
   },
   {
     code: "R.A. No. 11967",
     title: "Internet Transactions Act of 2023",
-    icon: "fa-boxes-packing",
+    icon: "package",
     summary:
       "Establishes obligations for truthful digital transaction records, accurate parcel content category declarations, prohibition of illegal or misdeclared goods, and accountability across e-commerce sellers, logistics coordinators, and delivery riders.",
   },
   {
     code: "R.A. No. 10175",
     title: "Cybercrime Prevention Act of 2012",
-    icon: "fa-shield-halved",
+    icon: "shield-check",
     summary:
       "Protects the confidentiality, integrity, and availability of LogiSync's electronic records, QR tracking data, and verification logs against unauthorized access, data tampering, computer-related forgery, and fraudulent manipulation.",
   },

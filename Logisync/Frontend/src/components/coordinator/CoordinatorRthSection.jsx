@@ -6,6 +6,7 @@ import { EmptyState } from "../ui.jsx";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
 import { fetchCoordinatorRth } from "../../services/parcelService.js";
 import { formatDate } from "../../utils/format.js";
+import Icon from "../Icon.jsx";
 
 export default function CoordinatorRthSection() {
   const [data, setData] = useState({ pending: [], confirmed: [], counts: { pending: 0, confirmed: 0, total: 0 } });
@@ -47,7 +48,7 @@ export default function CoordinatorRthSection() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-[19px] font-bold text-[#1e293b] dark:text-white">
-              <i className="fa-solid fa-warehouse mr-2 text-[#7c3aed]" />
+              <Icon name="undo-2" className="mr-2 text-[#7c3aed]" />
               Return to Hub (RTH) Physical Verification
             </h2>
             {data.counts.pending > 0 && (
@@ -67,7 +68,7 @@ export default function CoordinatorRthSection() {
             className={`${btnPrimary} !bg-[#7c3aed] hover:!bg-[#6d28d9]`}
             title="Open the Unified QR Scanner to verify returned parcels"
           >
-            <i className="fa-solid fa-qrcode mr-1.5" /> Scan Unified QR
+            <Icon name="qr-code" className="mr-1.5" /> Scan Unified QR
           </Link>
           <button
             type="button"
@@ -76,7 +77,7 @@ export default function CoordinatorRthSection() {
             title="Refresh list"
             aria-label="Refresh list"
           >
-            <i className={`fa-solid fa-rotate-right ${loading ? "fa-spin" : ""}`} />
+            <Icon name="refresh-cw" className={`${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -92,7 +93,7 @@ export default function CoordinatorRthSection() {
               : "bg-transparent text-[#64748b] hover:bg-[#f1f5f9] dark:text-[#9c948c] dark:hover:bg-night-line"
           }`}
         >
-          <i className="fa-solid fa-clock-rotate-left" />
+          <Icon name="history" />
           <span>Pending Physical Arrival</span>
           <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-extrabold text-[#c2410c] dark:bg-night-panel dark:text-orange-300">
             {data.counts.pending}
@@ -108,7 +109,7 @@ export default function CoordinatorRthSection() {
               : "bg-transparent text-[#64748b] hover:bg-[#f1f5f9] dark:text-[#9c948c] dark:hover:bg-night-line"
           }`}
         >
-          <i className="fa-solid fa-circle-check" />
+          <Icon name="circle-check" />
           <span>Confirmed at Hub</span>
           <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-extrabold text-[#7e22ce] dark:bg-night-panel dark:text-purple-300">
             {data.counts.confirmed}
@@ -119,13 +120,13 @@ export default function CoordinatorRthSection() {
       {/* Content Table / Cards */}
       {loading ? (
         <div className="py-12 text-center text-[13px] text-[#64748b]">
-          <i className="fa-solid fa-circle-notch fa-spin mr-2 text-brand" />
+          <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
           Loading Return to Hub parcels…
         </div>
       ) : list.length === 0 ? (
         <div className="py-8">
           <EmptyState
-            icon="fa-warehouse"
+            icon="undo-2"
             title={tab === "pending" ? "No pending returns awaiting arrival" : "No confirmed returns yet"}
             text={
               tab === "pending"
@@ -195,7 +196,7 @@ export default function CoordinatorRthSection() {
                       >
                         {tab === "pending" ? (
                           <>
-                            <i className="fa-solid fa-check mr-1" /> Verify Arrival
+                            <Icon name="check" className="mr-1" /> Verify Arrival
                           </>
                         ) : (
                           "View Record"

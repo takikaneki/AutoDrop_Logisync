@@ -25,6 +25,7 @@ import {
 import { compressImage } from "../../utils/image.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../../components/Icon.jsx";
 
 const RTH_REASONS = [
   "Recipient Refused Parcel",
@@ -289,7 +290,7 @@ export default function RiderScan() {
       >
         {parcel && (
           <button onClick={reset} className={btnGhost}>
-            <i className="fa-solid fa-qrcode" /> Scan another parcel
+            <Icon name="qr-code" /> Scan another parcel
           </button>
         )}
       </Topbar>
@@ -298,7 +299,7 @@ export default function RiderScan() {
         <section className={`${panel} mb-6 p-[30px] max-[600px]:p-5`}>
           {expect && (
             <div className="mx-auto mb-5 max-w-[360px]">
-              <Notice tone="info" icon="fa-qrcode">
+              <Notice tone="info" icon="qr-code">
                 Scanning for assigned parcel <strong>{expect}</strong>.{" "}
                 <button onClick={reset} className="font-bold underline">
                   Scan any parcel instead
@@ -310,7 +311,7 @@ export default function RiderScan() {
           {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
           {error && (
             <div className="mx-auto mt-4 max-w-[360px]">
-              <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+              <Notice tone="error" icon="circle-alert" role="alert">
                 {error}
               </Notice>
             </div>
@@ -343,14 +344,14 @@ export default function RiderScan() {
 
           {/* Role & Assignment Notice */}
           {!isAssigned ? (
-            <Notice tone="error" icon="fa-triangle-exclamation" role="alert">
+            <Notice tone="error" icon="triangle-alert" role="alert">
               <strong className="block">Not Assigned to You</strong>
               <span>
                 This parcel is assigned to another rider or has not been dispatched yet. Please check with your Coordinator.
               </span>
             </Notice>
           ) : isRthPending ? (
-            <Notice tone="warn" icon="fa-warehouse" role="status">
+            <Notice tone="warn" icon="undo-2" role="status">
               <strong className="block">Return to Hub</strong>
               <span>
                 You have marked this parcel for Return to Hub (Reason: {parcel.rth_reason || parcel.return_note || "Buyer refused"}).
@@ -358,19 +359,19 @@ export default function RiderScan() {
               </span>
             </Notice>
           ) : isRthConfirmed ? (
-            <Notice tone="success" icon="fa-circle-check" role="status">
+            <Notice tone="success" icon="circle-check" role="status">
               <strong className="block">Return to Hub – Confirmed</strong>
               <span>
                 The Coordinator has physically confirmed receipt of this parcel at the Hub. Custody has been safely returned.
               </span>
             </Notice>
           ) : isDelivered ? (
-            <Notice tone="success" icon="fa-circle-check" role="status">
+            <Notice tone="success" icon="circle-check" role="status">
               <strong className="block">Delivered</strong>
               <span>This parcel has already been successfully delivered to the recipient.</span>
             </Notice>
           ) : isRescheduled ? (
-            <Notice tone="warn" icon="fa-calendar-day" role="status">
+            <Notice tone="warn" icon="calendar-days" role="status">
               <strong className="block">Rescheduled for Delivery</strong>
               <span>
                 Scheduled delivery date: <strong>{formatDay(parcel.scheduledFor)}</strong>.
@@ -378,7 +379,7 @@ export default function RiderScan() {
               </span>
             </Notice>
           ) : (
-            <Notice tone="success" icon="fa-truck-fast" role="status">
+            <Notice tone="success" icon="truck" role="status">
               <strong className="block">Ready for Delivery</strong>
               <span>This parcel is cleared and assigned to you for delivery.</span>
             </Notice>
@@ -415,7 +416,7 @@ export default function RiderScan() {
                   }}
                   className={`${btnPrimary} !bg-[#16a34a] hover:!bg-[#15803d] flex items-center justify-center gap-2`}
                 >
-                  <i className="fa-solid fa-circle-check" />
+                  <Icon name="circle-check" />
                   <span>Delivered</span>
                 </button>
 
@@ -429,7 +430,7 @@ export default function RiderScan() {
                   }}
                   className={`${btnPrimary} !bg-[#d97706] hover:!bg-[#b45309] flex items-center justify-center gap-2`}
                 >
-                  <i className="fa-solid fa-calendar-day" />
+                  <Icon name="calendar-days" />
                   <span>Buyer Unavailable (Reschedule)</span>
                 </button>
 
@@ -444,7 +445,7 @@ export default function RiderScan() {
                   }}
                   className={`${btnPrimary} !bg-[#dc2626] hover:!bg-[#b91c1c] flex items-center justify-center gap-2`}
                 >
-                  <i className="fa-solid fa-warehouse" />
+                  <Icon name="undo-2" />
                   <span>Return to Hub (RTH)</span>
                 </button>
               </div>
@@ -471,7 +472,7 @@ export default function RiderScan() {
       >
         <div className="mb-4 flex items-center justify-between border-b pb-3 dark:border-night-line">
           <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            <i className="fa-solid fa-circle-check mr-2 text-green-600" />
+            <Icon name="circle-check" className="mr-2 text-green-600" />
             Complete Delivery
           </h3>
           <button
@@ -479,7 +480,7 @@ export default function RiderScan() {
             aria-label="Close"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
           >
-            <i className="fa-solid fa-xmark text-sm" />
+            <Icon name="x" className="text-sm" />
           </button>
         </div>
 
@@ -553,7 +554,7 @@ export default function RiderScan() {
       >
         <div className="mb-4 flex items-center justify-between border-b pb-3 dark:border-night-line">
           <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            <i className="fa-solid fa-calendar-day mr-2 text-amber-600" />
+            <Icon name="calendar-days" className="mr-2 text-amber-600" />
             Reschedule for Delivery
           </h3>
           <button
@@ -561,7 +562,7 @@ export default function RiderScan() {
             aria-label="Close"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
           >
-            <i className="fa-solid fa-xmark text-sm" />
+            <Icon name="x" className="text-sm" />
           </button>
         </div>
 
@@ -622,7 +623,7 @@ export default function RiderScan() {
       >
         <div className="mb-4 flex items-center justify-between border-b pb-3 dark:border-night-line">
           <h3 className="text-[17px] font-bold text-[#1e293b] dark:text-white">
-            <i className="fa-solid fa-warehouse mr-2 text-rose-600" />
+            <Icon name="undo-2" className="mr-2 text-rose-600" />
             Return to Hub (RTH) Request
           </h3>
           <button
@@ -630,7 +631,7 @@ export default function RiderScan() {
             aria-label="Close"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
           >
-            <i className="fa-solid fa-xmark text-sm" />
+            <Icon name="x" className="text-sm" />
           </button>
         </div>
 

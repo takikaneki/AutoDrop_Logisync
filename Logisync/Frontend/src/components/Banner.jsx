@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useProfile } from "../store/profile.js";
+import Icon from "./Icon.jsx";
 
 // Hero banner sa Home. Para gumamit ng sarili mong picture: ilagay ang file bilang
 // `public/banner.jpg` (hindi na kailangang baguhin ang code). Kapag wala, ang gradient + drawing ang lalabas.
@@ -49,10 +50,10 @@ export default function Banner() {
         </p>
         <div className="flex flex-wrap gap-2.5">
           <Link to="/verification" className="px-4 py-2.5 rounded-lg bg-white text-brand text-[14px] font-bold hover:bg-[#fff3eb]">
-            <i className="fa-solid fa-circle-check mr-1.5" /> Verify Parcels
+            <Icon name="circle-check" className="mr-1.5" /> Verify Parcels
           </Link>
           <Link to="/parcels" className="px-4 py-2.5 rounded-lg bg-white/15 border border-white/40 text-[14px] font-bold hover:bg-white/25">
-            <i className="fa-solid fa-box-open mr-1.5" /> Track Parcels
+            <Icon name="package-open" className="mr-1.5" /> Track Parcels
           </Link>
         </div>
       </div>

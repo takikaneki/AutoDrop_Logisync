@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import { useProfile } from "../../store/profile.js";
+import Icon from "../Icon.jsx";
 
 const ROLE_CONFIG = {
   coordinator: {
@@ -10,8 +11,8 @@ const ROLE_CONFIG = {
     image: "/images/spx-conveyor-hub.jpg",
     imageAlt: "SPX Express sorting conveyor hub",
     liveText: "Hub Operations Active",
-    primary: { label: "Scan Parcel", icon: "fa-qrcode", to: "/verification?scan=1" },
-    secondary: { label: "Generate Report", icon: "fa-file-lines", to: "/parcels?report=1" },
+    primary: { label: "Scan Parcel", icon: "scan-line", to: "/verification?scan=1" },
+    secondary: { label: "Generate Report", icon: "file-text", to: "/parcels?report=1" },
   },
   seller: {
     badge: "SELLER PORTAL",
@@ -20,8 +21,8 @@ const ROLE_CONFIG = {
     image: "/images/spx-courier-box.jpg",
     imageAlt: "SPX Express courier parcel box",
     liveText: "Dispatch Ready",
-    primary: { label: "Create Parcel", icon: "fa-square-plus", to: "/seller/create" },
-    secondary: { label: "Generate Report", icon: "fa-file-lines", to: "/seller/parcels?report=1" },
+    primary: { label: "Create Parcel", icon: "square-plus", to: "/seller/create" },
+    secondary: { label: "Generate Report", icon: "file-text", to: "/seller/parcels?report=1" },
   },
   rider: {
     badge: "RIDER PORTAL",
@@ -30,8 +31,8 @@ const ROLE_CONFIG = {
     image: "/images/spx-doorstep-delivery.jpg",
     imageAlt: "SPX Express doorstep parcel delivery",
     liveText: "Route Delivery Mode",
-    primary: { label: "Scan Parcel", icon: "fa-qrcode", to: "/rider/scan" },
-    secondary: { label: "Deliveries", icon: "fa-truck-fast", to: "/rider/deliveries" },
+    primary: { label: "Scan Parcel", icon: "scan-line", to: "/rider/scan" },
+    secondary: { label: "Deliveries", icon: "truck", to: "/rider/deliveries" },
   },
 };
 
@@ -71,14 +72,14 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
               to={cfg.primary.to}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#ee4d2d] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-bold text-white shadow-[0_8px_18px_-8px_rgba(238,77,45,0.65)] transition hover:bg-[#d94122]"
             >
-              <i className={`fa-solid ${cfg.primary.icon} shrink-0`} />
+              <Icon name={cfg.primary.icon} className="shrink-0" />
               <span>{cfg.primary.label}</span>
             </Link>
             <Link
               to={cfg.secondary.to}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#e5e8ee] bg-[#f8fafc] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-semibold text-[#334155] transition hover:border-[#cbd5e1] hover:bg-[#f1f5f9] dark:border-night-line dark:bg-night-head dark:text-[#e2ddd8] dark:hover:bg-[#352f2b]"
             >
-              <i className={`fa-solid ${cfg.secondary.icon} shrink-0`} />
+              <Icon name={cfg.secondary.icon} className="shrink-0" />
               <span>{cfg.secondary.label}</span>
             </Link>
           </div>
@@ -111,7 +112,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#fff0e5] text-[12px] font-bold text-[#ee4d2d] dark:bg-brand/20">
-                  <i className={`fa-solid ${step.icon}`} />
+                  <Icon name={step.icon} />
                 </span>
                 <div className="min-w-0">
                   <span className="block truncate text-[11px] font-medium text-[#64748b] dark:text-[#b8b0a8]">
@@ -122,7 +123,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
                   </strong>
                 </div>
               </div>
-              <i className="fa-solid fa-chevron-right text-[10px] text-[#cbd5e1] transition group-hover:translate-x-0.5 group-hover:text-[#ee4d2d]" />
+              <Icon name="chevron-right" className="text-[10px] text-[#cbd5e1] transition group-hover:translate-x-0.5 group-hover:text-[#ee4d2d]" />
             </Link>
           ))}
         </div>

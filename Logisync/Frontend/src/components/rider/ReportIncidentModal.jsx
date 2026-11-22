@@ -4,6 +4,7 @@ import { Notice } from "../portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, textareaCls } from "../styles.js";
 import { reportIncident } from "../../services/parcelService.js";
 import { toast } from "../../store/toast.js";
+import Icon from "../Icon.jsx";
 
 export default function ReportIncidentModal({ open, onClose }) {
   const [incidentType, setIncidentType] = useState("Vehicle Breakdown");
@@ -46,11 +47,11 @@ export default function ReportIncidentModal({ open, onClose }) {
         aria-label="Close"
         className="absolute right-3.5 top-3.5 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
       >
-        <i className="fa-solid fa-xmark" />
+        <Icon name="x" />
       </button>
       <div className="mb-3 flex items-center gap-2.5 text-[#d97706]">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#fef3c7] text-[18px]">
-          <i className="fa-solid fa-triangle-exclamation" />
+          <Icon name="triangle-alert" />
         </span>
         <h2 className="text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb]">Report Incident</h2>
       </div>
@@ -87,7 +88,7 @@ export default function ReportIncidentModal({ open, onClose }) {
 
       {incidentError && (
         <div className="mt-4">
-          <Notice tone="error" icon="fa-circle-exclamation">{incidentError}</Notice>
+          <Notice tone="error" icon="circle-alert">{incidentError}</Notice>
         </div>
       )}
 

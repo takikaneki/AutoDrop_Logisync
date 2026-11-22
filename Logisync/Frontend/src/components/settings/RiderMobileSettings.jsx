@@ -27,6 +27,7 @@ import {
   sanitizeLocalMobileDigits,
   validateMobileNumber,
 } from "../../utils/phone.js";
+import Icon from "../Icon.jsx";
 
 const TEXT_SIZES = [
   ["sm", "Small"],
@@ -356,7 +357,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
             aria-label="Go back"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
           >
-            <i className="fa-solid fa-arrow-left text-[17px]" />
+            <Icon name="arrow-left" className="text-[17px]" />
           </button>
           <h1 className="min-w-0 flex-1 truncate text-center text-[16.5px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
             {SECTION_TITLES[section] || "Settings"}
@@ -373,31 +374,31 @@ export default function RiderMobileSettings({ role = "rider" }) {
               {[
                 {
                   key: "account",
-                  icon: "fa-regular fa-user",
+                  icon: "user-round",
                   title: "Account Settings",
                   subtitle: "Update account details & password",
                 },
                 {
                   key: "notifications",
-                  icon: "fa-regular fa-bell",
+                  icon: "bell",
                   title: "Notification Preferences",
                   subtitle: "Manage channels, categories & sound",
                 },
                 {
                   key: "appearance",
-                  icon: "fa-solid fa-palette",
+                  icon: "palette",
                   title: "Appearance & Display",
                   subtitle: "Theme mode & text size",
                 },
                 {
                   key: "accessibility",
-                  icon: "fa-solid fa-universal-access",
+                  icon: "accessibility",
                   title: "Accessibility",
                   subtitle: "High contrast & focus indicators",
                 },
                 {
                   key: "activity",
-                  icon: "fa-solid fa-clock-rotate-left",
+                  icon: "history",
                   title: "Activity Log",
                   subtitle: "View your personal account activity",
                   to: activityPath,
@@ -411,7 +412,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                 >
                   <span className="flex min-w-0 items-center gap-3.5">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-brand">
-                      <i className={`${row.icon} text-[16px]`} />
+                      <Icon name={row.icon} className="text-[16px]" />
                     </span>
                     <span className="min-w-0">
                       <strong className="block truncate text-[14.5px] font-bold text-[#0f172a] dark:text-white">
@@ -422,7 +423,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                       </small>
                     </span>
                   </span>
-                  <i className="fa-solid fa-chevron-right shrink-0 text-[12px] text-slate-400" />
+                  <Icon name="chevron-right" className="shrink-0 text-[12px] text-slate-400" />
                 </button>
               ))}
             </div>
@@ -432,7 +433,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
               onClick={() => setLogoutOpen(true)}
               className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-red-200/80 bg-[#fff2ef] px-4 py-3.5 text-[15px] font-bold text-[#c23a3a] transition active:scale-[0.99] hover:bg-red-50 dark:border-red-900/40 dark:bg-red-950/25 dark:text-red-300"
             >
-              <i className="fa-solid fa-right-from-bracket text-[15px]" />
+              <Icon name="log-out" className="text-[15px]" />
               <span>Log Out</span>
             </button>
           </div>
@@ -457,7 +458,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     aria-label="Change profile photo"
                     className="absolute right-0 bottom-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#0f172a] text-white shadow-sm transition active:scale-95 hover:bg-brand dark:border-night-panel"
                   >
-                    <i className="fa-solid fa-camera text-[10px]" />
+                    <Icon name="camera" className="text-[10px]" />
                   </button>
                 </div>
 
@@ -560,14 +561,14 @@ export default function RiderMobileSettings({ role = "rider" }) {
 
               {errors.form && (
                 <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-[12.5px] font-semibold text-[#c23a3a] dark:bg-red-950/30 dark:text-red-300">
-                  <i className="fa-solid fa-circle-exclamation mr-1.5" />
+                  <Icon name="circle-alert" className="mr-1.5" />
                   {errors.form}
                 </p>
               )}
 
               {savedNotice && (
                 <p role="status" className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-[12.5px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
-                  <i className="fa-solid fa-circle-check mr-1.5" />
+                  <Icon name="circle-check" className="mr-1.5" />
                   {savedNotice}
                 </p>
               )}
@@ -584,7 +585,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
             {/* Protected Account Details (Read-Only) */}
             <div className={`${cardCls} p-4`}>
               <div className="mb-2.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider text-slate-400">
-                <i className="fa-solid fa-lock text-[11px]" />
+                <Icon name="lock" className="text-[11px]" />
                 <span>{isCoordinator ? "Account Details" : "Coordinator-Managed Details"}</span>
               </div>
               <div className="divide-y divide-slate-100 text-[13.5px] dark:divide-night-line">
@@ -634,7 +635,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
               >
                 <span className="flex items-center gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand dark:bg-night-head">
-                    <i className="fa-solid fa-key text-[14px]" />
+                    <Icon name="key-round" className="text-[14px]" />
                   </span>
                   <span>
                     <strong className="block text-[14.5px] font-bold text-[#0f172a] dark:text-white">
@@ -645,11 +646,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     </small>
                   </span>
                 </span>
-                <i
-                  className={`fa-solid fa-chevron-down text-[12px] text-slate-400 transition-transform ${
-                    passwordOpen ? "rotate-180 text-brand" : ""
-                  }`}
-                />
+                <Icon name="chevron-down" className={`text-[12px] text-slate-400 transition-transform ${ passwordOpen ? "rotate-180 text-brand" : "" }`} />
               </button>
 
               {passwordOpen && (
@@ -670,7 +667,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
             <div className={`${cardCls} flex items-center justify-between gap-3 p-4`}>
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-head">
-                  <i className="fa-regular fa-bell text-[18px]" />
+                  <Icon name="bell" className="text-[18px]" />
                 </span>
                 <div className="min-w-0">
                   <strong className="block text-[15px] font-extrabold text-[#0f172a] dark:text-white">
@@ -698,13 +695,13 @@ export default function RiderMobileSettings({ role = "rider" }) {
                   {[
                     [
                       "inAppNotifications",
-                      "fa-regular fa-bell",
+                      "bell",
                       "In-App Notifications",
                       "Controls alerts shown in the notification bell while keeping history.",
                     ],
                     [
                       "inAppPopups",
-                      "fa-solid fa-mobile-screen-button",
+                      "smartphone",
                       "In-App Popup Alerts",
                       "Show floating banner alerts while actively using LOGISYNC.",
                     ],
@@ -714,7 +711,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                       <div key={key} className="flex items-center justify-between gap-3 py-3.5">
                         <div className="flex min-w-0 items-start gap-3">
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                            <i className={`${icon} text-[13px]`} />
+                            <Icon name={icon} className="text-[13px]" />
                           </span>
                           <div className="min-w-0">
                             <strong className="block text-[13.5px] font-bold text-[#0f172a] dark:text-white">
@@ -740,7 +737,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-start gap-3">
                         <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                          <i className="fa-solid fa-bullhorn text-[13px]" />
+                          <Icon name="megaphone" className="text-[13px]" />
                         </span>
                         <div className="min-w-0">
                           <strong className="block text-[13.5px] font-bold text-[#0f172a] dark:text-white">
@@ -798,25 +795,25 @@ export default function RiderMobileSettings({ role = "rider" }) {
                   {[
                     [
                       "notifyParcel",
-                      "fa-solid fa-box",
+                      "package",
                       "Parcel & Delivery Updates",
                       "Assignments, transit updates, deliveries, and return-to-hub notices.",
                     ],
                     [
                       "notifyVerification",
-                      "fa-solid fa-video",
+                      "video",
                       "Verification & Video Status",
                       "Parcel clearance and dispatch verification readiness.",
                     ],
                     [
                       "notifyMessages",
-                      "fa-regular fa-comment-dots",
+                      "message-circle",
                       "Messages & Complaints",
                       "Direct messages from coordinator and request updates.",
                     ],
                     [
                       "notifyAnnouncements",
-                      "fa-solid fa-triangle-exclamation",
+                      "triangle-alert",
                       "Hub Announcements",
                       "Important operational advisories posted by coordinators.",
                     ],
@@ -826,7 +823,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                       <div key={key} className="flex items-center justify-between gap-3 py-3.5">
                         <div className="flex min-w-0 items-start gap-3">
                           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                            <i className={`${icon} text-[13px]`} />
+                            <Icon name={icon} className="text-[13px]" />
                           </span>
                           <div className="min-w-0">
                             <strong className="block text-[13.5px] font-bold text-[#0f172a] dark:text-white">
@@ -955,21 +952,21 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     key: "light",
                     label: "Light Mode",
                     hint: "Bright, clean daytime display.",
-                    icon: "fa-sun",
+                    icon: "sun",
                     badgeCls: "bg-amber-50 text-amber-500 border-amber-200",
                   },
                   {
                     key: "dark",
                     label: "Dark Mode",
                     hint: "Low-glare dark display for night routes.",
-                    icon: "fa-moon",
+                    icon: "moon",
                     badgeCls: "bg-[#0f172a] text-white border-slate-700",
                   },
                   {
                     key: "system",
                     label: "System Default",
                     hint: "Follow your device's light or dark setting.",
-                    icon: "fa-arrows-rotate",
+                    icon: "refresh-cw",
                     badgeCls: "bg-slate-100 text-[#0f172a] border-slate-300",
                   },
                 ].map((opt) => {
@@ -990,7 +987,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                         <span
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-[14px] ${opt.badgeCls}`}
                         >
-                          <i className={`fa-solid ${opt.icon}`} />
+                          <Icon name={opt.icon} />
                         </span>
                         <span className="min-w-0">
                           <strong className="block text-[14px] font-bold text-[#0f172a] dark:text-white">
@@ -1008,7 +1005,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                             : "border-slate-300 bg-white dark:border-night-line dark:bg-night-head"
                         }`}
                       >
-                        {active && <i className="fa-solid fa-check text-[10px]" />}
+                        {active && <Icon name="check" className="text-[10px]" />}
                       </span>
                     </button>
                   );
@@ -1122,7 +1119,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
               {REPUBLIC_ACTS.map((act) => (
                 <div key={act.code} className={`${cardCls} p-4`}>
                   <div className="mb-1 flex items-center gap-2 text-[12px] font-extrabold text-brand">
-                    <i className={`fa-solid ${act.icon}`} />
+                    <Icon name={act.icon} />
                     <span>{act.code}</span>
                   </div>
                   <strong className="block text-[13.5px] text-[#0f172a] dark:text-white">{act.title}</strong>

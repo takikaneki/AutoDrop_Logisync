@@ -2,12 +2,13 @@ import { Link } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { btnPrimary, panel } from "../components/styles.js";
 import useBase from "../hooks/useBase.js";
+import Icon from "../components/Icon.jsx";
 
 const features = [
-  ["fa-qrcode", "QR-based verification", "Coordinators scan a parcel's QR code and review the seller's packing video before it ships."],
-  ["fa-truck-fast", "Delivery monitoring", "Follow every parcel from pickup to delivery with a clear tracking timeline and proof of delivery."],
-  ["fa-comments", "Rider & seller messaging", "Talk directly to riders and sellers and handle urgent concerns in one place."],
-  ["fa-file-lines", "Reports & analytics", "Generate reports, export them, and watch delivery performance over time."],
+  ["qr-code", "QR-based verification", "Coordinators scan a parcel's QR code and review the seller's packing video before it ships."],
+  ["truck", "Delivery monitoring", "Follow every parcel from pickup to delivery with a clear tracking timeline and proof of delivery."],
+  ["message-circle", "Rider & seller messaging", "Talk directly to riders and sellers and handle urgent concerns in one place."],
+  ["file-text", "Reports & analytics", "Generate reports, export them, and watch delivery performance over time."],
 ];
 const steps = [
   ["1", "Seller registers a parcel", "The seller records the parcel and uploads a packing video."],
@@ -31,7 +32,7 @@ export default function About() {
       <section className="grid grid-cols-4 gap-5 mb-6 max-[1200px]:grid-cols-2 max-[600px]:grid-cols-1">
         {features.map(([ic, t, d]) => (
           <div key={t} className={`${panel} p-6`}>
-            <span className="w-[48px] h-[48px] rounded-xl bg-brand-soft text-brand flex items-center justify-center text-[19px] mb-4 dark:bg-night-line"><i className={`fa-solid ${ic}`} /></span>
+            <span className="w-[48px] h-[48px] rounded-xl bg-brand-soft text-brand flex items-center justify-center text-[19px] mb-4 dark:bg-night-line"><Icon name={ic} /></span>
             <h3 className="text-[16px] font-bold mb-1.5">{t}</h3>
             <p className="text-[13px] leading-relaxed text-[#888]">{d}</p>
           </div>
@@ -52,7 +53,7 @@ export default function About() {
 
       <div className="text-center py-4">
         <p className="text-[14px] text-[#888] mb-3">Have a question or suggestion?</p>
-        <Link to={`${base}/contact`} className={btnPrimary}><i className="fa-solid fa-envelope" /> Contact us</Link>
+        <Link to={`${base}/contact`} className={btnPrimary}><Icon name="mail" /> Contact us</Link>
       </div>
     </>
   );

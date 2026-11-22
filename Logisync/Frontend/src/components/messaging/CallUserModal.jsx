@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import Icon from "../Icon.jsx";
 
 export default function CallUserModal({
   active,
@@ -40,7 +41,7 @@ export default function CallUserModal({
       >
         <div className="flex items-start justify-between">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand ring-4 ring-brand/10 dark:bg-night-head">
-            <i className="fa-solid fa-phone text-lg" />
+            <Icon name="phone" className="text-lg" />
           </div>
           <button
             type="button"
@@ -48,7 +49,7 @@ export default function CallUserModal({
             aria-label="Close dialog"
             className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
-            <i className="fa-solid fa-xmark text-base" />
+            <Icon name="x" className="text-base" />
           </button>
         </div>
 
@@ -98,7 +99,7 @@ export default function CallUserModal({
               Registered Phone Number
             </div>
             <div className="mt-1 flex items-center justify-center gap-2 text-base font-bold text-slate-800 dark:text-slate-100">
-              <i className="fa-solid fa-phone text-xs text-brand" />
+              <Icon name="phone" className="text-xs text-brand" />
               <span>{rawPhone}</span>
             </div>
             <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
@@ -108,7 +109,7 @@ export default function CallUserModal({
         ) : (
           <div className="my-4 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-center dark:border-amber-900/50 dark:bg-amber-950/30">
             <div className="flex items-center justify-center gap-2 text-[13px] font-semibold text-amber-800 dark:text-amber-300">
-              <i className="fa-solid fa-circle-exclamation text-sm text-amber-600 dark:text-amber-400" />
+              <Icon name="circle-alert" className="text-sm text-amber-600 dark:text-amber-400" />
               <span>
                 {!active
                   ? "No coordinator is currently available."
@@ -137,7 +138,7 @@ export default function CallUserModal({
               onClick={onClose}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-[13px] font-bold text-white shadow-xs transition hover:bg-brand-dark"
             >
-              <i className="fa-solid fa-phone text-xs" />
+              <Icon name="phone" className="text-xs" />
               <span>Go to Phone</span>
             </a>
           ) : (
@@ -147,7 +148,7 @@ export default function CallUserModal({
               aria-disabled="true"
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-2.5 text-[13px] font-bold text-slate-400 cursor-not-allowed dark:bg-slate-800 dark:text-slate-500"
             >
-              <i className="fa-solid fa-phone text-xs" />
+              <Icon name="phone" className="text-xs" />
               <span>Go to Phone</span>
             </button>
           )}

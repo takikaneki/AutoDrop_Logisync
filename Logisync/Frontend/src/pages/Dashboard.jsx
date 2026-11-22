@@ -20,6 +20,7 @@ import { parcelStats } from "../utils/stats.js";
 import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDate } from "../utils/format.js";
+import Icon from "../components/Icon.jsx";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
 const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Flagged: "#d94747" };
@@ -143,7 +144,7 @@ export default function Dashboard() {
         title: inc.rider_name || `Rider #${inc.rider_id}`,
         subtitle: `${inc.incident_type} · ${inc.status === "CONFIRMED" ? "Hold Confirmed" : "Awaiting Hold"}`,
         meta: formatDate(inc.created_at),
-        icon: "fa-triangle-exclamation",
+        icon: "triangle-alert",
         tone: "danger",
         to: "/verification",
       }));
@@ -156,7 +157,7 @@ export default function Dashboard() {
         title: p.transaction_number || p.parcel_id,
         subtitle: `${p.seller_name || p.seller || "Seller"} · Needs verification`,
         meta: formatDate(p.created_at),
-        icon: "fa-video",
+        icon: "video",
         tone: "warn",
         to: `/verification?txn=${encodeURIComponent(p.transaction_number || p.parcel_id)}`,
       }));
@@ -197,7 +198,7 @@ export default function Dashboard() {
                   tone: "dark",
                   to: "/parcels",
                   badge: "All Shipments",
-                  icon: "fa-box",
+                  icon: "package",
                   subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
                 },
                 {
@@ -206,7 +207,7 @@ export default function Dashboard() {
                   tone: "yellow",
                   to: "/verification?status=VIDEO_SUBMITTED",
                   badge: "Pending Review",
-                  icon: "fa-hourglass-half",
+                  icon: "clock",
                   subtext: "Awaiting hub approval",
                 },
                 {
@@ -215,7 +216,7 @@ export default function Dashboard() {
                   tone: "green",
                   to: "/verification?status=VERIFIED",
                   badge: "Cleared",
-                  icon: "fa-circle-check",
+                  icon: "circle-check",
                   subtext: "Ready for rider dispatch",
                 },
               ]}
@@ -226,10 +227,10 @@ export default function Dashboard() {
             <PortalHeroBanner
               role="coordinator"
               pipeline={[
-                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "fa-video", to: "/verification?status=VIDEO_SUBMITTED" },
-                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "fa-circle-check", to: "/verification?status=VERIFIED" },
-                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "fa-truck-fast", to: "/parcels" },
-                { label: "Failed / Return", count: v(stats.flagged), icon: "fa-triangle-exclamation", to: "/parcels" },
+                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "video", to: "/verification?status=VIDEO_SUBMITTED" },
+                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "circle-check", to: "/verification?status=VERIFIED" },
+                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", to: "/parcels" },
+                { label: "Failed / Return", count: v(stats.flagged), icon: "triangle-alert", to: "/parcels" },
               ]}
             />
           </div>
@@ -257,7 +258,7 @@ export default function Dashboard() {
         <section className="mb-7 rounded-2xl border border-[#fed7aa] bg-[#fffaf5] p-6 dark:border-[#7c2d12] dark:bg-[#2b1810]">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 className="text-[18px] font-bold text-[#c2410c] dark:text-[#fb923c] flex items-center gap-2">
-              <i className="fa-solid fa-triangle-exclamation" /> Active Rider Incidents & Delivery Holds
+              <Icon name="triangle-alert" /> Active Rider Incidents & Delivery Holds
             </h2>
             <span className="rounded-full bg-[#ea580c] px-3 py-1 text-xs font-bold text-white">
               {incidents.filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED").length} active
@@ -298,7 +299,7 @@ export default function Dashboard() {
                           onClick={() => handleConfirmIncident(inc.incident_id)}
                           className="rounded-lg bg-[#ea580c] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#c2410c]"
                         >
-                          <i className="fa-solid fa-pause-circle mr-1" /> Confirm Hold
+                          <Icon name="circle-pause" className="mr-1" /> Confirm Hold
                         </button>
                       )}
                       {inc.status === "CONFIRMED" && (
@@ -311,7 +312,7 @@ export default function Dashboard() {
                           }}
                           className="rounded-lg bg-[#2563eb] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1d4ed8]"
                         >
-                          <i className="fa-solid fa-sliders mr-1" /> Take Action
+                          <Icon name="sliders-horizontal" className="mr-1" /> Take Action
                         </button>
                       )}
                     </div>
@@ -326,7 +327,7 @@ export default function Dashboard() {
       <CoordinatorRthSection />
 
       {/* 2. ANALYTICS */}
-      <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-chart-line mr-2 text-orange-500" />Analytics</h2>
+      <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><Icon name="trending-up" className="mr-2 text-orange-500" />Analytics</h2>
 
       <section className="mb-6 max-[600px]:mb-4 grid grid-cols-[2.2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
         <div className={panel}>
@@ -340,12 +341,12 @@ export default function Dashboard() {
           </div>
           <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#8a8a8a]">
             {period === "day" && (
-              <button type="button" onClick={() => setWeekOffset((n) => n - 1)} aria-label="Previous week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 dark:border-night-line"><i className="fa-solid fa-chevron-left text-[11px]" /></button>
+              <button type="button" onClick={() => setWeekOffset((n) => n - 1)} aria-label="Previous week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 dark:border-night-line"><Icon name="chevron-left" className="text-[11px]" /></button>
             )}
             <span>{series.range} · {loadingStats ? "…" : series.total} parcels</span>
             {period === "day" && (
               <>
-                <button type="button" onClick={() => setWeekOffset((n) => Math.min(0, n + 1))} disabled={weekOffset === 0} aria-label="Next week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 disabled:opacity-40 disabled:hover:border-[#e5e5e5] disabled:hover:text-inherit dark:border-night-line"><i className="fa-solid fa-chevron-right text-[11px]" /></button>
+                <button type="button" onClick={() => setWeekOffset((n) => Math.min(0, n + 1))} disabled={weekOffset === 0} aria-label="Next week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 disabled:opacity-40 disabled:hover:border-[#e5e5e5] disabled:hover:text-inherit dark:border-night-line"><Icon name="chevron-right" className="text-[11px]" /></button>
                 {weekOffset !== 0 && <button type="button" onClick={() => setWeekOffset(0)} className="text-orange-500 hover:underline">This week</button>}
               </>
             )}
@@ -435,7 +436,7 @@ export default function Dashboard() {
       <section className="hidden min-[821px]:block mb-6 max-[600px]:mb-4">
         <div className={`${panel} overflow-hidden`}>
           <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
-            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><i className="fa-solid fa-box mr-2 text-orange-500" />Recent Parcels</h2>
+            <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><Icon name="package" className="mr-2 text-orange-500" />Recent Parcels</h2>
             <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
           </div>
           <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
@@ -511,7 +512,7 @@ export default function Dashboard() {
               aria-label="Close"
               className="absolute right-3.5 top-3.5 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
             >
-              <i className="fa-solid fa-xmark" />
+              <Icon name="x" />
             </button>
             <h2 className="text-[18px] font-bold text-[#27364f] dark:text-[#f1eeeb] mb-1">
               Incident Action — {incidentActionTarget.rider_name || `Rider #${incidentActionTarget.rider_id}`}
@@ -531,7 +532,7 @@ export default function Dashboard() {
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
                     }`}
                 >
-                  <i className="fa-solid fa-play block text-base mb-1" />
+                  <Icon name="play" className="block text-base mb-1" />
                   Resume Delivery
                 </button>
                 <button
@@ -542,7 +543,7 @@ export default function Dashboard() {
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
                     }`}
                 >
-                  <i className="fa-solid fa-calendar-day block text-base mb-1" />
+                  <Icon name="calendar-days" className="block text-base mb-1" />
                   Reschedule
                 </button>
                 <button
@@ -553,7 +554,7 @@ export default function Dashboard() {
                       : "border-[#e2e8f0] bg-white text-[#475569] dark:border-night-line dark:bg-night-head"
                     }`}
                 >
-                  <i className="fa-solid fa-clock block text-base mb-1" />
+                  <Icon name="clock" className="block text-base mb-1" />
                   Extend Hold
                 </button>
               </div>
@@ -561,7 +562,7 @@ export default function Dashboard() {
 
             {actionType === "resume" && (
               <p className="text-xs text-[#16a34a] bg-[#f0fdf4] p-3 rounded-lg border border-[#bbf7d0] mb-3">
-                <i className="fa-solid fa-circle-check mr-1" />
+                <Icon name="circle-check" className="mr-1" />
                 This will lift the temporary delivery hold on this rider&apos;s parcels and resume active delivery.
               </p>
             )}
@@ -585,7 +586,7 @@ export default function Dashboard() {
 
             {actionType === "extend_hold" && (
               <p className="text-xs text-[#7c3aed] bg-[#f5f3ff] p-3 rounded-lg border border-[#ddd6fe] mb-3">
-                <i className="fa-solid fa-pause-circle mr-1" />
+                <Icon name="circle-pause" className="mr-1" />
                 Keeps parcels on hold for another 24 hours while rider resolves the incident.
               </p>
             )}

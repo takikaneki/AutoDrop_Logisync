@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { listParcels } from "../../services/parcelService.js";
+import Icon from "../../components/Icon.jsx";
 
 export default function SellerAnalytics() {
   const navigate = useNavigate();
@@ -80,7 +81,7 @@ export default function SellerAnalytics() {
           aria-label="Go back"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#0f172a] transition active:scale-95 hover:bg-slate-100 dark:text-white dark:hover:bg-night-head"
         >
-          <i className="fa-solid fa-arrow-left text-[17px]" />
+          <Icon name="arrow-left" className="text-[17px]" />
         </button>
         <h1 className="min-w-0 flex-1 truncate text-center text-[16.5px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
           Analytics
@@ -147,11 +148,11 @@ export default function SellerAnalytics() {
           </div>
           <div className="divide-y divide-slate-100 px-4 text-[14px] dark:divide-night-line">
             {[
-              { label: "Total Parcels", value: stats.total, icon: "fa-box", tone: "text-[#64748b] dark:text-slate-200", to: "/seller/parcels" },
-              { label: "Needs Video", value: stats.needsVideo, icon: "fa-video", tone: "text-[#3b82f6] dark:text-[#60a5fa]", to: "/seller/parcels?status=NEEDS_VIDEO" },
-              { label: "Under Verification", value: stats.underReview, icon: "fa-hourglass-half", tone: "text-[#ca8a04] dark:text-[#facc15]", to: "/seller/parcels?status=UNDER_VERIFICATION" },
-              { label: "Verified / In Delivery", value: stats.verifiedOrInDelivery, icon: "fa-circle-check", tone: "text-[#16a34a] dark:text-[#4ade80]", to: "/seller/parcels?status=VERIFIED" },
-              { label: "Return to Hub / Failed", value: stats.returnFailed, icon: "fa-warehouse", tone: "text-[#dc2626] dark:text-[#f87171]", to: "/seller/parcels?status=RETURN_TO_HUB" },
+              { label: "Total Parcels", value: stats.total, icon: "package", tone: "text-[#64748b] dark:text-slate-200", to: "/seller/parcels" },
+              { label: "Needs Video", value: stats.needsVideo, icon: "video", tone: "text-[#3b82f6] dark:text-[#60a5fa]", to: "/seller/parcels?status=NEEDS_VIDEO" },
+              { label: "Under Verification", value: stats.underReview, icon: "clock", tone: "text-[#ca8a04] dark:text-[#facc15]", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+              { label: "Verified / In Delivery", value: stats.verifiedOrInDelivery, icon: "circle-check", tone: "text-[#16a34a] dark:text-[#4ade80]", to: "/seller/parcels?status=VERIFIED" },
+              { label: "Return to Hub / Failed", value: stats.returnFailed, icon: "undo-2", tone: "text-[#dc2626] dark:text-[#f87171]", to: "/seller/parcels?status=RETURN_TO_HUB" },
             ].map((row) => (
               <Link
                 key={row.label}
@@ -160,7 +161,7 @@ export default function SellerAnalytics() {
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
-                    <i className={`fa-solid ${row.icon} text-[13px]`} />
+                    <Icon name={row.icon} className="text-[13px]" />
                   </span>
                   <span className="truncate font-semibold text-slate-700 dark:text-[#e2ddd8]">
                     {row.label}
@@ -170,7 +171,7 @@ export default function SellerAnalytics() {
                   <strong className={`text-[15px] font-extrabold ${row.tone}`}>
                     {loading ? "…" : row.value}
                   </strong>
-                  <i className="fa-solid fa-chevron-right text-[11px] text-slate-400" />
+                  <Icon name="chevron-right" className="text-[11px] text-slate-400" />
                 </span>
               </Link>
             ))}

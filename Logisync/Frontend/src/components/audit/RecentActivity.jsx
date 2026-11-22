@@ -6,6 +6,7 @@ import { panel } from "../styles.js";
 import { listAudit } from "../../services/auditService.js";
 import { timeAgo } from "../../store/notifications.js";
 import { metaOf } from "../../utils/activity.js";
+import Icon from "../Icon.jsx";
 
 // "Recent Activity" para sa dashboard ng Coordinator, Seller at Rider. Totoong data mula sa /api/audit-logs;
 // ang backend ang nagtatakda kung ano ang makikita ng bawat role. Nagre-refresh bawat 30 segundo.
@@ -32,12 +33,12 @@ export default function RecentActivity({ to, limit = 8, title = "Recent Activity
 
   return (
     <section className={`${panel} p-[30px] max-[600px]:p-4`}>
-      <PanelTitle icon="fa-clock-rotate-left" action={to && <PanelLink to={to}>View all</PanelLink>}>{title}</PanelTitle>
+      <PanelTitle icon="history" action={to && <PanelLink to={to}>View all</PanelLink>}>{title}</PanelTitle>
 
-      {error && <Notice tone="error" icon="fa-circle-exclamation" role="alert">{error}</Notice>}
+      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
       {!error && loading && <p className="py-8 text-center text-[14px] text-[#999]">Loading…</p>}
       {!error && !loading && logs.length === 0 && (
-        <EmptyState icon="fa-clock-rotate-left" title="No activity yet" text="Actions will be listed here as they happen." />
+        <EmptyState icon="history" title="No activity yet" text="Actions will be listed here as they happen." />
       )}
 
       {!error && logs.length > 0 && (
@@ -48,7 +49,7 @@ export default function RecentActivity({ to, limit = 8, title = "Recent Activity
             return (
               <li key={l.log_id} className="flex items-start gap-3.5 border-b border-[#f1f1f1] py-3.5 last:border-b-0 dark:border-night-line">
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[15px] ${m.tone}`}>
-                  <i className={`fa-solid ${m.icon}`} />
+                  <Icon name={m.icon} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px]">

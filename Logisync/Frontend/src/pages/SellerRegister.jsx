@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 
 export default function SellerRegister() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export default function SellerRegister() {
       <div className="flex min-h-screen items-center justify-center bg-[#f7f8fa] p-5">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-            <i className="fa-solid fa-clock text-2xl" />
+            <Icon name="clock" className="text-2xl" />
           </div>
 
           <h1 className="text-2xl font-bold text-[#18283e]">
@@ -87,13 +88,13 @@ export default function SellerRegister() {
           to="/login"
           className="text-sm font-medium text-orange-600 hover:underline"
         >
-          <i className="fa-solid fa-arrow-left mr-2" />
+          <Icon name="arrow-left" className="mr-2" />
           Back to Sign In
         </Link>
 
         <div className="mb-7 mt-6 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff7900] to-[#ec5500] text-2xl text-white">
-            <i className="fa-solid fa-box" />
+            <Icon name="package" />
           </div>
 
           <h1 className="text-3xl font-bold text-[#18283e]">
@@ -105,7 +106,7 @@ export default function SellerRegister() {
         </div>
 
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-          <i className="fa-solid fa-circle-info mr-2" />
+          <Icon name="info" className="mr-2" />
           Your account must be approved by a Coordinator before you can sign in.
         </div>
 
@@ -175,11 +176,7 @@ export default function SellerRegister() {
                 onClick={() => setShowPassword((value) => !value)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-[#72839b]"
               >
-                <i
-                  className={`fa-regular ${
-                    showPassword ? "fa-eye-slash" : "fa-eye"
-                  }`}
-                />
+                <Icon name={showPassword ? "eye-off" : "eye"} />
               </button>
             </div>
           </div>

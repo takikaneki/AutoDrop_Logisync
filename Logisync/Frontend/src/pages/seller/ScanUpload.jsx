@@ -150,7 +150,7 @@ export default function ScanUpload() {
         {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
         {lookupError && (
           <div className="mx-auto mt-4 max-w-[360px]">
-            <Notice tone="error" icon="fa-circle-exclamation" role="alert">
+            <Notice tone="error" icon="circle-alert" role="alert">
               {lookupError}{" "}
               {/not found/i.test(lookupError) && (
                 <>
