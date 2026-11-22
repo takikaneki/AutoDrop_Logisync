@@ -23,6 +23,8 @@ import Help from "./pages/Help.jsx";
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
 import SellerDashboard from "./pages/seller/SellerDashboard.jsx";
 import CreateParcel from "./pages/seller/CreateParcel.jsx";
+import SellerProfile from "./pages/seller/SellerProfile.jsx";
+import SellerAnalytics from "./pages/seller/SellerAnalytics.jsx";
 import RiderDashboard from "./pages/rider/RiderDashboard.jsx";
 import RiderScan from "./pages/rider/RiderScan.jsx";
 import RiderDeliveries from "./pages/rider/RiderDeliveries.jsx";
@@ -95,6 +97,8 @@ export default function App() {
           <Route path="messages" element={<MessagesPage />} />
           <Route path="complaints" element={<PortalComplaints />} />
           <Route path="notifications" element={<PortalNotifications />} />
+          <Route path="profile" element={<SellerProfile />} />
+          <Route path="analytics" element={<SellerAnalytics />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />

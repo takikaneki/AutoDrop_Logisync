@@ -44,6 +44,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
   const label = title ? t(title) : "";
   const actions = children || right || actionsProp;
   const isRider = base === "/rider";
+  const isSeller = base === "/seller";
   const isCoordinator = base === "";
 
   useEffect(() => {
@@ -61,23 +62,27 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
 
   const isHomeDashboard = title === "Dashboard";
 
-  // Rider & Coordinator Portal Mobile (max-[820px]):
-  // - Home (/dashboard), Deliveries, Parcels, Messages: no redundant mobile title bar.
-  // - Scan QR / Verification: centered title bar without back arrow.
-  // - Sub-pages opened from Profile/Settings (Help, Complaints, Accounts, Activity Log, etc.): sticky back-arrow + centered title bar.
-  // Desktop (min-[821px]) and Seller portal remain 100% unchanged.
-  if (isRider || isCoordinator) {
+  // Rider, Seller & Coordinator Portal Mobile (max-[820px]):
+  // - Home, Deliveries, Parcels, Messages: no redundant mobile title bar.
+  // - Scan QR / Verification / Create Parcel: centered title bar without back arrow.
+  // - Sub-pages opened from Profile/Settings: sticky back-arrow + centered title bar.
+  // Desktop (min-[821px]) remains 100% unchanged.
+  if (isRider || isSeller || isCoordinator) {
     if (isHomeDashboard) {
       return null;
     }
 
     const hideMobileTitleBar = isRider
       ? pathname === "/rider/deliveries" || pathname === "/rider/messages"
-      : pathname === "/parcels" || pathname === "/messages";
+      : isSeller
+        ? pathname === "/seller/parcels" || pathname === "/seller/messages"
+        : pathname === "/parcels" || pathname === "/messages";
 
     const isTopLevelTab = isRider
       ? pathname === "/rider/scan"
-      : pathname === "/verification";
+      : isSeller
+        ? pathname === "/seller/create"
+        : pathname === "/verification";
 
     const fallbackBack = isRider
       ? pathname.startsWith("/rider/activity")
@@ -88,17 +93,26 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
             pathname.startsWith("/rider/contact")
           ? "/rider/profile"
           : "/rider"
-      : pathname.startsWith("/audit")
-        ? "/settings"
-        : pathname.startsWith("/accounts") ||
-            pathname.startsWith("/riders") ||
-            pathname.startsWith("/sellers") ||
-            pathname.startsWith("/complaints") ||
-            pathname.startsWith("/help") ||
-            pathname.startsWith("/about") ||
-            pathname.startsWith("/contact")
-          ? "/profile"
-          : "/dashboard";
+      : isSeller
+        ? pathname.startsWith("/seller/activity")
+          ? "/seller/settings"
+          : pathname.startsWith("/seller/help") ||
+              pathname.startsWith("/seller/complaints") ||
+              pathname.startsWith("/seller/about") ||
+              pathname.startsWith("/seller/contact")
+            ? "/seller/profile"
+            : "/seller"
+        : pathname.startsWith("/audit")
+          ? "/settings"
+          : pathname.startsWith("/accounts") ||
+              pathname.startsWith("/riders") ||
+              pathname.startsWith("/sellers") ||
+              pathname.startsWith("/complaints") ||
+              pathname.startsWith("/help") ||
+              pathname.startsWith("/about") ||
+              pathname.startsWith("/contact")
+            ? "/profile"
+            : "/dashboard";
 
     const handleMobileBack = () => {
       if (window.history.length > 1) {
@@ -136,6 +150,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
             className={
               pathname === "/rider/deliveries" ||
               pathname === "/parcels" ||
+              pathname === "/seller/parcels" ||
               pathname === "/sellers" ||
               pathname === "/riders"
                 ? "hidden min-[821px]:flex min-[821px]:mb-4 min-[821px]:ml-auto items-center justify-end gap-2 flex-wrap print:hidden"

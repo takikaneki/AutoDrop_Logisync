@@ -25,7 +25,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
 
   const item =
     "w-full flex items-center gap-3 px-4 py-2.5 text-left text-[14px] hover:bg-[#fff3e8] dark:hover:bg-night-line";
-  const isRider = role === "rider";
+  const isModernMobile = role === "rider" || role === "seller";
 
   return (
     <>
@@ -40,7 +40,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               title="Toggle sidebar"
               className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line ${
                 collapsed ? "flex" : "flex min-[821px]:hidden"
-              } ${isRider ? "max-[820px]:hidden" : ""}`}
+              } ${isModernMobile ? "max-[820px]:hidden" : ""}`}
             >
               <i className="fa-solid fa-bars text-[18px]" />
             </button>
@@ -51,9 +51,9 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                 draggable={false}
                 className="h-5 sm:h-6 w-auto shrink-0 object-contain"
               />
-              <span className={`h-4 w-[1.5px] shrink-0 bg-slate-200 dark:bg-slate-700 ${isRider ? "" : "max-[380px]:hidden"}`} aria-hidden="true" />
+              <span className={`h-4 w-[1.5px] shrink-0 bg-slate-200 dark:bg-slate-700 ${isModernMobile ? "" : "max-[380px]:hidden"}`} aria-hidden="true" />
               <span className={`truncate text-[15px] sm:text-[16px] font-black tracking-tight dark:text-white ${
-                isRider
+                isModernMobile
                   ? "text-[#0f172a] min-[821px]:text-[#ee4d2d]"
                   : "text-[#ee4d2d] max-[380px]:hidden"
               }`}>
@@ -69,7 +69,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
           <div className="flex shrink-0 items-center justify-end gap-1.5 sm:gap-2.5">
             <button
               onClick={toggleDark}
-              className={`${iconBtn} ${isRider ? "max-[820px]:hidden" : ""}`}
+              className={`${iconBtn} ${isModernMobile ? "max-[820px]:hidden" : ""}`}
               title={dark ? "Switch to light mode" : "Switch to dark mode"}
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -78,7 +78,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
 
             <NotificationMenu role={role} />
 
-            <div ref={menuRef} className={`relative ml-0.5 sm:ml-1 max-[600px]:ml-0 ${isRider ? "max-[820px]:hidden" : ""}`}>
+            <div ref={menuRef} className={`relative ml-0.5 sm:ml-1 max-[600px]:ml-0 ${isModernMobile ? "max-[820px]:hidden" : ""}`}>
               <button
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-expanded={menuOpen}

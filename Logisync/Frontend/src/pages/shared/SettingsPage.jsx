@@ -4,28 +4,19 @@ import RiderMobileSettings from "../../components/settings/RiderMobileSettings.j
 import { getRole } from "../../api.js";
 
 export default function SettingsPage() {
-  const isRider = getRole() === "rider";
-
-  if (isRider) {
-    return (
-      <>
-        {/* Desktop / Laptop Rider Settings (100% unchanged) */}
-        <div className="hidden min-[821px]:block">
-          <Topbar title="Settings" />
-          <UnifiedSettings />
-        </div>
-        {/* Rider Mobile Settings Redesign (max-[820px] ONLY) */}
-        <div className="min-[821px]:hidden">
-          <RiderMobileSettings />
-        </div>
-      </>
-    );
-  }
+  const role = getRole() === "seller" ? "seller" : "rider";
 
   return (
     <>
-      <Topbar title="Settings" />
-      <UnifiedSettings />
+      {/* Desktop / Laptop Portal Settings (100% unchanged) */}
+      <div className="hidden min-[821px]:block">
+        <Topbar title="Settings" />
+        <UnifiedSettings />
+      </div>
+      {/* Rider & Seller Mobile Settings (max-[820px] ONLY) */}
+      <div className="min-[821px]:hidden">
+        <RiderMobileSettings role={role} />
+      </div>
     </>
   );
 }

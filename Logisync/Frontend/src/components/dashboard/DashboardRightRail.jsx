@@ -6,6 +6,7 @@ export default function DashboardRightRail({
   seeAllTo = "#",
   tasks = [],
   emptyText = "You're all caught up! No pending actions.",
+  hideSummaryOnMobile = false,
   summary = {
     label: "Completion Rate",
     value: "0%",
@@ -86,6 +87,8 @@ export default function DashboardRightRail({
       {/* Bottom Right: Mini-Bar Summary Card */}
       <div
         className={`relative overflow-hidden rounded-2xl p-5 text-white ${
+          hideSummaryOnMobile ? "hidden min-[821px]:block " : ""
+        }${
           isSlate
             ? "bg-[#0f172a] border border-[#1e293b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.55)]"
             : "bg-gradient-to-br from-[#ee4d2d] to-[#f97316] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.5)]"

@@ -138,7 +138,113 @@ export default function ParcelRecords() {
         </div>
       )}
 
-      <div className={reportOpen ? "print:hidden" : ""}>
+      {/* MOBILE 4-TAB HORIZONTAL FILTER BAR (max-[820px] ONLY) */}
+      <div
+        role="tablist"
+        aria-label="Filter parcels by status"
+        className={`sticky top-14 z-30 -mx-3.5 -mt-3.5 mb-3 max-[380px]:-mx-2.5 grid grid-cols-4 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 ${reportOpen ? "print:hidden" : ""}`}
+      >
+        {[
+          {
+            key: "NEEDS_VIDEO",
+            label: "Needs Video",
+            activeText: "text-[#3b82f6] dark:text-[#60a5fa]",
+            activeBar: "bg-[#3b82f6]",
+            activeBadge: "bg-[#dbeafe] text-[#1d4ed8] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+            filter: FILTERS[0],
+          },
+          {
+            key: "UNDER_VERIFICATION",
+            label: "Under Verif.",
+            activeText: "text-[#ca8a04] dark:text-[#facc15]",
+            activeBar: "bg-[#facc15]",
+            activeBadge: "bg-[#fef9c3] text-[#a16207] dark:bg-yellow-500/20 dark:text-[#facc15]",
+            filter: FILTERS[1],
+          },
+          {
+            key: "VERIFIED",
+            label: "Verified",
+            activeText: "text-[#16a34a] dark:text-[#4ade80]",
+            activeBar: "bg-[#16a34a]",
+            activeBadge: "bg-[#dcfce7] text-[#15803d] dark:bg-green-500/20 dark:text-[#4ade80]",
+            filter: FILTERS[2],
+          },
+          {
+            key: "RETURN_TO_HUB",
+            label: "Return/Failed",
+            activeText: "text-[#dc2626] dark:text-[#f87171]",
+            activeBar: "bg-[#dc2626]",
+            activeBadge: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+            filter: FILTERS[3],
+          },
+        ].map((tab) => {
+          const active = status === tab.key;
+          const cnt = countOf(tab.filter);
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => toggle(tab.key)}
+              className={`relative flex flex-col items-center justify-center gap-1 px-1 py-2.5 text-center leading-tight transition ${
+                active
+                  ? `font-extrabold ${tab.activeText}`
+                  : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
+              }`}
+            >
+              <span className="max-w-full truncate text-[10.5px] max-[360px]:text-[9.5px]">{tab.label}</span>
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+                  active
+                    ? tab.activeBadge
+                    : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
+                }`}
+              >
+                {loading ? "…" : cnt}
+              </span>
+              {active && (
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-x-2 bottom-0 h-[2.5px] rounded-full ${tab.activeBar}`}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* MOBILE ACTION BAR (below filter tabs, above records container) */}
+      <div className="mb-3 flex items-center justify-between gap-2 min-[821px]:hidden print:hidden">
+        {status !== "ALL" ? (
+          <button
+            type="button"
+            onClick={() => setStatus("ALL")}
+            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-600 transition active:scale-95 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+          >
+            <i className="fa-solid fa-xmark text-[10px]" />
+            <span>Show All ({parcels.length})</span>
+          </button>
+        ) : (
+          <span />
+        )}
+        <button
+          type="button"
+          onClick={toggleReport}
+          aria-expanded={reportOpen}
+          className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[12.5px] font-bold transition active:scale-95 ${
+            reportOpen
+              ? "border border-slate-200 bg-white text-slate-600 dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+              : "bg-brand text-white shadow-xs hover:bg-brand-dark"
+          }`}
+        >
+          <i className={`fa-solid ${reportOpen ? "fa-xmark" : "fa-file-lines"} text-[12px]`} />
+          <span>{reportOpen ? "Hide Report" : "Generate Report"}</span>
+        </button>
+      </div>
+
+      {/* DESKTOP 4-CARD SUMMARY GRID (min-[821px] — 100% unchanged) */}
+      <div className={`hidden min-[821px]:block ${reportOpen ? "print:hidden" : ""}`}>
         <StatGrid>
           {FILTERS.map((f) => (
             <button key={f.key} type="button" onClick={() => toggle(f.key)} aria-pressed={status === f.key} className="block h-full text-left rounded-2xl focus:outline-none [&>div]:h-full">

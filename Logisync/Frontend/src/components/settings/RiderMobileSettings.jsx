@@ -89,8 +89,9 @@ function Toggle({ checked, disabled = false, label, onClick }) {
 
 export default function RiderMobileSettings({ role = "rider" }) {
   const isCoordinator = role === "coordinator";
-  const profilePath = isCoordinator ? "/profile" : "/rider/profile";
-  const activityPath = isCoordinator ? "/audit" : "/rider/activity";
+  const isSeller = role === "seller";
+  const profilePath = isCoordinator ? "/profile" : isSeller ? "/seller/profile" : "/rider/profile";
+  const activityPath = isCoordinator ? "/audit" : isSeller ? "/seller/activity" : "/rider/activity";
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawSection = (searchParams.get("section") || "").toLowerCase();
@@ -148,10 +149,12 @@ export default function RiderMobileSettings({ role = "rider" }) {
 
   const accountIdDisplay = isCoordinator
     ? `COOR-${String(profile.userId ?? 1).padStart(4, "0")}`
-    : profile.riderCode ||
-      (profile.userId !== null && profile.userId !== undefined && String(profile.userId).trim() !== ""
-        ? `RID-${String(profile.userId).padStart(4, "0")}`
-        : "RID-0001");
+    : isSeller
+      ? profile.sellerCode || `SEL-${String(profile.userId ?? 1).padStart(4, "0")}`
+      : profile.riderCode ||
+        (profile.userId !== null && profile.userId !== undefined && String(profile.userId).trim() !== ""
+          ? `RID-${String(profile.userId).padStart(4, "0")}`
+          : "RID-0001");
 
   const openSection = (next) => {
     setSavedNotice("");
@@ -587,17 +590,23 @@ export default function RiderMobileSettings({ role = "rider" }) {
               <div className="divide-y divide-slate-100 text-[13.5px] dark:divide-night-line">
                 <div className="flex items-center justify-between py-2">
                   <span className="text-slate-500 dark:text-[#b8b0a8]">
-                    {isCoordinator ? "Coordinator ID" : "Rider ID"}
+                    {isCoordinator ? "Coordinator ID" : isSeller ? "Seller ID" : "Rider ID"}
                   </span>
                   <strong className="font-mono text-[#0f172a] dark:text-white">{accountIdDisplay}</strong>
                 </div>
                 <div className="flex items-center justify-between py-2">
                   <span className="text-slate-500 dark:text-[#b8b0a8]">Role</span>
                   <strong className="text-[#0f172a] dark:text-white">
-                    {isCoordinator ? "Coordinator" : "Rider"}
+                    {isCoordinator ? "Coordinator" : isSeller ? "Seller" : "Rider"}
                   </strong>
                 </div>
-                {!isCoordinator && (
+                {isSeller && profile.shopName && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-slate-500 dark:text-[#b8b0a8]">Shop Name</span>
+                    <strong className="text-right text-[#0f172a] dark:text-white">{profile.shopName}</strong>
+                  </div>
+                )}
+                {!isCoordinator && !isSeller && (
                   <div className="flex items-center justify-between py-2">
                     <span className="text-slate-500 dark:text-[#b8b0a8]">Assigned Agency</span>
                     <strong className="text-right text-[#0f172a] dark:text-white">
@@ -608,7 +617,9 @@ export default function RiderMobileSettings({ role = "rider" }) {
               </div>
               {!isCoordinator && (
                 <p className="mt-2 text-[11.5px] leading-snug text-slate-400 dark:text-[#9c948d]">
-                  Rider ID, role, and assigned agency are managed by your Hub Coordinator and cannot be edited here.
+                  {isSeller
+                    ? "Seller ID, role, and shop details are managed by your Hub Coordinator and cannot be edited here."
+                    : "Rider ID, role, and assigned agency are managed by your Hub Coordinator and cannot be edited here."}
                 </p>
               )}
             </div>
@@ -1185,7 +1196,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                 <div>
                   <dt className="text-slate-400">Active Portal</dt>
                   <dd className="font-bold text-[#0f172a] dark:text-white">
-                    {isCoordinator ? "Coordinator Hub" : "Rider Portal"}
+                    {isCoordinator ? "Coordinator Hub" : isSeller ? "Seller Portal" : "Rider Portal"}
                   </dd>
                 </div>
                 <div>
