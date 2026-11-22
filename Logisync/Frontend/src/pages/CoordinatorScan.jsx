@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import ScanPanel from "../components/qr/ScanPanel.jsx";
+import PortalRecentScans from "../components/qr/PortalRecentScans.jsx";
 import CoordinatorRthModal from "../components/coordinator/CoordinatorRthModal.jsx";
 import { panel } from "../components/styles.js";
 import { findParcel } from "../services/parcelService.js";
+import { logPortalScan, usePortalScans } from "../store/portalScans.js";
 
 export default function CoordinatorScan() {
   const navigate = useNavigate();
+  const scans = usePortalScans("coordinator");
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState("");
   const [rthParcel, setRthParcel] = useState(null);
@@ -24,6 +27,7 @@ export default function CoordinatorScan() {
         setError("Parcel not found.");
         return;
       }
+      logPortalScan("coordinator", p, code);
       const rthStatus = String(p.rth_status || "").toUpperCase();
       const status = String(p.status || "").toUpperCase();
       if (rthStatus === "PENDING" || rthStatus === "PENDING_CONFIRMATION" || status === "RTH_PENDING" || status === "RETURN_TO_HUB") {
@@ -46,15 +50,17 @@ export default function CoordinatorScan() {
         subtitle="Scan a parcel QR code or enter its transaction number to verify packing proof or confirm Return to Hub arrival."
       />
 
-      <section className={`${panel} mx-auto max-w-[780px] p-6 max-[600px]:p-4`}>
+      <section className={`${panel} p-[30px] max-[600px]:p-5`}>
         <ScanPanel
-          onResult={handleLookup}
+          onValue={handleLookup}
           busy={looking}
           error={error}
           placeholder="Transaction number or parcel ID…"
           btnClass="bg-brand hover:bg-brand-dark"
         />
       </section>
+
+      <PortalRecentScans role="coordinator" scans={scans} />
 
       {rthParcel && (
         <CoordinatorRthModal

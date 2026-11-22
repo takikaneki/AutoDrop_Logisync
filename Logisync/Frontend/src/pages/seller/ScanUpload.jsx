@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import ScanPanel from "../../components/qr/ScanPanel.jsx";
+import PortalRecentScans from "../../components/qr/PortalRecentScans.jsx";
 import ShipmentDetailsView from "../../components/parcels/ShipmentDetailsView.jsx";
 import { Notice } from "../../components/portal.jsx";
 import { panel } from "../../components/styles.js";
 import { findParcel, getSellerParcel, uploadVideo } from "../../services/parcelService.js";
 import { formatSize } from "../../utils/format.js";
 import { toast } from "../../store/toast.js";
+import { logPortalScan, usePortalScans } from "../../store/portalScans.js";
 
 const MAX_MB = 50;
 const ALLOWED = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"];
@@ -18,6 +20,7 @@ export default function ScanUpload() {
   const [params] = useSearchParams();
   const initialQuery = routeId || params.get("txn") || "";
 
+  const scans = usePortalScans("seller");
   const [data, setData] = useState(null);
   const [looking, setLooking] = useState(Boolean(initialQuery));
   const [lookupError, setLookupError] = useState("");
@@ -36,7 +39,9 @@ export default function ScanUpload() {
     setLookupError("");
     setSuccess("");
     try {
-      setData(await findParcel(value, "seller"));
+      const found = await findParcel(value, "seller");
+      setData(found);
+      logPortalScan("seller", found?.parcel || found, value);
     } catch (err) {
       setData(null);
       setLookupError(err.message);
@@ -165,6 +170,8 @@ export default function ScanUpload() {
           </div>
         )}
       </section>
+
+      <PortalRecentScans role="seller" scans={scans} />
     </>
   );
 }
