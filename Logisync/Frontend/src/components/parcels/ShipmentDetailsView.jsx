@@ -675,11 +675,11 @@ export default function ShipmentDetailsView({
             </div>
           </div>
 
-          {/* 3 Tabs directly below the page heading */}
+          {/* 4 Tabs directly below the page heading — strictly single-line & aligned across mobile and desktop */}
           <div
             role="tablist"
             aria-label="Shipment Details Tabs"
-            className="mb-5 flex items-center gap-6 border-b border-[#e5e7eb] dark:border-night-line"
+            className="mb-5 flex items-center justify-between sm:justify-start gap-2 sm:gap-6 overflow-x-auto no-scrollbar border-b border-[#e5e7eb] dark:border-night-line"
           >
             {TABS.map((tab) => {
               const active = activeTab === tab.id;
@@ -690,13 +690,13 @@ export default function ShipmentDetailsView({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative inline-flex items-center gap-1.5 pb-3 text-[14px] font-semibold transition ${
+                  className={`relative inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap pb-3 text-[12.5px] sm:text-[14px] leading-none font-semibold transition ${
                     active
                       ? "text-brand after:absolute after:inset-x-0 after:bottom-0 after:h-[2.5px] after:rounded-t-full after:bg-brand"
                       : "text-[#64748b] hover:text-[#1e293b] dark:text-[#9c948c] dark:hover:text-white"
                   }`}
                 >
-                  {tab.icon && <Icon name={tab.icon} className="text-[13px]" />}
+                  {tab.icon && <Icon name={tab.icon} className="text-[12px] sm:text-[13px] max-[390px]:hidden" />}
                   <span>{tab.label}</span>
                 </button>
               );
@@ -927,16 +927,16 @@ export default function ShipmentDetailsView({
           {activeTab === "history" && (
             <div className="space-y-4">
               <section className={`${panel} p-6 max-[600px]:p-4`}>
-                <div className="mb-4 flex items-center justify-between border-b border-[#e5e7eb] pb-3 dark:border-night-line">
-                  <div>
-                    <h2 className="text-[16px] font-bold text-[#1e293b] dark:text-white">
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-2 border-b border-[#e5e7eb] pb-3 dark:border-night-line">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-[16px] font-bold leading-snug text-[#1e293b] dark:text-white">
                       Parcel Movement & Audit History
                     </h2>
-                    <p className="text-[12px] text-[#64748b] dark:text-[#9c948c]">
+                    <p className="mt-0.5 text-[12px] text-[#64748b] dark:text-[#9c948c]">
                       Immutable audit log of all status transitions, actors, and hub confirmations.
                     </p>
                   </div>
-                  <span className="font-mono text-xs font-bold text-[#64748b]">
+                  <span className="shrink-0 rounded-md bg-slate-100 px-2.5 py-1 font-mono text-[11.5px] font-bold text-[#475569] dark:bg-night-head dark:text-[#d1c9c2]">
                     {parcel?.transaction_number || parcel?.parcel_id}
                   </span>
                 </div>
@@ -952,21 +952,29 @@ export default function ShipmentDetailsView({
                     No movement events recorded yet.
                   </div>
                 ) : (
-                  <ol className="relative space-y-6 border-l-2 border-[#e5e7eb] pl-4 dark:border-night-line">
-                    {historyList.map((item, idx) => (
-                      <li key={item.history_id || idx} className="relative">
-                        <span className="absolute -left-[23px] top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand ring-4 ring-white dark:ring-night-panel" />
-                        <div className="rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-3.5 dark:border-night-line dark:bg-night-soft">
+                  <ol className="relative space-y-4">
+                    {historyList.map((item, idx, arr) => (
+                      <li key={item.history_id || idx} className="relative flex items-start gap-3">
+                        {idx < arr.length - 1 && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute left-[9px] top-5 h-[calc(100%+4px)] w-[2px] bg-[#e2e8f0] dark:bg-night-line"
+                          />
+                        )}
+                        <span className="relative z-10 mt-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/15">
+                          <span className="h-2.5 w-2.5 rounded-full bg-brand" />
+                        </span>
+                        <div className="min-w-0 flex-1 rounded-xl border border-[#e5e7eb] bg-[#f8fafc] p-3.5 dark:border-night-line dark:bg-night-soft">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-bold text-[#1e293b] dark:text-white">
+                            <span className="text-[14px] font-bold text-[#1e293b] dark:text-white">
                               {item.previous_status ? `${item.previous_status} → ` : ""}{item.new_status}
                             </span>
-                            <span className="text-xs text-[#64748b] dark:text-[#9c948c]">
+                            <span className="text-[11.5px] text-[#64748b] dark:text-[#9c948c]">
                               {formatDate(item.created_at)}
                             </span>
                           </div>
 
-                          <div className="mt-1.5 text-xs text-[#64748b] dark:text-[#9c948c]">
+                          <div className="mt-1.5 text-[12px] text-[#64748b] dark:text-[#9c948c]">
                             Action by: <strong className="text-[#334155] dark:text-[#e2e8f0]">{item.actor_name || "System"}</strong> ({item.actor_role || "User"} #{item.actor_id || "—"})
                           </div>
 
@@ -978,7 +986,7 @@ export default function ShipmentDetailsView({
                           )}
 
                           {item.notes && (
-                            <p className="mt-1.5 text-xs italic text-[#475569] dark:text-[#cbd5e1]">
+                            <p className="mt-1.5 text-[12px] italic text-[#475569] dark:text-[#cbd5e1]">
                               "{item.notes}"
                             </p>
                           )}
