@@ -14,6 +14,58 @@ function formatRiderId(profile) {
   return "RID-0001";
 }
 
+function SectionLabel({ children }) {
+  return (
+    <p className="px-4 pt-3.5 pb-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-slate-400 dark:text-[#9c948c]">
+      {children}
+    </p>
+  );
+}
+
+function MenuRow({ icon, label, sublabel, to, onClick, iconTone = "default" }) {
+  const iconBoxCls =
+    iconTone === "brand"
+      ? "bg-brand/12 text-brand dark:bg-brand/20"
+      : "bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]";
+
+  const content = (
+    <>
+      <span className="flex min-w-0 items-center gap-3.5">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBoxCls}`}>
+          <Icon name={icon} className="text-[16px]" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
+            {label}
+          </span>
+          {sublabel && (
+            <span className="block truncate text-[12px] font-medium text-slate-500 dark:text-[#9c948c]">
+              {sublabel}
+            </span>
+          )}
+        </span>
+      </span>
+      <Icon name="chevron-right" className="shrink-0 text-[13px] text-slate-400" />
+    </>
+  );
+
+  const rowCls =
+    "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70 dark:active:bg-night-head";
+
+  if (to) {
+    return (
+      <Link to={to} className={rowCls}>
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} className={rowCls}>
+      {content}
+    </button>
+  );
+}
+
 export default function RiderProfile() {
   const navigate = useNavigate();
   const profile = useProfile();
@@ -26,52 +78,6 @@ export default function RiderProfile() {
   }, []);
 
   const riderId = formatRiderId(profile);
-
-  // Single unified container from Personal Information through About LOGISYNC
-  const menuItems = [
-    {
-      key: "personal",
-      label: "Personal Information",
-      icon: "user-round",
-      to: "/rider/settings?section=account",
-    },
-    {
-      key: "faqs",
-      label: "FAQs",
-      icon: "circle-help",
-      to: "/rider/help#faq",
-    },
-    {
-      key: "analytics",
-      label: "Analytics",
-      icon: "chart-no-axes-column",
-      to: "/rider/analytics",
-    },
-    {
-      key: "complaints",
-      label: "Complaints",
-      icon: "clipboard-list",
-      to: "/rider/complaints",
-    },
-    {
-      key: "settings",
-      label: "Settings",
-      icon: "settings",
-      to: "/rider/settings",
-    },
-    {
-      key: "privacy",
-      label: "Privacy Policy",
-      icon: "shield-check",
-      to: "/rider/settings?section=privacy",
-    },
-    {
-      key: "about",
-      label: "About LOGISYNC",
-      icon: "info",
-      to: "/rider/settings?section=about",
-    },
-  ];
 
   return (
     <>
@@ -107,68 +113,89 @@ export default function RiderProfile() {
             {profile.name}
           </h1>
           <p className="mt-0.5 text-[13.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
-            Rider
+            Rider · <span className="font-mono">{riderId}</span>
           </p>
-
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-slate-200/85 px-3.5 py-1 text-[11.5px] font-bold tracking-wide text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
-            <span>RIDER ID:</span>
-            <span className="font-mono text-[#0f172a] dark:text-white">{riderId}</span>
-          </span>
 
           <button
             type="button"
             onClick={() => navigate("/rider/settings?section=account")}
             className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-brand/35 bg-white px-5 py-2 text-[13px] font-bold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand"
           >
-            <Icon name="user-pen" className="text-[12px]" />
+            <Icon name="pencil" className="text-[12px]" />
             <span>Edit Profile</span>
           </button>
         </section>
 
-        {/* Profile Menu */}
+        {/* Sectioned Rider Profile Menu */}
         <nav aria-label="Rider profile menu" className="relative z-10 mt-6 space-y-3">
-          {/* Unified single container: Personal Information -> About LOGISYNC */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] divide-y divide-slate-100 dark:border-night-line dark:bg-night-panel dark:divide-night-line">
-            {menuItems.map((item) => (
-              <Link
-                key={item.key}
-                to={item.to}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition active:bg-slate-50 hover:bg-slate-50/80 dark:hover:bg-night-head/70 dark:active:bg-night-head"
-              >
-                <span className="flex min-w-0 items-center gap-3.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[#0f172a] dark:bg-night-head dark:text-[#f1eeeb]">
-                    <Icon name={item.icon} className="text-[15px]" />
-                  </span>
-                  <span className="truncate text-[14.5px] font-semibold text-[#0f172a] dark:text-[#f1eeeb]">
-                    {item.label}
-                  </span>
-                </span>
-                <Icon name="chevron-right" className="shrink-0 text-[12px] text-slate-400" />
-              </Link>
-            ))}
+          {/* ACCOUNT */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
+            <SectionLabel>Account</SectionLabel>
+            <div className="divide-y divide-slate-100 dark:divide-night-line">
+              <MenuRow
+                icon="user-round"
+                label="Personal Information"
+                to="/rider/settings?section=account"
+              />
+            </div>
           </div>
 
-          {/* Need Help? -> Opens Contact Support Modal */}
-          <button
-            type="button"
-            onClick={() => setContactOpen(true)}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[#fed7aa]/90 bg-[#fff3e8] px-4 py-3.5 text-left shadow-[0_2px_10px_rgba(238,77,45,0.07)] transition active:scale-[0.99] hover:bg-[#ffead6] dark:border-brand/30 dark:bg-brand/15 dark:hover:bg-brand/20"
-          >
-            <span className="flex min-w-0 items-center gap-3.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/90 text-brand shadow-2xs dark:bg-night-panel">
-                <Icon name="headset" className="text-[15px]" />
-              </span>
-              <span className="min-w-0">
-                <strong className="block truncate text-[14.5px] font-bold text-[#0f172a] dark:text-white">
-                  Need Help?
-                </strong>
-                <small className="block truncate text-[12px] font-semibold text-brand">
-                  Contact Support
-                </small>
-              </span>
-            </span>
-            <Icon name="chevron-right" className="shrink-0 text-[12px] text-brand" />
-          </button>
+          {/* OPERATIONS */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
+            <SectionLabel>Operations</SectionLabel>
+            <div className="divide-y divide-slate-100 dark:divide-night-line">
+              <MenuRow
+                icon="chart-no-axes-column"
+                label="Analytics"
+                to="/rider/analytics"
+              />
+              <MenuRow
+                icon="clipboard-list"
+                label="Complaints"
+                to="/rider/complaints"
+              />
+            </div>
+          </div>
+
+          {/* PREFERENCES */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
+            <SectionLabel>Preferences</SectionLabel>
+            <div className="divide-y divide-slate-100 dark:divide-night-line">
+              <MenuRow icon="settings" label="Settings" to="/rider/settings" />
+            </div>
+          </div>
+
+          {/* INFORMATION */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
+            <SectionLabel>Information</SectionLabel>
+            <div className="divide-y divide-slate-100 dark:divide-night-line">
+              <MenuRow
+                icon="shield-check"
+                label="Privacy Policy"
+                to="/rider/settings?section=privacy"
+              />
+              <MenuRow
+                icon="info"
+                label="About LOGISYNC"
+                to="/rider/settings?section=about"
+              />
+            </div>
+          </div>
+
+          {/* SUPPORT */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
+            <SectionLabel>Support</SectionLabel>
+            <div className="divide-y divide-slate-100 dark:divide-night-line">
+              <MenuRow icon="circle-help" label="FAQs" to="/rider/help#faq" />
+              <MenuRow
+                icon="headset"
+                iconTone="brand"
+                label="Need Help?"
+                sublabel="Contact Support"
+                onClick={() => setContactOpen(true)}
+              />
+            </div>
+          </div>
 
           {/* Log Out Row */}
           <button
