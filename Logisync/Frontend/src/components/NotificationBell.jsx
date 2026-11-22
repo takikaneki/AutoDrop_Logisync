@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { classifyNotification, markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
+import {
+  classifyNotification,
+  markAllRead,
+  markRead,
+  syncCoordinatorNotificationsFromServer,
+  timeAgo,
+  useNotifications,
+} from "../store/notifications.js";
 import { usePrefs } from "../store/prefs.js";
 import { notifyPopup } from "../store/toast.js";
 import Icon from "./Icon.jsx";
@@ -27,6 +34,17 @@ export default function NotificationBell() {
   const navigate = useNavigate();
   const rawNotifications = useNotifications();
   const prefs = usePrefs();
+
+  useEffect(() => {
+    syncCoordinatorNotificationsFromServer();
+    const timer = setInterval(syncCoordinatorNotificationsFromServer, 15000);
+    const onFocus = () => syncCoordinatorNotificationsFromServer();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   const bellEnabled = prefs.notificationsEnabled !== false && prefs.inAppNotifications !== false;
 

@@ -6,7 +6,13 @@ import { btnGhost, panel } from "../components/styles.js";
 import AnnouncementsPanel from "../components/AnnouncementsPanel.jsx";
 import FailedDeliveryReview from "../components/delivery/FailedDeliveryReview.jsx";
 import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
-import { markAllRead, markRead, timeAgo, useNotifications } from "../store/notifications.js";
+import {
+  markAllRead,
+  markRead,
+  syncCoordinatorNotificationsFromServer,
+  timeAgo,
+  useNotifications,
+} from "../store/notifications.js";
 import Icon from "../components/Icon.jsx";
 
 const tones = {
@@ -42,6 +48,7 @@ export default function Notifications() {
 
   useEffect(() => {
     syncAnnouncementsFromServer();
+    syncCoordinatorNotificationsFromServer();
   }, []);
   const unread = items.filter((n) => !n.read).length;
 
