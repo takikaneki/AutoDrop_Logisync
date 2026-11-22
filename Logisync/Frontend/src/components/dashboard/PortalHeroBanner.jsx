@@ -48,15 +48,6 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-2.5">
               <img src={SPX_LOGO_DATA_URL} alt="SPX Express" className="h-5 w-auto object-contain" />
-              {role === "seller" && (
-                <>
-                  <span className="h-3.5 w-px bg-[#e2e8f0] dark:bg-night-line" aria-hidden="true" />
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#fff0e5] px-2.5 py-0.5 text-[11px] font-extrabold tracking-wide text-[#ee4d2d] dark:bg-brand/20 dark:text-[#ffb98a]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#ee4d2d]" />
-                    {cfg.badge}
-                  </span>
-                </>
-              )}
             </div>
 
             <h1 className="text-[22px] max-[600px]:text-[18px] font-extrabold tracking-tight text-[#1e293b] dark:text-[#f1eeeb]">

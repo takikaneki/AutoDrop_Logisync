@@ -6,7 +6,7 @@ import UserAvatar from "../Avatar.jsx";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
 import { useProfile } from "../../store/profile.js";
-import { ROLE_LABEL, toPath } from "./navConfig.js";
+import { toPath } from "./navConfig.js";
 import NotificationMenu from "./NotificationMenu.jsx";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import Icon from "../Icon.jsx";
@@ -61,9 +61,6 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                 LogiSync
               </span>
             </Link>
-            <span className="hidden min-[821px]:inline-flex shrink-0 items-center rounded-full bg-brand/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-brand border border-brand/20">
-              {ROLE_LABEL[role]}
-            </span>
           </div>
 
           {/* Right Column: Theme Toggle, Notifications, and Profile */}
