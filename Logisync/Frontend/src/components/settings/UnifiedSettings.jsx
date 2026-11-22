@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import UserAvatar from "../Avatar.jsx";
 import LogoutModal from "../LogoutModal.jsx";
 import ChangePasswordForm from "../ChangePasswordForm.jsx";
+import AvatarCropModal from "./AvatarCropModal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls } from "../styles.js";
 import { setPrefs, toggleDark, usePrefs } from "../../store/prefs.js";
 import { saveProfileToServer, useProfile } from "../../store/profile.js";
@@ -137,6 +138,8 @@ export default function UnifiedSettings() {
   };
 
   const [savingProfile, setSavingProfile] = useState(false);
+  const [cropFile, setCropFile] = useState(null);
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   const saveProfile = async (e) => {
     e.preventDefault();
@@ -164,18 +167,30 @@ export default function UnifiedSettings() {
     }
   };
 
-  const uploadAvatar = async (e) => {
+  const uploadAvatar = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast("Please choose an image file.", "error");
+    if (!file.type.startsWith("image/")) {
+      toast("Please choose an image file.", "error");
+      e.target.value = "";
+      return;
+    }
+    setCropFile(file);
+    e.target.value = "";
+  };
+
+  const confirmCroppedAvatar = async (dataUrl) => {
+    if (savingAvatar) return;
+    setSavingAvatar(true);
     try {
-      const dataUrl = await resizeImage(file);
       await saveProfileToServer({ avatar: dataUrl });
+      setCropFile(null);
       toast("Profile picture updated.");
     } catch (ex) {
       toast(ex?.message || "Could not update profile picture.", "error");
+    } finally {
+      setSavingAvatar(false);
     }
-    e.target.value = "";
   };
 
   const q = search.trim().toLowerCase();
@@ -1391,6 +1406,13 @@ export default function UnifiedSettings() {
         </section>
       </div>
 
+      <AvatarCropModal
+        file={cropFile}
+        open={Boolean(cropFile)}
+        saving={savingAvatar}
+        onClose={() => !savingAvatar && setCropFile(null)}
+        onConfirm={confirmCroppedAvatar}
+      />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

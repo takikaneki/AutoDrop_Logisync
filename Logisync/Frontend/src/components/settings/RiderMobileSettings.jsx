@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import UserAvatar from "../Avatar.jsx";
 import LogoutModal from "../LogoutModal.jsx";
 import ChangePasswordForm from "../ChangePasswordForm.jsx";
+import AvatarCropModal from "./AvatarCropModal.jsx";
 import { setPrefs, usePrefs } from "../../store/prefs.js";
 import { saveProfileToServer, syncProfileFromServer, useProfile } from "../../store/profile.js";
 import { toast } from "../../store/toast.js";
@@ -112,6 +113,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
   const [errors, setErrors] = useState({});
   const [savingAccount, setSavingAccount] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [cropFile, setCropFile] = useState(null);
   const [savedNotice, setSavedNotice] = useState("");
   const fileRef = useRef(null);
 
@@ -180,7 +182,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
     navigate(profilePath);
   };
 
-  const handleChangePhoto = async (e) => {
+  const handleChangePhoto = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -188,16 +190,21 @@ export default function RiderMobileSettings({ role = "rider" }) {
       e.target.value = "";
       return;
     }
+    setCropFile(file);
+    e.target.value = "";
+  };
+
+  const handleConfirmCroppedPhoto = async (dataUrl) => {
+    if (uploadingPhoto) return;
     setUploadingPhoto(true);
     try {
-      const dataUrl = await resizeImage(file, 256);
       await saveProfileToServer({ avatar: dataUrl });
+      setCropFile(null);
       toast("Profile photo updated.");
     } catch (ex) {
       toast(ex?.message || "Could not update profile photo.", "error");
     } finally {
       setUploadingPhoto(false);
-      e.target.value = "";
     }
   };
 
@@ -1215,6 +1222,13 @@ export default function RiderMobileSettings({ role = "rider" }) {
         )}
       </div>
 
+      <AvatarCropModal
+        file={cropFile}
+        open={Boolean(cropFile)}
+        saving={uploadingPhoto}
+        onClose={() => !uploadingPhoto && setCropFile(null)}
+        onConfirm={handleConfirmCroppedPhoto}
+      />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );
