@@ -50,7 +50,7 @@ const groups = [
 
 const supportLinks = [
   { to: "/contact", icon: "mail", label: "Contact Us" },
-  { to: "/help", icon: "circle-help", label: "Help / FAQs" },
+  { to: "/help", icon: "circle-help", label: "FAQs" },
   { to: "/about", icon: "info", label: "About LOGISYNC" },
 ];
 

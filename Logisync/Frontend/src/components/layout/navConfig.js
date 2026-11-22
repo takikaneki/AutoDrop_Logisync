@@ -76,7 +76,7 @@ export function navFor(role) {
 // Support links sa sidebar (pareho sa Coordinator, Seller, at Rider web view)
 export const TOP_LINKS = [
   { path: "contact", label: "Contact Us" },
-  { path: "help", label: "Help / FAQs" },
+  { path: "help", label: "FAQs" },
   { path: "about", label: "About LOGISYNC" },
 ];
 
