@@ -182,6 +182,9 @@ export function apiUpload(path, formData, onProgress) {
         clearSession();
         window.location.href = "/login";
       }
+      if (xhr.status === 413) {
+        return reject(new Error("Video file is too large for direct server upload. Please try a smaller video clip."));
+      }
       reject(new Error(data?.message || (xhr.status >= 500 ? SERVER_DOWN : `Upload failed (${xhr.status})`)));
     };
     xhr.send(formData);

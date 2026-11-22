@@ -11,6 +11,7 @@ const {
   createParcel,
   getParcelForRole,
   getSellerParcel,
+  getVideoUploadSignature,
   uploadVideo,
   getCoordinatorParcel,
   reviewDiscreetRequest,
@@ -77,10 +78,19 @@ router.get("/seller/:parcelId",
   getSellerParcel
 );
 
+router.post("/seller/:parcelId/video-signature",
+  authenticateToken,
+  authorizeRoles("seller"),
+  getVideoUploadSignature
+);
+
 router.post("/seller/:parcelId/video",
   authenticateToken,
   authorizeRoles("seller"),
-  uploadVideoMiddleware.single("video"),
+  (req, res, next) => {
+    if (req.is("application/json")) return next();
+    return uploadVideoMiddleware.single("video")(req, res, next);
+  },
   uploadVideo
 );
 

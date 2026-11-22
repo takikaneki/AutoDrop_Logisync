@@ -212,7 +212,7 @@ export async function listParcels() {
   const list = rawList.filter((p) => {
     const txn = String(p?.transaction_number || "").trim();
     const pid = String(p?.parcel_id || "").trim();
-    return (/^PH\d{10}[A-Z]$/i.test(txn) || /^SPX\d{9}$/i.test(txn)) && pid.length > 0 && pid.length <= 10;
+    return (/^PH(?:\d{10}[A-Z]|\d{12})$/i.test(txn) || /^SPX\d{9}$/i.test(txn)) && pid.length > 0 && pid.length <= 10;
   });
   syncCustomersFromParcels(list);
   return list.map(enrichParcel);
@@ -255,8 +255,60 @@ export const getCoordinatorParcel = async (parcelId) => {
   return res?.parcel ? { ...res, parcel: enrichParcel(res.parcel) } : res;
 };
 
-// POST /api/parcels/seller/:parcelId/video  (multipart, field name = "video")
-export function uploadVideo(parcelId, file, onProgress) {
+// Direct-to-Cloudinary signed upload (bypasses Vercel's 4.5 MB serverless body limit for up to 50 MB videos),
+// with automatic fallback to multipart upload if direct signing is unavailable.
+export async function uploadVideo(parcelId, file, onProgress) {
+  let sig = null;
+  try {
+    sig = await api(`/parcels/seller/${enc(parcelId)}/video-signature`, { method: "POST" });
+  } catch {
+    sig = null;
+  }
+
+  if (sig?.cloudName && sig?.apiKey && sig?.signature && sig?.timestamp) {
+    const cloudForm = new FormData();
+    cloudForm.append("file", file);
+    cloudForm.append("api_key", sig.apiKey);
+    cloudForm.append("timestamp", String(sig.timestamp));
+    cloudForm.append("signature", sig.signature);
+    if (sig.folder) cloudForm.append("folder", sig.folder);
+    if (sig.publicId) cloudForm.append("public_id", sig.publicId);
+
+    const cloudRes = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig.cloudName)}/video/upload`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress?.(Math.min(95, Math.round((e.loaded / e.total) * 95)));
+      };
+      xhr.onerror = () => reject(new Error("Network error while uploading video to cloud storage. Please check your internet connection."));
+      xhr.onload = () => {
+        let data = null;
+        try {
+          data = JSON.parse(xhr.responseText);
+        } catch {
+          /* ignore */
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && data?.secure_url) {
+          return resolve(data);
+        }
+        reject(new Error(data?.error?.message || `Video upload failed (${xhr.status}).`));
+      };
+      xhr.send(cloudForm);
+    });
+
+    onProgress?.(100);
+    return api(`/parcels/seller/${enc(parcelId)}/video`, {
+      method: "POST",
+      body: {
+        secure_url: cloudRes.secure_url,
+        public_id: cloudRes.public_id,
+        file_name: file.name,
+        file_size: file.size || cloudRes.bytes || 0,
+        mime_type: file.type || "video/mp4",
+      },
+    });
+  }
+
   const form = new FormData();
   form.append("video", file);
   return apiUpload(`/parcels/seller/${enc(parcelId)}/video`, form, onProgress);

@@ -1100,19 +1100,87 @@ async function getSellerParcel(req, res) {
   }
 }
 
+async function getVideoUploadSignature(req, res) {
+  try {
+    const [parcelRows] = await pool.query(
+      "SELECT parcel_id, seller_id, status FROM parcels WHERE parcel_id = ?",
+      [req.params.parcelId]
+    );
+
+    if (!parcelRows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Parcel not found."
+      });
+    }
+
+    const parcel = parcelRows[0];
+    if (Number(parcel.seller_id) !== Number(req.user.user_id)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only upload proof for your own parcels."
+      });
+    }
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return res.status(500).json({
+        success: false,
+        message: "Cloudinary environment variables are missing on the server."
+      });
+    }
+
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = "logisync/video-proofs";
+    const publicId = `video-${crypto.randomUUID()}`;
+    const paramsToSign = { folder, public_id: publicId, timestamp };
+
+    const signature =
+      cloudinary && cloudinary.utils && typeof cloudinary.utils.api_sign_request === "function"
+        ? cloudinary.utils.api_sign_request(paramsToSign, apiSecret)
+        : crypto
+            .createHash("sha1")
+            .update(`folder=${folder}&public_id=${publicId}&timestamp=${timestamp}${apiSecret}`)
+            .digest("hex");
+
+    return res.json({
+      success: true,
+      cloudName,
+      apiKey,
+      timestamp,
+      signature,
+      folder,
+      publicId
+    });
+  } catch (error) {
+    console.error("Video signature generation error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to prepare video upload."
+    });
+  }
+}
+
 async function uploadVideo(req, res) {
   let uploadedAsset = null;
   let videoRecordSaved = false;
 
   try {
-    if (!req.file) {
+    const directUrl = String(req.body?.secure_url || "").trim();
+    const directPublicId = String(req.body?.public_id || "").trim();
+    const isDirectCloudinary = Boolean(directUrl && directPublicId);
+
+    if (!req.file && !isDirectCloudinary) {
       return res.status(400).json({
         success: false,
         message: "Video file is required."
       });
     }
 
-    // Check parcel and ownership BEFORE uploading to Cloudinary
+    // Check parcel and ownership BEFORE uploading/recording
     const [parcelRows] = await pool.query(
       "SELECT parcel_id, seller_id, status FROM parcels WHERE parcel_id = ?",
       [req.params.parcelId]
@@ -1134,32 +1202,64 @@ async function uploadVideo(req, res) {
       });
     }
 
-    if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      !process.env.CLOUDINARY_API_KEY ||
-      !process.env.CLOUDINARY_API_SECRET
-    ) {
-      throw new Error("Cloudinary environment variables are missing.");
+    let fileName = "";
+    let fileSize = 0;
+    let mimeType = "video/mp4";
+
+    if (isDirectCloudinary) {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(directUrl);
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Cloudinary video URL."
+        });
+      }
+      if (parsedUrl.protocol !== "https:" || parsedUrl.hostname !== "res.cloudinary.com") {
+        return res.status(400).json({
+          success: false,
+          message: "Video URL must originate from Cloudinary."
+        });
+      }
+      uploadedAsset = {
+        secure_url: directUrl,
+        public_id: directPublicId
+      };
+      fileName = String(req.body?.file_name || "packing_video.mp4").trim().slice(0, 255);
+      fileSize = Math.max(0, Number(req.body?.file_size) || 0);
+      mimeType = String(req.body?.mime_type || "video/mp4").trim().slice(0, 100);
+    } else {
+      if (
+        !process.env.CLOUDINARY_CLOUD_NAME ||
+        !process.env.CLOUDINARY_API_KEY ||
+        !process.env.CLOUDINARY_API_SECRET
+      ) {
+        throw new Error("Cloudinary environment variables are missing.");
+      }
+
+      const publicId = `video-${crypto.randomUUID()}`;
+
+      // Upload video buffer to Cloudinary
+      uploadedAsset = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: "video",
+            folder: "logisync/video-proofs",
+            public_id: publicId
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+      fileName = req.file.originalname;
+      fileSize = req.file.size;
+      mimeType = req.file.mimetype;
     }
-
-    const publicId = `video-${crypto.randomUUID()}`;
-
-    // Upload video buffer to Cloudinary
-    uploadedAsset = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: "video",
-          folder: "logisync/video-proofs",
-          public_id: publicId
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-
-      stream.end(req.file.buffer);
-    });
 
     // Save Cloudinary URL and public ID
     const [result] = await pool.query(
@@ -1170,11 +1270,11 @@ async function uploadVideo(req, res) {
       [
         parcel.parcel_id,
         req.user.user_id,
-        req.file.originalname,
+        fileName,
         uploadedAsset.secure_url,
         uploadedAsset.public_id,
-        req.file.size,
-        req.file.mimetype
+        fileSize,
+        mimeType
       ]
     );
     videoRecordSaved = true;
@@ -1193,7 +1293,7 @@ async function uploadVideo(req, res) {
         category: "Video",
         action: "Uploaded video proof",
         target: parcel.parcel_id,
-        detail: req.file.originalname,
+        detail: fileName,
         sellerId: parcel.seller_id
       });
     } catch (auditError) {
@@ -1205,9 +1305,9 @@ async function uploadVideo(req, res) {
       message: "Video proof uploaded successfully.",
       video: {
         video_id: result.insertId,
-        file_name: req.file.originalname,
-        file_size: req.file.size,
-        mime_type: req.file.mimetype
+        file_name: fileName,
+        file_size: fileSize,
+        mime_type: mimeType
       }
     });
   } catch (error) {
@@ -3773,6 +3873,7 @@ module.exports = {
   createParcel,
   getParcelForRole,
   getSellerParcel,
+  getVideoUploadSignature,
   uploadVideo,
   getCoordinatorParcel,
   reviewDiscreetRequest,
