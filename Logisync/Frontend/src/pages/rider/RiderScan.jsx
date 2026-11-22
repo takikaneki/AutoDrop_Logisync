@@ -93,16 +93,27 @@ export default function RiderScan() {
       }
 
       setParcel(p);
-      logScan(p, value);
+      // Only add to active delivery queue if strictly VERIFIED, assigned to this rider, and not RTH/Delivered
+      const verified =
+        p.status === "VERIFIED" ||
+        p.verification_status === "VERIFIED" ||
+        p.status === "OUT_FOR_DELIVERY" ||
+        p.status === "RESCHEDULED" ||
+        p.delivery_status === "TO_DELIVER" ||
+        p.delivery_status === "RESCHEDULED";
 
-      // Only add to active delivery queue if verified and not RTH
-      if (
-        p.status !== "RTH_PENDING" &&
-        p.status !== "RTH_CONFIRMED" &&
-        p.status !== "DELIVERED" &&
-        p.rth_status !== "PENDING_CONFIRMATION" &&
-        p.rth_status !== "CONFIRMED"
-      ) {
+      const isRthOrDone =
+        p.status === "RETURN_TO_HUB" ||
+        p.status === "RTH_PENDING" ||
+        p.status === "RTH_CONFIRMED" ||
+        p.status === "DELIVERED" ||
+        p.delivery_status === "DELIVERED" ||
+        p.rth_status === "PENDING" ||
+        p.rth_status === "PENDING_CONFIRMATION" ||
+        p.rth_status === "CONFIRMED";
+
+      if (verified && !isRthOrDone && scanData?.assigned_to_current_rider !== false) {
+        logScan(p, value);
         setOutcome(addToDeliver(p, value));
       }
     } catch (err) {
@@ -259,6 +270,15 @@ export default function RiderScan() {
     }
   };
 
+  const isVerified =
+    parcel?.status === "VERIFIED" ||
+    parcel?.verification_status === "VERIFIED" ||
+    parcel?.status === "OUT_FOR_DELIVERY" ||
+    parcel?.status === "RESCHEDULED" ||
+    parcel?.status === "DELIVERED" ||
+    parcel?.delivery_status === "TO_DELIVER" ||
+    parcel?.delivery_status === "RESCHEDULED" ||
+    parcel?.delivery_status === "DELIVERED";
   const isAssigned = scanContext?.assigned_to_current_rider !== false;
   const isDelivered = parcel?.status === "DELIVERED" || parcel?.delivery_status === "DELIVERED";
   const isRthPending =
@@ -274,13 +294,10 @@ export default function RiderScan() {
     parcel?.rth_status === "CONFIRMED";
   const isRescheduled = parcel?.status === "RESCHEDULED" || parcel?.rescheduled;
   const isReady =
+    isVerified &&
     !isDelivered &&
     !isRthPending &&
-    !isRthConfirmed &&
-    (parcel?.status === "VERIFIED" ||
-      parcel?.verification_status === "VERIFIED" ||
-      parcel?.status === "OUT_FOR_DELIVERY" ||
-      isRescheduled);
+    !isRthConfirmed;
 
   return (
     <>
@@ -343,7 +360,23 @@ export default function RiderScan() {
           </div>
 
           {/* Role & Assignment Notice */}
-          {!isAssigned ? (
+          {!isVerified ? (
+            <Notice tone="error" icon="circle-alert" role="alert">
+              <strong className="block">Parcel is not ready for delivery</strong>
+              <span>
+                This parcel has not been approved by the Coordinator yet
+                {parcel.status === "WAITING_FOR_VIDEO"
+                  ? " — waiting for the seller to upload packing video."
+                  : parcel.status === "VIDEO_SUBMITTED"
+                    ? " — packing video is still under verification."
+                    : parcel.status === "REUPLOAD_REQUESTED"
+                      ? " — seller needs to re-upload the packing video."
+                      : parcel.status === "REJECTED"
+                        ? " — parcel was rejected during verification."
+                        : "."}
+              </span>
+            </Notice>
+          ) : !isAssigned ? (
             <Notice tone="error" icon="triangle-alert" role="alert">
               <strong className="block">Not Assigned to You</strong>
               <span>
@@ -452,9 +485,15 @@ export default function RiderScan() {
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#fafafa] p-4 text-[13px] text-[#777] dark:bg-night-head dark:text-[#d1c9c2]">
-            <Link to="/rider/deliveries" className={btnPrimary}>
-              Go to Deliveries
-            </Link>
+            {isVerified && isAssigned ? (
+              <Link to="/rider/deliveries" className={btnPrimary}>
+                Go to Deliveries
+              </Link>
+            ) : (
+              <button type="button" onClick={reset} className={btnPrimary}>
+                <Icon name="scan-line" /> Scan another parcel
+              </button>
+            )}
             <Link to="/rider/messages" className="font-bold text-brand hover:underline">
               Message coordinator →
             </Link>
