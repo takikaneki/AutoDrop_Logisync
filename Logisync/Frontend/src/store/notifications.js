@@ -4,19 +4,44 @@ import { fetchComplaints } from "../services/complaintService.js";
 import { listMessages } from "../services/messageService.js";
 
 // Notifications ng Coordinator (local + live backend sync for complaints & messages).
+// Ang Coordinator ang gumagawa ng announcements kaya HINDI dapat nagno-notif sa sarili niya ang announcements.
+function purgeSelfAnnouncements(list) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((n) => {
+    if (!n) return false;
+    const title = String(n.title || "").trim().toLowerCase();
+    if (n.kind === "announcement" || n.category === "announcements") return false;
+    if (title.startsWith("announcement sent:")) return false;
+    return true;
+  });
+}
+
 const store = createStore([], "pt-notifications");
 
-export const useNotifications = store.use;
+if (Array.isArray(store.get())) {
+  const cleaned = purgeSelfAnnouncements(store.get());
+  if (cleaned.length !== store.get().length) {
+    store.set(cleaned);
+  }
+}
 
-export const markRead = (id) => store.set((l) => l.map((n) => (n.id === id ? { ...n, read: true } : n)));
+export const useNotifications = () => purgeSelfAnnouncements(store.use());
 
-export const markAllRead = () => store.set((l) => l.map((n) => ({ ...n, read: true })));
+export const markRead = (id) => store.set((l) => purgeSelfAnnouncements(l).map((n) => (n.id === id ? { ...n, read: true } : n)));
+
+export const markAllRead = () => store.set((l) => purgeSelfAnnouncements(l).map((n) => ({ ...n, read: true })));
 
 export function addNotification(n) {
+  if (!n) return;
+  const title = String(n.title || "").trim().toLowerCase();
+  if (n.kind === "announcement" || n.category === "announcements" || title.startsWith("announcement sent:")) {
+    return;
+  }
   store.set((l) => {
+    const cleaned = purgeSelfAnnouncements(l);
     const id = n.id || `n${Date.now()}`;
-    if (n.id && l.some((x) => x.id === n.id)) return l;
-    return [{ id, read: false, ts: Date.now(), ...n }, ...l];
+    if (n.id && cleaned.some((x) => x.id === n.id)) return cleaned;
+    return [{ id, read: false, ts: Date.now(), ...n }, ...cleaned];
   });
 }
 

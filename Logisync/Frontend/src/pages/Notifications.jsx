@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { btnGhost, panel } from "../components/styles.js";
-import AnnouncementsPanel from "../components/AnnouncementsPanel.jsx";
 import FailedDeliveryReview from "../components/delivery/FailedDeliveryReview.jsx";
-import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
 import {
   markAllRead,
   markRead,
@@ -42,12 +40,10 @@ function compactNotifText(text = "") {
 
 export default function Notifications() {
   const items = useNotifications();
-  const announcements = useAnnouncements();
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
 
   useEffect(() => {
-    syncAnnouncementsFromServer();
     syncCoordinatorNotificationsFromServer();
   }, []);
   const unread = items.filter((n) => !n.read).length;
@@ -92,23 +88,6 @@ export default function Notifications() {
   return (
     <>
       <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread notification${unread > 1 ? "s" : ""}.` : "You're all caught up."} />
-
-      {/* Announcements (nasa itaas ng notification table). Dito rin ang link papunta sa pamamahala nito. */}
-      {announcements.length > 0 && (
-        <AnnouncementsPanel
-          items={announcements.map((a) => ({
-            id: a.id,
-            title: a.title,
-            text: a.message,
-            ts: a.ts,
-            toRiders: !!a.toRiders,
-            toSellers: !!a.toSellers,
-          }))}
-          limit={3}
-          manageTo="/announcements"
-          heading="Announcements"
-        />
-      )}
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2 flex-wrap">

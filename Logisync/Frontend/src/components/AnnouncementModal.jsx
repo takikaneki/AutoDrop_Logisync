@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { addNotification } from "../store/notifications.js";
-import { playAlertSound } from "../utils/sound.js";
 import { publishAnnouncement } from "../store/announcements.js";
 import { logAction } from "../store/audit.js";
-import { getPrefs } from "../store/prefs.js";
 import { toast } from "../store/toast.js";
 import Icon from "./Icon.jsx";
 
@@ -17,7 +14,6 @@ export default function AnnouncementModal({ open, onClose }) {
   const [message, setMessage] = useState("");
   const [audience, setAudience] = useState("riders"); // "riders" | "sellers" | "both"
   const [error, setError] = useState("");
-  const [popup, setPopup] = useState(null);
   const titleRef = useRef(null);
 
   const toRiders = audience === "riders" || audience === "both";
@@ -51,21 +47,7 @@ export default function AnnouncementModal({ open, onClose }) {
         audience,
       });
       logAction({ category: "Announcements", action: "Sent announcement", target: recipients, detail: finalTitle });
-      toast("Announcement sent.");
-      addNotification({
-        kind: "system",
-        icon: "megaphone",
-        tone: "orange",
-        title: `Announcement sent: ${finalTitle}`,
-        text: `Sent to ${recipients}.`,
-        to: null,
-      });
-
-      setPopup({ title: finalTitle, message: message.trim(), recipients: `Sent to: ${recipients}` });
-      const prefs = getPrefs();
-      if (prefs.notificationsEnabled !== false && prefs.sound !== false && prefs.notifyAnnouncements !== false && prefs.soundAnnouncements !== false) {
-        playAlertSound();
-      }
+      toast(`Announcement sent to ${recipients}.`);
       setTitle("");
       setMessage("");
       setError("");
@@ -75,7 +57,7 @@ export default function AnnouncementModal({ open, onClose }) {
     }
   };
 
-  if (!open && !popup) return null;
+  if (!open) return null;
 
   return (
     <>
@@ -179,23 +161,6 @@ export default function AnnouncementModal({ open, onClose }) {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {popup && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-[rgba(35,35,35,.48)]">
-          <div className="w-[390px] max-w-[calc(100%-30px)] p-7 text-center rounded-[17px] bg-white shadow-[0_20px_60px_rgba(0,0,0,.18)] animate-popup dark:bg-night-panel">
-            <div className="w-[55px] h-[55px] mx-auto mb-3 rounded-full bg-brand-soft text-brand flex items-center justify-center text-[21px]">
-              <Icon name="megaphone" />
-            </div>
-            <span className="text-[9px] font-extrabold tracking-[1px] text-brand">SYSTEM ANNOUNCEMENT</span>
-            <h2 className="my-[9px] text-[19px] font-bold">{popup.title}</h2>
-            <p className="text-[12px] leading-[1.6] text-[#777] dark:text-[#d1c9c2]">{popup.message}</p>
-            <div className="my-[15px] text-[10px] text-[#999]">{popup.recipients}</div>
-            <button onClick={() => setPopup(null)} className="w-full p-[11px] rounded-lg bg-brand text-white text-[11px] font-bold">
-              Acknowledge
-            </button>
           </div>
         </div>
       )}
