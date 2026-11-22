@@ -15,11 +15,13 @@ const labelCls = "block mb-1.5 text-[12px] font-semibold text-[#666] dark:text-[
 export default function AnnouncementModal({ open, onClose }) {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [toRiders, setToRiders] = useState(true);
-  const [toSellers, setToSellers] = useState(true);
+  const [audience, setAudience] = useState("riders"); // "riders" | "sellers" | "both"
   const [error, setError] = useState("");
   const [popup, setPopup] = useState(null);
   const titleRef = useRef(null);
+
+  const toRiders = audience === "riders" || audience === "both";
+  const toSellers = audience === "sellers" || audience === "both";
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +43,13 @@ export default function AnnouncementModal({ open, onClose }) {
 
     setSending(true);
     try {
-      await publishAnnouncement({ title: finalTitle, message: message.trim(), toRiders, toSellers });
+      await publishAnnouncement({
+        title: finalTitle,
+        message: message.trim(),
+        toRiders,
+        toSellers,
+        audience,
+      });
       logAction({ category: "Announcements", action: "Sent announcement", target: recipients, detail: finalTitle });
       toast("Announcement sent.");
       addNotification({
@@ -127,16 +135,41 @@ export default function AnnouncementModal({ open, onClose }) {
                 </p>
               )}
 
-              <div className="flex items-center justify-between gap-[15px] max-[600px]:flex-col max-[600px]:items-start">
-                <div className="flex flex-wrap items-center gap-[13px] text-[12px] text-[#777] dark:text-[#d1c9c2]">
-                  <span className="text-[#999]">Send to:</span>
-                  <label className="flex items-center gap-[5px] cursor-pointer">
-                    <input type="checkbox" checked={toRiders} onChange={(e) => setToRiders(e.target.checked)} className="accent-brand" /> Riders
-                  </label>
-                  <label className="flex items-center gap-[5px] cursor-pointer">
-                    <input type="checkbox" checked={toSellers} onChange={(e) => setToSellers(e.target.checked)} className="accent-brand" /> Sellers
-                  </label>
+              <div className="mb-3.5">
+                <label className={labelCls}>Target Audience (Role-Based Recipient)</label>
+                <div className="grid grid-cols-3 gap-2 max-[480px]:grid-cols-1">
+                  {[
+                    { key: "riders", label: "Riders Only", icon: "bike" },
+                    { key: "sellers", label: "Sellers Only", icon: "store" },
+                    { key: "both", label: "Both Roles", icon: "users" },
+                  ].map((opt) => {
+                    const active = audience === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setAudience(opt.key)}
+                        className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-[12px] font-bold transition ${
+                          active
+                            ? "border-brand bg-brand text-white shadow-xs"
+                            : "border-[#e5e8ee] bg-white text-[#555] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"
+                        }`}
+                      >
+                        <Icon name={opt.icon} className="text-[13px]" />
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-[15px] max-[600px]:flex-col max-[600px]:items-stretch">
+                <span className="text-[11.5px] font-semibold text-[#777] dark:text-[#d1c9c2]">
+                  Sending to:{" "}
+                  <strong className="text-brand">
+                    {audience === "riders" ? "Riders Only" : audience === "sellers" ? "Sellers Only" : "Riders and Sellers"}
+                  </strong>
+                </span>
                 <button
                   onClick={send}
                   disabled={sending}

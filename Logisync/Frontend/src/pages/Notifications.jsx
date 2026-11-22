@@ -61,6 +61,31 @@ export default function Notifications() {
     if (tab === "return_to_hub") {
       return items.filter((n) => /return to hub/i.test(`${n.title || ""} ${n.text || ""}`));
     }
+    if (tab === "delivery") {
+      return items.filter(
+        (n) =>
+          n.kind === "delivery" ||
+          n.kind === "rider" ||
+          /deliver|reschedul|return to hub|rider/i.test(`${n.title || ""} ${n.text || ""}`)
+      );
+    }
+    if (tab === "parcel") {
+      return items.filter(
+        (n) =>
+          n.kind === "parcel" ||
+          n.category === "parcel" ||
+          n.category === "verification" ||
+          /parcel|video|verif/i.test(`${n.title || ""} ${n.text || ""}`)
+      );
+    }
+    if (tab === "system") {
+      return items.filter(
+        (n) =>
+          n.kind === "system" ||
+          n.category === "messages" ||
+          n.category === "announcements"
+      );
+    }
     return items.filter((n) => n.kind === tab);
   }, [items, tab]);
 

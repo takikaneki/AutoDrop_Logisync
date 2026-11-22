@@ -1,5 +1,5 @@
 import { createStore } from "./createStore.js";
-import { getRole, getUser } from "../api.js";
+import { api, getRole, getUser } from "../api.js";
 import { fetchComplaints } from "../services/complaintService.js";
 import { listMessages } from "../services/messageService.js";
 
@@ -27,29 +27,36 @@ export async function syncCoordinatorNotificationsFromServer() {
   syncing = true;
   try {
     const me = Number(getUser()?.user_id);
-    const [complaints, messages] = await Promise.all([
+    const [complaints, messages, parcelsRes] = await Promise.all([
       fetchComplaints().catch(() => []),
       listMessages().catch(() => []),
+      api("/parcels").catch(() => null),
     ]);
 
     const incoming = [];
 
     if (Array.isArray(complaints)) {
       complaints.forEach((c) => {
-        if (!c?.id) return;
+        const rawId = c?.complaint_id || c?.id;
+        if (!rawId) return;
+        const ticketId = String(rawId).startsWith("C-") ? String(rawId) : `C-${rawId}`;
         const isUrgent =
           String(c.priority || "").toLowerCase() === "high" ||
-          /urgent/i.test(String(c.category || c.kind || ""));
-        const senderRole = String(c.role || "").toLowerCase() === "seller" ? "seller" : "rider";
-        const tsVal = new Date(c.createdAt || c.updatedAt || Date.now()).getTime() || Date.now();
+          /urgent/i.test(String(c.category || c.complaint_kind || c.kind || ""));
+        const senderRole =
+          String(c.complainant_role || c.role || "").toLowerCase() === "seller" ? "seller" : "rider";
+        const senderName = c.complainant_name || c.from || c.role || "User";
+        const tsVal =
+          new Date(c.created_at || c.createdAt || c.updated_at || c.updatedAt || Date.now()).getTime() ||
+          Date.now();
         incoming.push({
-          id: `complaint:${c.id}`,
+          id: `complaint:${ticketId}`,
           kind: senderRole,
           category: "messages",
           icon: isUrgent ? "triangle-alert" : "clipboard-list",
           tone: isUrgent ? "red" : "orange",
-          read: Boolean(c.isRead || c.status === "Resolved"),
-          title: `${c.from || c.role || "User"} sent ${isUrgent ? "an urgent complaint" : "a complaint"} (${c.id})`,
+          read: Boolean(c.is_read || c.isRead || c.status === "Resolved"),
+          title: `${senderName} sent ${isUrgent ? "an urgent complaint" : "a complaint"} (${ticketId})`,
           text: c.subject || c.category || "New complaint submitted",
           ts: tsVal,
           to: "/complaints",
@@ -77,6 +84,64 @@ export async function syncCoordinatorNotificationsFromServer() {
           });
         });
     }
+
+    const parcels = Array.isArray(parcelsRes?.parcels) ? parcelsRes.parcels : [];
+    parcels.forEach((p) => {
+      if (!p?.parcel_id) return;
+      const txn = p.transaction_number || p.parcel_id;
+      const tsVal = new Date(p.updated_at || p.created_at || Date.now()).getTime() || Date.now();
+
+      // 1. Seller uploaded packing video awaiting coordinator verification
+      if (p.status === "VIDEO_SUBMITTED") {
+        incoming.push({
+          id: `verif-pending:${p.parcel_id}`,
+          kind: "seller",
+          category: "verification",
+          icon: "video",
+          tone: "orange",
+          read: false,
+          title: `Video ready for verification: ${txn}`,
+          text: `${p.seller_name || "Seller"} submitted packing video for ${p.receiver_name || "Customer"}.`,
+          ts: tsVal,
+          to: "/verification",
+        });
+      }
+
+      // 2. Rider Return to Hub awaiting coordinator confirmation
+      const isRthPending =
+        (p.return_to_hub || p.delivery_status === "RETURN_TO_HUB" || p.rth_status === "PENDING" || p.rth_status === "PENDING_CONFIRMATION") &&
+        !p.rth_confirmed_at &&
+        p.rth_status !== "CONFIRMED";
+      if (isRthPending) {
+        incoming.push({
+          id: `rth-coord:${p.parcel_id}`,
+          kind: "rider",
+          category: "parcel",
+          icon: "undo-2",
+          tone: "red",
+          read: false,
+          title: `Return to Hub Pending: ${txn}`,
+          text: `${p.rth_reason || p.last_failure || "Undelivered parcel"} · Awaiting hub confirmation.`,
+          ts: new Date(p.rth_requested_at || p.return_to_hub_at || tsVal).getTime() || tsVal,
+          to: "/verification",
+        });
+      } else if (p.rescheduled && p.delivery_status === "TO_DELIVER") {
+        // 3. Rider rescheduled delivery attempt (Coordinator visibility)
+        const dayNum = Math.max(1, Number(p.reschedule_count || 1));
+        incoming.push({
+          id: `resched-coord:${p.parcel_id}:${dayNum}:${p.scheduled_for || ""}`,
+          kind: "rider",
+          category: "parcel",
+          icon: "calendar-days",
+          tone: "orange",
+          read: false,
+          title: `Delivery Rescheduled (Day ${dayNum}/2): ${txn}`,
+          text: `${p.receiver_name || "Customer"} · Next attempt: ${p.scheduled_for || "Next delivery day"} (${p.last_failure || "Buyer unavailable"}).`,
+          ts: tsVal,
+          to: "/parcels",
+        });
+      }
+    });
 
     if (incoming.length === 0) return;
 

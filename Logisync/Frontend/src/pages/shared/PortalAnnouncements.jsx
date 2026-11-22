@@ -11,7 +11,7 @@ const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day:
 // Announcements ng Coordinator para sa Seller o Rider. Ang lumalabas lang ay ang para sa role ng naka-login.
 export default function PortalAnnouncements() {
   const role = useBase().slice(1); // "seller" | "rider"
-  const list = useAnnouncements().filter((a) => (role === "rider" ? a.toRiders : a.toSellers));
+  const list = useAnnouncements(role).filter((a) => (role === "rider" ? a.toRiders === true : a.toSellers === true));
 
   useEffect(() => {
     syncAnnouncementsFromServer();

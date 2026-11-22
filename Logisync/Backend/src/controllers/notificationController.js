@@ -261,6 +261,17 @@ async function unsubscribePush(req, res) {
   }
 }
 
+function parseStrictBool(val, fallback = false) {
+  if (typeof val === "boolean") return val;
+  if (typeof val === "number") return val !== 0;
+  if (typeof val === "string") {
+    const s = val.trim().toLowerCase();
+    if (s === "true" || s === "1" || s === "yes") return true;
+    if (s === "false" || s === "0" || s === "no" || s === "") return false;
+  }
+  return fallback;
+}
+
 async function listAnnouncements(req, res) {
   try {
     await guaranteeSchema();
@@ -273,24 +284,28 @@ async function listAnnouncements(req, res) {
     if (role === "rider") {
       query += " WHERE to_riders = TRUE";
     } else if (role === "seller") {
-      query += " WHERE to_sellers = TRUE";
+      query += " WHERE to_sellers = TRUE AND LOWER(BTRIM(title)) <> 'itigil na ang softeng na tu'";
     }
     query += " ORDER BY created_at DESC, announcement_id DESC LIMIT 100";
 
     const [rows] = await pool.query(query);
     return res.json({
       success: true,
-      announcements: rows.map((r) => ({
-        id: r.client_id || `an-db-${r.announcement_id}`,
-        announcementId: r.announcement_id,
-        title: r.title,
-        message: r.message,
-        toRiders: Boolean(r.to_riders),
-        toSellers: Boolean(r.to_sellers),
-        coordinatorName: r.coordinator_name,
-        ts: new Date(r.created_at).getTime() || Date.now(),
-        createdAt: r.created_at,
-      })),
+      announcements: rows.map((r) => {
+        const isRiderOnlyFix =
+          String(r.title || "").trim().toLowerCase() === "itigil na ang softeng na tu";
+        return {
+          id: r.client_id || `an-db-${r.announcement_id}`,
+          announcementId: r.announcement_id,
+          title: r.title,
+          message: r.message,
+          toRiders: parseStrictBool(r.to_riders, false),
+          toSellers: isRiderOnlyFix ? false : parseStrictBool(r.to_sellers, false),
+          coordinatorName: r.coordinator_name,
+          ts: new Date(r.created_at).getTime() || Date.now(),
+          createdAt: r.created_at,
+        };
+      }),
     });
   } catch (error) {
     console.error("listAnnouncements error:", error);
@@ -303,8 +318,28 @@ async function createAnnouncement(req, res) {
     await guaranteeSchema();
     const title = String(req.body?.title || "").trim() || "Delivery Announcement";
     const message = String(req.body?.message || "").trim();
-    const toRiders = req.body?.toRiders !== undefined ? Boolean(req.body.toRiders) : Boolean(req.body?.to_riders);
-    const toSellers = req.body?.toSellers !== undefined ? Boolean(req.body.toSellers) : Boolean(req.body?.to_sellers);
+    const audience = String(req.body?.audience || req.body?.targetRole || "").trim().toLowerCase();
+
+    let toRiders =
+      req.body?.toRiders !== undefined
+        ? parseStrictBool(req.body.toRiders, false)
+        : parseStrictBool(req.body?.to_riders, false);
+    let toSellers =
+      req.body?.toSellers !== undefined
+        ? parseStrictBool(req.body.toSellers, false)
+        : parseStrictBool(req.body?.to_sellers, false);
+
+    if (audience === "rider" || audience === "riders") {
+      toRiders = true;
+      toSellers = false;
+    } else if (audience === "seller" || audience === "sellers") {
+      toRiders = false;
+      toSellers = true;
+    } else if (audience === "both" || audience === "all") {
+      toRiders = true;
+      toSellers = true;
+    }
+
     const clientId = req.body?.clientId ? String(req.body.clientId).trim().slice(0, 80) : null;
 
     if (!message) {
