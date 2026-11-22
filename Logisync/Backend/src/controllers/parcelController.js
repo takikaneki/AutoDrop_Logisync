@@ -303,7 +303,7 @@ function evaluateDeclarationRisk({
 }
 
 function isValidTransactionNumber(tx) {
-  return /^PH\d{10}[A-Z]$/.test(String(tx || "").trim().toUpperCase());
+  return /^PH(?:\d{10}[A-Z]|\d{12})$/.test(String(tx || "").trim().toUpperCase());
 }
 
 function isGibberishName(str) {
@@ -611,7 +611,7 @@ async function createParcel(req, res) {
     if (!isValidTransactionNumber(transactionNumber)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid transaction number. Must follow the format PH1234567891U (PH followed by 10 digits and 1 uppercase letter)."
+        message: "Invalid transaction number. Must be PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567890A), or PH followed by 12 digits (e.g. PH123456789012)."
       });
     }
 

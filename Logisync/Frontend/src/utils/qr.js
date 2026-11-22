@@ -6,7 +6,9 @@
 // Kapag nakita na ang totoong sample ng QR, dito lang natin aayusin.
 const QUERY_KEYS = ["transaction_number", "transactionNumber", "txn", "tn", "order_id", "id"];
 
-export const TRANSACTION_NUMBER_REGEX = /^PH\d{10}[A-Z]$/;
+export const TRANSACTION_NUMBER_REGEX = /^PH(?:\d{10}[A-Z]|\d{12})$/;
+export const TRANSACTION_NUMBER_FORMAT_HINT =
+  "PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567890A) or PH followed by 12 digits (e.g. PH123456789012)";
 
 export function isValidTransactionNumber(raw) {
   return TRANSACTION_NUMBER_REGEX.test(String(raw ?? "").trim().toUpperCase());
@@ -30,8 +32,8 @@ export function parseTransactionNumber(raw) {
     }
   }
 
-  // Extract embedded PH token if present (e.g. PH1234567891U)
-  const match = text.match(/\bPH\d{10}[A-Z]\b/i);
+  // Extract embedded PH token if present (PH + 10 digits + 1 uppercase letter OR PH + 12 digits)
+  const match = text.match(/\bPH(?:\d{12}|\d{10}[A-Z])\b/i);
   if (match) return match[0].toUpperCase();
 
   return text.toUpperCase();

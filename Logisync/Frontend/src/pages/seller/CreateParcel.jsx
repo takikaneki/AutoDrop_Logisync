@@ -198,7 +198,7 @@ export default function CreateParcel() {
     const { name, value } = e.target;
     let nextValue = value;
     if (name === "transaction_number") {
-      nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 13);
+      nextValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14);
     } else if (name === "receiver_contact") {
       nextValue = sanitizeMobileNumber(value);
     }
@@ -359,7 +359,7 @@ export default function CreateParcel() {
       setTxnLookupMessage("");
       setErrors((er) => ({
         ...er,
-        transaction_number: "Enter a transaction number first (e.g. PH1234567891U).",
+        transaction_number: "Enter a transaction number first (e.g. PH1234567890A or PH123456789012).",
       }));
       return;
     }
@@ -368,7 +368,7 @@ export default function CreateParcel() {
       setTxnLookupMessage("");
       setErrors((er) => ({
         ...er,
-        transaction_number: `Invalid format ("${rawTxn}"). Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).`,
+        transaction_number: `Invalid format ("${rawTxn}"). Expected PH + 10 digits + 1 uppercase letter (e.g. PH1234567890A) or PH + 12 digits (e.g. PH123456789012).`,
       }));
       return;
     }
@@ -394,10 +394,10 @@ export default function CreateParcel() {
     }
     if (!isValidTransactionNumber(rawTxn)) {
       setTxnLookupMessage("");
-      setApiError(`Invalid QR code content ("${rawTxn}"). Transaction number must follow PH1234567891U (PH followed by 10 digits and 1 uppercase letter).`);
+      setApiError(`Invalid QR code content ("${rawTxn}"). Expected PH + 10 digits + 1 uppercase letter (e.g. PH1234567890A) or PH + 12 digits (e.g. PH123456789012).`);
       setErrors((er) => ({
         ...er,
-        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).`
+        transaction_number: `Invalid QR code format ("${rawTxn}"). Expected PH + 10 digits + 1 uppercase letter (e.g. PH1234567890A) or PH + 12 digits (e.g. PH123456789012).`
       }));
       return;
     }
@@ -528,8 +528,8 @@ export default function CreateParcel() {
                         type="text"
                         value={values.transaction_number}
                         onChange={onChange}
-                        placeholder="e.g. PH1234567891U"
-                        maxLength={13}
+                        placeholder="PH1234567890A / PH123456789012"
+                        maxLength={14}
                         aria-invalid={!!errors.transaction_number}
                         className={`${inputCls} pl-7 font-mono ${errors.transaction_number ? "!border-[#d94747]" : ""}`}
                       />

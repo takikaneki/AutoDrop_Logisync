@@ -1,7 +1,11 @@
 import { useState } from "react";
 import QrScanner from "./QrScanner.jsx";
 import Icon from "../Icon.jsx";
-import { parseTransactionNumber } from "../../utils/qr.js";
+import {
+  TRANSACTION_NUMBER_FORMAT_HINT,
+  isValidTransactionNumber,
+  parseTransactionNumber,
+} from "../../utils/qr.js";
 import { inputCls } from "../styles.js";
 
 // Centered Scanner + manual Transaction Number input sa iisang panel.
@@ -9,7 +13,9 @@ import { inputCls } from "../styles.js";
 export default function ScanPanel({
   onValue,
   busy = false,
+  error: externalError = "",
   label = "Transaction number",
+  placeholder,
   btnClass = "bg-brand hover:bg-brand-dark",
   autoStart = false,
 }) {
@@ -18,8 +24,12 @@ export default function ScanPanel({
 
   const submit = (raw) => {
     const value = parseTransactionNumber(raw);
-    if (!value) return setError("Enter a value first.");
-    if (value.length > 100) return setError("That value is too long to be a valid number.");
+    if (!value) return setError("Enter a transaction number first.");
+    if (!isValidTransactionNumber(value)) {
+      return setError(
+        `Invalid format ("${value}"). Expected ${TRANSACTION_NUMBER_FORMAT_HINT}.`
+      );
+    }
     setError("");
     onValue(value);
   };
@@ -51,7 +61,7 @@ export default function ScanPanel({
             Can&apos;t scan? Type it instead
           </p>
           <p className="mt-0.5 text-[12px] text-[#888] dark:text-[#b8b0a8]">
-            Enter the {label.toLowerCase()} or parcel ID printed on the parcel.
+            Format: PH + 10 digits + 1 uppercase letter, or PH + 12 digits.
           </p>
         </div>
 
@@ -67,11 +77,11 @@ export default function ScanPanel({
             <input
               value={manual}
               onChange={(e) => {
-                setManual(e.target.value);
+                setManual(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 14));
                 setError("");
               }}
-              maxLength={100}
-              placeholder={`${label}...`}
+              maxLength={14}
+              placeholder={placeholder || "PH1234567890A / PH123456789012"}
               aria-label={label}
               className={`${inputCls} pl-7 font-mono`}
             />
@@ -84,7 +94,11 @@ export default function ScanPanel({
             {busy ? "Looking…" : "Look up"}
           </button>
         </form>
-        {error && <p className="mt-2 text-center text-[12px] font-medium text-[#d94747]">{error}</p>}
+        {(error || externalError) && (
+          <p className="mt-2 text-center text-[12px] font-medium text-[#d94747]">
+            {error || externalError}
+          </p>
+        )}
       </div>
 
       {/* Clean Lucide QR + Parcel Indicator */}
