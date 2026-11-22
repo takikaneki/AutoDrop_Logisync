@@ -12,9 +12,9 @@ import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
 
 const statusTone = {
-  Open: "bg-[#fff0f0] text-[#d94747]",
-  "In Progress": "bg-[#fef3c7] text-[#d97706]",
-  Resolved: "bg-[#eaf8ef] text-[#29945a]",
+  Open: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+  "In Progress": "bg-[#dbeafe] text-[#2563eb] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+  Resolved: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
 };
 
 const CONFIG = {

@@ -75,11 +75,11 @@ export default function ParcelReport({ parcels, onClose }) {
     if (!result) return null;
     const c = (...s) => result.rows.filter((p) => s.includes(p.status)).length;
     return [
-      ["Total parcels", result.rows.length, "text-[#27364f] dark:text-[#f1eeeb]"],
-      ["Needs video", c("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"), "text-[#e99a00]"],
-      ["Under verification", c("VIDEO_SUBMITTED"), "text-[#4285c5]"],
-      ["Verified", c("VERIFIED"), "text-[#29945a]"],
-      ["Rejected", c("REJECTED"), "text-[#d94747]"],
+      ["Total parcels", result.rows.length, "text-[#0f172a] dark:text-[#f1eeeb]", "border-[#cbd5e1] border-t-[3px] border-t-[#64748b] dark:border-slate-700 dark:border-t-[#64748b]"],
+      ["Needs video", c("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"), "text-[#3b82f6] dark:text-[#60a5fa]", "border-[#bfdbfe] border-t-[3px] border-t-[#3b82f6] dark:border-[#1e40af]/70 dark:border-t-[#3b82f6]"],
+      ["Under verification", c("VIDEO_SUBMITTED"), "text-[#ca8a04] dark:text-[#facc15]", "border-[#fde047] border-t-[3px] border-t-[#facc15] dark:border-[#a16207]/70 dark:border-t-[#facc15]"],
+      ["Verified", c("VERIFIED"), "text-[#16a34a] dark:text-[#4ade80]", "border-[#bbf7d0] border-t-[3px] border-t-[#16a34a] dark:border-[#166534]/70 dark:border-t-[#16a34a]"],
+      ["Rejected", c("REJECTED"), "text-[#dc2626] dark:text-[#f87171]", "border-[#fecaca] border-t-[3px] border-t-[#dc2626] dark:border-[#991b1b]/70 dark:border-t-[#dc2626]"],
     ];
   }, [result]);
 
@@ -195,9 +195,9 @@ export default function ParcelReport({ parcels, onClose }) {
       {result && counts && (
         <>
           <div className="mb-6 grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-2">
-            {counts.map(([l, v, colorCls]) => (
-              <div key={l} className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] font-medium text-[#888]">{l}</small>
+            {counts.map(([l, v, colorCls, borderCls]) => (
+              <div key={l} className={`rounded-xl border bg-white p-4 dark:bg-night-head ${borderCls}`}>
+                <small className="block text-[12px] font-medium text-[#64748b] dark:text-[#b8b0a8]">{l}</small>
                 <strong className={`mt-1 block text-[24px] leading-tight ${colorCls}`}>{v}</strong>
               </div>
             ))}

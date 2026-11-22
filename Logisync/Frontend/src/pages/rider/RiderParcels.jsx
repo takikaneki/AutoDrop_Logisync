@@ -300,13 +300,13 @@ export default function RiderParcels() {
 
           <div className="mb-6 grid grid-cols-4 gap-3 max-[900px]:grid-cols-2">
             {[
-              ["Completed parcels", summary.total, "text-[#27364f] dark:text-[#f1eeeb]"],
-              ["Delivered", summary.delivered, "text-[#29945a]"],
-              ["Return to Hub / Failed", summary.failed, "text-[#7c3aed]"],
-              ["Success rate", `${summary.rate}%`, "text-brand"],
-            ].map(([l, v, cls]) => (
-              <div key={l} className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] text-[#888]">{l}</small>
+              ["Completed parcels", summary.total, "text-[#0f172a] dark:text-[#f1eeeb]", "border-[#cbd5e1] border-t-[3px] border-t-[#64748b] dark:border-slate-700 dark:border-t-[#64748b]"],
+              ["Delivered", summary.delivered, "text-[#16a34a] dark:text-[#4ade80]", "border-[#bbf7d0] border-t-[3px] border-t-[#16a34a] dark:border-[#166534]/70 dark:border-t-[#16a34a]"],
+              ["Return to Hub / Failed", summary.failed, "text-[#dc2626] dark:text-[#f87171]", "border-[#fecaca] border-t-[3px] border-t-[#dc2626] dark:border-[#991b1b]/70 dark:border-t-[#dc2626]"],
+              ["Success rate", `${summary.rate}%`, "text-[#16a34a] dark:text-[#4ade80]", "border-[#bbf7d0] border-t-[3px] border-t-[#16a34a] dark:border-[#166534]/70 dark:border-t-[#16a34a]"],
+            ].map(([l, v, cls, borderCls]) => (
+              <div key={l} className={`rounded-xl border bg-white p-4 dark:bg-night-head ${borderCls}`}>
+                <small className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{l}</small>
                 <strong className={`mt-1 block text-[24px] leading-tight ${cls}`}>{v}</strong>
               </div>
             ))}

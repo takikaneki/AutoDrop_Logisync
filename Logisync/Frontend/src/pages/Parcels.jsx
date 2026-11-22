@@ -558,14 +558,14 @@ export default function Parcels() {
           {/* Report Summary Cards */}
           <div className="mb-5 grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-1">
             {[
-              ["Total parcels", reportSummary.total, "text-[#27364f] dark:text-[#f1eeeb]"],
-              ["Delivered", reportSummary.delivered, "text-[#29945a]"],
-              ["In transit / Rescheduled", reportSummary.transit, "text-[#e9651c]"],
-              ["Return to Hub / Failed", reportSummary.failed, "text-[#7c3aed]"],
-              ["Success rate", `${reportSummary.rate}%`, "text-brand"],
-            ].map(([l, v, cls]) => (
-              <div key={l} className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-4 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] text-[#888]">{l}</small>
+              ["Total parcels", reportSummary.total, "text-[#0f172a] dark:text-[#f1eeeb]", "border-[#cbd5e1] border-t-[3px] border-t-[#64748b] dark:border-slate-700 dark:border-t-[#64748b]"],
+              ["Delivered", reportSummary.delivered, "text-[#16a34a] dark:text-[#4ade80]", "border-[#bbf7d0] border-t-[3px] border-t-[#16a34a] dark:border-[#166534]/70 dark:border-t-[#16a34a]"],
+              ["In transit / Rescheduled", reportSummary.transit, "text-[#3b82f6] dark:text-[#60a5fa]", "border-[#bfdbfe] border-t-[3px] border-t-[#3b82f6] dark:border-[#1e40af]/70 dark:border-t-[#3b82f6]"],
+              ["Return to Hub / Failed", reportSummary.failed, "text-[#dc2626] dark:text-[#f87171]", "border-[#fecaca] border-t-[3px] border-t-[#dc2626] dark:border-[#991b1b]/70 dark:border-t-[#dc2626]"],
+              ["Success rate", `${reportSummary.rate}%`, "text-[#16a34a] dark:text-[#4ade80]", "border-[#bbf7d0] border-t-[3px] border-t-[#16a34a] dark:border-[#166534]/70 dark:border-t-[#16a34a]"],
+            ].map(([l, v, cls, borderCls]) => (
+              <div key={l} className={`rounded-xl border bg-white p-4 dark:bg-night-head ${borderCls}`}>
+                <small className="block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">{l}</small>
                 <strong className={`mt-1 block text-[24px] leading-tight ${cls}`}>{v}</strong>
               </div>
             ))}
