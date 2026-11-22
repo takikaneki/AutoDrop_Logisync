@@ -537,32 +537,28 @@ export default function RiderDeliveries() {
           </>
         ) : (
           <div className="mt-3">
-            {isResched && (
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#fff8eb] px-3 py-2 text-[12.5px] text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
-                <span>
-                  <Icon name="bell" className="mr-1.5" />
-                  Latest Rescheduled Date: <strong>{formatDay(d.scheduledFor)}</strong>
-                </span>
-                <span className="font-bold">
-                  {remainingDays > 0
-                    ? `${remainingDays} reschedule day${remainingDays > 1 ? "s" : ""} remaining`
-                    : "Final delivery day before Return to Hub"}
-                </span>
-              </div>
-            )}
+            {isResched && (() => {
+              const latestReason =
+                cleanText(d.lastFailure) ||
+                cleanText(d.attempts?.[d.attempts.length - 1]?.reason) ||
+                "";
+              return (
+                <div className="mb-2 flex items-start gap-2 rounded-xl bg-[#fff8eb] px-3 py-2.5 text-[13px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
+                  <Icon name="calendar-days" className="mt-0.5 shrink-0" />
+                  <span>
+                    Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
+                    {latestReason ? ` due to ${latestReason}` : ""}.
+                  </span>
+                </div>
+              );
+            })()}
 
-            {cleanText(d.lastFailure) && (
+            {!isResched && cleanText(d.lastFailure) && (
               <p className="mb-2 text-[13px] font-semibold text-[#d94747]">
                 <Icon name="undo-2" className="mr-1.5" />
                 Last attempt failed: {cleanText(d.lastFailure)}
               </p>
             )}
-
-            <AttemptHistory
-              attempts={d.attempts}
-              rescheduleCount={reschedCount}
-              returnToHub={Boolean(d.returnToHub)}
-            />
 
             <div className="mt-4 border-t border-[#f0f2f6] pt-4 dark:border-night-line">
               {actionButtons}
