@@ -136,79 +136,164 @@ export default function CoordinatorRthSection() {
           />
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-[#e5e7eb] dark:border-night-line">
-          <table className="w-full min-w-[700px] border-collapse text-left text-[13px]">
-            <thead className="bg-[#f8fafc] text-xs font-semibold uppercase tracking-wider text-[#64748b] dark:bg-night-head dark:text-[#9c948c]">
-              <tr>
-                <th className="px-4 py-3">Transaction Number</th>
-                <th className="px-4 py-3">Assigned Rider</th>
-                <th className="px-4 py-3">Seller</th>
-                <th className="px-4 py-3">Return Reason</th>
-                <th className="px-4 py-3">{tab === "pending" ? "Marked For Return" : "Confirmed Date"}</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#e5e7eb] text-[#334155] dark:divide-night-line dark:text-[#d1c9c2]">
-              {list.map((p) => {
-                const key = p.parcel_id || p.transaction_number;
-                return (
-                  <tr key={key} className="hover:bg-[#f8fafc] dark:hover:bg-night-head/50">
-                    <td className="px-4 py-3.5 font-mono font-bold text-[#1e293b] dark:text-white">
-                      {p.transaction_number || p.parcel_id}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="font-medium text-[#1e293b] dark:text-white">
+        <>
+          {/* Desktop & Tablet Table View (min-[701px] — unchanged) */}
+          <div className="hidden min-[701px]:block overflow-x-auto rounded-xl border border-[#e5e7eb] dark:border-night-line">
+            <table className="w-full min-w-[700px] border-collapse text-left text-[13px]">
+              <thead className="bg-[#f8fafc] text-xs font-semibold uppercase tracking-wider text-[#64748b] dark:bg-night-head dark:text-[#9c948c]">
+                <tr>
+                  <th className="px-4 py-3">Transaction Number</th>
+                  <th className="px-4 py-3">Assigned Rider</th>
+                  <th className="px-4 py-3">Seller</th>
+                  <th className="px-4 py-3">Return Reason</th>
+                  <th className="px-4 py-3">{tab === "pending" ? "Marked For Return" : "Confirmed Date"}</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e5e7eb] text-[#334155] dark:divide-night-line dark:text-[#d1c9c2]">
+                {list.map((p) => {
+                  const key = p.parcel_id || p.transaction_number;
+                  return (
+                    <tr key={key} className="hover:bg-[#f8fafc] dark:hover:bg-night-head/50">
+                      <td className="px-4 py-3.5 font-mono font-bold text-[#1e293b] dark:text-white">
+                        {p.transaction_number || p.parcel_id}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="font-medium text-[#1e293b] dark:text-white">
+                          {p.assigned_rider_name || p.rider_name || "Rider"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span>{p.seller_name || p.seller || "Seller"}</span>
+                      </td>
+                      <td className="px-4 py-3.5 max-w-[200px] truncate" title={p.rth_reason || p.return_note}>
+                        <span className="font-semibold text-rose-700 dark:text-rose-400">
+                          {p.rth_reason || p.return_note || "Buyer Refused / Cancelled"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-[#64748b] dark:text-[#9c948c]">
+                        {tab === "pending"
+                          ? formatDate(p.rth_requested_at || p.updated_at)
+                          : formatDate(p.rth_confirmed_at || p.updated_at)}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <StatusBadge
+                          status={
+                            tab === "pending"
+                              ? "Return to Hub"
+                              : "Return to Hub – Confirmed"
+                          }
+                        />
+                      </td>
+                      <td className="px-4 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedParcel(p)}
+                          className={
+                            tab === "pending"
+                              ? "rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6d28d9]"
+                              : `${btnGhost} !px-3 !py-1 text-xs`
+                          }
+                        >
+                          {tab === "pending" ? (
+                            <>
+                              <Icon name="check" className="mr-1" /> Verify Arrival
+                            </>
+                          ) : (
+                            "View Record"
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View (max-[700px]) */}
+          <div className="min-[701px]:hidden space-y-3">
+            {list.map((p) => {
+              const key = p.parcel_id || p.transaction_number;
+              const dateVal =
+                tab === "pending"
+                  ? formatDate(p.rth_requested_at || p.updated_at)
+                  : formatDate(p.rth_confirmed_at || p.updated_at);
+              return (
+                <article
+                  key={key}
+                  className="rounded-xl border border-[#e5e7eb] bg-[#fcfcfd] p-3.5 shadow-2xs dark:border-night-line dark:bg-night-head"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="block text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">
+                        Transaction No.
+                      </span>
+                      <strong className="block truncate font-mono text-[14px] font-bold text-[#1e293b] dark:text-white">
+                        {p.transaction_number || p.parcel_id}
+                      </strong>
+                    </div>
+                    <StatusBadge
+                      status={
+                        tab === "pending"
+                          ? "Return to Hub"
+                          : "Return to Hub – Confirmed"
+                      }
+                    />
+                  </div>
+
+                  <p className="mt-2.5 flex items-start gap-2 rounded-lg bg-rose-50/80 px-2.5 py-2 text-[12.5px] font-semibold text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                    <Icon name="circle-alert" className="mt-0.5 shrink-0 text-[13px]" />
+                    <span className="min-w-0 break-words">
+                      {p.rth_reason || p.return_note || "Buyer Refused / Cancelled"}
+                    </span>
+                  </p>
+
+                  <div className="mt-2.5 grid grid-cols-2 gap-2 text-[12.5px] text-[#475569] dark:text-[#d1c9c2]">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <Icon name="bike" className="shrink-0 text-[#94a3b8]" />
+                      <span className="truncate font-medium text-[#1e293b] dark:text-white">
                         {p.assigned_rider_name || p.rider_name || "Rider"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span>{p.seller_name || p.seller || "Seller"}</span>
-                    </td>
-                    <td className="px-4 py-3.5 max-w-[200px] truncate" title={p.rth_reason || p.return_note}>
-                      <span className="font-semibold text-rose-700 dark:text-rose-400">
-                        {p.rth_reason || p.return_note || "Buyer Refused / Cancelled"}
+                    </div>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <Icon name="store" className="shrink-0 text-[#94a3b8]" />
+                      <span className="truncate">
+                        {p.seller_name || p.seller || "Seller"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3.5 text-xs text-[#64748b] dark:text-[#9c948c]">
-                      {tab === "pending"
-                        ? formatDate(p.rth_requested_at || p.updated_at)
-                        : formatDate(p.rth_confirmed_at || p.updated_at)}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <StatusBadge
-                        status={
-                          tab === "pending"
-                            ? "Return to Hub"
-                            : "Return to Hub – Confirmed"
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedParcel(p)}
-                        className={
-                          tab === "pending"
-                            ? "rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6d28d9]"
-                            : `${btnGhost} !px-3 !py-1 text-xs`
-                        }
-                      >
-                        {tab === "pending" ? (
-                          <>
-                            <Icon name="check" className="mr-1" /> Verify Arrival
-                          </>
-                        ) : (
-                          "View Record"
-                        )}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#edf0f4] pt-2.5 dark:border-night-line">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-[11.5px] text-[#64748b] dark:text-[#9c948c]">
+                      <Icon name="clock" className="shrink-0" />
+                      <span className="truncate">{dateVal}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedParcel(p)}
+                      className={
+                        tab === "pending"
+                          ? "inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6d28d9]"
+                          : `${btnGhost} shrink-0 !px-3 !py-1.5 text-xs`
+                      }
+                    >
+                      {tab === "pending" ? (
+                        <>
+                          <Icon name="check" className="h-3.5 w-3.5" />
+                          <span>Verify Arrival</span>
+                        </>
+                      ) : (
+                        <span>View Record</span>
+                      )}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Coordinator RTH Physical Confirmation Modal */}
