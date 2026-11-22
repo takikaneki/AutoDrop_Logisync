@@ -27,9 +27,15 @@ const groups = [
     links: [
       { to: "/parcels", icon: "package", label: "Parcel Records" },
       { to: "/verification", icon: "circle-check", label: "Verification" },
+      { to: "/scan", icon: "scan-line", label: "Scan QR" },
+    ],
+  },
+  {
+    title: "Account Management",
+    links: [
+      { to: "/accounts", icon: "user-plus", label: "Account Creation" },
       { to: "/riders", icon: "bike", label: "Riders" },
       { to: "/sellers", icon: "store", label: "Sellers" },
-      { to: "/accounts", icon: "users", label: "Accounts" },
     ],
   },
   {
@@ -42,10 +48,10 @@ const groups = [
   },
 ];
 
-const infoLinks = [
-  { to: "/about", icon: "info", label: "About Us" },
-  { to: "/contact", icon: "mail", label: "Contact" },
-  { to: "/help", icon: "circle-help", label: "Help" },
+const supportLinks = [
+  { to: "/contact", icon: "mail", label: "Contact Us" },
+  { to: "/help", icon: "circle-help", label: "Help / FAQs" },
+  { to: "/about", icon: "info", label: "About LOGISYNC" },
 ];
 
 export default function Sidebar({ collapsed, mobileOpen = false, onClose, onCloseDesktop, onToggleSidebar }) {
@@ -188,15 +194,14 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
         </div>
 
         <nav className="flex flex-col gap-0.5">
-          {groups.map((g) => (
-            <div key={g.title} className="mb-2">
+          {groups.map((g, gIdx) => (
+            <div key={g.title} className={gIdx > 0 ? "mt-2 border-t border-white/20 pt-2.5" : "mb-1"}>
               {collapsed ? (
                 <>
-                  <div className="mx-3 my-2 border-t border-white/20 first:hidden max-[820px]:hidden" />
-                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">{t(g.title)}</p>
+                  <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">{t(g.title)}</p>
                 </>
               ) : (
-                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">{t(g.title)}</p>
+                <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">{t(g.title)}</p>
               )}
               {g.links.map((l) => {
                 const count = l.badge ? badges[l.badge] : l.to === "/messages" ? unreadConversations : 0;
@@ -228,21 +233,18 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
             </div>
           ))}
 
-          {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
-          <div className="mb-2 min-[960px]:hidden">
+          {/* Support Links */}
+          <div className="mt-2 border-t border-white/20 pt-2.5 pb-2">
             {collapsed ? (
-              <>
-                <div className="mx-3 my-2 border-t border-white/20 max-[820px]:hidden" />
-                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">
-                  {t("Quick Links")}
-                </p>
-              </>
+              <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">
+                {t("Support")}
+              </p>
             ) : (
-              <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">
-                {t("Quick Links")}
+              <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">
+                {t("Support")}
               </p>
             )}
-            {infoLinks.map((l) => {
+            {supportLinks.map((l) => {
               const labelText = t(l.label);
               return (
                 <NavLink

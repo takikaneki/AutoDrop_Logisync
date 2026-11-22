@@ -73,11 +73,11 @@ export function navFor(role) {
     .filter((g) => g.links.length > 0);
 }
 
-// Mga link sa itaas na bar (Home ay idinadagdag sa header)
+// Support links sa sidebar (pareho sa Coordinator, Seller, at Rider web view)
 export const TOP_LINKS = [
-  { path: "about", label: "About Us" },
-  { path: "contact", label: "Contact" },
-  { path: "help", label: "Help" },
+  { path: "contact", label: "Contact Us" },
+  { path: "help", label: "Help / FAQs" },
+  { path: "about", label: "About LOGISYNC" },
 ];
 
 // toPath("seller", "parcels") -> "/seller/parcels"   toPath("seller", "") -> "/seller"

@@ -109,15 +109,12 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
         </div>
 
         <nav className="flex flex-col gap-0.5" aria-label="Sidebar">
-          {navFor(role).map((g) => (
-            <div key={g.title} className="mb-2">
+          {navFor(role).map((g, gIdx) => (
+            <div key={g.title} className={gIdx > 0 ? "mt-2 border-t border-white/20 pt-2.5" : "mb-1"}>
               {collapsed ? (
-                <>
-                  <div className="mx-3 my-2 border-t border-white/20 first:hidden max-[820px]:hidden" />
-                  <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">{g.title}</p>
-                </>
+                <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">{g.title}</p>
               ) : (
-                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">{g.title}</p>
+                <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">{g.title}</p>
               )}
               {g.links.map((l) => (
                 <NavLink
@@ -144,18 +141,15 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
             </div>
           ))}
 
-          {/* Mobile/Tablet Info Links (hidden from top header on screens < 960px) */}
-          <div className="mb-2 min-[960px]:hidden">
+          {/* Support Links */}
+          <div className="mt-2 border-t border-white/20 pt-2.5 pb-2">
             {collapsed ? (
-              <>
-                <div className="mx-3 my-2 border-t border-white/20 max-[820px]:hidden" />
-                <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">
-                  Information
-                </p>
-              </>
+              <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75 min-[821px]:hidden">
+                Support
+              </p>
             ) : (
-              <p className="px-3.5 pt-2 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">
-                Information
+              <p className="px-3.5 pt-1 pb-1.5 text-[11px] font-bold uppercase tracking-[.6px] text-white/75">
+                Support
               </p>
             )}
             {TOP_LINKS.map((l) => (

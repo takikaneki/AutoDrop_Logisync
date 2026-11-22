@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Parcels from "./pages/Parcels.jsx";
 import ParcelDetails from "./pages/ParcelDetails.jsx";
 import Verification from "./pages/Verification.jsx";
+import CoordinatorScan from "./pages/CoordinatorScan.jsx";
 import Riders from "./pages/Riders.jsx";
 import Sellers from "./pages/Sellers.jsx";
 import Messages from "./pages/Messages.jsx";
@@ -140,6 +141,7 @@ export default function App() {
           <Route path="/parcels/:id" element={<ParcelDetails />} />
           <Route path="/reports" element={<Navigate to="/parcels?report=1" replace />} />
           <Route path="/verification" element={<Verification />} />
+          <Route path="/scan" element={<CoordinatorScan />} />
           <Route path="/riders" element={<Riders />} />
           <Route path="/sellers" element={<Sellers />} />
           <Route path="/messages" element={<Messages />} />
