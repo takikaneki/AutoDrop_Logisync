@@ -234,10 +234,10 @@ export default function ChatView({
     );
 
   return (
-    <div className={`grid h-[calc(100vh-170px)] min-h-[520px] max-[920px]:h-[calc(100vh-155px)] overflow-hidden rounded-2xl border ${directMode ? "grid-cols-1" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
+    <div className={`grid w-full min-w-0 grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[920px]:h-[calc(100dvh-168px)] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
-        <aside className={`flex min-h-0 flex-col border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
+        <aside className={`min-w-0 w-full min-h-0 flex-col overflow-hidden border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
           <div className="space-y-3 border-b border-slate-200 p-3 dark:border-slate-700">
             {!coordinatorOnly && (
               <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-night-head">
@@ -289,14 +289,14 @@ export default function ChatView({
                       <strong className="truncate text-sm">{contact.name}</strong>
                       <span className="shrink-0 text-[11px] capitalize text-slate-400">{contact.role}</span>
                     </span>
-                    <span className="flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                    <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
                       {(() => {
                         const rep = last ? parseRefusalReport(last.message) : null;
                         if (rep) {
                           return (
-                            <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
-                              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                              Refusal Report · {rep.txn || rep.reason}
+                            <span className="inline-flex max-w-full items-center gap-1 truncate font-semibold text-rose-600 dark:text-rose-400">
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                              <span className="truncate">Refusal Report · {rep.txn || rep.reason}</span>
                             </span>
                           );
                         }
@@ -317,7 +317,7 @@ export default function ChatView({
       )}
 
       {/* USAPAN */}
-      <section className={`min-h-0 flex-col ${directMode || active ? "flex" : "hidden md:flex"}`}>
+      <section className={`min-w-0 w-full min-h-0 flex-col overflow-hidden ${directMode || active ? "flex" : "hidden md:flex"}`}>
         {!active ? (
           <div className="m-auto p-6 text-center text-slate-500">
             <Icon name="message-circle" className="text-4xl opacity-50" />

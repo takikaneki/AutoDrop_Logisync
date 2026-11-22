@@ -83,19 +83,19 @@ export default function CoordinatorRthSection() {
       </div>
 
       {/* Tabs: Pending vs Confirmed */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 grid grid-cols-2 items-stretch gap-2.5 sm:inline-flex sm:items-center sm:gap-3">
         <button
           type="button"
           onClick={() => setTab("pending")}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
+          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-center text-[12.5px] sm:px-4 sm:py-2 sm:text-[13px] font-bold leading-snug transition ${
             tab === "pending"
-              ? "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-950/40 dark:text-orange-300"
-              : "bg-transparent text-[#64748b] hover:bg-[#f1f5f9] dark:text-[#9c948c] dark:hover:bg-night-line"
+              ? "border-[#fde047] bg-[#fef9c3] text-[#a16207] dark:border-yellow-500/40 dark:bg-yellow-500/15 dark:text-[#facc15]"
+              : "border-slate-200/80 bg-slate-50/70 text-[#64748b] hover:bg-[#f1f5f9] dark:border-night-line dark:bg-night-head/60 dark:text-[#9c948c] dark:hover:bg-night-line"
           }`}
         >
-          <Icon name="history" />
-          <span>Pending Physical Arrival</span>
-          <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-extrabold text-[#c2410c] dark:bg-night-panel dark:text-orange-300">
+          <Icon name="clock" className="shrink-0" />
+          <span className="min-w-0">Pending Arrival</span>
+          <span className="shrink-0 rounded-full bg-white/90 px-2 py-0.5 text-xs font-extrabold text-[#a16207] dark:bg-night-panel dark:text-[#facc15]">
             {data.counts.pending}
           </span>
         </button>
@@ -103,15 +103,15 @@ export default function CoordinatorRthSection() {
         <button
           type="button"
           onClick={() => setTab("confirmed")}
-          className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-bold transition ${
+          className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-center text-[12.5px] sm:px-4 sm:py-2 sm:text-[13px] font-bold leading-snug transition ${
             tab === "confirmed"
-              ? "bg-[#f3e8ff] text-[#7e22ce] dark:bg-purple-950/40 dark:text-purple-300"
-              : "bg-transparent text-[#64748b] hover:bg-[#f1f5f9] dark:text-[#9c948c] dark:hover:bg-night-line"
+              ? "border-[#bbf7d0] bg-[#dcfce7] text-[#15803d] dark:border-green-500/40 dark:bg-green-500/15 dark:text-[#4ade80]"
+              : "border-slate-200/80 bg-slate-50/70 text-[#64748b] hover:bg-[#f1f5f9] dark:border-night-line dark:bg-night-head/60 dark:text-[#9c948c] dark:hover:bg-night-line"
           }`}
         >
-          <Icon name="circle-check" />
-          <span>Confirmed at Hub</span>
-          <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-extrabold text-[#7e22ce] dark:bg-night-panel dark:text-purple-300">
+          <Icon name="circle-check" className="shrink-0" />
+          <span className="min-w-0">Confirmed at Hub</span>
+          <span className="shrink-0 rounded-full bg-white/90 px-2 py-0.5 text-xs font-extrabold text-[#15803d] dark:bg-night-panel dark:text-[#4ade80]">
             {data.counts.confirmed}
           </span>
         </button>

@@ -20,7 +20,7 @@ const RIDER_MOBILE_ITEMS = [
 const COORDINATOR_MOBILE_ITEMS = [
   { to: "/dashboard", end: true, icon: "house", label: "Home" },
   { to: "/parcels", icon: "package", label: "Parcels" },
-  { to: "/verification", icon: "scan-line", label: "Verify", featured: true },
+  { to: "/verification", icon: "circle-check", label: "Verify", featured: true },
   { to: "/messages", icon: "message-circle", label: "Messages" },
   { to: "/profile", icon: "user-round", label: "Profile" },
 ];

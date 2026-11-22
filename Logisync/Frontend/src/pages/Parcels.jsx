@@ -686,10 +686,42 @@ export default function Parcels() {
         className={`sticky top-14 z-30 -mx-3.5 -mt-3.5 mb-3 max-[380px]:-mx-2.5 grid grid-cols-4 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 ${reportOpen ? "print:hidden" : ""}`}
       >
         {[
-          { key: "All", label: "All", count: parcels.length },
-          { key: "In Transit", label: "In Transit", count: counts["In Transit"] },
-          { key: "Delivered", label: "Delivered", count: counts["Delivered"] },
-          { key: "Failed / Return to Hub", label: "Failed", count: counts["Failed / Return to Hub"] },
+          {
+            key: "All",
+            label: "All",
+            count: parcels.length,
+            activeText: "text-[#0f172a] dark:text-white",
+            hoverText: "hover:text-[#0f172a] dark:hover:text-white",
+            activeBar: "bg-[#64748b]",
+            activeBadge: "bg-slate-200/80 text-[#0f172a] dark:bg-slate-600/40 dark:text-white",
+          },
+          {
+            key: "In Transit",
+            label: "In Transit",
+            count: counts["In Transit"],
+            activeText: "text-[#3b82f6] dark:text-[#60a5fa]",
+            hoverText: "hover:text-[#3b82f6] dark:hover:text-[#60a5fa]",
+            activeBar: "bg-[#3b82f6]",
+            activeBadge: "bg-[#dbeafe] text-[#1d4ed8] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+          },
+          {
+            key: "Delivered",
+            label: "Delivered",
+            count: counts["Delivered"],
+            activeText: "text-[#16a34a] dark:text-[#4ade80]",
+            hoverText: "hover:text-[#16a34a] dark:hover:text-[#4ade80]",
+            activeBar: "bg-[#16a34a]",
+            activeBadge: "bg-[#dcfce7] text-[#15803d] dark:bg-green-500/20 dark:text-[#4ade80]",
+          },
+          {
+            key: "Failed / Return to Hub",
+            label: "Failed",
+            count: counts["Failed / Return to Hub"],
+            activeText: "text-[#dc2626] dark:text-[#f87171]",
+            hoverText: "hover:text-[#dc2626] dark:hover:text-[#f87171]",
+            activeBar: "bg-[#dc2626]",
+            activeBadge: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+          },
         ].map((tab) => {
           const active = status === tab.key;
           return (
@@ -704,15 +736,15 @@ export default function Parcels() {
               }}
               className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11.5px] max-[360px]:text-[10.5px] leading-tight transition ${
                 active
-                  ? "font-extrabold text-brand"
-                  : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
+                  ? `font-extrabold ${tab.activeText}`
+                  : `font-semibold text-slate-500 ${tab.hoverText} dark:text-[#b8b0a8]`
               }`}
             >
               <span className="truncate">{tab.label}</span>
               <span
                 className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
                   active
-                    ? "bg-brand/12 text-brand"
+                    ? tab.activeBadge
                     : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
                 }`}
               >
@@ -721,7 +753,7 @@ export default function Parcels() {
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-2 bottom-0 h-[2.5px] rounded-full bg-brand"
+                  className={`absolute inset-x-2 bottom-0 h-[2.5px] rounded-full ${tab.activeBar}`}
                 />
               )}
             </button>
