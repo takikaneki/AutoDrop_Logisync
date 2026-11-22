@@ -178,21 +178,6 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
 
           <div>
             <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
-              Payment Method
-            </span>
-            <div className="mt-0.5 text-[14px] text-[#52627a] dark:text-[#d1c9c2]">
-              {(d.is_cod || d.payment_method === "COD" || d.paymentMethod === "COD") ? (
-                <span className="inline-flex items-center gap-1.5 font-bold text-[#b45309]">
-                  <CodBadge /> Cash on Delivery (check exact amount via official Shopee app)
-                </span>
-              ) : (
-                <span>Prepaid (Non-COD)</span>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Address
             </span>
             <p className="mt-0.5 break-words text-[14px] leading-relaxed text-[#52627a] dark:text-[#d1c9c2]">

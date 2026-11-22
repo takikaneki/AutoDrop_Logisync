@@ -391,7 +391,6 @@ export default function RiderScan() {
               ["Receiver", parcel.receiver || parcel.receiver_name],
               ["Receiver Contact", parcel.receiver_contact || parcel.contact || "—"],
               ["Delivery Address", parcel.address || parcel.receiver_address || "—"],
-              ["Payment Method", (parcel.is_cod || parcel.payment_method === "COD") ? "Cash on Delivery (COD)" : "Prepaid (Non-COD)"],
               ["Contents", parcel.contents || "—"],
               ["Seller", parcel.seller || parcel.seller_name || "—"],
               ["Last Updated", parcel.updated_at ? formatDate(parcel.updated_at) : "—"],
