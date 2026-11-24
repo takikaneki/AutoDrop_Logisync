@@ -262,16 +262,15 @@ export default function EmergencyReports() {
         subtitle="High-priority incident alerts submitted by Sellers and Riders requiring immediate coordinator review."
       />
 
-      {/* Mobile Horizontal Filter Tabs */}
+      {/* Mobile Horizontal Filter Tabs (3 filters — tap active tab to show all) */}
       <div
         role="tablist"
         aria-label="Filter emergency reports by status"
-        className="-mx-3.5 -mt-3.5 mb-4 grid grid-cols-4 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 max-[380px]:-mx-2.5"
+        className="-mx-3.5 -mt-3.5 mb-4 grid grid-cols-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95 max-[380px]:-mx-2.5"
       >
         {[
-          { key: "ALL", label: "All", count: counts.ALL },
           { key: "NEW", label: "New", count: counts.NEW },
-          { key: "ACKNOWLEDGED", label: "Ack.", count: counts.ACKNOWLEDGED },
+          { key: "ACKNOWLEDGED", label: "Acknowledged", count: counts.ACKNOWLEDGED },
           { key: "RESOLVED", label: "Resolved", count: counts.RESOLVED },
         ].map((tab) => {
           const active = filterKey === tab.key;
@@ -281,8 +280,8 @@ export default function EmergencyReports() {
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => setFilterKey(tab.key)}
-              className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11.5px] leading-tight transition max-[360px]:text-[10.5px] ${
+              onClick={() => setFilterKey(active ? "ALL" : tab.key)}
+              className={`relative flex items-center justify-center gap-1.5 px-2 py-3.5 text-[12px] leading-tight transition max-[360px]:text-[11px] ${
                 active
                   ? "font-extrabold text-[#dc2626]"
                   : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
@@ -301,7 +300,7 @@ export default function EmergencyReports() {
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-2 bottom-0 h-[2.5px] rounded-full bg-[#dc2626]"
+                  className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-[#dc2626]"
                 />
               )}
             </button>
@@ -309,16 +308,9 @@ export default function EmergencyReports() {
         })}
       </div>
 
-      {/* Desktop Summary Cards */}
-      <section className="mb-6 hidden grid-cols-4 gap-4 min-[821px]:grid">
+      {/* Desktop Summary Cards (3 cards — click active card to show all) */}
+      <section className="mb-6 hidden grid-cols-3 gap-5 min-[821px]:grid">
         {[
-          {
-            key: "ALL",
-            label: "All Reports",
-            count: counts.ALL,
-            badgeCls: "bg-slate-100 text-slate-700 dark:bg-night-head dark:text-[#e2e8f0]",
-            borderCls: "!border-slate-200 !border-t-[3px] !border-t-slate-500 dark:!border-night-line dark:!border-t-slate-400",
-          },
           {
             key: "NEW",
             label: "New / Unreviewed",
@@ -340,21 +332,28 @@ export default function EmergencyReports() {
             badgeCls: STATUS_META.RESOLVED.cls,
             borderCls: "!border-[#bbf7d0] !border-t-[3px] !border-t-[#16a34a] dark:!border-[#166534]/70 dark:!border-t-[#16a34a]",
           },
-        ].map((card) => (
-          <button
-            key={card.key}
-            type="button"
-            onClick={() => setFilterKey(card.key)}
-            className={`${panel} ${card.borderCls} p-5 text-left transition hover:shadow-md active:scale-[0.99] ${
-              filterKey === card.key ? "!border-brand ring-2 ring-brand/40 shadow-sm" : ""
-            }`}
-          >
-            <span className={`inline-block rounded-full px-3 py-1 text-[12px] font-bold ${card.badgeCls}`}>
-              {card.label}
-            </span>
-            <strong className="mt-3 block text-[30px] leading-none">{card.count}</strong>
-          </button>
-        ))}
+        ].map((card) => {
+          const active = filterKey === card.key;
+          return (
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => setFilterKey(active ? "ALL" : card.key)}
+              className={`${panel} ${card.borderCls} flex min-w-0 flex-col items-start justify-between p-6 text-left transition hover:shadow-md active:scale-[0.99] ${
+                active ? "!border-brand ring-2 ring-brand/40 shadow-sm" : ""
+              }`}
+            >
+              <span
+                className={`inline-flex max-w-full items-center truncate whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold leading-none ${card.badgeCls}`}
+              >
+                {card.label}
+              </span>
+              <strong className="mt-4 block text-[32px] font-extrabold leading-none tracking-tight text-[#0f172a] dark:text-white">
+                {card.count}
+              </strong>
+            </button>
+          );
+        })}
       </section>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
