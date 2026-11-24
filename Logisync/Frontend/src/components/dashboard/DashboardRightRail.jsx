@@ -97,15 +97,9 @@ export default function DashboardRightRail({
         }${
           isSlate
             ? "bg-[#0f172a] border border-[#1e293b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.55)]"
-            : "bg-gradient-to-br from-[#ee4d2d] to-[#f97316] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.5)]"
+            : "bg-[#ee4d2d] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.5)]"
         }`}
       >
-        {isSlate && (
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(238,77,45,0.42),transparent_65%)]"
-            aria-hidden="true"
-          />
-        )}
         <div className="relative flex items-center justify-between gap-2">
           <span className={`text-[12.5px] font-bold uppercase tracking-wider ${isSlate ? "text-slate-300" : "text-orange-100"}`}>
             {summary.label}
