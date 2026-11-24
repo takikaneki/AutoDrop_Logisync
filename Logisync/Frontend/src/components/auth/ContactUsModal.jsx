@@ -90,7 +90,7 @@ export function ContactUsContent({
 
   const dk = (cls) => (supportDark ? cls : "");
   const inputBase = `w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand focus:bg-white focus:ring-3 focus:ring-brand/15 placeholder:text-slate-400 ${dk(
-    "dark:border-night-line dark:bg-night-head dark:text-[#f1eeeb] dark:focus:bg-night-head dark:placeholder:text-[#8b837d]"
+    "dark:border-slate-700/80 dark:bg-[#0f172a] dark:text-[#f1eeeb] dark:focus:border-brand dark:focus:bg-[#0f172a] dark:placeholder:text-slate-400"
   )}`;
 
   return (
@@ -135,7 +135,7 @@ export function ContactUsContent({
       <div className="grid grid-cols-1 gap-6 p-5 sm:p-7 lg:grid-cols-12">
         {/* Left Column: Direct Contact Details */}
         <div className="space-y-3.5 lg:col-span-5">
-          <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 p-5 text-white">
+          <div className={`rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 p-5 text-white ${dk("dark:border dark:border-slate-700/70")}`}>
             <span className="inline-block rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
               Direct Channels
             </span>
@@ -224,7 +224,7 @@ export function ContactUsContent({
         >
           {sent ? (
             <div className="flex h-full flex-col items-center justify-center py-8 text-center">
-              <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600">
+              <span className={`mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600 ${dk("dark:bg-emerald-500/15 dark:text-emerald-400")}`}>
                 <Icon name="check" />
               </span>
               <h3 className={`text-lg font-extrabold text-slate-900 ${dk("dark:text-white")}`}>Message Sent!</h3>
