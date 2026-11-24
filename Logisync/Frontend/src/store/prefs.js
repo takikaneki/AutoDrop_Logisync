@@ -86,6 +86,9 @@ if (initialUserPrefs) {
 
 const fontSizeMap = { sm: "14px", md: "16px", lg: "18px" };
 
+let themeSwitchRaf = null;
+let localChangeSeq = 0;
+
 function resolveDark(p) {
   if (p.themeMode === "system" && typeof window !== "undefined" && window.matchMedia) {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -94,16 +97,47 @@ function resolveDark(p) {
 }
 
 export function applyPrefs(p = store.get()) {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   const isDark = resolveDark(p);
+  const wasDark = root.classList.contains("dark");
+  const themeChanged = wasDark !== isDark;
+
+  if (themeChanged) {
+    if (themeSwitchRaf !== null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(themeSwitchRaf);
+      themeSwitchRaf = null;
+    }
+    // Temporarily disable CSS transitions across the entire DOM so navbar, sidebar,
+    // backgrounds, cards, tables, buttons, dropdowns, modals, and scrollbars repaint in one frame.
+    root.classList.add("theme-switching");
+  }
+
   root.classList.toggle("dark", isDark);
-  document.body.classList.toggle("dark", isDark);
+  if (document.body) {
+    document.body.classList.toggle("dark", isDark);
+  }
+  root.style.colorScheme = isDark ? "dark" : "light";
   root.classList.toggle("reduced-motion", Boolean(p.reducedMotion));
   root.classList.toggle("underline-links", Boolean(p.underlineLinks));
   root.classList.toggle("high-contrast", Boolean(p.highContrast));
   root.classList.toggle("enhanced-focus", Boolean(p.enhancedFocus));
   root.style.zoom = "";
   root.style.fontSize = fontSizeMap[p.fontSize] || "16px";
+
+  if (themeChanged) {
+    // Force a single synchronous style flush while transitions are frozen
+    void root.offsetHeight;
+    if (typeof requestAnimationFrame === "function") {
+      themeSwitchRaf = requestAnimationFrame(() => {
+        root.classList.remove("theme-switching");
+        themeSwitchRaf = null;
+      });
+    } else {
+      root.classList.remove("theme-switching");
+    }
+  }
+
   try {
     localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
   } catch {
@@ -142,6 +176,7 @@ async function flushPreferencesToServer(expectedUid) {
 export async function syncPrefsFromServer() {
   const { token, uid } = currentAuthInfo();
   if (!token || !uid) return;
+  const startSeq = localChangeSeq;
   try {
     const res = await fetch(`${API_BASE_URL}/notifications/preferences`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -149,10 +184,14 @@ export async function syncPrefsFromServer() {
     if (!res.ok) return;
     const data = await res.json();
     if (!data?.preferences) return;
+    // Do not overwrite freshly toggled local preferences with an in-flight server snapshot
+    if (localChangeSeq !== startSeq || pendingSyncTimer !== null || Object.keys(queuedServerPatch).length > 0) {
+      return;
+    }
     const merged = { ...BASE_DEFAULTS, ...data.preferences };
     writeUserScopedCache(uid, merged);
-    store.set(() => merged);
     applyPrefs(merged);
+    store.set(() => merged);
   } catch {
     /* ignore transient network error */
   }
@@ -161,21 +200,25 @@ export async function syncPrefsFromServer() {
 export const usePrefs = store.use;
 export const getPrefs = store.get;
 export const setPrefs = (patch, { skipServerSync = false } = {}) => {
+  localChangeSeq += 1;
   const { uid } = currentAuthInfo();
-  store.set((s) => {
-    const next = { ...s, ...patch };
-    if (patch.themeMode === "light") next.dark = false;
-    else if (patch.themeMode === "dark") next.dark = true;
-    else if (patch.themeMode === "system") next.dark = resolveDark(next);
-    if (uid) writeUserScopedCache(uid, next);
-    return next;
-  });
-  applyPrefs();
+  const prev = store.get();
+  const next = { ...prev, ...patch };
+  if (patch.themeMode === "light") next.dark = false;
+  else if (patch.themeMode === "dark") next.dark = true;
+  else if (patch.themeMode === "system") next.dark = resolveDark(next);
+
+  if (uid) writeUserScopedCache(uid, next);
+  // Apply DOM theme classes & color-scheme synchronously BEFORE notifying React subscribers
+  // so CSS dark: rules and React-rendered icons/controls update in the exact same paint frame.
+  applyPrefs(next);
+  store.set(() => next);
 
   if (!skipServerSync && uid) {
-    queuedServerPatch = { ...queuedServerPatch, ...store.get() };
+    queuedServerPatch = { ...queuedServerPatch, ...next };
     if (pendingSyncTimer) clearTimeout(pendingSyncTimer);
     pendingSyncTimer = setTimeout(() => {
+      pendingSyncTimer = null;
       flushPreferencesToServer(uid);
     }, 150);
   }
@@ -196,16 +239,16 @@ if (typeof window !== "undefined") {
     const nextUser = event?.detail?.user;
     if (!nextUser) {
       const fallback = { ...BASE_DEFAULTS, dark: false, themeMode: "light", fontSize: "md" };
-      store.set(() => fallback);
       applyPrefs(fallback);
+      store.set(() => fallback);
       return;
     }
     const uid = String(nextUser.user_id || "");
     const cached = readUserScopedCache(uid);
     if (cached) {
       const next = { ...BASE_DEFAULTS, ...cached };
-      store.set(() => next);
       applyPrefs(next);
+      store.set(() => next);
     }
     syncPrefsFromServer();
   });
@@ -215,8 +258,9 @@ if (typeof window !== "undefined" && window.matchMedia) {
   const mq = window.matchMedia("(prefers-color-scheme: dark)");
   const onChange = () => {
     if (store.get().themeMode === "system") {
-      store.set((s) => ({ ...s, dark: mq.matches }));
-      applyPrefs();
+      const next = { ...store.get(), dark: mq.matches };
+      applyPrefs(next);
+      store.set(() => next);
     }
   };
   if (mq.addEventListener) mq.addEventListener("change", onChange);

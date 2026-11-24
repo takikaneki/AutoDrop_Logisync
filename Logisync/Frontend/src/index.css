@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
 html,
 body {
   overflow-x: clip;
@@ -12,8 +20,18 @@ body {
   @apply bg-[#f7f8fb] text-ink font-sans;
 }
 
+.dark body,
 body.dark {
   @apply bg-night-bg text-[#f1eeeb];
+}
+
+/* Prevent staggered/delayed color transitions when toggling Light/Dark Mode so all elements repaint simultaneously */
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+  transition-duration: 0ms !important;
 }
 
 @media print {
