@@ -30,7 +30,19 @@ export async function createUser({
     method: "POST",
     body: { name, email, password, role, phone, shop_name, zone, vehicle, plate_number, pickup_address, agency, rider_type, status },
   });
-  return res.user;
+  return {
+    ...res.user,
+    emailSent: Boolean(res.emailSent),
+    emailError: res.emailError || null,
+  };
+}
+
+// POST /api/users/:id/resend-credentials-email (coordinator lang)
+export async function resendCredentialsEmail(userId, temporaryPassword) {
+  return api(`/users/${encodeURIComponent(userId)}/resend-credentials-email`, {
+    method: "POST",
+    body: { temporaryPassword },
+  });
 }
 
 // PATCH /api/users/:id/profile  (coordinator lang) - i-edit ang seller account

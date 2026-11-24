@@ -1,6 +1,16 @@
 const bcrypt = require("bcryptjs");
 const { pool, rawPool } = require("../config/database");
 const { logAudit } = require("../utils/audit");
+const { sendAccountCredentialsEmail } = require("../utils/mailer");
+
+function getLoginUrl() {
+  const appUrl = (
+    process.env.APP_URL ||
+    process.env.FRONTEND_URL ||
+    "http://localhost:5173"
+  ).replace(/\/$/, "");
+  return `${appUrl}/login`;
+}
 
 let userColumnsReady = false;
 
@@ -220,10 +230,24 @@ async function createUser(req, res) {
       detail: `${role}: ${cleanName}${createdRow.seller_code || createdRow.rider_code ? ` (${createdRow.seller_code || createdRow.rider_code})` : ""}${cleanRiderType ? ` [${cleanRiderType} · ${cleanAgency}]` : ""}`
     });
 
-    // Walang password hash at walang token sa sagot
+    // Automatically email temporary credentials after successful DB insertion
+    const mailRes = await sendAccountCredentialsEmail({
+      to: cleanEmail,
+      name: cleanName,
+      role,
+      temporaryPassword: password,
+      loginUrl: getLoginUrl(),
+    });
+    const emailSent = Boolean(mailRes?.sent);
+
+    // Walang password hash, walang plaintext password, at walang token sa sagot
     res.status(201).json({
       success: true,
-      message: "Account created.",
+      message: emailSent
+        ? "Account created and credentials email sent."
+        : "Account created, but the credentials email could not be delivered. You can retry sending the email.",
+      emailSent,
+      emailError: emailSent ? null : (mailRes?.error || "Failed to deliver account credentials email."),
       user: {
         user_id: result.insertId,
         name: cleanName,
@@ -240,15 +264,115 @@ async function createUser(req, res) {
         rider_code: createdRow.rider_code || null,
         agency: cleanAgency,
         rider_type: cleanRiderType,
+        first_login: true,
         created_at: createdRow.created_at || new Date().toISOString()
       }
     });
   } catch (error) {
-    console.error("createUser error:", error);
+    console.error("createUser error:", error?.code || error?.message);
     if (error && error.code === "23505") {
       return res.status(409).json({ success: false, message: "Duplicate account detected (email or Seller ID already exists)." });
     }
     res.status(500).json({ success: false, message: "Failed to create account." });
+  }
+}
+
+// POST /api/users/:id/resend-credentials-email (coordinator lang)
+// Retries sending the account credentials email WITHOUT creating a duplicate account
+// and WITHOUT modifying or resetting the user's password.
+async function resendCredentialsEmail(req, res) {
+  try {
+    await ensureUserColumns();
+    const userId = Number(req.params.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid user ID." });
+    }
+
+    const { temporaryPassword } = req.body || {};
+    if (typeof temporaryPassword !== "string" || temporaryPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "The account's temporary password is required to retry sending the credentials email.",
+      });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT user_id, name, email, role, password_hash, first_login, verification_status
+       FROM users
+       WHERE user_id = $1
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: "Account not found." });
+    }
+
+    const targetUser = rows[0];
+    const role = String(targetUser.role || "").trim().toLowerCase();
+    if (!["seller", "rider", "coordinator"].includes(role)) {
+      return res.status(400).json({ success: false, message: "Unsupported account role." });
+    }
+
+    if (String(targetUser.verification_status || "").toUpperCase() === "REJECTED") {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot send credentials email for an inactive or disabled account.",
+      });
+    }
+
+    if (!Boolean(targetUser.first_login)) {
+      return res.status(400).json({
+        success: false,
+        message: "This account has already completed first-time password setup.",
+      });
+    }
+
+    // Cryptographically verify the submitted temporary password matches the existing stored hash
+    // so retries never reset or alter the user's password.
+    const matchesStoredHash = await bcrypt.compare(temporaryPassword, targetUser.password_hash);
+    if (!matchesStoredHash) {
+      return res.status(400).json({
+        success: false,
+        message: "Temporary password does not match the account's current password.",
+      });
+    }
+
+    const mailRes = await sendAccountCredentialsEmail({
+      to: targetUser.email,
+      name: targetUser.name,
+      role,
+      temporaryPassword,
+      loginUrl: getLoginUrl(),
+    });
+
+    if (!mailRes?.sent) {
+      return res.status(503).json({
+        success: false,
+        emailSent: false,
+        message: mailRes?.error || "Failed to deliver account credentials email. Please try again.",
+      });
+    }
+
+    await logAudit(req.user, {
+      category: "Accounts",
+      action: "Resent account credentials email",
+      target: targetUser.email,
+      detail: `Resent initial login credentials email for ${role}: ${targetUser.name}`,
+    });
+
+    return res.json({
+      success: true,
+      emailSent: true,
+      message: "Account credentials email sent successfully.",
+    });
+  } catch (error) {
+    console.error("resendCredentialsEmail error:", error?.code || error?.message);
+    return res.status(500).json({
+      success: false,
+      emailSent: false,
+      message: "Failed to retry sending account credentials email.",
+    });
   }
 }
 
@@ -606,6 +730,7 @@ module.exports = {
   ensureUserColumns,
   listContacts,
   createUser,
+  resendCredentialsEmail,
   listUsers,
   reviewSeller,
   updateSellerAccount,

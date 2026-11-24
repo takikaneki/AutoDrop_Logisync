@@ -3,7 +3,7 @@ import Topbar from "../components/Topbar.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { Notice } from "../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, stickyThead, td, th } from "../components/styles.js";
-import { createUser, listUsers } from "../services/userService.js";
+import { createUser, listUsers, resendCredentialsEmail } from "../services/userService.js";
 import { toast } from "../store/toast.js";
 import { ROLE_BADGE } from "../utils/activity.js";
 import { formatDate } from "../utils/format.js";
@@ -46,6 +46,7 @@ export default function Accounts() {
   const [apiError, setApiError] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [retryingEmail, setRetryingEmail] = useState(false);
   const [created, setCreated] = useState(null);
 
   const [users, setUsers] = useState([]);
@@ -103,14 +104,39 @@ export default function Accounts() {
         vehicle: form.role === "rider" ? form.vehicle.trim() || "Motorcycle" : undefined,
         agency: form.role === "rider" ? form.agency.trim() : undefined,
       });
-      setCreated({ ...user, password: form.password });
+      setCreated({
+        ...user,
+        password: form.password,
+        emailSent: Boolean(user.emailSent),
+        emailError: user.emailError || "",
+      });
       setUsers((l) => [{ ...user, created_at: user.created_at || new Date().toISOString() }, ...l]);
       setForm({ ...EMPTY, role: form.role });
-      toast(`Account created for ${user.name}`);
+      toast(
+        user.emailSent
+          ? `Account created and credentials emailed to ${user.email}`
+          : `Account created for ${user.name}, but credentials email failed to send.`
+      );
     } catch (err) {
       setApiError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRetryEmail = async () => {
+    if (!created?.user_id || !created?.password || retryingEmail) return;
+    setRetryingEmail(true);
+    try {
+      await resendCredentialsEmail(created.user_id, created.password);
+      setCreated((prev) => (prev ? { ...prev, emailSent: true, emailError: "" } : prev));
+      toast(`Credentials email sent to ${created.email}`);
+    } catch (err) {
+      setCreated((prev) =>
+        prev ? { ...prev, emailSent: false, emailError: err.message || "Failed to send credentials email." } : prev
+      );
+    } finally {
+      setRetryingEmail(false);
     }
   };
 
@@ -139,17 +165,46 @@ export default function Accounts() {
 
           {created && (
             <div className="mb-5">
-              <Notice tone="success" icon="circle-check" role="status">
-                <strong className="block">Account created</strong>
+              <Notice
+                tone={created.emailSent ? "success" : "warn"}
+                icon={created.emailSent ? "circle-check" : "triangle-alert"}
+                role="status"
+              >
+                <strong className="block">
+                  {created.emailSent
+                    ? "Account created & credentials emailed"
+                    : "Account created — email delivery failed"}
+                </strong>
                 <span className="block break-all">
                   {created.email} · <span className="capitalize">{created.role}</span>
                 </span>
                 <span className="block">
                   Temporary password: <code className="font-bold">{created.password}</code>
                 </span>
-                <span className="mt-1 block text-[12px] opacity-80">
-                  Share this privately. It will not be shown again.
-                </span>
+                {created.emailSent ? (
+                  <span className="mt-1 block text-[12px] opacity-80">
+                    Login credentials and first-time verification instructions were sent to {created.email}.
+                  </span>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    <span className="block text-[12px]">
+                      {created.emailError || "Unable to send the credentials email right now."}{" "}
+                      The account was saved and will not be duplicated if you retry.
+                    </span>
+                    <button
+                      type="button"
+                      disabled={retryingEmail}
+                      onClick={handleRetryEmail}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-current/25 bg-white/80 px-3 py-1.5 text-[12px] font-bold transition hover:bg-white disabled:opacity-60 dark:bg-night-panel/80"
+                    >
+                      <Icon
+                        name={retryingEmail ? "loader-2" : "send"}
+                        className={retryingEmail ? "animate-spin text-[12px]" : "text-[12px]"}
+                      />
+                      <span>{retryingEmail ? "Retrying email..." : "Retry Sending Email"}</span>
+                    </button>
+                  </div>
+                )}
               </Notice>
             </div>
           )}

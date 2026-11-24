@@ -2,6 +2,7 @@ const express = require("express");
 const {
   listContacts,
   createUser,
+  resendCredentialsEmail,
   listUsers,
   reviewSeller,
   updateSellerAccount,
@@ -33,6 +34,12 @@ router.put("/change-password", authenticateToken, changePassword);
 // Accounts: coordinator lang
 router.get("/", authenticateToken, authorizeRoles("coordinator"), listUsers);
 router.post("/", authenticateToken, authorizeRoles("coordinator"), createUser);
+router.post(
+  "/:id/resend-credentials-email",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  resendCredentialsEmail
+);
 
 // Coordinator lang: approve/activate o reject/suspend ng seller o rider
 router.patch(

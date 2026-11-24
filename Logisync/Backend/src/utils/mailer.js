@@ -255,6 +255,137 @@ async function sendPasswordResetEmail({ to, name = "User", resetLink }) {
   }
 }
 
+/**
+ * Sends an account credentials email when a Coordinator creates a new account.
+ * Never logs temporary passwords or credentials.
+ */
+async function sendAccountCredentialsEmail({
+  to,
+  name = "User",
+  role = "rider",
+  temporaryPassword,
+  loginUrl,
+}) {
+  const roleLabel =
+    String(role || "").trim().toLowerCase() === "seller"
+      ? "Seller"
+      : String(role || "").trim().toLowerCase() === "coordinator"
+        ? "Coordinator"
+        : "Rider";
+
+  const subject = `LogiSync – Your New ${roleLabel} Account Credentials`;
+  const safeNameText = String(name || "User").replace(/[\r\n]/g, " ").trim();
+  const safeNameHtml = escapeHtml(safeNameText);
+  const safeToHtml = escapeHtml(to);
+  const safePasswordHtml = escapeHtml(temporaryPassword);
+  const safeLoginUrl = String(loginUrl || "").trim();
+  const safeLoginUrlHtml = escapeHtml(safeLoginUrl);
+
+  const text = [
+    `Hello ${safeNameText},`,
+    ``,
+    `Your LogiSync ${roleLabel} account has been created by the Hub Coordinator.`,
+    ``,
+    `Account Details:`,
+    `- Assigned Role: ${roleLabel}`,
+    `- Registered Email: ${to}`,
+    `- Temporary Password: ${temporaryPassword}`,
+    ``,
+    `First-Time Login Instructions:`,
+    `1. Open the LogiSync login page: ${safeLoginUrl}`,
+    `2. Sign in using your registered email address and the temporary password above.`,
+    `3. You will be prompted to verify your email with a 6-digit OTP code and set your permanent password before accessing your ${roleLabel} dashboard.`,
+    ``,
+    `For your security, please do not share your temporary password with anyone.`,
+    ``,
+    `— LogiSync SPX Express`,
+  ].join("\n");
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${escapeHtml(subject)}</title>
+    </head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+      <table align="center" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
+        <tr>
+          <td style="height: 6px; background: linear-gradient(to right, #f97316, #f59e0b, #ea580c);"></td>
+        </tr>
+        <tr>
+          <td style="padding: 32px 36px;">
+            <div style="margin-bottom: 8px;">
+              <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f97316; letter-spacing: -0.5px;">LogiSync</h1>
+            </div>
+            <p style="margin: 0 0 20px 0; font-size: 13px; color: #64748b; font-weight: 600;">SPX Express Verification &amp; Delivery Coordination Platform</p>
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 24px;" />
+
+            <p style="font-size: 15px; margin: 0 0 12px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
+            <p style="font-size: 14px; margin: 0 0 20px 0; color: #475569; line-height: 1.6;">
+              Your LogiSync <strong>${escapeHtml(roleLabel)}</strong> account has been created by the Hub Coordinator. Use the temporary credentials below to sign in and complete your mandatory first-time password verification.
+            </p>
+
+            <div style="margin: 24px 0; padding: 20px 22px; background: #fff7ed; border-radius: 16px; border: 1px solid #fed7aa;">
+              <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1px;">Account Credentials</p>
+              <table width="100%" style="font-size: 13px; color: #334155; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 4px 0; color: #64748b; width: 145px;">Assigned Role:</td>
+                  <td style="padding: 4px 0; font-weight: 700;">${escapeHtml(roleLabel)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #64748b;">Registered Email:</td>
+                  <td style="padding: 4px 0; font-weight: 700; word-break: break-all;">${safeToHtml}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0; color: #64748b;">Temporary Password:</td>
+                  <td style="padding: 4px 0;"><code style="display: inline-block; padding: 3px 8px; background: #ffffff; border: 1px dashed #fdba74; border-radius: 6px; font-size: 14px; font-weight: 800; color: #ea580c; font-family: 'Courier New', Courier, monospace;">${safePasswordHtml}</code></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin: 20px 0; padding: 16px 18px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #475569; line-height: 1.6;">
+              <strong style="display: block; margin-bottom: 6px; color: #0f172a;">Mandatory First-Time Login Steps:</strong>
+              <ol style="margin: 0; padding-left: 18px;">
+                <li>Click the sign-in button below and enter your registered email and temporary password.</li>
+                <li>Enter the 6-digit OTP verification code sent to your registered email address.</li>
+                <li>Create your permanent password to unlock your ${escapeHtml(roleLabel)} dashboard.</li>
+              </ol>
+            </div>
+
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${safeLoginUrlHtml}" style="display: inline-block; background-color: #f97316; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 12px; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);">
+                Sign In to LogiSync
+              </a>
+            </div>
+
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 10px 0;">
+              Or copy and paste this link into your browser:<br />
+              <a href="${safeLoginUrlHtml}" style="color: #f97316; word-break: break-all;">${safeLoginUrlHtml}</a>
+            </p>
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 14px 0 0 0;">
+              Keep your credentials private. Your temporary password cannot be reused once you complete first-time password setup.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 20px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
+            &copy; ${new Date().getFullYear()} LogiSync SPX Express. All rights reserved.
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    return await sendMail({ to, subject, text, html });
+  } catch (err) {
+    console.error("[LogiSync Mailer] Account credentials email delivery failed:", err.code || "SMTP_ERROR");
+    return { sent: false, error: "Failed to deliver account credentials email." };
+  }
+}
+
 module.exports = {
   escapeHtml,
   getSmtpConfig,
@@ -265,4 +396,5 @@ module.exports = {
   verifyOtpHash,
   sendOtpEmail,
   sendPasswordResetEmail,
+  sendAccountCredentialsEmail,
 };
