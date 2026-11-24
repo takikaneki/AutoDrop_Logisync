@@ -359,7 +359,7 @@ export default function Verification() {
             label="Discreet requests pending"
             value={loading ? "…" : discreetPendingCount}
             icon="shield-check"
-            tone="yellow"
+            tone="blue"
           />
         </button>
         <button
