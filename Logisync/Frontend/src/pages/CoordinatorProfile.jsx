@@ -86,7 +86,7 @@ export default function CoordinatorProfile() {
 
   return (
     <>
-      <div className="relative mx-auto min-h-[calc(100dvh-124px)] w-full max-w-xl overflow-hidden bg-[#f7f8fb] px-4 pt-6 pb-8 dark:bg-night-bg min-[821px]:rounded-2xl min-[821px]:border min-[821px]:border-slate-200/80 min-[821px]:bg-white min-[821px]:p-6 min-[821px]:dark:border-night-line min-[821px]:dark:bg-night-panel">
+      <div className="relative mx-auto min-h-[calc(100dvh-124px)] w-full max-w-xl overflow-hidden bg-[#f7f8fb] px-4 pt-6 pb-8 dark:bg-night-bg min-[821px]:min-h-0 min-[821px]:max-w-5xl min-[821px]:rounded-2xl min-[821px]:border min-[821px]:border-slate-200/80 min-[821px]:bg-white min-[821px]:p-7 min-[821px]:dark:border-night-line min-[821px]:dark:bg-night-panel">
         {/* Soft decorative pastel corner accents */}
         <div
           aria-hidden="true"
@@ -103,38 +103,42 @@ export default function CoordinatorProfile() {
         {showProfileSkeleton ? (
           <ProfileHeaderSkeleton />
         ) : (
-        <section className="relative z-10 flex flex-col items-center text-center">
-          <div className="relative">
-            <div className="rounded-full bg-white p-1 shadow-sm ring-2 ring-brand/25 dark:bg-night-panel">
-              <UserAvatar className="h-[88px] w-[88px] text-[30px]" />
+        <section className="relative z-10 flex flex-col items-center text-center min-[821px]:flex-row min-[821px]:items-center min-[821px]:justify-between min-[821px]:gap-6 min-[821px]:border-b min-[821px]:border-slate-200/80 min-[821px]:pb-6 min-[821px]:text-left min-[821px]:dark:border-night-line">
+          <div className="flex flex-col items-center min-[821px]:flex-row min-[821px]:items-center min-[821px]:gap-5">
+            <div className="relative shrink-0">
+              <div className="rounded-full bg-white p-1 shadow-sm ring-2 ring-brand/25 dark:bg-night-panel">
+                <UserAvatar className="h-[88px] w-[88px] text-[30px]" />
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/settings?section=account")}
+                aria-label="Edit Profile"
+                title="Edit Profile"
+                className="absolute right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#0f172a] text-white shadow-md transition active:scale-95 hover:bg-brand dark:border-night-panel"
+              >
+                <Icon name="pencil" className="text-[11px]" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/settings?section=account")}
-              aria-label="Edit Profile"
-              title="Edit Profile"
-              className="absolute right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-[#0f172a] text-white shadow-md transition active:scale-95 hover:bg-brand dark:border-night-panel"
-            >
-              <Icon name="pencil" className="text-[11px]" />
-            </button>
+
+            <div className="min-w-0">
+              <h1 className="mt-3.5 max-w-full truncate px-2 text-[21px] font-extrabold tracking-tight text-[#0f172a] dark:text-white min-[821px]:mt-0 min-[821px]:px-0 min-[821px]:text-[24px]">
+                {profile.name}
+              </h1>
+              <p className="mt-0.5 text-[13.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
+                Coordinator
+              </p>
+
+              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-slate-200/85 px-3.5 py-1 text-[11.5px] font-bold tracking-wide text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
+                <span>COORDINATOR ID:</span>
+                <span className="font-mono text-[#0f172a] dark:text-white">{coordinatorId}</span>
+              </span>
+            </div>
           </div>
-
-          <h1 className="mt-3.5 max-w-full truncate px-2 text-[21px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
-            {profile.name}
-          </h1>
-          <p className="mt-0.5 text-[13.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
-            Coordinator
-          </p>
-
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-slate-200/85 px-3.5 py-1 text-[11.5px] font-bold tracking-wide text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
-            <span>COORDINATOR ID:</span>
-            <span className="font-mono text-[#0f172a] dark:text-white">{coordinatorId}</span>
-          </span>
 
           <button
             type="button"
             onClick={() => navigate("/settings?section=account")}
-            className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-brand/35 bg-white px-5 py-2 text-[13px] font-bold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand"
+            className="mt-3.5 inline-flex shrink-0 items-center gap-2 rounded-full border border-brand/35 bg-white px-5 py-2 text-[13px] font-bold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand min-[821px]:mt-0"
           >
             <Icon name="pencil" className="text-[12px]" />
             <span>Edit Profile</span>
@@ -143,8 +147,9 @@ export default function CoordinatorProfile() {
         )}
 
         {/* Sectioned Coordinator Profile Menu */}
-        <nav aria-label="Coordinator profile menu" className="relative z-10 mt-6 space-y-3">
-          {/* ACCOUNT */}
+        <nav aria-label="Coordinator profile menu" className="relative z-10 mt-6 grid grid-cols-1 gap-3 min-[821px]:grid-cols-2 min-[821px]:items-start min-[821px]:gap-5">
+          <div className="space-y-3 min-[821px]:space-y-4">
+            {/* ACCOUNT */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
             <SectionLabel>Account</SectionLabel>
             <div className="divide-y divide-slate-100 dark:divide-night-line">
@@ -269,7 +274,10 @@ export default function CoordinatorProfile() {
             </div>
           </div>
 
-          {/* PREFERENCES */}
+          </div>
+
+          <div className="space-y-3 min-[821px]:space-y-4">
+            {/* PREFERENCES */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
             <SectionLabel>Preferences</SectionLabel>
             <div className="divide-y divide-slate-100 dark:divide-night-line">
@@ -325,6 +333,7 @@ export default function CoordinatorProfile() {
             </span>
             <Icon name="chevron-right" className="shrink-0 text-[12px] text-[#d94747]/70" />
           </button>
+          </div>
         </nav>
       </div>
 
