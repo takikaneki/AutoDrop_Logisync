@@ -17,12 +17,42 @@ body {
 }
 
 body {
-  @apply bg-[#f7f8fb] text-ink font-sans;
+  @apply bg-[#eef0f4] text-ink font-sans;
 }
 
 .dark body,
 body.dark {
   @apply bg-night-bg text-[#f1eeeb];
+}
+
+/* Eye-friendly soft dimmed white for Light Mode across desktop, tablet, and mobile */
+@media screen {
+  html:not(.dark):not(.high-contrast) :is(
+    .bg-white,
+    .odd\:bg-white:nth-child(odd),
+    .hover\:bg-white:hover,
+    .focus\:bg-white:focus
+  ) {
+    background-color: #f5f6f8;
+  }
+
+  @media (min-width: 821px) {
+    html:not(.dark):not(.high-contrast) .min-\[821px\]\:bg-white {
+      background-color: #f5f6f8;
+    }
+  }
+
+  html:not(.dark):not(.high-contrast) .bg-white\/95 {
+    background-color: rgb(245 246 248 / 0.95);
+  }
+
+  html:not(.dark):not(.high-contrast) .bg-white\/90 {
+    background-color: rgb(245 246 248 / 0.9);
+  }
+
+  html:not(.dark):not(.high-contrast) :is(.bg-\[\#f7f8fb\], .bg-\[\#fcfcfd\], .bg-\[\#fafafa\]) {
+    background-color: #eef0f4;
+  }
 }
 
 /* Prevent staggered/delayed color transitions when toggling Light/Dark Mode so all elements repaint simultaneously */
