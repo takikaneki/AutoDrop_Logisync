@@ -9,6 +9,7 @@ import { downloadCsv, groupByPeriod, isoDay } from "../../utils/report.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 import { getParcelAddress } from "../../store/customers.js";
 import Icon from "../Icon.jsx";
+import { DatePickerInput, FilterSelect } from "../SearchFilterBar.jsx";
 
 const STATUSES = ["WAITING_FOR_VIDEO", "VIDEO_SUBMITTED", "VERIFIED", "REJECTED", "REUPLOAD_REQUESTED"];
 const monthsAgo = (n) => {
@@ -162,25 +163,53 @@ export default function ParcelReport({ parcels, onClose }) {
         <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[540px]:grid-cols-1">
           <div>
             <label className={labelCls} htmlFor="sr-by">Group by</label>
-            <select id="sr-by" value={q.by} onChange={set("by")} className={inputCls}>
+            <FilterSelect
+              id="sr-by"
+              value={q.by}
+              onChange={set("by")}
+              ariaLabel="Group by period"
+              icon="calendar-days"
+              className="w-full"
+            >
               <option value="week">Per week</option>
               <option value="month">Per month</option>
-            </select>
+            </FilterSelect>
           </div>
           <div>
             <label className={labelCls} htmlFor="sr-status">Status</label>
-            <select id="sr-status" value={q.status} onChange={set("status")} className={inputCls}>
+            <FilterSelect
+              id="sr-status"
+              value={q.status}
+              onChange={set("status")}
+              ariaLabel="Report status filter"
+              icon="filter"
+              active={q.status !== "ALL"}
+              className="w-full"
+            >
               <option value="ALL">All statuses</option>
               {STATUSES.map((s) => <option key={s} value={s}>{statusInfo(s).label}</option>)}
-            </select>
+            </FilterSelect>
           </div>
           <div>
             <label className={labelCls} htmlFor="sr-from">From</label>
-            <input id="sr-from" type="date" value={q.from} onChange={set("from")} className={inputCls} />
+            <DatePickerInput
+              id="sr-from"
+              value={q.from}
+              onChange={set("from")}
+              placeholder="Start date"
+              ariaLabel="From date"
+            />
           </div>
           <div>
             <label className={labelCls} htmlFor="sr-to">To</label>
-            <input id="sr-to" type="date" value={q.to} onChange={set("to")} className={inputCls} />
+            <DatePickerInput
+              id="sr-to"
+              value={q.to}
+              onChange={set("to")}
+              placeholder="End date"
+              ariaLabel="To date"
+              align="right"
+            />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2.5">

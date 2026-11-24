@@ -41,7 +41,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
-import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
+import { DatePickerInput, FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const statusIcons = {
   "In Transit": "truck",
@@ -502,37 +502,74 @@ export default function Parcels() {
             <div className="grid grid-cols-5 gap-3 max-[1100px]:grid-cols-3 max-[640px]:grid-cols-1">
               <div>
                 <label className={labelCls} htmlFor="r-status">Status</label>
-                <select id="r-status" value={reportQuery.status} onChange={setRQ("status")} className={inputCls}>
+                <FilterSelect
+                  id="r-status"
+                  value={reportQuery.status}
+                  onChange={setRQ("status")}
+                  ariaLabel="Report status filter"
+                  icon="filter"
+                  active={reportQuery.status !== "All"}
+                  className="w-full"
+                >
                   {["All", "In Transit", "Rescheduled", "Delivered", "Return to Hub", "Failed Delivery"].map((s) => (
                     <option key={s}>{s}</option>
                   ))}
-                </select>
+                </FilterSelect>
               </div>
               <div>
                 <label className={labelCls} htmlFor="r-seller">Seller</label>
-                <select id="r-seller" value={reportQuery.seller} onChange={setRQ("seller")} className={inputCls}>
+                <FilterSelect
+                  id="r-seller"
+                  value={reportQuery.seller}
+                  onChange={setRQ("seller")}
+                  ariaLabel="Report seller filter"
+                  icon="store"
+                  active={reportQuery.seller !== "All"}
+                  className="w-full"
+                >
                   <option>All</option>
                   {sellersList.map((s) => (
                     <option key={s}>{s}</option>
                   ))}
-                </select>
+                </FilterSelect>
               </div>
               <div>
                 <label className={labelCls} htmlFor="r-rider">Rider</label>
-                <select id="r-rider" value={reportQuery.rider} onChange={setRQ("rider")} className={inputCls}>
+                <FilterSelect
+                  id="r-rider"
+                  value={reportQuery.rider}
+                  onChange={setRQ("rider")}
+                  ariaLabel="Report rider filter"
+                  icon="bike"
+                  active={reportQuery.rider !== "All"}
+                  className="w-full"
+                >
                   <option>All</option>
                   {ridersList.map((r) => (
                     <option key={r}>{r}</option>
                   ))}
-                </select>
+                </FilterSelect>
               </div>
               <div>
                 <label className={labelCls} htmlFor="r-from">From</label>
-                <input id="r-from" type="date" value={reportQuery.from} onChange={setRQ("from")} className={inputCls} />
+                <DatePickerInput
+                  id="r-from"
+                  value={reportQuery.from}
+                  onChange={setRQ("from")}
+                  placeholder="Start date"
+                  ariaLabel="From date"
+                />
               </div>
               <div>
                 <label className={labelCls} htmlFor="r-to">To</label>
-                <input id="r-to" type="date" value={reportQuery.to} onChange={setRQ("to")} className={inputCls} />
+                <DatePickerInput
+                  id="r-to"
+                  value={reportQuery.to}
+                  onChange={setRQ("to")}
+                  placeholder="End date"
+                  ariaLabel="To date"
+                  align="right"
+                />
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2.5">

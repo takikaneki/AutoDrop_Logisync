@@ -10,6 +10,7 @@ import { toast } from "../../store/toast.js";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { downloadCsv, groupByPeriod, isoDay, pct } from "../../utils/report.js";
 import Icon from "../../components/Icon.jsx";
+import { DatePickerInput, FilterSelect } from "../../components/SearchFilterBar.jsx";
 
 const PAGE_SIZE = 10;
 const reportHistoryStore = createStore([], "pt-rider-reports");
@@ -268,26 +269,54 @@ export default function RiderParcels() {
             <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[540px]:grid-cols-1">
               <div>
                 <label className={labelCls} htmlFor="rr-by">Group by</label>
-                <select id="rr-by" value={q.by} onChange={setRQ("by")} className={inputCls}>
+                <FilterSelect
+                  id="rr-by"
+                  value={q.by}
+                  onChange={setRQ("by")}
+                  ariaLabel="Group by period"
+                  icon="calendar-days"
+                  className="w-full"
+                >
                   <option value="week">Per week</option>
                   <option value="month">Per month</option>
-                </select>
+                </FilterSelect>
               </div>
               <div>
                 <label className={labelCls} htmlFor="rr-result">Result</label>
-                <select id="rr-result" value={q.result} onChange={setRQ("result")} className={inputCls}>
+                <FilterSelect
+                  id="rr-result"
+                  value={q.result}
+                  onChange={setRQ("result")}
+                  ariaLabel="Delivery result filter"
+                  icon="filter"
+                  active={q.result !== "All"}
+                  className="w-full"
+                >
                   <option value="All">Delivered &amp; Return to Hub</option>
                   <option value={STAGE.DELIVERED}>Delivered only</option>
                   <option value={STAGE.FAILED}>Return to Hub / Failed only</option>
-                </select>
+                </FilterSelect>
               </div>
               <div>
                 <label className={labelCls} htmlFor="rr-from">From</label>
-                <input id="rr-from" type="date" value={q.from} onChange={setRQ("from")} className={inputCls} />
+                <DatePickerInput
+                  id="rr-from"
+                  value={q.from}
+                  onChange={setRQ("from")}
+                  placeholder="Start date"
+                  ariaLabel="From date"
+                />
               </div>
               <div>
                 <label className={labelCls} htmlFor="rr-to">To</label>
-                <input id="rr-to" type="date" value={q.to} onChange={setRQ("to")} className={inputCls} />
+                <DatePickerInput
+                  id="rr-to"
+                  value={q.to}
+                  onChange={setRQ("to")}
+                  placeholder="End date"
+                  ariaLabel="To date"
+                  align="right"
+                />
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2.5">

@@ -31,6 +31,7 @@ import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
 import { formatDate } from "../utils/format.js";
 import Icon from "../components/Icon.jsx";
+import { DatePickerInput } from "../components/SearchFilterBar.jsx";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
 const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Flagged: "#d94747" };
@@ -645,11 +646,11 @@ export default function Dashboard() {
                 <label className="text-xs font-bold text-[#555] dark:text-[#d1c9c2] block mb-1">
                   Rescheduled Delivery Date (Optional, defaults to tomorrow)
                 </label>
-                <input
-                  type="date"
+                <DatePickerInput
                   value={rescheduleDate}
                   onChange={(e) => setRescheduleDate(e.target.value)}
-                  className={inputCls}
+                  placeholder="Select delivery date"
+                  ariaLabel="Rescheduled Delivery Date"
                 />
                 <p className="text-[11px] text-[#888] mt-1">
                   Reschedules parcels safely without consuming rider&apos;s attempt limit.
