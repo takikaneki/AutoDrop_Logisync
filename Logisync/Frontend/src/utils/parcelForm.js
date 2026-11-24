@@ -205,7 +205,7 @@ export function evaluateDeclarationFlags(values = {}) {
 }
 
 export function isValidTransactionNumber(tx) {
-  return /^PH\d{10}[A-Z]$/.test(String(tx || "").trim().toUpperCase());
+  return /^PH(?:\d{10}[A-Z]|\d{12})$/.test(String(tx || "").trim().toUpperCase());
 }
 
 export function isGibberishName(str) {
@@ -253,7 +253,7 @@ export function validateParcel(values) {
   if (!tx) {
     errors.transaction_number = "Transaction number is required.";
   } else if (!isValidTransactionNumber(tx)) {
-    errors.transaction_number = "Invalid format. Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567891U).";
+    errors.transaction_number = "Invalid format. Expected PH followed by 10 digits and 1 uppercase letter (e.g. PH1234567890A) or PH followed by 12 digits (e.g. PH123456789012).";
   }
 
   const name = (values.receiver_name || "").trim();

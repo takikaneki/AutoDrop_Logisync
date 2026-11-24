@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../api.js";
+import { getRole, getUser, logoutUser } from "../api.js";
+import { hasUnsyncedOfflineDraft } from "../utils/parcelDraftStore.js";
 import Icon from "./Icon.jsx";
 
 export default function LogoutModal({ open, onClose }) {
   const navigate = useNavigate();
   if (!open) return null;
+
+  const isSeller = String(getUser()?.role || getRole() || "").toLowerCase() === "seller";
+  const hasOfflineDraft = isSeller && hasUnsyncedOfflineDraft(getUser()?.user_id);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -28,9 +32,23 @@ export default function LogoutModal({ open, onClose }) {
         <h3 id="logout-modal-title" className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f5f1ed]">
           Log out of LogiSync?
         </h3>
-        <p className="mt-1.5 mb-6 text-[13px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
+        <p className="mt-1.5 mb-5 text-[13px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8]">
           You&apos;ll be signed out of your current portal session. You can log back in anytime.
         </p>
+        {hasOfflineDraft && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-[12px] leading-relaxed text-amber-900 dark:border-amber-600/40 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <strong className="flex items-center gap-1.5 font-bold">
+              <Icon name="triangle-alert" className="text-amber-600 shrink-0" />
+              <span>Unfinished Offline Parcel Draft</span>
+            </strong>
+            <p className="mt-1">
+              You have an unfinished Create Parcel draft saved offline on this device that has not synced to the server yet. Your draft remains isolated to your account, but unsynced offline changes may be lost if browser storage is cleared.
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-center gap-2.5">
           <button
             type="button"

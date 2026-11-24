@@ -25,6 +25,17 @@ import {
 } from "../../utils/phone.js";
 import ParcelCreated from "../../components/parcels/ParcelCreated.jsx";
 import QrScanner from "../../components/qr/QrScanner.jsx";
+import { getUser } from "../../api.js";
+import { compressImage } from "../../utils/image.js";
+import { formatSize } from "../../utils/format.js";
+import {
+  clearParcelDraft,
+  hasMeaningfulDraftContent,
+  loadAndReconcileParcelDraft,
+  saveDraftSnapshotSync,
+  saveParcelDraft,
+  syncPendingDraftToServer,
+} from "../../utils/parcelDraftStore.js";
 import { isValidTransactionNumber, parseTransactionNumber } from "../../utils/qr.js";
 import { findCustomerByName, searchCustomers, useCustomers } from "../../store/customers.js";
 import Icon from "../../components/Icon.jsx";
@@ -50,6 +61,7 @@ const CATEGORY_ICONS = {
 
 export default function CreateParcel() {
   const customers = useCustomers();
+  const currentUserId = getUser()?.user_id ?? null;
   const [values, setValues] = useState(EMPTY_PARCEL);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
@@ -58,6 +70,31 @@ export default function CreateParcel() {
   const [scanned, setScanned] = useState(false);
   const [txnLookupMessage, setTxnLookupMessage] = useState("");
   const [instructionsOpen, setInstructionsOpen] = useState(false);
+
+  // Auto-save & Draft recovery states
+  const [saveStatus, setSaveStatus] = useState("idle"); // "idle" | "saving" | "saved" | "offline" | "error"
+  const [draftRestoredNotice, setDraftRestoredNotice] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState("");
+  const [photoMeta, setPhotoMeta] = useState(null);
+  const [photoRestoreWarning, setPhotoRestoreWarning] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef(null);
+
+  const draftIdRef = useRef(`draft_${currentUserId || "s"}_${Date.now()}`);
+  const draftHydratedRef = useRef(false);
+  const skipNextAutoSaveRef = useRef(false);
+  const submittedSuccessRef = useRef(false);
+  const saveTimerRef = useRef(null);
+  const latestStateRef = useRef({
+    values: EMPTY_PARCEL,
+    scanned: false,
+    updateSavedCustomer: false,
+    photoFile: null,
+    photoPreviewUrl: "",
+    photoMeta: null,
+    created: null,
+  });
 
   useEffect(() => {
     if (!instructionsOpen) return;
@@ -103,6 +140,289 @@ export default function CreateParcel() {
     fetchSellerCustomers().catch(() => {});
     loadSellerParcels();
   }, [loadSellerParcels]);
+
+  // Keep latestStateRef in sync for unmount / beforeunload / offline handlers
+  useEffect(() => {
+    latestStateRef.current = {
+      values,
+      scanned,
+      updateSavedCustomer,
+      photoFile,
+      photoPreviewUrl,
+      photoMeta,
+      created,
+    };
+  }, [values, scanned, updateSavedCustomer, photoFile, photoPreviewUrl, photoMeta, created]);
+
+  const performAutoSave = useCallback(
+    async ({ immediate = false, forceOffline = false } = {}) => {
+      if (!currentUserId || submittedSuccessRef.current) return;
+      const st = latestStateRef.current;
+      if (st.created) return;
+
+      const draftValues = {
+        ...st.values,
+        scanned: Boolean(st.scanned),
+        updateSavedCustomer: Boolean(st.updateSavedCustomer),
+      };
+
+      if (!hasMeaningfulDraftContent(draftValues, st.photoMeta)) {
+        return;
+      }
+
+      if (!immediate) {
+        setSaveStatus("saving");
+      }
+
+      const res = await saveParcelDraft({
+        userId: currentUserId,
+        draftId: draftIdRef.current,
+        values: draftValues,
+        photoFile: st.photoFile,
+        photoDataUrl: st.photoPreviewUrl,
+        photoMeta: st.photoMeta,
+        clientUpdatedAt: Date.now(),
+        syncServer: !forceOffline,
+        forceOffline,
+      });
+
+      if (submittedSuccessRef.current) return;
+      if (res.status === "saved") {
+        setSaveStatus("saved");
+      } else if (res.status === "offline") {
+        setSaveStatus("offline");
+      } else if (res.status === "error") {
+        setSaveStatus("error");
+      }
+    },
+    [currentUserId]
+  );
+
+  // 1. Restore most recent unfinished draft on mount (or when Seller account changes)
+  useEffect(() => {
+    let alive = true;
+    draftHydratedRef.current = false;
+    submittedSuccessRef.current = false;
+
+    if (!currentUserId) return;
+
+    (async () => {
+      const restored = await loadAndReconcileParcelDraft(currentUserId);
+      if (!alive) return;
+
+      if (restored && hasMeaningfulDraftContent(restored.values, restored.photoMeta)) {
+        skipNextAutoSaveRef.current = true;
+        draftIdRef.current = restored.draftId || `draft_${currentUserId}_${Date.now()}`;
+        setValues((prev) => ({
+          ...prev,
+          ...restored.values,
+          receiver_city: restored.values?.receiver_city || TRECE_MARTIRES_CITY,
+          receiver_province: restored.values?.receiver_province || CAVITE_PROVINCE,
+        }));
+        setScanned(Boolean(restored.values?.scanned));
+        setUpdateSavedCustomer(Boolean(restored.values?.updateSavedCustomer));
+
+        if (restored.photoRestoreFailed) {
+          setPhotoFile(null);
+          setPhotoPreviewUrl("");
+          setPhotoMeta(null);
+          setPhotoRestoreWarning(
+            `Your previously selected photo (${restored.photoMeta?.name || "image"}) could not be restored by the browser. Please select the photo again.`
+          );
+        } else if (restored.photoFile || restored.photoDataUrl) {
+          setPhotoFile(restored.photoFile || null);
+          setPhotoPreviewUrl(restored.photoDataUrl || "");
+          setPhotoMeta(restored.photoMeta || null);
+          setPhotoRestoreWarning("");
+        }
+
+        setDraftRestoredNotice(true);
+        setSaveStatus(
+          typeof navigator !== "undefined" && navigator.onLine === false
+            ? "offline"
+            : restored.dirty
+              ? "offline"
+              : "saved"
+        );
+      }
+
+      draftHydratedRef.current = true;
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [currentUserId]);
+
+  // 2. Debounced auto-save whenever any form field, transaction number, or photo changes
+  useEffect(() => {
+    if (!draftHydratedRef.current || created || submittedSuccessRef.current) return;
+    if (skipNextAutoSaveRef.current) {
+      skipNextAutoSaveRef.current = false;
+      return;
+    }
+
+    const draftValues = {
+      ...values,
+      scanned: Boolean(scanned),
+      updateSavedCustomer: Boolean(updateSavedCustomer),
+    };
+
+    if (!hasMeaningfulDraftContent(draftValues, photoMeta)) {
+      return;
+    }
+
+    setSaveStatus("saving");
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 350);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [values, scanned, updateSavedCustomer, photoFile, photoPreviewUrl, photoMeta, created, performAutoSave]);
+
+  // 3. Save immediately on navigation away (unmount), browser refresh/close, tab hide, and online/offline transitions
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const flushSyncSnapshot = () => {
+      if (submittedSuccessRef.current) return;
+      const st = latestStateRef.current;
+      if (st.created) return;
+      const draftValues = {
+        ...st.values,
+        scanned: Boolean(st.scanned),
+        updateSavedCustomer: Boolean(st.updateSavedCustomer),
+      };
+      if (!hasMeaningfulDraftContent(draftValues, st.photoMeta)) return;
+      saveDraftSnapshotSync({
+        userId: currentUserId,
+        draftId: draftIdRef.current,
+        values: draftValues,
+        photoMeta: st.photoMeta,
+        photoDataUrl: st.photoPreviewUrl,
+        photoFile: st.photoFile,
+        clientUpdatedAt: Date.now(),
+      });
+    };
+
+    const handleOffline = () => {
+      flushSyncSnapshot();
+      performAutoSave({ immediate: true, forceOffline: true });
+    };
+
+    const handleOnline = async () => {
+      const st = latestStateRef.current;
+      if (st.created || submittedSuccessRef.current) return;
+      const draftValues = {
+        ...st.values,
+        scanned: Boolean(st.scanned),
+        updateSavedCustomer: Boolean(st.updateSavedCustomer),
+      };
+      if (!hasMeaningfulDraftContent(draftValues, st.photoMeta)) return;
+      setSaveStatus("saving");
+      const res = await syncPendingDraftToServer(currentUserId);
+      if (res?.synced) {
+        setSaveStatus("saved");
+      } else {
+        performAutoSave({ immediate: true });
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        flushSyncSnapshot();
+      }
+    };
+
+    window.addEventListener("beforeunload", flushSyncSnapshot);
+    window.addEventListener("pagehide", flushSyncSnapshot);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", flushSyncSnapshot);
+      window.removeEventListener("pagehide", flushSyncSnapshot);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      flushSyncSnapshot();
+      performAutoSave({ immediate: true });
+    };
+  }, [currentUserId, performAutoSave]);
+
+  const onSelectPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError("");
+    setPhotoRestoreWarning("");
+
+    if (!file.type || !file.type.startsWith("image/")) {
+      setPhotoError("Please select a valid image file (JPG, PNG, or WebP).");
+      if (photoInputRef.current) photoInputRef.current.value = "";
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPhotoError(`Image is too large (${formatSize(file.size)}). Maximum allowed size is 10 MB.`);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      const compressedDataUrl = await compressImage(file, { maxDim: 960, quality: 0.8 });
+      const meta = {
+        name: file.name || "parcel_photo.jpg",
+        size: file.size || 0,
+        type: file.type || "image/jpeg",
+        lastModified: file.lastModified || Date.now(),
+        hadPhoto: true,
+      };
+      setPhotoFile(file);
+      setPhotoPreviewUrl(compressedDataUrl);
+      setPhotoMeta(meta);
+    } catch (err) {
+      setPhotoError(err?.message || "Unable to read the selected photo. Please choose another image.");
+    }
+  };
+
+  const onRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
+    setPhotoMeta(null);
+    setPhotoError("");
+    setPhotoRestoreWarning("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const onDiscardDraft = async () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    skipNextAutoSaveRef.current = true;
+    await clearParcelDraft(currentUserId, { clearServer: true });
+    draftIdRef.current = `draft_${currentUserId || "s"}_${Date.now()}`;
+    setScanned(false);
+    setTxnLookupMessage("");
+    setMatchedCustomer(null);
+    setSuggestOpen(false);
+    setCategoryOpen(false);
+    setBarangaySuggestOpen(false);
+    setUpdateSavedCustomer(false);
+    autoFilledRef.current = { address: false, contact: false };
+    setValues(EMPTY_PARCEL);
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
+    setPhotoMeta(null);
+    setPhotoError("");
+    setPhotoRestoreWarning("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    setErrors({});
+    setApiError("");
+    setDraftRestoredNotice(false);
+    setSaveStatus("idle");
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -339,8 +659,15 @@ export default function CreateParcel() {
       const payload = {
         ...trimParcel(values),
         updateExistingCustomer: Boolean(updateSavedCustomer),
+        draft_id: draftIdRef.current,
+        idempotency_key: draftIdRef.current,
       };
       const createdParcel = await createParcel(payload);
+      submittedSuccessRef.current = true;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      await clearParcelDraft(currentUserId, { clearServer: true });
+      setDraftRestoredNotice(false);
+      setSaveStatus("idle");
       setCreated(createdParcel);
       setExistingTxns((prev) => new Set([...prev, txnNorm]));
     } catch (err) {
@@ -348,6 +675,11 @@ export default function CreateParcel() {
       if (err.message && err.message.toLowerCase().includes("transaction number")) {
         setErrors((er) => ({ ...er, transaction_number: err.message }));
       }
+      // Retain draft on failed submission so Seller can retry without losing data
+      performAutoSave({
+        immediate: true,
+        forceOffline: typeof navigator !== "undefined" && navigator.onLine === false,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -418,6 +750,8 @@ export default function CreateParcel() {
   };
 
   const reset = () => {
+    submittedSuccessRef.current = false;
+    draftIdRef.current = `draft_${currentUserId || "s"}_${Date.now()}`;
     setScanned(false);
     setTxnLookupMessage("");
     setMatchedCustomer(null);
@@ -427,9 +761,17 @@ export default function CreateParcel() {
     setUpdateSavedCustomer(false);
     autoFilledRef.current = { address: false, contact: false };
     setValues(EMPTY_PARCEL);
+    setPhotoFile(null);
+    setPhotoPreviewUrl("");
+    setPhotoMeta(null);
+    setPhotoError("");
+    setPhotoRestoreWarning("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
     setErrors({});
     setApiError("");
     setCreated(null);
+    setDraftRestoredNotice(false);
+    setSaveStatus("idle");
     fetchSellerCustomers().catch(() => {});
     loadSellerParcels();
   };
@@ -464,7 +806,45 @@ export default function CreateParcel() {
                 Parcel Details
               </h2>
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
+              {saveStatus !== "idle" && (
+                <span
+                  role="status"
+                  aria-live="polite"
+                  data-testid="draft-save-indicator"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${
+                    saveStatus === "saving"
+                      ? "bg-slate-100 text-slate-600 dark:bg-night-panel dark:text-slate-300"
+                      : saveStatus === "saved"
+                        ? "bg-[#eaf8ef] text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]"
+                        : saveStatus === "offline"
+                          ? "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300"
+                          : "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                  }`}
+                >
+                  <Icon
+                    name={
+                      saveStatus === "saving"
+                        ? "loader-2"
+                        : saveStatus === "saved"
+                          ? "circle-check"
+                          : saveStatus === "offline"
+                            ? "wifi-off"
+                            : "circle-alert"
+                    }
+                    className={`text-[11px] ${saveStatus === "saving" ? "animate-spin" : ""}`}
+                  />
+                  <span>
+                    {saveStatus === "saving"
+                      ? "Saving..."
+                      : saveStatus === "saved"
+                        ? "Draft saved"
+                        : saveStatus === "offline"
+                          ? "Offline — Draft saved on this device"
+                          : "Unable to save draft"}
+                  </span>
+                </span>
+              )}
               {scanned && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7f4a] dark:bg-[#29945a]/20 dark:text-[#8fd6ae]">
                   <Icon name="circle-check" className="text-[10px]" /> QR Scanned
@@ -481,6 +861,33 @@ export default function CreateParcel() {
           </div>
 
           <div className="space-y-5 p-6 max-[600px]:p-4">
+            {draftRestoredNotice && (
+              <div
+                role="status"
+                data-testid="draft-restored-banner"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/30 bg-[#fff7f2] px-4 py-3 text-[13px] text-[#7c2d12] dark:border-brand/40 dark:bg-brand/10 dark:text-[#ffd6bc]"
+              >
+                <span className="flex items-center gap-2 font-medium">
+                  <Icon name="history" className="text-brand shrink-0" />
+                  <span>Your previous unfinished parcel draft has been restored.</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={onDiscardDraft}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand/35 bg-white px-3 py-1 text-[12px] font-bold text-brand transition hover:bg-brand hover:text-white dark:bg-night-head dark:hover:bg-brand"
+                >
+                  <Icon name="trash-2" className="text-[11px]" />
+                  <span>Discard draft</span>
+                </button>
+              </div>
+            )}
+
+            {photoRestoreWarning && (
+              <Notice tone="warn" icon="triangle-alert" role="alert">
+                {photoRestoreWarning}
+              </Notice>
+            )}
+
             {apiError && (
               <Notice tone="error" icon="circle-alert" role="alert">
                 {apiError}
@@ -1125,6 +1532,66 @@ export default function CreateParcel() {
             </div>
             </div>
 
+            {/* Parcel Reference Photo (Optional — Persisted with Draft in IndexedDB) */}
+            <div className="space-y-2.5 border-t border-[#f1f1f1] pt-4 dark:border-night-line">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <label htmlFor="parcel_draft_photo" className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+                    Parcel Reference Photo <span className="text-[11.5px] font-normal text-[#888]">(Optional)</span>
+                  </label>
+                  <small className="text-[12px] text-[#777] dark:text-[#b8b0a8]">
+                    Select a reference photo of the parcel or waybill. Automatically preserved with your draft even while offline.
+                  </small>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <input
+                  ref={photoInputRef}
+                  id="parcel_draft_photo"
+                  type="file"
+                  accept="image/*"
+                  onChange={onSelectPhoto}
+                  className="block text-[12.5px] text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-soft file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-brand hover:file:bg-[#ffe4d1] dark:text-[#d1c9c2] dark:file:bg-night-head"
+                />
+                {(photoFile || photoPreviewUrl) && (
+                  <button
+                    type="button"
+                    onClick={onRemovePhoto}
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-[#d94747] transition hover:border-red-300 hover:bg-red-50 dark:border-night-line dark:bg-night-head"
+                  >
+                    <Icon name="x" className="text-[11px]" />
+                    <span>Remove photo</span>
+                  </button>
+                )}
+              </div>
+
+              {photoError && (
+                <p role="alert" className="text-[12px] font-semibold text-[#d94747]">
+                  <Icon name="circle-alert" className="mr-1" />
+                  {photoError}
+                </p>
+              )}
+
+              {photoPreviewUrl && (
+                <div className="mt-2 flex items-center gap-3.5 rounded-xl border border-slate-200/90 bg-[#fafafa] p-3 dark:border-night-line dark:bg-night-head/70">
+                  <img
+                    src={photoPreviewUrl}
+                    alt="Selected parcel draft preview"
+                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 bg-white object-cover dark:border-night-line"
+                  />
+                  <div className="min-w-0 flex-1 text-[12.5px]">
+                    <strong className="block truncate text-[#27364f] dark:text-[#f1eeeb]">
+                      {photoMeta?.name || photoFile?.name || "parcel_photo.jpg"}
+                    </strong>
+                    <span className="block text-[11.5px] text-slate-500 dark:text-slate-400">
+                      {photoMeta?.size ? `${formatSize(photoMeta.size)} · ` : ""}Saved in parcel draft (not submitted until you click Register Parcel)
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* 7. Discreet Handling Section */}
             <div className="space-y-3 border-t border-[#f1f1f1] pt-4 dark:border-night-line">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1234,6 +1701,49 @@ export default function CreateParcel() {
                     <li key={idx}>{w}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {saveStatus !== "idle" && (
+              <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon
+                    name={
+                      saveStatus === "saving"
+                        ? "loader-2"
+                        : saveStatus === "saved"
+                          ? "circle-check"
+                          : saveStatus === "offline"
+                            ? "wifi-off"
+                            : "circle-alert"
+                    }
+                    className={`text-[12px] ${
+                      saveStatus === "saving"
+                        ? "animate-spin text-slate-500"
+                        : saveStatus === "saved"
+                          ? "text-[#1f7f4a]"
+                          : saveStatus === "offline"
+                            ? "text-amber-600"
+                            : "text-[#d94747]"
+                    }`}
+                  />
+                  <span>
+                    {saveStatus === "saving"
+                      ? "Saving..."
+                      : saveStatus === "saved"
+                        ? "Draft saved"
+                        : saveStatus === "offline"
+                          ? "Offline — Draft saved on this device"
+                          : "Unable to save draft"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={onDiscardDraft}
+                  className="text-[12px] font-semibold text-slate-500 hover:text-[#d94747] hover:underline dark:text-slate-400"
+                >
+                  Discard draft
+                </button>
               </div>
             )}
 
