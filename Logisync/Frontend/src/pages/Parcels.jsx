@@ -761,19 +761,13 @@ export default function Parcels() {
                 setStatus(tab.key);
                 setPage(1);
               }}
-              className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11.5px] max-[360px]:text-[10.5px] leading-tight transition ${
-                active
-                  ? `font-extrabold ${tab.activeText}`
-                  : `font-semibold text-slate-500 ${tab.hoverText} dark:text-[#b8b0a8]`
+              className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11.5px] max-[360px]:text-[10.5px] leading-tight transition ${tab.activeText} ${
+                active ? "font-extrabold" : "font-bold opacity-85 hover:opacity-100"
               }`}
             >
               <span className="truncate">{tab.label}</span>
               <span
-                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                  active
-                    ? tab.activeBadge
-                    : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
-                }`}
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${tab.activeBadge}`}
               >
                 {loading ? "—" : tab.count}
               </span>

@@ -379,9 +379,30 @@ export default function Sellers() {
         className="-mx-3.5 -mt-3.5 mb-3 max-[380px]:-mx-2.5 grid grid-cols-3 border-b border-slate-200/90 bg-white/95 backdrop-blur-md min-[821px]:hidden dark:border-night-line dark:bg-night-panel/95"
       >
         {[
-          { key: "All", label: "All", count: sellers.length },
-          { key: "Active", label: "Active", count: sellers.filter((x) => x.status === "Active").length },
-          { key: "Inactive", label: "Inactive", count: sellers.filter((x) => x.status === "Inactive").length },
+          {
+            key: "All",
+            label: "All",
+            count: sellers.length,
+            textCls: "text-[#0f172a] dark:text-white",
+            badgeCls: "bg-slate-200/80 text-[#0f172a] dark:bg-slate-600/40 dark:text-white",
+            barCls: "bg-[#64748b]",
+          },
+          {
+            key: "Active",
+            label: "Active",
+            count: sellers.filter((x) => x.status === "Active").length,
+            textCls: "text-[#16a34a] dark:text-[#4ade80]",
+            badgeCls: "bg-[#dcfce7] text-[#15803d] dark:bg-green-500/20 dark:text-[#4ade80]",
+            barCls: "bg-[#16a34a]",
+          },
+          {
+            key: "Inactive",
+            label: "Inactive",
+            count: sellers.filter((x) => x.status === "Inactive").length,
+            textCls: "text-[#dc2626] dark:text-[#f87171]",
+            badgeCls: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
+            barCls: "bg-[#dc2626]",
+          },
         ].map((tab) => {
           const active = status === tab.key;
           return (
@@ -394,26 +415,20 @@ export default function Sellers() {
                 setStatus(tab.key);
                 setPage(1);
               }}
-              className={`relative flex items-center justify-center gap-1.5 px-2 py-3.5 text-[12.5px] leading-tight transition ${
-                active
-                  ? "font-extrabold text-brand"
-                  : "font-semibold text-slate-500 hover:text-[#0f172a] dark:text-[#b8b0a8] dark:hover:text-white"
+              className={`relative flex items-center justify-center gap-1.5 px-2 py-3.5 text-[12.5px] leading-tight transition ${tab.textCls} ${
+                active ? "font-extrabold" : "font-bold opacity-85 hover:opacity-100"
               }`}
             >
               <span className="truncate">{tab.label}</span>
               <span
-                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
-                  active
-                    ? "bg-brand/12 text-brand"
-                    : "bg-slate-100 text-slate-500 dark:bg-night-head dark:text-[#b8b0a8]"
-                }`}
+                className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${tab.badgeCls}`}
               >
                 {loading ? "…" : tab.count}
               </span>
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-brand"
+                  className={`absolute inset-x-3 bottom-0 h-[2.5px] rounded-full ${tab.barCls}`}
                 />
               )}
             </button>
