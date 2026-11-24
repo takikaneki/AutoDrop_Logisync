@@ -21,6 +21,7 @@ import {
   validateMobileNumber,
 } from "../utils/phone.js";
 import Icon from "../components/Icon.jsx";
+import { SearchInput } from "../components/SearchFilterBar.jsx";
 
 const ROLES = [
   ["seller", "Seller", "Registers parcels and uploads video proof."],
@@ -447,12 +448,12 @@ export default function Accounts() {
                 </button>
               ))}
             </div>
-            <input
+            <SearchInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name or email"
-              aria-label="Search accounts"
-              className={`${inputCls} !w-auto min-w-[200px] flex-1`}
+              placeholder="Search name or email..."
+              ariaLabel="Search accounts"
+              className="min-w-[220px] flex-1"
             />
           </div>
 

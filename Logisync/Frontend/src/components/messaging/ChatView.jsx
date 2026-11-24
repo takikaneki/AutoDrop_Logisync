@@ -21,6 +21,7 @@ import {
 } from "../Skeletons.jsx";
 import CallUserModal from "./CallUserModal.jsx";
 import Icon from "../Icon.jsx";
+import { SearchInput } from "../SearchFilterBar.jsx";
 
 const POLL_MS = 15000;
 
@@ -313,12 +314,12 @@ export default function ChatView({
               </div>
             )}
 
-            <input
+            <SearchInput
+              compact
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name"
-              aria-label="Search contacts"
-              className="w-full rounded-lg border border-slate-300 bg-transparent px-3 py-2 text-sm outline-none dark:border-slate-600"
+              placeholder="Search contacts..."
+              ariaLabel="Search contacts"
             />
           </div>
           <ul className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden">

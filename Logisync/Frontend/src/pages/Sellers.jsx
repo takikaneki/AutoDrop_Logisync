@@ -24,6 +24,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const tone = {
   Active: "bg-[#eaf8ef] text-[#29945a]",
@@ -472,35 +473,41 @@ export default function Sellers() {
       </div>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
-        <div className="mb-5 grid grid-cols-[1fr_200px] gap-3 max-[700px]:grid-cols-1">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search seller name, shop, email or ID..."
-              className={`${inputCls} pl-9`}
-            />
-          </div>
-          <select
+        <SearchFilterBar
+          hasActiveFilters={Boolean(search.trim() || status !== "All")}
+          onReset={() => {
+            setSearch("");
+            setStatus("All");
+            setPage(1);
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search seller name, shop, email or ID..."
+            ariaLabel="Search sellers"
+          />
+          <FilterSelect
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by status"
+            ariaLabel="Filter by status"
+            icon="filter"
+            active={status !== "All"}
+            className="min-w-[180px]"
           >
             {["All", "Active", "Inactive"].map((s) => (
               <option key={s} value={s}>
                 {s === "All" ? "All statuses" : s}
               </option>
             ))}
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
         {error && !offlineEmpty && (

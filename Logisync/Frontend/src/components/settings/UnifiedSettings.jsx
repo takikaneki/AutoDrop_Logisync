@@ -29,6 +29,7 @@ import {
   validateMobileNumber,
 } from "../../utils/phone.js";
 import Icon from "../Icon.jsx";
+import { SearchInput } from "../SearchFilterBar.jsx";
 
 const SIZES = [
   ["sm", "Small"],
@@ -395,14 +396,13 @@ export default function UnifiedSettings() {
           </div>
 
           {/* Search Settings */}
-          <div className="relative my-3.5 shrink-0">
-            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-[#94a3b8]" />
-            <input
+          <div className="my-3.5 shrink-0">
+            <SearchInput
+              compact
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Settings"
-              aria-label="Search Settings"
-              className="h-9 w-full rounded-lg border border-[#cbd5e1] bg-[#f8fafc] pl-8 pr-3 text-[12.5px] text-ink outline-none focus:border-brand focus:bg-white dark:border-night-line dark:bg-night-head dark:text-[#f1eeeb]"
+              placeholder="Search Settings..."
+              ariaLabel="Search Settings"
             />
           </div>
 

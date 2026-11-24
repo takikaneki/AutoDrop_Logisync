@@ -13,6 +13,7 @@ import {
   ParcelCardListSkeleton,
 } from "../Skeletons.jsx";
 import Icon from "../Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../SearchFilterBar.jsx";
 
 const FETCH_LIMIT = 200;
 
@@ -65,15 +66,34 @@ export default function AuditTable({ note }) {
     <section className={`${panel} p-6`}>
       {note && <p className="mb-4 text-[13px] text-[#999]"><Icon name="lock" className="mr-1.5" />{note}</p>}
 
-      <div className="mb-5 grid grid-cols-[1fr_200px] gap-3 max-[700px]:grid-cols-1">
-        <div className="relative">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search action, parcel, person or detail..." aria-label="Search" className={`${inputCls} pl-9`} />
-        </div>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category" className={inputCls}>
-          {["All", ...CATEGORIES].map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </div>
+      <SearchFilterBar
+        hasActiveFilters={Boolean(search.trim() || category !== "All")}
+        onReset={() => {
+          setSearch("");
+          setCategory("All");
+        }}
+      >
+        <SearchInput
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search action, parcel, person or detail..."
+          ariaLabel="Search activity log"
+        />
+        <FilterSelect
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          ariaLabel="Filter by category"
+          icon="filter"
+          active={category !== "All"}
+          className="min-w-[190px]"
+        >
+          {["All", ...CATEGORIES].map((c) => (
+            <option key={c} value={c}>
+              {c === "All" ? "All categories" : c}
+            </option>
+          ))}
+        </FilterSelect>
+      </SearchFilterBar>
 
       {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
       {error && (

@@ -41,6 +41,7 @@ import {
 import { latestFor, reportFailure, useFailedDeliveries, withdrawFailure } from "../../store/failedDeliveries.js";
 import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
+import { SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
 
 const STEP = 15; // ilang card ang idinadagdag ng "Show more"
 
@@ -1005,27 +1006,36 @@ export default function RiderDeliveries() {
         )}
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-3">
-        <div className="relative min-w-[220px] flex-1">
-          <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-          <input
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setLimit(STEP);
-            }}
-            placeholder="Search receiver, address, transaction no."
-            aria-label="Search"
-            className={`${inputCls} pl-10`}
-          />
-        </div>
+      <SearchFilterBar
+        hasActiveFilters={Boolean(search.trim() || byArea)}
+        onReset={() => {
+          setSearch("");
+          setByArea(false);
+          setLimit(STEP);
+        }}
+      >
+        <SearchInput
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setLimit(STEP);
+          }}
+          placeholder="Search receiver, address, transaction no."
+          ariaLabel="Search deliveries"
+        />
         {stage === STAGE.TO_DELIVER && (
           <button
+            type="button"
             onClick={() => setByArea((v) => !v)}
             aria-pressed={byArea}
-            className={`${byArea ? btnPrimary : btnGhost} !px-5`}
+            className={`inline-flex h-[42px] shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-bold transition max-[640px]:flex-1 ${
+              byArea
+                ? "bg-brand text-white shadow-xs hover:bg-brand-dark"
+                : "border border-slate-200/95 bg-white text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-brand hover:text-brand dark:border-slate-700/80 dark:bg-[#111c30] dark:text-slate-200 dark:hover:border-brand dark:hover:text-brand"
+            }`}
           >
-            <Icon name="map-pin" /> Group by area
+            <Icon name="map-pin" className="h-4 w-4" />
+            <span>Group by area</span>
           </button>
         )}
         <button
@@ -1034,11 +1044,11 @@ export default function RiderDeliveries() {
             setIncidentError("");
             setIncidentOpen(true);
           }}
-          className="ml-auto inline-flex min-[821px]:hidden items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2.5 text-[13px] font-bold text-[#b45309] transition active:scale-95 hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
+          className="ml-auto inline-flex h-[42px] min-[821px]:hidden items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 text-[13px] font-bold text-[#b45309] transition active:scale-95 hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
         >
           <Icon name="triangle-alert" /> Report Incident
         </button>
-      </div>
+      </SearchFilterBar>
 
       <section className={stage === STAGE.TO_DELIVER && list.length === 0 && !isInitialSyncLoading ? `${panel} p-6` : ""}>
         {isInitialSyncLoading ? (

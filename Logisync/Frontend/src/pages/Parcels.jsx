@@ -41,6 +41,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const statusIcons = {
   "In Transit": "truck",
@@ -812,22 +813,28 @@ export default function Parcels() {
           </div>
         )}
 
-        <div className="grid grid-cols-[1fr_190px] gap-3 mb-[18px] max-[900px]:grid-cols-1">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input
-              value={search}
-              onChange={reset(setSearch)}
-              placeholder="Search parcel ID, transaction no., seller, recipient or rider..."
-              className={`${inputCls} pl-9`}
-            />
-          </div>
-
-          <select
+        <SearchFilterBar
+          className="mb-[18px]"
+          hasActiveFilters={Boolean(search.trim() || status !== "All Status")}
+          onReset={() => {
+            setSearch("");
+            setStatus("All Status");
+            setPage(1);
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={reset(setSearch)}
+            placeholder="Search parcel ID, transaction no., seller, recipient or rider..."
+            ariaLabel="Search parcels"
+          />
+          <FilterSelect
             value={status}
             onChange={reset(setStatus)}
-            className={inputCls}
-            aria-label="Filter by status"
+            ariaLabel="Filter by status"
+            icon="filter"
+            active={status !== "All Status"}
+            className="min-w-[195px]"
           >
             <option>All Status</option>
             <option>In Transit</option>
@@ -836,8 +843,8 @@ export default function Parcels() {
             <option>Failed / Return to Hub</option>
             <option>Return to Hub</option>
             <option>Failed Delivery</option>
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {/* Desktop & Tablet Table View */}
         <div className={`hidden min-[701px]:block ${tableScroll} !border-[#e5e8ee] dark:!border-night-line`}>

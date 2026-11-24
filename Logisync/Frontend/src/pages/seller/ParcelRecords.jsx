@@ -19,6 +19,7 @@ import { statusInfo } from "../../utils/parcelStatus.js";
 import { bucketOf } from "../../utils/stats.js";
 import { getParcelAddress } from "../../store/customers.js";
 import Icon from "../../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
 
 const PAGE_SIZE = 10;
 const PENDING = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
@@ -272,21 +273,45 @@ export default function ParcelRecords() {
             <LoadErrorState compact title="Unable to load parcel records" message={error} onRetry={load} />
           </div>
         )}
-        <div className="mb-[18px] grid grid-cols-[1fr_190px_170px] gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
-          <div className="relative max-[900px]:col-span-2 max-[600px]:col-span-1">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ID, transaction no., customer, address, contact, category or contents..." aria-label="Search" className={`${inputCls} pl-9`} />
-          </div>
-          <select value={isBucket ? "ALL" : status} onChange={(e) => setStatus(e.target.value)} aria-label="Status filter" className={inputCls}>
-            <option value="ALL">Filter by status</option>
+        <SearchFilterBar
+          className="mb-[18px]"
+          hasActiveFilters={Boolean(search.trim() || status !== "ALL" || sort !== "newest")}
+          onReset={() => {
+            setSearch("");
+            setStatus("ALL");
+            setSort("newest");
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search ID, transaction no., customer, address, contact, category or contents..."
+            ariaLabel="Search parcel records"
+          />
+          <FilterSelect
+            value={isBucket ? "ALL" : status}
+            onChange={(e) => setStatus(e.target.value)}
+            ariaLabel="Status filter"
+            icon="filter"
+            active={!isBucket && status !== "ALL"}
+            className="min-w-[185px]"
+          >
+            <option value="ALL">All statuses</option>
             {FILTERS.map((f) => <option key={f.key} value={f.key}>{f.label}</option>)}
-          </select>
-          <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" className={inputCls}>
+          </FilterSelect>
+          <FilterSelect
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            ariaLabel="Sort parcels"
+            icon="arrow-up-down"
+            active={sort !== "newest"}
+            className="min-w-[165px]"
+          >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="status">By status</option>
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {isBucket && (
           <p className="mb-3 text-[13px] text-[#777] dark:text-[#d1c9c2]">

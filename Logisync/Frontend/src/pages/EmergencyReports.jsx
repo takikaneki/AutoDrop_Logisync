@@ -35,6 +35,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const STATUS_META = {
   NEW: {
@@ -358,50 +359,55 @@ export default function EmergencyReports() {
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         {/* Filter Bar */}
-        <div className="mb-5 grid grid-cols-[1fr_190px_160px_auto] gap-3 max-[900px]:grid-cols-1">
-          <div className="relative">
-            <Icon
-              name="search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search ID, reporter, category, subject, or location..."
-              className={`${inputCls} pl-9`}
-            />
-          </div>
-          <select
+        <SearchFilterBar
+          hasActiveFilters={Boolean(search.trim() || filterKey !== "ALL" || roleFilter !== "ALL")}
+          onReset={() => {
+            setSearch("");
+            setFilterKey("ALL");
+            setRoleFilter("ALL");
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search ID, reporter, category, subject, or location..."
+            ariaLabel="Search emergency reports"
+          />
+          <FilterSelect
             value={filterKey}
             onChange={(e) => setFilterKey(e.target.value)}
-            className={inputCls}
-            aria-label="Filter by status"
+            ariaLabel="Filter by status"
+            icon="filter"
+            active={filterKey !== "ALL"}
+            className="min-w-[185px]"
           >
             <option value="ALL">All Reports ({counts.ALL})</option>
             <option value="NEW">New / Unreviewed ({counts.NEW})</option>
             <option value="ACKNOWLEDGED">Acknowledged ({counts.ACKNOWLEDGED})</option>
             <option value="RESOLVED">Resolved ({counts.RESOLVED})</option>
-          </select>
-          <select
+          </FilterSelect>
+          <FilterSelect
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className={inputCls}
-            aria-label="Filter by reporter role"
+            ariaLabel="Filter by reporter role"
+            icon="users"
+            active={roleFilter !== "ALL"}
+            className="min-w-[145px]"
           >
             <option value="ALL">All Roles</option>
             <option value="rider">Riders</option>
             <option value="seller">Sellers</option>
-          </select>
+          </FilterSelect>
           <button
             type="button"
             onClick={loadData}
             disabled={!online || loading}
-            className={`${btnGhost} justify-center`}
+            className="inline-flex h-[42px] shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200/95 bg-white px-3.5 text-[13px] font-semibold text-slate-600 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition hover:border-brand hover:text-brand disabled:opacity-50 dark:border-slate-700/80 dark:bg-[#111c30] dark:text-slate-200 dark:hover:border-brand dark:hover:text-brand max-[640px]:w-full"
           >
-            <Icon name="refresh-cw" />
+            <Icon name="refresh-cw" className="h-3.5 w-3.5" />
             <span>Refresh</span>
           </button>
-        </div>
+        </SearchFilterBar>
 
         {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
         {loadError && !offlineEmpty && (

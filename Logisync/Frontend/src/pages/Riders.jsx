@@ -24,6 +24,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const tone = {
   Active: "bg-[#eaf8ef] text-[#29945a]",
@@ -476,27 +477,37 @@ export default function Riders() {
       </div>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
-        <div className="mb-5 grid grid-cols-[1fr_170px_150px_150px] gap-3 max-[1100px]:grid-cols-2 max-[600px]:grid-cols-1">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search rider name, email, zone or ID..."
-              className={`${inputCls} pl-9`}
-            />
-          </div>
-          <select
+        <SearchFilterBar
+          hasActiveFilters={Boolean(
+            search.trim() || agencyFilter !== "All" || zone !== "All" || status !== "All"
+          )}
+          onReset={() => {
+            setSearch("");
+            setAgencyFilter("All");
+            setZone("All");
+            setStatus("All");
+            setPage(1);
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search rider name, email, zone or ID..."
+            ariaLabel="Search riders"
+          />
+          <FilterSelect
             value={agencyFilter}
             onChange={(e) => {
               setAgencyFilter(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by agency"
+            ariaLabel="Filter by agency"
+            icon="warehouse"
+            active={agencyFilter !== "All"}
+            className="min-w-[165px]"
           >
             <option value="All">All agencies</option>
             {agencies.map((a) => (
@@ -504,15 +515,17 @@ export default function Riders() {
                 {a}
               </option>
             ))}
-          </select>
-          <select
+          </FilterSelect>
+          <FilterSelect
             value={zone}
             onChange={(e) => {
               setZone(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by zone"
+            ariaLabel="Filter by zone"
+            icon="map-pin"
+            active={zone !== "All"}
+            className="min-w-[150px]"
           >
             <option value="All">All zones</option>
             {zones.map((z) => (
@@ -520,23 +533,25 @@ export default function Riders() {
                 {z}
               </option>
             ))}
-          </select>
-          <select
+          </FilterSelect>
+          <FilterSelect
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by status"
+            ariaLabel="Filter by status"
+            icon="filter"
+            active={status !== "All"}
+            className="min-w-[155px]"
           >
             {["All", "Active", "On Delivery", "Inactive"].map((s) => (
               <option key={s} value={s}>
                 {s === "All" ? "All statuses" : s}
               </option>
             ))}
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
         {error && !offlineEmpty && (

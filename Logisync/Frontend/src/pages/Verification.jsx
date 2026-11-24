@@ -31,6 +31,7 @@ import { formatDate, formatSize } from "../utils/format.js";
 import { statusInfo } from "../utils/parcelStatus.js";
 import { getParcelAddress } from "../store/customers.js";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const PAGE_SIZE = 8;
 const FILTERS = [
@@ -392,15 +393,31 @@ export default function Verification() {
       </StatGrid>
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
-        <div className="mb-4 grid grid-cols-[1fr_240px] gap-3 max-[640px]:grid-cols-1">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parcel ID, transaction no., seller, receiver, category..." aria-label="Search" className={`${inputCls} pl-9`} />
-          </div>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Status filter" className={inputCls}>
+        <SearchFilterBar
+          className="mb-4"
+          hasActiveFilters={Boolean(search.trim() || filter !== "ALL")}
+          onReset={() => {
+            setSearch("");
+            setFilter("ALL");
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search parcel ID, transaction no., seller, receiver, category..."
+            ariaLabel="Search verification queue"
+          />
+          <FilterSelect
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            ariaLabel="Status filter"
+            icon="filter"
+            active={filter !== "ALL"}
+            className="min-w-[220px]"
+          >
             {FILTERS.map((f) => <option key={f} value={f}>{filterLabel(f)}</option>)}
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
         {error && !offlineEmpty && (
