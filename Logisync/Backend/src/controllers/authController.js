@@ -3,6 +3,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { pool, rawPool } = require("../config/database");
 const {
+  ensureAccountLifecycleSchema,
+  purgeExpiredDeactivatedAccounts,
+} = require("../utils/accountLifecycle");
+const {
   sendPasswordResetEmail,
   getOtpHmacSecret,
   generateOtp,
@@ -62,6 +66,7 @@ function createToken(user) {
       name: user.name,
       email: user.email,
       role: user.role,
+      session_version: Number(user.session_version || 1),
       policy_version: user.policy_version || CURRENT_POLICY_VERSION,
       terms_accepted: Boolean(user.terms_accepted),
     },
@@ -180,6 +185,7 @@ async function register(req, res) {
 async function login(req, res) {
   try {
     await ensurePolicySchema();
+    await ensureAccountLifecycleSchema();
     const { email, password, username, termsAccepted, policyVersion } = req.body;
 
     const identifier = String(email || username || req.body?.identifier || "").trim();
@@ -198,10 +204,12 @@ async function login(req, res) {
     }
 
     const [rows] = await pool.query(
-      `SELECT user_id, name, email, phone, avatar, password_hash, role, verification_status, first_login
+      `SELECT user_id, name, email, phone, avatar, password_hash, role, verification_status,
+              first_login, is_deleted, deactivated_at, recovery_expires_at, session_version
        FROM users
-       WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(?))
-          OR LOWER(BTRIM(name)) = LOWER(BTRIM(?))
+       WHERE is_deleted = FALSE
+         AND (LOWER(BTRIM(email)) = LOWER(BTRIM(?))
+          OR LOWER(BTRIM(name)) = LOWER(BTRIM(?)))
        LIMIT 1`,
       [identifier, identifier]
     );
@@ -213,6 +221,12 @@ async function login(req, res) {
     }
 
     const user = rows[0];
+    if (Boolean(user.is_deleted)) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid email or password." });
+    }
+
     const valid = await bcrypt.compare(password, user.password_hash);
 
     if (!valid) {
@@ -236,10 +250,23 @@ async function login(req, res) {
 
     // Inactive / suspended / pending checks
     const verificationStatus = String(user.verification_status || "").toUpperCase();
-    if (verificationStatus === "REJECTED") {
+    if (verificationStatus === "REJECTED" || user.deactivated_at != null) {
+      if (
+        (actualRole === "seller" || actualRole === "rider") &&
+        user.recovery_expires_at &&
+        new Date(user.recovery_expires_at).getTime() <= Date.now()
+      ) {
+        await purgeExpiredDeactivatedAccounts({ userId: user.user_id }).catch(() => {});
+        return res.status(401).json({
+          success: false,
+          code: "ACCOUNT_DELETED",
+          message: "Invalid email or password.",
+        });
+      }
       return res.status(403).json({
         success: false,
-        message: "Your account is inactive or disabled. Please contact the Coordinator.",
+        code: "ACCOUNT_DEACTIVATED",
+        message: "Your account has been deactivated. Please contact the Coordinator.",
       });
     }
 
@@ -1948,14 +1975,15 @@ async function firstLoginChangePassword(req, res) {
       // Lock user row and validate eligibility
       const { rows: uRows } = await client.query(
         `SELECT user_id, name, email, phone, avatar, role, verification_status,
-                first_login, password_hash, rider_type, rider_code, agency
+                first_login, password_hash, rider_type, rider_code, agency,
+                is_deleted, session_version
          FROM users
          WHERE user_id = $1
          FOR UPDATE`,
         [decoded.user_id]
       );
 
-      if (!uRows.length) {
+      if (!uRows.length || Boolean(uRows[0].is_deleted)) {
         await client.query("ROLLBACK");
         return res.status(404).json({
           success: false,

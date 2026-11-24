@@ -170,18 +170,42 @@ export default function Riders() {
     }
   };
 
+  const [updatingId, setUpdatingId] = useState(null);
+
   const applyStatus = async () => {
-    if (!confirm) return;
+    if (!confirm || updatingId) return;
     const { rider, kind } = confirm;
     const next = kind === "Deactivate" ? "REJECTED" : "APPROVED";
+    setUpdatingId(rider.userId);
     try {
-      await updateUserVerification(rider.userId, next);
-      setRawRiders((prev) => prev.map((u) => (u.user_id === rider.userId ? { ...u, verification_status: next } : u)));
-      logAction({ category: "Riders", action: kind === "Deactivate" ? "Deactivated rider" : "Activated rider", target: rider.name, detail: rider.email });
-      toast(`${rider.name} — ${kind === "Deactivate" ? "deactivated" : "activated"}.`);
+      const res = await updateUserVerification(rider.userId, next);
+      const updatedRow = res?.user;
+      setRawRiders((prev) =>
+        prev.map((u) =>
+          u.user_id === rider.userId
+            ? {
+                ...u,
+                ...(updatedRow || {}),
+                verification_status: next,
+                deactivated_at: updatedRow ? updatedRow.deactivated_at : next === "REJECTED" ? new Date().toISOString() : null,
+                recovery_expires_at: updatedRow ? updatedRow.recovery_expires_at : null,
+              }
+            : u
+        )
+      );
+      toast(
+        res?.message ||
+          (kind === "Deactivate"
+            ? `${rider.name}'s account has been deactivated. Recoverable for 7 days.`
+            : `${rider.name}'s account has been reactivated.`)
+      );
     } catch (err) {
       toast(err.message || "Failed to update rider status.", "error");
+      if (err?.status === 410 || err?.code === "RECOVERY_EXPIRED" || err?.code === "ACCOUNT_DELETED") {
+        loadData();
+      }
     } finally {
+      setUpdatingId(null);
       setConfirm(null);
     }
   };
@@ -570,6 +594,11 @@ export default function Riders() {
                       >
                         {r.status}
                       </span>
+                      {!r.accountActive && r.raw?.recovery_expires_at && (
+                        <small className="mt-1 block text-[11px] font-medium text-[#b45309] dark:text-amber-300">
+                          Recovery ends {formatDate(r.raw.recovery_expires_at)}
+                        </small>
+                      )}
                     </td>
                     <td className={`${td} whitespace-nowrap text-right`}>
                       <button
@@ -588,8 +617,9 @@ export default function Riders() {
                       </button>
                       <button
                         type="button"
+                        disabled={updatingId === r.userId}
                         onClick={() => setConfirm({ rider: r, kind: r.accountActive ? "Deactivate" : "Activate" })}
-                        className={`text-[13px] font-semibold hover:underline ${r.accountActive ? "text-[#d94747]" : "text-[#29945a]"}`}
+                        className={`text-[13px] font-semibold hover:underline disabled:opacity-50 ${r.accountActive ? "text-[#d94747]" : "text-[#29945a]"}`}
                       >
                         {r.accountActive ? "Deactivate" : "Activate"}
                       </button>
@@ -652,6 +682,12 @@ export default function Riders() {
                     {r.status}
                   </span>
                 </div>
+                {!r.accountActive && r.raw?.recovery_expires_at && (
+                  <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                    <Icon name="clock" className="mr-1.5 h-3 w-3" />
+                    Recovery period ends {formatDate(r.raw.recovery_expires_at)}
+                  </p>
+                )}
                 <div className="mt-3 flex items-center justify-between border-t border-[#f1f3f7] pt-2.5 text-[12.5px] dark:border-night-line">
                   <div className="text-[#666] dark:text-[#d1c9c2]">
                     <span className="font-semibold text-[#333] dark:text-[#f1eeeb]">{r.stats.total}</span> parcels
@@ -674,8 +710,9 @@ export default function Riders() {
                     </button>
                     <button
                       type="button"
+                      disabled={updatingId === r.userId}
                       onClick={() => setConfirm({ rider: r, kind: r.accountActive ? "Deactivate" : "Activate" })}
-                      className={`font-semibold hover:underline ${r.accountActive ? "text-[#d94747]" : "text-[#29945a]"}`}
+                      className={`font-semibold hover:underline disabled:opacity-50 ${r.accountActive ? "text-[#d94747]" : "text-[#29945a]"}`}
                     >
                       {r.accountActive ? "Deactivate" : "Activate"}
                     </button>
@@ -721,6 +758,23 @@ export default function Riders() {
                 </div>
               </div>
             </div>
+
+            {!current.accountActive && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[12.5px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+                <strong className="block font-bold">Account Inactive — 7-Day Recovery Window</strong>
+                {current.raw?.deactivated_at && (
+                  <span className="mt-0.5 block">
+                    Deactivated: {formatDate(current.raw.deactivated_at)}
+                    {current.raw?.deactivated_by_name ? ` by ${current.raw.deactivated_by_name}` : ""}
+                  </span>
+                )}
+                {current.raw?.recovery_expires_at && (
+                  <span className="mt-0.5 block font-semibold">
+                    Permanent removal scheduled: {formatDate(current.raw.recovery_expires_at)}
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 max-[380px]:grid-cols-1">
               {[
@@ -988,18 +1042,31 @@ export default function Riders() {
 
       <ConfirmDialog
         open={!!confirm}
-        title={confirm ? `${confirm.kind} this rider?` : ""}
+        title={
+          confirm
+            ? confirm.kind === "Deactivate"
+              ? "Deactivate this account?"
+              : "Reactivate this account?"
+            : ""
+        }
         text={
           confirm
             ? confirm.kind === "Deactivate"
-              ? `${confirm.rider.name} (${confirm.rider.email}) will not be able to sign in while inactive.`
-              : `${confirm.rider.name} (${confirm.rider.email}) will be able to sign in again.`
+              ? `Are you sure you want to deactivate ${confirm.rider.name}'s account? The user will immediately lose access to LOGISYNC. This account can still be reactivated within the next 7 days.`
+              : `Are you sure you want to reactivate ${confirm.rider.name}'s account? The user will regain access to their LOGISYNC portal.`
             : ""
         }
-        confirmLabel={confirm?.kind}
+        confirmLabel={
+          confirm
+            ? confirm.kind === "Deactivate"
+              ? "Yes, Deactivate"
+              : "Yes, Reactivate"
+            : "Confirm"
+        }
         danger={confirm?.kind === "Deactivate"}
+        busy={Boolean(confirm && updatingId === confirm.rider.userId)}
         onConfirm={applyStatus}
-        onCancel={() => setConfirm(null)}
+        onCancel={() => !updatingId && setConfirm(null)}
       />
     </>
   );

@@ -142,9 +142,26 @@ export async function api(path, { method = "GET", body, headers } = {}) {
   }
 
   if (!res.ok || data?.success === false) {
-    // Expired/invalid token: ibalik sa login
-    if (res.status === 401 && token) {
+    // Expired/invalid token o na-deactivate/na-delete na account: ibalik agad sa login
+    const revokedCode = data?.code;
+    const isSessionRevoked =
+      res.status === 401 ||
+      revokedCode === "ACCOUNT_DEACTIVATED" ||
+      revokedCode === "ACCOUNT_DELETED" ||
+      revokedCode === "SESSION_INVALIDATED";
+    if (isSessionRevoked && token) {
+      const revokedMsg =
+        revokedCode === "ACCOUNT_DEACTIVATED" || revokedCode === "ACCOUNT_DELETED" || revokedCode === "SESSION_INVALIDATED"
+          ? data?.message || "Your session has ended. Please sign in again."
+          : "";
       clearSession();
+      if (revokedMsg) {
+        try {
+          sessionStorage.setItem("pt-session-revoked-msg", revokedMsg);
+        } catch {
+          /* ignore */
+        }
+      }
       window.location.href = "/login";
     }
     // Walang JSON galing sa 5xx = hindi naabot ng Vite proxy ang backend

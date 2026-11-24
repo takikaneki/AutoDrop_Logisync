@@ -12,6 +12,7 @@ const auditRoutes = require("./routes/auditRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
+const { purgeExpiredDeactivatedAccounts } = require("./utils/accountLifecycle");
 
 const app = express();
 
@@ -26,6 +27,24 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.get(["/api/health", "/health"], (_req, res) => {
   res.json({ success: true, message: "SyncLink backend is running" });
+});
+
+// Scheduled cron endpoint for automatic permanent removal of expired inactive accounts (Vercel Cron / external scheduler)
+app.get(["/api/cron/cleanup-expired-accounts", "/cron/cleanup-expired-accounts"], async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const authHeader = req.headers.authorization || "";
+    if (authHeader !== `Bearer ${secret}`) {
+      return res.status(401).json({ success: false, message: "Unauthorized cron invocation." });
+    }
+  }
+  try {
+    const result = await purgeExpiredDeactivatedAccounts({ force: true });
+    return res.json({ success: true, removedCount: result.removedCount, removed: result.removed });
+  } catch (err) {
+    console.error("Cron cleanup-expired-accounts error:", err?.message || err);
+    return res.status(500).json({ success: false, message: "Expired account cleanup failed." });
+  }
 });
 
 app.use(["/api/auth", "/auth"], authRoutes);

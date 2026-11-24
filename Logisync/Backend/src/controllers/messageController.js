@@ -104,14 +104,14 @@ async function sendMessage(req, res) {
     }
 
     const [users] = await pool.query(
-      "SELECT user_id, role FROM users WHERE user_id = ?",
+      "SELECT user_id, role, is_deleted FROM users WHERE user_id = ?",
       [receiverId]
     );
 
-    if (!users.length) {
+    if (!users.length || Boolean(users[0].is_deleted)) {
       return res.status(404).json({
         success: false,
-        message: "Receiver not found."
+        message: "Receiver account is no longer available."
       });
     }
 

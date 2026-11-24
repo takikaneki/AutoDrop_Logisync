@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const app = require("./app");
 const { testConnection } = require("./config/database");
+const { startExpiredAccountCleanupScheduler } = require("./utils/accountLifecycle");
 
 const PORT = Number(process.env.PORT || 5000);
 
@@ -9,6 +10,7 @@ async function startServer() {
   try {
     await testConnection();
     console.log("PostgreSQL (Neon) connected successfully.");
+    startExpiredAccountCleanupScheduler();
   } catch (error) {
     console.error("PostgreSQL connection failed:", error.message);
     console.error("Make sure your PostgreSQL / Neon DATABASE_URL or .env settings are correct.");

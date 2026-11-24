@@ -2,6 +2,13 @@ const bcrypt = require("bcryptjs");
 const { pool, rawPool } = require("../config/database");
 const { logAudit } = require("../utils/audit");
 const { sendAccountCredentialsEmail } = require("../utils/mailer");
+const {
+  RECOVERY_PERIOD_DAYS,
+  ensureAccountLifecycleSchema,
+  getAccountCode,
+  getRoleLabel,
+  purgeExpiredDeactivatedAccounts,
+} = require("../utils/accountLifecycle");
 
 function getLoginUrl() {
   const appUrl = (
@@ -51,12 +58,19 @@ async function ensureUserColumns() {
       ) s
      WHERE u.user_id = s.user_id;
   `);
+  await ensureAccountLifecycleSchema();
   userColumnsReady = true;
 }
 
-const USER_FIELDS = `user_id, name, email, role, verification_status,
-                  phone, shop_name, zone, vehicle, plate_number,
-                  seller_code, pickup_address, rider_code, agency, rider_type, created_at, updated_at`;
+const USER_FIELDS = `u.user_id, u.name, u.email, u.role, u.verification_status,
+                  u.phone, u.shop_name, u.zone, u.vehicle, u.plate_number,
+                  u.seller_code, u.pickup_address, u.rider_code, u.agency, u.rider_type,
+                  u.deactivated_at, u.deactivated_by, du.name AS deactivated_by_name,
+                  u.recovery_expires_at, u.reactivated_at, u.reactivated_by, ru.name AS reactivated_by_name,
+                  u.is_deleted, u.created_at, u.updated_at`;
+
+const USER_JOINS = `LEFT JOIN users du ON u.deactivated_by = du.user_id
+                    LEFT JOIN users ru ON u.reactivated_by = ru.user_id`;
 
 const RIDER_TYPES = ["FM", "LM"];
 function normalizeRiderType(value) {
@@ -85,16 +99,17 @@ function statusToVerification(status) {
 async function listContacts(req, res) {
   try {
     await ensureUserColumns();
+    await purgeExpiredDeactivatedAccounts().catch(() => {});
     const isCoordinator = req.user.role === "coordinator";
 
     const [rows] = isCoordinator
       ? await pool.query(
           `SELECT user_id, name, email, role, phone FROM users
-           WHERE role IN ('seller', 'rider') ORDER BY name ASC`
+           WHERE role IN ('seller', 'rider') AND is_deleted = FALSE ORDER BY name ASC`
         )
       : await pool.query(
           `SELECT user_id, name, role, phone FROM users
-           WHERE role = 'coordinator' ORDER BY name ASC`
+           WHERE role = 'coordinator' AND is_deleted = FALSE ORDER BY name ASC`
         );
 
     res.json({ success: true, contacts: rows });
@@ -384,11 +399,26 @@ async function updateSellerAccount(req, res) {
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(400).json({ success: false, message: "Invalid user ID." });
     }
-    const [found] = await pool.query("SELECT user_id, role FROM users WHERE user_id = ?", [userId]);
+    const [found] = await pool.query(
+      `SELECT user_id, name, email, role, verification_status, seller_code, rider_code,
+              is_deleted, deactivated_at, recovery_expires_at
+         FROM users
+        WHERE user_id = ?`,
+      [userId]
+    );
     if (!found.length || !["seller", "rider"].includes(found[0].role)) {
       return res.status(404).json({ success: false, message: "Account not found." });
     }
-    const targetRole = found[0].role;
+    const targetUser = found[0];
+    if (Boolean(targetUser.is_deleted)) {
+      return res.status(410).json({
+        success: false,
+        code: "ACCOUNT_DELETED",
+        message: "This account has been permanently removed and can no longer be edited.",
+      });
+    }
+    const targetRole = targetUser.role;
+    const prevVerification = String(targetUser.verification_status || "APPROVED").toUpperCase();
 
     const { name, email, phone, shop_name, pickup_address, status, password, agency, rider_type, zone, vehicle, plate_number } = req.body || {};
     const sets = [];
@@ -447,8 +477,37 @@ async function updateSellerAccount(req, res) {
     if (targetRole === "seller" && pickup_address !== undefined) {
       sets.push("pickup_address = ?"); vals.push(String(pickup_address).trim().slice(0, 300) || null);
     }
+    let statusTransition = null;
     if (status !== undefined) {
-      sets.push("verification_status = ?"); vals.push(statusToVerification(status));
+      const nextVerif = statusToVerification(status);
+      if (nextVerif !== prevVerification) {
+        if (nextVerif === "APPROVED") {
+          const purgeCheck = await purgeExpiredDeactivatedAccounts({ userId }).catch(() => ({ removedCount: 0 }));
+          if (purgeCheck.removedCount > 0) {
+            return res.status(410).json({
+              success: false,
+              code: "RECOVERY_EXPIRED",
+              message: "This account's 7-day recovery period has expired and the account has been permanently removed.",
+            });
+          }
+          sets.push("verification_status = ?"); vals.push("APPROVED");
+          sets.push("deactivated_at = NULL");
+          sets.push("deactivated_by = NULL");
+          sets.push("recovery_expires_at = NULL");
+          sets.push("reactivated_at = NOW()");
+          sets.push("reactivated_by = ?"); vals.push(req.user.user_id);
+          statusTransition = "REACTIVATED";
+        } else {
+          sets.push("verification_status = ?"); vals.push("REJECTED");
+          sets.push("deactivated_at = NOW()");
+          sets.push("deactivated_by = ?"); vals.push(req.user.user_id);
+          sets.push(`recovery_expires_at = NOW() + INTERVAL '${RECOVERY_PERIOD_DAYS} days'`);
+          sets.push("reactivated_at = NULL");
+          sets.push("reactivated_by = NULL");
+          sets.push("session_version = COALESCE(session_version, 1) + 1");
+          statusTransition = "DEACTIVATED";
+        }
+      }
     }
     if (password) {
       if (typeof password !== "string" || password.length < 8) {
@@ -461,17 +520,41 @@ async function updateSellerAccount(req, res) {
     }
 
     vals.push(userId);
-    await pool.query(`UPDATE users SET ${sets.join(", ")}, updated_at = NOW() WHERE user_id = ?`, vals);
+    await pool.query(`UPDATE users SET ${sets.join(", ")}, updated_at = NOW() WHERE user_id = ? AND is_deleted = FALSE`, vals);
+
+    if (statusTransition === "DEACTIVATED") {
+      await pool.query("DELETE FROM email_otps WHERE user_id = ?", [userId]).catch(() => {});
+      await pool.query("DELETE FROM password_resets WHERE user_id = ?", [userId]).catch(() => {});
+    }
+
+    const [rows] = await pool.query(
+      `SELECT ${USER_FIELDS} FROM users u ${USER_JOINS} WHERE u.user_id = ?`,
+      [userId]
+    );
+    const updatedUser = rows[0];
+    const roleLabel = getRoleLabel(targetRole);
+    const accountCode = getAccountCode(updatedUser || targetUser);
 
     await logAudit(req.user, {
       category: "Accounts",
-      action: `Updated ${targetRole} account`,
-      target: String(userId),
-      detail: `Fields: ${sets.map((x) => x.split(" ")[0]).join(", ")}`
+      action:
+        statusTransition === "DEACTIVATED"
+          ? "Account deactivated"
+          : statusTransition === "REACTIVATED"
+            ? "Account reactivated"
+            : `Updated ${targetRole} account`,
+      target: `${roleLabel}: ${updatedUser?.name || targetUser.name} (${accountCode})`,
+      detail:
+        statusTransition === "DEACTIVATED"
+          ? `${roleLabel} account "${updatedUser?.name || targetUser.name}" (${accountCode}) deactivated by ${req.user.name}. 7-day recovery expires ${updatedUser?.recovery_expires_at ? new Date(updatedUser.recovery_expires_at).toISOString() : "in 7 days"}.`
+          : statusTransition === "REACTIVATED"
+            ? `${roleLabel} account "${updatedUser?.name || targetUser.name}" (${accountCode}) reactivated by ${req.user.name}.`
+            : `Fields: ${sets.map((x) => x.split(" ")[0]).join(", ")}`,
+      sellerId: targetRole === "seller" ? userId : null,
+      riderId: targetRole === "rider" ? userId : null,
     });
 
-    const [rows] = await pool.query(`SELECT ${USER_FIELDS} FROM users WHERE user_id = ?`, [userId]);
-    res.json({ success: true, message: "Seller account updated.", user: rows[0] });
+    res.json({ success: true, message: `${roleLabel} account updated.`, user: updatedUser });
   } catch (error) {
     console.error("updateSellerAccount error:", error);
     if (error && error.code === "23505") {
@@ -485,19 +568,23 @@ async function updateSellerAccount(req, res) {
 async function listUsers(req, res) {
   try {
     await ensureUserColumns();
+    await purgeExpiredDeactivatedAccounts().catch(() => {});
     const role = req.query.role;
     const [rows] = ROLES.includes(role)
       ? await pool.query(
           `SELECT ${USER_FIELDS}
-           FROM users
-           WHERE role = ?
-           ORDER BY created_at DESC`,
+           FROM users u
+           ${USER_JOINS}
+           WHERE u.role = ? AND u.is_deleted = FALSE
+           ORDER BY u.created_at DESC`,
           [role]
         )
       : await pool.query(
           `SELECT ${USER_FIELDS}
-           FROM users
-           ORDER BY created_at DESC`
+           FROM users u
+           ${USER_JOINS}
+           WHERE u.is_deleted = FALSE
+           ORDER BY u.created_at DESC`
         );
 
     res.json({ success: true, users: rows });
@@ -514,7 +601,14 @@ async function reviewSeller(req, res) {
   try {
     await ensureUserColumns();
     const userId = Number(req.params.id);
-    const { status } = req.body || {};
+    const rawStatus = String(req.body?.status || "").trim();
+    const normalizedUpper = rawStatus.toUpperCase();
+    const status =
+      normalizedUpper === "APPROVED" || normalizedUpper === "ACTIVE"
+        ? "APPROVED"
+        : normalizedUpper === "REJECTED" || normalizedUpper === "INACTIVE"
+          ? "REJECTED"
+          : "";
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(400).json({
@@ -530,38 +624,193 @@ async function reviewSeller(req, res) {
       });
     }
 
-    const [result] = await pool.query(
-      `UPDATE users
-       SET verification_status = ?, updated_at = NOW()
-       WHERE user_id = ? AND role IN ('seller', 'rider')`,
-      [status, userId]
+    // First, check & process expiration for this specific account on server clock
+    const purgeResult = await purgeExpiredDeactivatedAccounts({ userId }).catch(() => ({ removedCount: 0 }));
+    if (purgeResult.removedCount > 0) {
+      return res.status(410).json({
+        success: false,
+        code: "RECOVERY_EXPIRED",
+        message: "This account's 7-day recovery period has expired and the account has been permanently removed."
+      });
+    }
+
+    const [foundRows] = await pool.query(
+      `SELECT user_id, name, email, role, verification_status, seller_code, rider_code,
+              is_deleted, deactivated_at, recovery_expires_at
+         FROM users
+        WHERE user_id = ? AND role IN ('seller', 'rider')
+        LIMIT 1`,
+      [userId]
     );
 
-    if (result.affectedRows === 0) {
+    if (!foundRows.length) {
       return res.status(404).json({
         success: false,
         message: "Account not found."
       });
     }
 
+    const targetUser = foundRows[0];
+    if (Boolean(targetUser.is_deleted)) {
+      return res.status(410).json({
+        success: false,
+        code: "ACCOUNT_DELETED",
+        message: "This account has been permanently removed and cannot be reactivated."
+      });
+    }
+
+    const currentStatus = String(targetUser.verification_status || "").toUpperCase();
+    const roleLabel = getRoleLabel(targetUser.role);
+    const accountCode = getAccountCode(targetUser);
+
+    if (status === "REJECTED") {
+      // Prevent repeated deactivation requests and protect the original 7-day recovery window
+      if (currentStatus === "REJECTED") {
+        return res.status(409).json({
+          success: false,
+          code: "ALREADY_INACTIVE",
+          message: "This account is already inactive."
+        });
+      }
+
+      const [updated] = await pool.query(
+        `UPDATE users
+            SET verification_status = 'REJECTED',
+                deactivated_at = NOW(),
+                deactivated_by = ?,
+                recovery_expires_at = NOW() + INTERVAL '${RECOVERY_PERIOD_DAYS} days',
+                reactivated_at = NULL,
+                reactivated_by = NULL,
+                session_version = COALESCE(session_version, 1) + 1,
+                updated_at = NOW()
+          WHERE user_id = ?
+            AND role IN ('seller', 'rider')
+            AND is_deleted = FALSE
+            AND verification_status <> 'REJECTED'`,
+        [req.user.user_id, userId]
+      );
+
+      if (updated.affectedRows === 0) {
+        return res.status(409).json({
+          success: false,
+          code: "ALREADY_INACTIVE",
+          message: "This account is already inactive."
+        });
+      }
+
+      // Revoke any pending OTPs or password reset tokens immediately
+      await pool.query("DELETE FROM email_otps WHERE user_id = ?", [userId]).catch(() => {});
+      await pool.query("DELETE FROM password_resets WHERE user_id = ?", [userId]).catch(() => {});
+
+      const [freshRows] = await pool.query(
+        `SELECT ${USER_FIELDS} FROM users u ${USER_JOINS} WHERE u.user_id = ?`,
+        [userId]
+      );
+      const updatedUser = freshRows[0] || null;
+      const expiryIso = updatedUser?.recovery_expires_at
+        ? new Date(updatedUser.recovery_expires_at).toISOString()
+        : null;
+
+      await logAudit(req.user, {
+        category: "Accounts",
+        action: "Account deactivated",
+        target: `${roleLabel}: ${targetUser.name} (${accountCode})`,
+        detail: `${roleLabel} account "${targetUser.name}" (${accountCode}) deactivated by ${req.user.name}. Access revoked immediately; ${RECOVERY_PERIOD_DAYS}-day recovery period ends ${expiryIso || "in 7 days"}.`,
+        sellerId: targetUser.role === "seller" ? userId : null,
+        riderId: targetUser.role === "rider" ? userId : null,
+      });
+
+      return res.json({
+        success: true,
+        message: `${targetUser.name}'s account has been deactivated. It can be reactivated within ${RECOVERY_PERIOD_DAYS} days.`,
+        user_id: userId,
+        verification_status: "REJECTED",
+        deactivated_at: updatedUser?.deactivated_at || null,
+        recovery_expires_at: updatedUser?.recovery_expires_at || null,
+        user: updatedUser
+      });
+    }
+
+    // status === "APPROVED" (Reactivation during the 7-day recovery period)
+    if (currentStatus === "APPROVED") {
+      return res.status(409).json({
+        success: false,
+        code: "ALREADY_ACTIVE",
+        message: "This account is already active."
+      });
+    }
+
+    // Atomically enforce server-side recovery expiration deadline (recovery_expires_at > NOW())
+    const [updated] = await pool.query(
+      `UPDATE users
+          SET verification_status = 'APPROVED',
+              deactivated_at = NULL,
+              deactivated_by = NULL,
+              recovery_expires_at = NULL,
+              reactivated_at = NOW(),
+              reactivated_by = ?,
+              updated_at = NOW()
+        WHERE user_id = ?
+          AND role IN ('seller', 'rider')
+          AND is_deleted = FALSE
+          AND (recovery_expires_at IS NULL OR recovery_expires_at > NOW())`,
+      [req.user.user_id, userId]
+    );
+
+    if (updated.affectedRows === 0) {
+      await purgeExpiredDeactivatedAccounts({ userId }).catch(() => {});
+      return res.status(410).json({
+        success: false,
+        code: "RECOVERY_EXPIRED",
+        message: "This account's 7-day recovery period has expired and the account has been permanently removed."
+      });
+    }
+
+    const [freshRows] = await pool.query(
+      `SELECT ${USER_FIELDS} FROM users u ${USER_JOINS} WHERE u.user_id = ?`,
+      [userId]
+    );
+    const updatedUser = freshRows[0] || null;
+
     await logAudit(req.user, {
       category: "Accounts",
-      action: status === "APPROVED" ? "Account activated" : "Account suspended",
-      target: String(userId),
-      detail: `Account verification status changed to ${status}.`
+      action: "Account reactivated",
+      target: `${roleLabel}: ${targetUser.name} (${accountCode})`,
+      detail: `${roleLabel} account "${targetUser.name}" (${accountCode}) reactivated by ${req.user.name} during the recovery period.`,
+      sellerId: targetUser.role === "seller" ? userId : null,
+      riderId: targetUser.role === "rider" ? userId : null,
     });
 
     return res.json({
       success: true,
-      message: `Account ${status === "APPROVED" ? "activated" : "suspended"} successfully.`,
+      message: `${targetUser.name}'s account has been reactivated.`,
       user_id: userId,
-      verification_status: status
+      verification_status: "APPROVED",
+      reactivated_at: updatedUser?.reactivated_at || null,
+      user: updatedUser
     });
   } catch (error) {
     console.error("reviewSeller error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update account status."
+    });
+  }
+}
+
+async function cleanupExpiredAccounts(req, res) {
+  try {
+    const result = await purgeExpiredDeactivatedAccounts({ force: true });
+    return res.json({
+      success: true,
+      removedCount: result.removedCount,
+      removed: result.removed,
+    });
+  } catch (error) {
+    console.error("cleanupExpiredAccounts error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to clean up expired inactive accounts."
     });
   }
 }
@@ -733,6 +982,7 @@ module.exports = {
   resendCredentialsEmail,
   listUsers,
   reviewSeller,
+  cleanupExpiredAccounts,
   updateSellerAccount,
   getMyProfile,
   updateMyProfile,

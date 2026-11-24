@@ -168,6 +168,9 @@ export default function Sellers() {
         initials: getInitials(u.name),
         tone: AVATAR_TONES[idx % AVATAR_TONES.length],
         joined: formatDate(u.created_at),
+        deactivatedAt: u.deactivated_at || null,
+        deactivatedByName: u.deactivated_by_name || null,
+        recoveryExpiresAt: u.recovery_expires_at || null,
         status: uiStatus,
         verificationStatus: u.verification_status || "APPROVED",
         counts: {
@@ -284,45 +287,58 @@ export default function Sellers() {
   };
 
   const actions = {
-    Deactivate: [
-      "REJECTED",
-      "Deactivated seller",
-      "Deactivate this seller?",
-      "They will not be able to sign in or register new parcels while inactive.",
-      true,
-    ],
-    Activate: [
-      "APPROVED",
-      "Activated seller",
-      "Activate this seller?",
-      "Their account will be active again.",
-      false,
-    ],
+    Deactivate: {
+      dbStatus: "REJECTED",
+      title: "Deactivate this account?",
+      confirmLabel: "Yes, Deactivate",
+      danger: true,
+      message: (seller) =>
+        `Are you sure you want to deactivate ${seller.name}'s account? The user will immediately lose access to LOGISYNC. This account can still be reactivated within the next 7 days.`,
+    },
+    Activate: {
+      dbStatus: "APPROVED",
+      title: "Reactivate this account?",
+      confirmLabel: "Yes, Reactivate",
+      danger: false,
+      message: (seller) =>
+        `Are you sure you want to reactivate ${seller.name}'s account? The user will regain access to their LOGISYNC portal.`,
+    },
   };
 
   const actionFor = (s) => (s.status === "Inactive" ? "Activate" : "Deactivate");
 
   const apply = async () => {
-    if (!confirm) return;
+    if (!confirm || updatingId) return;
     const { seller, kind } = confirm;
-    const [nextDbStatus, auditLabel] = actions[kind];
+    const cfg = actions[kind];
     setUpdatingId(seller.userId);
     try {
-      await updateUserVerification(seller.userId, nextDbStatus);
+      const res = await updateUserVerification(seller.userId, cfg.dbStatus);
+      const updatedRow = res?.user;
       setRawSellers((prev) =>
         prev.map((u) =>
-          u.user_id === seller.userId ? { ...u, verification_status: nextDbStatus } : u
+          u.user_id === seller.userId
+            ? {
+                ...u,
+                ...(updatedRow || {}),
+                verification_status: cfg.dbStatus,
+                deactivated_at: updatedRow ? updatedRow.deactivated_at : cfg.dbStatus === "REJECTED" ? new Date().toISOString() : null,
+                recovery_expires_at: updatedRow ? updatedRow.recovery_expires_at : null,
+              }
+            : u
         )
       );
-      logAction({
-        category: "Sellers",
-        action: auditLabel,
-        target: seller.name,
-        detail: seller.email,
-      });
-      toast(`${seller.name} — ${auditLabel.toLowerCase()}.`);
+      toast(
+        res?.message ||
+          (kind === "Deactivate"
+            ? `${seller.name}'s account has been deactivated. Recoverable for 7 days.`
+            : `${seller.name}'s account has been reactivated.`)
+      );
     } catch (err) {
       toast(err.message || "Failed to update seller status.", "error");
+      if (err?.status === 410 || err?.code === "RECOVERY_EXPIRED" || err?.code === "ACCOUNT_DELETED") {
+        loadData();
+      }
     } finally {
       setUpdatingId(null);
       setConfirm(null);
@@ -540,6 +556,11 @@ export default function Sellers() {
                       >
                         {s.status}
                       </span>
+                      {s.status === "Inactive" && s.recoveryExpiresAt && (
+                        <small className="mt-1 block text-[11px] font-medium text-[#b45309] dark:text-amber-300">
+                          Recovery ends {formatDate(s.recoveryExpiresAt)}
+                        </small>
+                      )}
                     </td>
                     <td className={`${td} whitespace-nowrap text-right`}>
                       <button
@@ -628,6 +649,12 @@ export default function Sellers() {
                     {s.status}
                   </span>
                 </div>
+                {s.status === "Inactive" && s.recoveryExpiresAt && (
+                  <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11.5px] font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                    <Icon name="clock" className="mr-1.5 h-3 w-3" />
+                    Recovery period ends {formatDate(s.recoveryExpiresAt)}
+                  </p>
+                )}
                 <div className="mt-3 flex items-center justify-between border-t border-[#f1f3f7] pt-2.5 text-[12.5px] dark:border-night-line">
                   <span className="text-[#666] dark:text-[#d1c9c2]">
                     <strong className="text-[#333] dark:text-[#f1eeeb]">{s.counts.total}</strong> parcels
@@ -697,6 +724,22 @@ export default function Sellers() {
                 )}
               </div>
             </div>
+            {current.status === "Inactive" && (
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[12.5px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+                <strong className="block font-bold">Account Inactive — 7-Day Recovery Window</strong>
+                {current.deactivatedAt && (
+                  <span className="mt-0.5 block">
+                    Deactivated: {formatDate(current.deactivatedAt)}
+                    {current.deactivatedByName ? ` by ${current.deactivatedByName}` : ""}
+                  </span>
+                )}
+                {current.recoveryExpiresAt && (
+                  <span className="mt-0.5 block font-semibold">
+                    Permanent removal scheduled: {formatDate(current.recoveryExpiresAt)}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="mb-5 grid grid-cols-3 gap-3 max-[520px]:grid-cols-1">
               <div className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head">
                 <small className="block text-[12px] text-[#999]">Total parcels</small>
@@ -916,12 +959,13 @@ export default function Sellers() {
 
       <ConfirmDialog
         open={!!confirm}
-        title={confirm ? actions[confirm.kind][2] : ""}
-        text={confirm ? `${confirm.seller.name} (${confirm.seller.email}). ${actions[confirm.kind][3]}` : ""}
-        confirmLabel={confirm?.kind}
-        danger={confirm ? actions[confirm.kind][4] : false}
+        title={confirm ? actions[confirm.kind].title : ""}
+        text={confirm ? actions[confirm.kind].message(confirm.seller) : ""}
+        confirmLabel={confirm ? actions[confirm.kind].confirmLabel : "Confirm"}
+        danger={confirm ? actions[confirm.kind].danger : false}
+        busy={Boolean(confirm && updatingId === confirm.seller.userId)}
         onConfirm={apply}
-        onCancel={() => setConfirm(null)}
+        onCancel={() => !updatingId && setConfirm(null)}
       />
     </>
   );

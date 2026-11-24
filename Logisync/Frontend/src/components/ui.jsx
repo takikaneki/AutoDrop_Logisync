@@ -119,24 +119,26 @@ export function TableSkeleton({ rows = 6, cols = 4 }) {
   );
 }
 
-export function ConfirmDialog({ open, title, text, confirmLabel = "Confirm", danger = false, onConfirm, onCancel }) {
+export function ConfirmDialog({ open, title, text, confirmLabel = "Confirm", danger = false, busy = false, onConfirm, onCancel }) {
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onCancel();
+    const onKey = (e) => e.key === "Escape" && !busy && onCancel();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+  }, [open, busy, onCancel]);
 
   return (
-    <Modal open={open} onClose={onCancel} z="z-[4000]" className="w-full max-w-[400px] p-7 text-center dark:bg-night-panel">
+    <Modal open={open} onClose={() => !busy && onCancel?.()} z="z-[4000]" className="w-full max-w-[420px] p-7 text-center dark:bg-night-panel">
       <div className={`w-[46px] h-[46px] mx-auto mb-3.5 rounded-full flex items-center justify-center text-[20px] ${danger ? "bg-[#fff0f0] text-[#d94747]" : "bg-[#fff0e5] text-brand"}`}>
         <Icon name={danger ? "triangle-alert" : "circle-help"} className="h-5 w-5" />
       </div>
       <h3 className="text-[17px] font-bold mb-2">{title}</h3>
-      {text && <p className="text-[13px] text-[#888] mb-5">{text}</p>}
+      {text && <p className="text-[13px] leading-relaxed text-[#64748b] dark:text-[#b8b0a8] mb-5">{text}</p>}
       <div className="flex justify-center gap-2.5 mt-5">
-        <button className={btnGhost} onClick={onCancel}>Cancel</button>
-        <button className={danger ? btnDanger : btnPrimary} onClick={onConfirm}>{confirmLabel}</button>
+        <button type="button" disabled={busy} className={`${btnGhost} disabled:opacity-50`} onClick={onCancel}>Cancel</button>
+        <button type="button" disabled={busy} className={`${danger ? btnDanger : btnPrimary} disabled:opacity-50`} onClick={onConfirm}>
+          {busy ? "Processing…" : confirmLabel}
+        </button>
       </div>
     </Modal>
   );

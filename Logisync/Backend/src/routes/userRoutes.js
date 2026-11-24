@@ -5,6 +5,7 @@ const {
   resendCredentialsEmail,
   listUsers,
   reviewSeller,
+  cleanupExpiredAccounts,
   updateSellerAccount,
   getMyProfile,
   updateMyProfile
@@ -53,6 +54,13 @@ router.patch(
   authenticateToken,
   authorizeRoles("coordinator"),
   reviewSeller
+);
+
+router.post(
+  "/cleanup-expired",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  cleanupExpiredAccounts
 );
 
 router.patch(

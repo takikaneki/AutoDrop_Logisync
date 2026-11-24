@@ -393,6 +393,16 @@ export default function Login({ portalRole: propPortalRole } = {}) {
     setRememberMe(remembered.rememberMe);
     setAgreed(remembered.agreed);
     setLegalDocModal(null);
+    try {
+      const revokedMsg = sessionStorage.getItem("pt-session-revoked-msg");
+      if (revokedMsg) {
+        sessionStorage.removeItem("pt-session-revoked-msg");
+        setError(revokedMsg);
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
     setError("");
   }, [selectedRole]);
 

@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { pool } = require("../config/database");
+const { ensureAccountLifecycleSchema } = require("../utils/accountLifecycle");
 
 async function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -35,26 +36,57 @@ async function authenticateToken(req, res, next) {
   }
 
   try {
+    await ensureAccountLifecycleSchema();
+
     // Retrieve actual user record from trusted database
     const [rows] = await pool.query(
-      "SELECT user_id, name, email, role, verification_status, first_login FROM users WHERE user_id = $1",
+      `SELECT user_id, name, email, role, verification_status, first_login,
+              is_deleted, deactivated_at, recovery_expires_at, session_version
+         FROM users
+        WHERE user_id = $1`,
       [decoded.user_id]
     );
 
     if (!rows || !rows.length) {
-      return res.status(401).json({ success: false, message: "User account no longer exists." });
+      return res.status(401).json({
+        success: false,
+        code: "ACCOUNT_DELETED",
+        message: "User account no longer exists."
+      });
     }
 
     const dbUser = rows[0];
 
-    // Enforce account suspension
+    if (Boolean(dbUser.is_deleted)) {
+      return res.status(401).json({
+        success: false,
+        code: "ACCOUNT_DELETED",
+        message: "This account has been permanently removed."
+      });
+    }
+
+    // Enforce immediate account deactivation & session revocation
     if (
       (dbUser.role === "seller" || dbUser.role === "rider") &&
-      String(dbUser.verification_status || "").toUpperCase() === "REJECTED"
+      (String(dbUser.verification_status || "").toUpperCase() === "REJECTED" ||
+        dbUser.deactivated_at != null)
     ) {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: "Your account is inactive. Please contact the Coordinator."
+        code: "ACCOUNT_DEACTIVATED",
+        message: "Your account has been deactivated. Please contact the Coordinator."
+      });
+    }
+
+    // Invalidate tokens minted prior to a session_version bump (e.g. deactivation or password reset)
+    if (
+      decoded.session_version !== undefined &&
+      Number(decoded.session_version) !== Number(dbUser.session_version || 1)
+    ) {
+      return res.status(401).json({
+        success: false,
+        code: "SESSION_INVALIDATED",
+        message: "Your session is no longer valid. Please sign in again."
       });
     }
 
