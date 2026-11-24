@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AnnouncementModal from "./AnnouncementModal.jsx";
 import NotificationBell from "./NotificationBell.jsx";
-import ContactUsModal from "./auth/ContactUsModal.jsx";
 import LogoutModal from "./LogoutModal.jsx";
 import UserAvatar from "./Avatar.jsx";
 import { toggleDark, usePrefs } from "../store/prefs.js";
@@ -19,7 +18,6 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
   const profile = useProfile();
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -118,21 +116,11 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                       {profile.email || profile.role}
                     </small>
                   </div>
+                  <Link to="/profile" onClick={() => setMenuOpen(false)} className={item}>
+                    <Icon name="user-round" className="h-4 w-4 text-[#888]" /> My Profile
+                  </Link>
                   <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
                     <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setContactOpen(true);
-                    }}
-                    className={item}
-                  >
-                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
-                  </button>
-                  <Link to="/help#faq" onClick={() => setMenuOpen(false)} className={item}>
-                    <Icon name="circle-help" className="h-4 w-4 text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
@@ -151,7 +139,6 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
       </header>
 
       <AnnouncementModal open={announceOpen} onClose={() => setAnnounceOpen(false)} />
-      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );

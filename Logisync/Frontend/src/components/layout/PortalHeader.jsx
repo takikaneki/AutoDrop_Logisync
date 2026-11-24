@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import LogoutModal from "../LogoutModal.jsx";
-import ContactUsModal from "../auth/ContactUsModal.jsx";
 import UserAvatar from "../Avatar.jsx";
 import useClickOutside from "../../hooks/useClickOutside.js";
 import { toggleDark, usePrefs } from "../../store/prefs.js";
@@ -19,7 +18,6 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
   const { dark } = usePrefs();
   const profile = useProfile();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
@@ -104,28 +102,18 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     </small>
                   </div>
                   <Link
+                    to={toPath(role, "profile")}
+                    onClick={() => setMenuOpen(false)}
+                    className={item}
+                  >
+                    <Icon name="user-round" className="h-4 w-4 text-[#888]" /> My Profile
+                  </Link>
+                  <Link
                     to={toPath(role, "settings")}
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
                     <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setContactOpen(true);
-                    }}
-                    className={item}
-                  >
-                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
-                  </button>
-                  <Link
-                    to={`${toPath(role, "help")}#faq`}
-                    onClick={() => setMenuOpen(false)}
-                    className={item}
-                  >
-                    <Icon name="circle-help" className="h-4 w-4 text-[#888]" /> FAQ
                   </Link>
                   <button
                     onClick={() => {
@@ -143,7 +131,6 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
         </div>
       </header>
 
-      <ContactUsModal open={contactOpen} onClose={() => setContactOpen(false)} />
       <LogoutModal open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </>
   );
