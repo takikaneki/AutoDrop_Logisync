@@ -37,8 +37,8 @@ export default function PortalNotifications() {
   const tabs = [
     ["all", "All"],
     ["unread", "Unread"],
+    ["emergency", "Emergency"],
     ["message", "Messages"],
-    ["complaint", "Complaints"],
     ["parcel", "Parcels"],
   ];
   const list = useMemo(
@@ -89,23 +89,50 @@ export default function PortalNotifications() {
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
-          list.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => { markPortalRead(n.id); if (n.to) navigate(n.to); }}
-              className={`flex w-full items-center gap-4 border-b border-[#edf0f4] px-5 py-3.5 text-left last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
-            >
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] ${tones[n.tone] || tones.orange}`}><Icon name={n.icon} /></span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center justify-between gap-2">
-                  <strong className="truncate text-[14px]">{n.title}</strong>
-                  <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
+          list.map((n) => {
+            const isEmergency = n.kind === "emergency" || n.category === "emergency";
+            return (
+              <button
+                key={n.id}
+                onClick={() => { markPortalRead(n.id); if (n.to) navigate(n.to); }}
+                className={`flex w-full items-center gap-4 border-b border-[#edf0f4] px-5 py-3.5 text-left last:border-0 dark:border-night-line ${
+                  isEmergency
+                    ? "border-l-4 border-l-[#dc2626] bg-[#fef2f2]/85 hover:bg-[#fee2e2]/80 dark:bg-red-950/35 dark:hover:bg-red-950/50"
+                    : `hover:bg-[#fff7f2] dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`
+                }`}
+              >
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[14px] ${
+                    isEmergency ? "bg-[#dc2626] text-white" : tones[n.tone] || tones.orange
+                  }`}
+                >
+                  <Icon name={n.icon} />
                 </span>
-                <span className="mt-0.5 block truncate text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">{n.text}</span>
-              </span>
-              {!n.read && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
-            </button>
-          ))
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
+                      {isEmergency && (
+                        <span className="shrink-0 rounded-full bg-[#dc2626] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                          Emergency
+                        </span>
+                      )}
+                      <strong className={`truncate text-[14px] ${isEmergency ? "text-[#991b1b] dark:text-red-200" : ""}`}>
+                        {n.title}
+                      </strong>
+                    </span>
+                    <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12.5px] text-[#64748b] dark:text-[#b8b0a8]">{n.text}</span>
+                </span>
+                {!n.read && (
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${isEmergency ? "bg-[#dc2626]" : "bg-brand"}`}
+                    aria-label="Unread"
+                  />
+                )}
+              </button>
+            );
+          })
         )}
       </section>
     </>

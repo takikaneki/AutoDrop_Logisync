@@ -49,7 +49,7 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
         }`}
       >
-        <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
+        <div className={`logisync-sidebar-scroll flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
           {/* Branding Header + Upper-Right Hamburger Toggle */}
           <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:flex-col min-[821px]:items-center min-[821px]:gap-2.5 min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
             <div className={`flex items-center justify-between gap-2.5 ${collapsed ? "min-[821px]:flex-col min-[821px]:justify-center" : ""}`}>

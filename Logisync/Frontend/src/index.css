@@ -243,3 +243,43 @@ body.dark {
   outline-offset: 2px !important;
   box-shadow: 0 0 0 5px rgba(251, 146, 60, 0.35) !important;
 }
+
+/* Adaptive Light & Dark Mode Sidebar Scrollbar */
+.logisync-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.38) transparent;
+}
+.logisync-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.logisync-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.logisync-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.36);
+  border-radius: 9999px;
+}
+.logisync-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.58);
+}
+.logisync-sidebar-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.dark .logisync-sidebar-scroll {
+  scrollbar-color: #334155 #0f172a;
+}
+.dark .logisync-sidebar-scroll::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.dark .logisync-sidebar-scroll::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 9999px;
+  border: 1px solid #0f172a;
+}
+.dark .logisync-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+.dark .logisync-sidebar-scroll::-webkit-scrollbar-corner {
+  background: #0f172a;
+}

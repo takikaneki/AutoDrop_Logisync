@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getRole, getUser } from "../api.js";
-import { fetchComplaints } from "../services/complaintService.js";
+import { fetchEmergencyReports } from "../services/emergencyService.js";
 import { fetchMyRiderParcels } from "../services/deliveryService.js";
 import { listMessages } from "../services/messageService.js";
 import { listParcels } from "../services/parcelService.js";
 import { filterAnnouncementsForRole, syncAnnouncementsFromServer, useAnnouncements } from "./announcements.js";
-import { useComplaints } from "./records.js";
 import { MAX_RESCHEDULES, STAGE, useAssignedParcels, useMyDeliveries } from "./riderDeliveries.js";
 import { formatDay } from "../utils/format.js";
 import { isOnline, readViewCache, useReconnectRefresh, writeViewCache } from "../utils/network.js";
@@ -61,7 +60,6 @@ export function usePortalNotifications(roleProp) {
   const activeRole = String(roleProp || getRole() || "").trim().toLowerCase();
   const readMap = readStore.use();
   const rawAnnouncements = useAnnouncements(activeRole);
-  const localComplaints = useComplaints();
   const assigned = useAssignedParcels();
   const myDeliveries = useMyDeliveries();
   const cachedRemote = useMemo(
@@ -112,37 +110,38 @@ export function usePortalNotifications(roleProp) {
           );
       }
 
-      // 2. Complaints / Requests updates mula sa PostgreSQL backend para lang sa user na ito
-      const dbComplaints = await fetchComplaints().catch(() => []);
-      if (Array.isArray(dbComplaints)) {
-        dbComplaints
-          .filter((c) => {
-            const ownerId = Number(c.user_id ?? c.userId);
-            const cRole = String(c.complainant_role || c.role || "").trim().toLowerCase();
-            if (ownerId) return ownerId === me;
-            return cRole === activeRole && String(c.complainant_name || c.from || "").trim() === String(name || "").trim();
-          })
-          .forEach((c) => {
-            const ticketId = c.complaint_id ? `C-${c.complaint_id}` : String(c.id || "C-0");
-            const status = String(c.status || "Open");
-            const notes = parseNotesList(c.notes);
-            if (status === "Open" && notes.length === 0) return;
+      // 2. Emergency Report status updates from Coordinator for this Seller/Rider
+      const emrRes = await fetchEmergencyReports().catch(() => ({ reports: [] }));
+      const myEmergencies = Array.isArray(emrRes?.reports) ? emrRes.reports : [];
+      myEmergencies.forEach((r) => {
+        if (!r?.report_code) return;
+        const status = String(r.status || "NEW").toUpperCase();
+        const history = Array.isArray(r.history) ? r.history : [];
+        const coordUpdates = history.filter((h) => h.actor_role === "coordinator");
+        if (status === "NEW" && coordUpdates.length === 0) return;
 
-            const lastNoteText = notes.length > 0 ? extractNoteText(notes[notes.length - 1]) : "";
-            next.push({
-              id: `cp:${ticketId}:${status}:${notes.length}`,
-              kind: "complaint",
-              icon: status === "Resolved" ? "circle-check" : "headset",
-              tone: status === "Resolved" ? "green" : "purple",
-              title: notes.length > 0 && status === "Open"
-                ? `Coordinator replied to ${ticketId}`
-                : `${ticketId} is ${status.toLowerCase()}`,
-              text: lastNoteText || String(c.subject || "Complaint update"),
-              ts: new Date(c.updated_at || c.updatedAt || c.created_at || c.createdAt || Date.now()).getTime() || Date.now(),
-              to: `/${activeRole}/complaints`,
-            });
-          });
-      }
+        const statusLabel =
+          status === "RESOLVED"
+            ? "Resolved"
+            : status === "IN_PROGRESS"
+              ? "In Progress"
+              : status === "ACKNOWLEDGED"
+                ? "Acknowledged"
+                : "Updated";
+        const latestCoord = coordUpdates.length ? coordUpdates[coordUpdates.length - 1] : null;
+        next.push({
+          id: `emr:${r.report_code}:${status}:${history.length}`,
+          kind: "emergency",
+          category: "emergency",
+          priority: "high",
+          icon: status === "RESOLVED" ? "circle-check" : "triangle-alert",
+          tone: status === "RESOLVED" ? "green" : "red",
+          title: `Emergency ${r.report_code} · ${statusLabel}`,
+          text: latestCoord?.note || `${r.category || "Emergency"}: ${r.subject || "Coordinator updated your report"}`,
+          ts: new Date(r.updated_at || r.created_at || Date.now()).getTime() || Date.now(),
+          to: `/${activeRole}/report-emergency`,
+        });
+      });
 
       // 3. SELLER: Sariling parcels lang mula sa backend (verification, RTH, delivered — WALANG rider reschedule spam)
       if (activeRole === "seller") {
@@ -292,33 +291,6 @@ export function usePortalNotifications(roleProp) {
         })
       );
 
-    // Fallback local complaints (strictly filtered by userId === me and activeRole)
-    localComplaints
-      .filter((c) => {
-        const ownerId = Number(c.user_id ?? c.userId);
-        const cRole = String(c.complainant_role || c.role || "").trim().toLowerCase();
-        if (ownerId) return ownerId === me;
-        return cRole === activeRole && String(c.from || "").trim() === String(name || "").trim();
-      })
-      .filter((c) => c.status !== "Open" || (Array.isArray(c.notes) && c.notes.length > 0))
-      .forEach((c) => {
-        const notes = parseNotesList(c.notes);
-        const ticketId = c.complaint_id ? `C-${c.complaint_id}` : String(c.id || "C-0");
-        const key = `cp:${ticketId}:${c.status}:${notes.length}`;
-        if (byId.has(key)) return;
-        const lastNoteText = notes.length > 0 ? extractNoteText(notes[notes.length - 1]) : "";
-        pushUnique({
-          id: key,
-          kind: "complaint",
-          icon: c.status === "Resolved" ? "circle-check" : "headset",
-          tone: c.status === "Resolved" ? "green" : "purple",
-          title: `${ticketId} is ${String(c.status || "updated").toLowerCase()}`,
-          text: lastNoteText || String(c.subject || "Complaint update"),
-          ts: c.updatedAt || c.createdAt || Date.now(),
-          to: `/${activeRole}/complaints`,
-        });
-      });
-
     // RIDER-ONLY parcel delivery, reschedule, Return to Hub, and hold notifications
     if (activeRole === "rider") {
       // Merge serverRiderParcels + local myDeliveries owned by this rider
@@ -417,7 +389,7 @@ export function usePortalNotifications(roleProp) {
     return Array.from(byId.values())
       .map((n) => ({ ...n, read: !!mine[n.id] }))
       .sort((a, b) => b.ts - a.ts);
-  }, [remote, rawAnnouncements, localComplaints, assigned, myDeliveries, serverRiderParcels, readMap, activeRole, me, name]);
+  }, [remote, rawAnnouncements, assigned, myDeliveries, serverRiderParcels, readMap, activeRole, me]);
 
   const pinned = useMemo(() => items.filter((n) => n.kind === "announcement"), [items]);
   const regular = useMemo(() => items.filter((n) => n.kind !== "announcement"), [items]);

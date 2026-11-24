@@ -30,6 +30,7 @@ const tones = {
 const tabs = [
   ["all", "All"],
   ["unread", "Unread"],
+  ["emergency", "Emergency"],
   ["rescheduled", "Rescheduled"],
   ["return_to_hub", "Return to Hub"],
   ["delivery", "Deliveries"],
@@ -61,10 +62,16 @@ export default function Notifications() {
   const offlineEmpty = !online && items.length === 0 && !syncState.syncedOnce;
   const showCachedNotice = !online && items.length > 0;
   const unread = items.filter((n) => !n.read).length;
+  const emergencyUnread = items.filter(
+    (n) => !n.read && (n.kind === "emergency" || n.category === "emergency")
+  ).length;
 
   const list = useMemo(() => {
     if (tab === "all") return items;
     if (tab === "unread") return items.filter((n) => !n.read);
+    if (tab === "emergency") {
+      return items.filter((n) => n.kind === "emergency" || n.category === "emergency");
+    }
     if (tab === "rescheduled") {
       return items.filter((n) => /reschedul/i.test(`${n.title || ""} ${n.text || ""}`));
     }
@@ -105,11 +112,29 @@ export default function Notifications() {
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2 flex-wrap">
-          {tabs.map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white shadow-xs" : "bg-white border border-[#e5e8ee] text-[#64748b] hover:border-brand hover:text-brand dark:bg-night-panel dark:border-night-line dark:text-[#d1c9c2]"}`}>
-              {l}{k === "unread" && unread > 0 ? ` (${unread})` : ""}
-            </button>
-          ))}
+          {tabs.map(([k, l]) => {
+            const isEmergencyTab = k === "emergency";
+            const active = tab === k;
+            return (
+              <button
+                key={k}
+                onClick={() => setTab(k)}
+                className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${
+                  active
+                    ? isEmergencyTab
+                      ? "bg-[#dc2626] text-white shadow-xs"
+                      : "bg-brand text-white shadow-xs"
+                    : isEmergencyTab && emergencyUnread > 0
+                      ? "bg-[#fef2f2] border border-[#fca5a5] text-[#dc2626] hover:bg-[#fee2e2] dark:bg-red-950/40 dark:border-red-800 dark:text-red-300"
+                      : "bg-white border border-[#e5e8ee] text-[#64748b] hover:border-brand hover:text-brand dark:bg-night-panel dark:border-night-line dark:text-[#d1c9c2]"
+                }`}
+              >
+                {l}
+                {k === "unread" && unread > 0 ? ` (${unread})` : ""}
+                {isEmergencyTab && emergencyUnread > 0 ? ` (${emergencyUnread})` : ""}
+              </button>
+            );
+          })}
         </div>
         <button onClick={markAllRead} disabled={!unread} className={`${btnGhost} !py-2 disabled:opacity-50`}>
           <Icon name="check-check" /> Mark all as read
@@ -137,25 +162,52 @@ export default function Notifications() {
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
-          list.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => { markRead(n.id); if (n.to) navigate(n.to); }}
-              className={`w-full flex items-center gap-4 px-5 py-3.5 text-left border-b border-[#edf0f4] last:border-0 hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`}
-            >
-              <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}><Icon name={n.icon} /></span>
-              <span className="flex-1 min-w-0">
-                <span className="flex items-center justify-between gap-2">
-                  <strong className="truncate text-[14px]">{n.title}</strong>
-                  <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
+          list.map((n) => {
+            const isEmergency = n.kind === "emergency" || n.category === "emergency";
+            return (
+              <button
+                key={n.id}
+                onClick={() => { markRead(n.id); if (n.to) navigate(n.to); }}
+                className={`w-full flex items-center gap-4 px-5 py-3.5 text-left border-b border-[#edf0f4] last:border-0 dark:border-night-line ${
+                  isEmergency
+                    ? "border-l-4 border-l-[#dc2626] bg-[#fef2f2]/90 hover:bg-[#fee2e2]/80 dark:bg-red-950/35 dark:hover:bg-red-950/50"
+                    : `hover:bg-[#fff7f2] dark:hover:bg-night-head ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head/60"}`
+                }`}
+              >
+                <span
+                  className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${
+                    isEmergency ? "bg-[#dc2626] text-white shadow-xs" : tones[n.tone] || tones.orange
+                  }`}
+                >
+                  <Icon name={isEmergency ? "triangle-alert" : n.icon} />
                 </span>
-                <span className="block truncate text-[12.5px] text-[#64748b] dark:text-[#b8b0a8] mt-0.5">
-                  {compactNotifText(n.text)}
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
+                      {isEmergency && (
+                        <span className="shrink-0 rounded-full bg-[#dc2626] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                          Emergency
+                        </span>
+                      )}
+                      <strong className={`truncate text-[14px] ${isEmergency ? "text-[#991b1b] dark:text-red-200" : ""}`}>
+                        {n.title}
+                      </strong>
+                    </span>
+                    <small className="shrink-0 text-[11.5px] text-[#94a3b8]">{timeAgo(n.ts)}</small>
+                  </span>
+                  <span className={`block truncate text-[12.5px] mt-0.5 ${isEmergency ? "text-[#7f1d1d] dark:text-red-200/80" : "text-[#64748b] dark:text-[#b8b0a8]"}`}>
+                    {compactNotifText(n.text)}
+                  </span>
                 </span>
-              </span>
-              {!n.read && <span className="w-2.5 h-2.5 rounded-full bg-brand shrink-0" aria-label="Unread" />}
-            </button>
-          ))
+                {!n.read && (
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${isEmergency ? "bg-[#dc2626]" : "bg-brand"}`}
+                    aria-label="Unread"
+                  />
+                )}
+              </button>
+            );
+          })
         )}
       </section>
     </>

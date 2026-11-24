@@ -210,10 +210,169 @@ async function sendAnnouncementPush(announcement, { pushClient = null, skipVapid
   return summary;
 }
 
+function buildEmergencyAlertPushPayload(report) {
+  const roleLabel =
+    String(report?.reporter_role || "").toLowerCase() === "seller" ? "Seller" : "Rider";
+  const category = String(report?.category || "Emergency").trim().slice(0, 60);
+  const reportCode = String(report?.report_code || `EMR-${report?.report_id || ""}`).trim();
+
+  // Privacy-safe preview: exclude full address, personal phone/contact, and detailed private description.
+  const body = `New ${roleLabel} emergency (${reportCode}) — ${category}. Open LOGISYNC to review immediately.`;
+
+  return JSON.stringify({
+    type: "emergency_alert",
+    category: "emergency",
+    priority: "high",
+    reportId: report.report_id,
+    reportCode,
+    title: `EMERGENCY ALERT · ${reportCode}`,
+    body,
+    url: `/emergency-reports?report=${encodeURIComponent(reportCode)}`,
+    ts: Date.now(),
+  });
+}
+
+/**
+ * Sends high-priority desktop Browser Push notifications to eligible Coordinator accounts
+ * when a Seller or Rider submits an Emergency Report.
+ * - Does NOT suppress alerts when ordinary notification categories are disabled.
+ * - Respects browser push subscription status, prevents duplicate delivery per subscription,
+ *   and deactivates expired/invalid (404/410) subscriptions.
+ */
+async function sendEmergencyAlertPush(report, { pushClient = null, skipVapidInit = false } = {}) {
+  const summary = {
+    configured: true,
+    attempted: 0,
+    sent: 0,
+    skipped: 0,
+    deactivated: 0,
+    failed: 0,
+  };
+
+  if (!report || !report.report_id) {
+    return summary;
+  }
+
+  const client = await resolvePushClient(pushClient);
+
+  if (!skipVapidInit && !(await ensureVapidConfigured(client))) {
+    summary.configured = false;
+    return summary;
+  }
+
+  const { rows: subscriptions } = await rawPool.query(
+    `SELECT
+       ps.subscription_id,
+       ps.user_id,
+       ps.endpoint,
+       ps.p256dh,
+       ps.auth,
+       u.role,
+       u.verification_status,
+       up.preferences
+     FROM push_subscriptions ps
+     JOIN users u ON u.user_id = ps.user_id
+     LEFT JOIN user_preferences up ON up.user_id = ps.user_id
+     WHERE ps.is_active = TRUE
+       AND LOWER(u.role) = 'coordinator'
+       AND COALESCE(u.is_deleted, FALSE) = FALSE
+       AND COALESCE(UPPER(u.verification_status), 'APPROVED') <> 'REJECTED'`
+  );
+
+  const seenEndpoints = new Set();
+  const payload = buildEmergencyAlertPushPayload(report);
+
+  for (const sub of subscriptions) {
+    if (!sub.endpoint || seenEndpoints.has(sub.endpoint)) {
+      summary.skipped += 1;
+      continue;
+    }
+    seenEndpoints.add(sub.endpoint);
+
+    const prefs = sub.preferences && typeof sub.preferences === "object" ? sub.preferences : {};
+    // High-priority Emergency Alerts are NEVER suppressed by ordinary category toggles
+    // (notifyParcel, notifyVerification, notifyMessages, notifyAnnouncements).
+    // Only honor explicit Browser Push opt-out.
+    if (prefs.browserPushEnabled === false) {
+      summary.skipped += 1;
+      continue;
+    }
+
+    // Atomic duplicate guard per (report_id, subscription_id)
+    const [insertRes] = await pool.query(
+      `INSERT INTO emergency_push_delivery_logs (report_id, subscription_id, user_id, status)
+       VALUES (?, ?, ?, 'PENDING')
+       ON CONFLICT (report_id, subscription_id) DO NOTHING`,
+      [report.report_id, sub.subscription_id, sub.user_id]
+    );
+
+    if (!insertRes.length) {
+      summary.skipped += 1;
+      continue;
+    }
+
+    const deliveryId = insertRes[0].delivery_id;
+    summary.attempted += 1;
+
+    try {
+      await client.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        },
+        payload,
+        { timeout: 5000, urgency: "high" }
+      );
+
+      await pool.query(
+        `UPDATE emergency_push_delivery_logs SET status = 'SENT' WHERE delivery_id = ?`,
+        [deliveryId]
+      );
+      summary.sent += 1;
+    } catch (err) {
+      const code = Number(err?.statusCode || 0);
+      const errMsg = String(err?.message || "Push delivery error").slice(0, 240);
+
+      if (code === 404 || code === 410) {
+        await pool.query(
+          `UPDATE push_subscriptions
+              SET is_active = FALSE, last_error = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE subscription_id = ?`,
+          [errMsg, sub.subscription_id]
+        );
+        await pool.query(
+          `UPDATE emergency_push_delivery_logs SET status = 'EXPIRED' WHERE delivery_id = ?`,
+          [deliveryId]
+        );
+        summary.deactivated += 1;
+      } else {
+        await pool.query(
+          `UPDATE push_subscriptions
+              SET last_error = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE subscription_id = ?`,
+          [errMsg, sub.subscription_id]
+        );
+        await pool.query(
+          `UPDATE emergency_push_delivery_logs SET status = 'FAILED' WHERE delivery_id = ?`,
+          [deliveryId]
+        );
+        summary.failed += 1;
+      }
+    }
+  }
+
+  return summary;
+}
+
 module.exports = {
   ensureVapidConfigured,
   getPublicVapidConfig,
   buildAnnouncementPushPayload,
   sendAnnouncementPush,
+  buildEmergencyAlertPushPayload,
+  sendEmergencyAlertPush,
   setPushClientForTesting,
 };

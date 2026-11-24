@@ -13,7 +13,8 @@ const names = {
   riders: "Riders",
   sellers: "Sellers",
   messages: "Messages",
-  complaints: "Complaints",
+  "emergency-reports": "Emergency Reports",
+  "report-emergency": "Report Emergency",
   announcements: "Announcements",
   notifications: "Notifications",
   analytics: "Analytics",
@@ -89,7 +90,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
       ? pathname.startsWith("/rider/activity")
         ? "/rider/settings"
         : pathname.startsWith("/rider/help") ||
-            pathname.startsWith("/rider/complaints") ||
+            pathname.startsWith("/rider/report-emergency") ||
             pathname.startsWith("/rider/about") ||
             pathname.startsWith("/rider/contact")
           ? "/rider/profile"
@@ -98,7 +99,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
         ? pathname.startsWith("/seller/activity")
           ? "/seller/settings"
           : pathname.startsWith("/seller/help") ||
-              pathname.startsWith("/seller/complaints") ||
+              pathname.startsWith("/seller/report-emergency") ||
               pathname.startsWith("/seller/about") ||
               pathname.startsWith("/seller/contact")
             ? "/seller/profile"
@@ -108,7 +109,7 @@ export default function Topbar({ title, subtitle, right, actions: actionsProp, c
           : pathname.startsWith("/accounts") ||
               pathname.startsWith("/riders") ||
               pathname.startsWith("/sellers") ||
-              pathname.startsWith("/complaints") ||
+              pathname.startsWith("/emergency-reports") ||
               pathname.startsWith("/help") ||
               pathname.startsWith("/about") ||
               pathname.startsWith("/contact")

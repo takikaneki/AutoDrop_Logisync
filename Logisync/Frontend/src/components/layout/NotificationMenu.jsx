@@ -28,6 +28,7 @@ export default function NotificationMenu({ role, btnClass }) {
 
   const allowItem = (n, isAnnouncement = false) => {
     const cat = classifyNotification(n, isAnnouncement);
+    if (cat === "emergency") return true;
     if (cat === "announcements") return prefs.notifyAnnouncements !== false;
     if (cat === "messages") return prefs.notifyMessages !== false;
     if (cat === "verification") return prefs.notifyVerification !== false;
@@ -128,21 +129,47 @@ export default function NotificationMenu({ role, btnClass }) {
                   </button>
                 </li>
               ))}
-              {notifications.slice(0, 5).map((n) => (
-                <li key={n.id}>
-                  <button onClick={() => go(n)} className={`flex w-full gap-3 px-4 py-3 text-left text-[14px] hover:bg-[#fff3e8] dark:hover:bg-night-line ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`}>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand dark:bg-night-head">
-                      <Icon name={n.icon} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <strong className="block truncate">{n.title}</strong>
-                      <span className="block truncate text-[13px] text-[#999]">{n.text}</span>
-                      <small className="text-[12px] text-[#bbb]">{timeAgo(n.ts)}</small>
-                    </span>
-                    {!n.read && <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
-                  </button>
-                </li>
-              ))}
+              {notifications.slice(0, 5).map((n) => {
+                const isEmergency = n.kind === "emergency" || n.category === "emergency";
+                return (
+                  <li key={n.id}>
+                    <button
+                      onClick={() => go(n)}
+                      className={`flex w-full gap-3 px-4 py-3 text-left text-[14px] ${
+                        isEmergency
+                          ? "border-l-4 border-l-[#dc2626] bg-[#fef2f2] hover:bg-[#fee2e2]/80 dark:bg-red-950/35 dark:hover:bg-red-950/50"
+                          : `hover:bg-[#fff3e8] dark:hover:bg-night-line ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                          isEmergency
+                            ? "bg-[#dc2626] text-white"
+                            : "bg-brand-soft text-brand dark:bg-night-head"
+                        }`}
+                      >
+                        <Icon name={n.icon} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        {isEmergency && (
+                          <small className="block text-[10.5px] font-extrabold uppercase tracking-wide text-[#dc2626] dark:text-red-300">
+                            Emergency Update
+                          </small>
+                        )}
+                        <strong className="block truncate">{n.title}</strong>
+                        <span className="block truncate text-[13px] text-[#999]">{n.text}</span>
+                        <small className="text-[12px] text-[#bbb]">{timeAgo(n.ts)}</small>
+                      </span>
+                      {!n.read && (
+                        <span
+                          className={`mt-2 h-2 w-2 shrink-0 rounded-full ${isEmergency ? "bg-[#dc2626]" : "bg-brand"}`}
+                          aria-label="Unread"
+                        />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
           <Link to={toPath(role, "notifications")} onClick={() => setOpen(false)} className="block border-t border-[#f1f1f1] px-4 py-3 text-center text-[13px] font-semibold text-brand hover:bg-[#fff3e8] dark:border-night-line dark:hover:bg-night-line">

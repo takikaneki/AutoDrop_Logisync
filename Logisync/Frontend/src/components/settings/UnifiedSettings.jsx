@@ -833,7 +833,7 @@ export default function UnifiedSettings() {
                               Browser Push Notifications
                             </strong>
                             <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10.5px] font-bold text-brand">
-                              Announcements only
+                              Announcements &amp; Emergencies
                             </span>
                             <span
                               className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
@@ -848,7 +848,9 @@ export default function UnifiedSettings() {
                             </span>
                           </div>
                           <span className="mt-0.5 block text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
-                            Receive desktop browser push alerts exclusively when a Coordinator publishes a Hub Announcement.
+                            {roleKey === "coordinator"
+                              ? "Receive high-priority desktop browser push alerts for incoming Seller/Rider Emergency Reports and Hub Announcements."
+                              : "Receive desktop browser push alerts when a Coordinator publishes a Hub Announcement."}
                           </span>
                         </div>
                         <button
@@ -914,8 +916,8 @@ export default function UnifiedSettings() {
                       ],
                       [
                         "notifyMessages",
-                        "Messages & Complaints",
-                        "Direct chat messages and complaint or request status replies.",
+                        "Messages",
+                        "Direct chat messages between Coordinator, Sellers, and Riders.",
                       ],
                       [
                         "notifyAnnouncements",

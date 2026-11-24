@@ -25,6 +25,7 @@ const tones = {
 
 const tabs = [
   { key: "all", label: "All" },
+  { key: "emergency", label: "Emergency" },
   { key: "rider", label: "Riders" },
   { key: "seller", label: "Sellers" },
 ];
@@ -57,6 +58,8 @@ export default function NotificationBell() {
   const notifications = useMemo(() => {
     return rawNotifications.filter((n) => {
       const cat = classifyNotification(n);
+      // Never suppress high-priority emergency alerts via ordinary notification category toggles.
+      if (cat === "emergency") return true;
       if (cat === "announcements") return prefs.notifyAnnouncements !== false;
       if (cat === "messages") return prefs.notifyMessages !== false;
       if (cat === "verification") return prefs.notifyVerification !== false;
@@ -73,22 +76,33 @@ export default function NotificationBell() {
     const fresh = notifications.filter((n) => !n.read && !seenIdsRef.current.has(n.id));
     seenIdsRef.current = ids;
     if (fresh.length > 0) {
-      const n = fresh[0];
+      const emergencyFresh = fresh.find((n) => classifyNotification(n) === "emergency");
+      const n = emergencyFresh || fresh[0];
+      const cat = classifyNotification(n);
       notifyPopup({
         title: n.title,
         message: n.text,
-        icon: n.icon || "bell",
+        icon: n.icon || (cat === "emergency" ? "triangle-alert" : "bell"),
         to: n.to || "/notifications",
-        category: classifyNotification(n),
+        category: cat,
+        priority: cat === "emergency" ? "high" : "normal",
       });
     }
   }, [notifications]);
 
-  const unread = bellEnabled ? notifications.filter((n) => !n.read).length : 0;
-  const list = useMemo(
-    () => (tab === "all" ? notifications : notifications.filter((n) => n.kind === tab)),
-    [notifications, tab]
-  );
+  const unreadEmergencies = notifications.filter(
+    (n) => !n.read && classifyNotification(n) === "emergency"
+  ).length;
+  const unread = bellEnabled
+    ? notifications.filter((n) => !n.read).length
+    : unreadEmergencies;
+  const list = useMemo(() => {
+    if (tab === "all") return notifications;
+    if (tab === "emergency") {
+      return notifications.filter((n) => classifyNotification(n) === "emergency");
+    }
+    return notifications.filter((n) => n.kind === tab || n.reporterRole === tab);
+  }, [notifications, tab]);
 
   // isara kapag nag-click sa labas o Escape
   useEffect(() => {
@@ -165,7 +179,7 @@ export default function NotificationBell() {
           </div>
 
           <div className="max-h-[360px] overflow-y-auto border-t border-[#f1f1f1] dark:border-night-line">
-            {!bellEnabled ? (
+            {!bellEnabled && unreadEmergencies === 0 ? (
               <div className="px-5 py-9 text-center text-[12.5px] text-[#888]">
                 <Icon name="bell-off" className="mb-2 block text-[22px] text-[#bbb]" />
                 In-App Notifications in the header bell are turned off. Existing history is preserved.
@@ -178,25 +192,53 @@ export default function NotificationBell() {
                 {online ? "No notifications here yet." : "You're offline. Notifications will refresh when reconnected."}
               </div>
             ) : (
-              list.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => openItem(n)}
-                  className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-[#f6f6f6] hover:bg-[#fff7f2] dark:border-night-line dark:hover:bg-night-line ${
-                    n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"
-                  }`}
-                >
-                  <span className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${tones[n.tone] || tones.orange}`}>
-                    <Icon name={n.icon} />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <strong className="block text-[13px] leading-snug">{n.title}</strong>
-                    <span className="block mt-0.5 text-[12px] text-[#888] truncate">{n.text}</span>
-                    <small className="block mt-1 text-[11px] text-[#aaa]">{timeAgo(n.ts)}</small>
-                  </span>
-                  {!n.read && <span className="mt-1.5 w-2 h-2 shrink-0 rounded-full bg-brand" />}
-                </button>
-              ))
+              list
+                .filter((n) => bellEnabled || classifyNotification(n) === "emergency")
+                .map((n) => {
+                  const isEmergency = classifyNotification(n) === "emergency";
+                  return (
+                    <button
+                      key={n.id}
+                      onClick={() => openItem(n)}
+                      className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-[#f6f6f6] dark:border-night-line ${
+                        isEmergency
+                          ? "border-l-4 border-l-[#dc2626] bg-[#fef2f2] hover:bg-[#fee2e2]/80 dark:bg-red-950/35 dark:hover:bg-red-950/50"
+                          : `hover:bg-[#fff7f2] dark:hover:bg-night-line ${n.read ? "" : "bg-[#fffaf7] dark:bg-night-head"}`
+                      }`}
+                    >
+                      <span
+                        className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-[14px] ${
+                          isEmergency
+                            ? "bg-[#dc2626] text-white shadow-xs"
+                            : tones[n.tone] || tones.orange
+                        }`}
+                      >
+                        <Icon name={isEmergency ? "triangle-alert" : n.icon} />
+                      </span>
+                      <span className="flex-1 min-w-0">
+                        {isEmergency && (
+                          <span className="mb-0.5 inline-flex items-center gap-1 rounded-full bg-[#dc2626] px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider text-white">
+                            Emergency
+                          </span>
+                        )}
+                        <strong className={`block text-[13px] leading-snug ${isEmergency ? "text-[#991b1b] dark:text-red-200" : ""}`}>
+                          {n.title}
+                        </strong>
+                        <span className={`block mt-0.5 text-[12px] truncate ${isEmergency ? "text-[#7f1d1d] dark:text-red-200/80" : "text-[#888]"}`}>
+                          {n.text}
+                        </span>
+                        <small className="block mt-1 text-[11px] text-[#aaa]">{timeAgo(n.ts)}</small>
+                      </span>
+                      {!n.read && (
+                        <span
+                          className={`mt-1.5 w-2 h-2 shrink-0 rounded-full ${
+                            isEmergency ? "bg-[#dc2626]" : "bg-brand"
+                          }`}
+                        />
+                      )}
+                    </button>
+                  );
+                })
             )}
           </div>
 

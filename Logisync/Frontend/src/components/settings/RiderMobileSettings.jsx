@@ -815,8 +815,8 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     [
                       "notifyMessages",
                       "message-circle",
-                      "Messages & Complaints",
-                      "Direct messages from coordinator and request updates.",
+                      "Messages",
+                      "Direct messages from the coordinator.",
                     ],
                     [
                       "notifyAnnouncements",

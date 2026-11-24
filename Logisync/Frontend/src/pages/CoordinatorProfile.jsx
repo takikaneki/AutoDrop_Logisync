@@ -260,9 +260,11 @@ export default function CoordinatorProfile() {
                 to="/analytics"
               />
               <MenuRow
-                icon="clipboard-list"
-                label="Complaints"
-                to="/complaints"
+                icon="triangle-alert"
+                iconTone="brand"
+                label="Emergency Reports"
+                sublabel="Review Seller & Rider alerts"
+                to="/emergency-reports"
               />
             </div>
           </div>

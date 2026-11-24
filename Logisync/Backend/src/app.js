@@ -10,6 +10,7 @@ const messageRoutes = require("./routes/messageRoutes");
 const userRoutes = require("./routes/userRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
+const emergencyRoutes = require("./routes/emergencyRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
 const { purgeExpiredDeactivatedAccounts } = require("./utils/accountLifecycle");
@@ -53,6 +54,7 @@ app.use(["/api/messages", "/messages"], messageRoutes);
 app.use(["/api/users", "/users"], userRoutes);
 app.use(["/api/audit-logs", "/audit-logs"], auditRoutes);
 app.use(["/api/complaints", "/complaints"], complaintRoutes);
+app.use(["/api/emergency-reports", "/emergency-reports"], emergencyRoutes);
 app.use(["/api/notifications", "/notifications"], notificationRoutes);
 app.use(["/api/announcements", "/announcements"], announcementRoutes);
 

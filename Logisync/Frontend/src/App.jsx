@@ -9,7 +9,7 @@ import CoordinatorScan from "./pages/CoordinatorScan.jsx";
 import Riders from "./pages/Riders.jsx";
 import Sellers from "./pages/Sellers.jsx";
 import Messages from "./pages/Messages.jsx";
-import Complaints from "./pages/Complaints.jsx";
+import EmergencyReports from "./pages/EmergencyReports.jsx";
 import Announcements from "./pages/Announcements.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import AuditLog from "./pages/AuditLog.jsx";
@@ -32,7 +32,7 @@ import RiderDeliveries from "./pages/rider/RiderDeliveries.jsx";
 import RiderProfile from "./pages/rider/RiderProfile.jsx";
 import RiderAnalytics from "./pages/rider/RiderAnalytics.jsx";
 import PortalNotifications from "./pages/shared/PortalNotifications.jsx";
-import PortalComplaints from "./pages/shared/PortalComplaints.jsx";
+import ReportEmergency from "./pages/shared/ReportEmergency.jsx";
 import ParcelRecords from "./pages/seller/ParcelRecords.jsx";
 import ScanUpload from "./pages/seller/ScanUpload.jsx";
 import MessagesPage from "./pages/shared/MessagesPage.jsx";
@@ -96,7 +96,8 @@ export default function App() {
           <Route path="activity" element={<ActivityPage />} />
           <Route path="announcements" element={<Navigate to="/seller/notifications" replace />} />
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="complaints" element={<PortalComplaints />} />
+          <Route path="report-emergency" element={<ReportEmergency />} />
+          <Route path="complaints" element={<Navigate to="/seller/report-emergency" replace />} />
           <Route path="notifications" element={<PortalNotifications />} />
           <Route path="profile" element={<SellerProfile />} />
           <Route path="analytics" element={<SellerAnalytics />} />
@@ -123,7 +124,8 @@ export default function App() {
           <Route path="activity" element={<ActivityPage />} />
           <Route path="announcements" element={<Navigate to="/rider/notifications" replace />} />
           <Route path="messages" element={<MessagesPage />} />
-          <Route path="complaints" element={<PortalComplaints />} />
+          <Route path="report-emergency" element={<ReportEmergency />} />
+          <Route path="complaints" element={<Navigate to="/rider/report-emergency" replace />} />
           <Route path="notifications" element={<PortalNotifications />} />
           <Route path="profile" element={<RiderProfile />} />
           <Route path="analytics" element={<RiderAnalytics />} />
@@ -145,7 +147,8 @@ export default function App() {
           <Route path="/riders" element={<Riders />} />
           <Route path="/sellers" element={<Sellers />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/complaints" element={<Complaints />} />
+          <Route path="/emergency-reports" element={<EmergencyReports />} />
+          <Route path="/complaints" element={<Navigate to="/emergency-reports" replace />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<CoordinatorProfile />} />

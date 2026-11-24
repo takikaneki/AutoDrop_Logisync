@@ -23,7 +23,7 @@ export const NAV = {
       title: "Communication",
       links: [
         { path: "messages", label: "Messages", icon: "message-circle" },
-        { path: "complaints", label: "Complaints / Requests", icon: "clipboard-list" },
+        { path: "report-emergency", label: "Report Emergency", icon: "triangle-alert" },
         { path: "notifications", label: "Notifications", icon: "bell" },
       ],
     },
@@ -47,7 +47,7 @@ export const NAV = {
       title: "Communication",
       links: [
         { path: "messages", label: "Messages", icon: "message-circle" },
-        { path: "complaints", label: "Complaints / Urgent Request", icon: "clipboard-list" },
+        { path: "report-emergency", label: "Report Emergency", icon: "triangle-alert" },
         { path: "notifications", label: "Notifications", icon: "bell" },
       ],
     },

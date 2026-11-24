@@ -4,6 +4,7 @@ const TONE_MAP = {
   parcel: { freq: 880, endFreq: 1174.66, dur: 0.24 },
   messages: { freq: 740, endFreq: 987.77, dur: 0.22 },
   announcements: { freq: 880, endFreq: 880, dur: 0.35 },
+  emergency: { freq: 987.77, endFreq: 1318.51, dur: 0.44 },
   scan: { freq: 1046.5, endFreq: 1318.5, dur: 0.16 },
 };
 

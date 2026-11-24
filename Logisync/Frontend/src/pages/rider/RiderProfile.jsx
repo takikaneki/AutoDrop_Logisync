@@ -161,9 +161,11 @@ export default function RiderProfile() {
                 to="/rider/analytics"
               />
               <MenuRow
-                icon="clipboard-list"
-                label="Complaints"
-                to="/rider/complaints"
+                icon="triangle-alert"
+                iconTone="brand"
+                label="Report Emergency"
+                sublabel="Alert hub coordinators immediately"
+                to="/rider/report-emergency"
               />
             </div>
           </div>

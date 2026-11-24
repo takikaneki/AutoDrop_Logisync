@@ -4,12 +4,11 @@ import AnnouncementModal from "./AnnouncementModal.jsx";
 import LogoutModal from "./LogoutModal.jsx";
 import UserAvatar from "./Avatar.jsx";
 import { useNotifications } from "../store/notifications.js";
-import { useComplaints } from "../store/records.js";
 import { toggleDark, usePrefs, useT } from "../store/prefs.js";
 import { useProfile } from "../store/profile.js";
 import { getUser } from "../api.js";
 import { listMessages } from "../services/messageService.js";
-import { fetchUnreadComplaintCount } from "../services/complaintService.js";
+import { fetchUnreviewedEmergencyCount } from "../services/emergencyService.js";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 import { useSidebarTooltip } from "./layout/SidebarTooltip.jsx";
 import Icon from "./Icon.jsx";
@@ -42,7 +41,7 @@ const groups = [
     title: "Communication",
     links: [
       { to: "/messages", icon: "message-circle", label: "Messages" },
-      { to: "/complaints", icon: "clipboard-list", label: "Complaints", badge: "complaints" },
+      { to: "/emergency-reports", icon: "triangle-alert", label: "Emergency Reports", badge: "emergencies" },
       { to: "/notifications", icon: "bell", label: "Notifications", badge: "notifications" },
     ],
   },
@@ -61,7 +60,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [unreadConversations, setUnreadConversations] = useState(0);
-  const [unreadComplaints, setUnreadComplaints] = useState(0);
+  const [unreviewedEmergencies, setUnreviewedEmergencies] = useState(0);
   const currentUserId = Number(getUser()?.user_id);
   const { tipProps, Tooltip } = useSidebarTooltip(collapsed);
 
@@ -69,9 +68,9 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
     let mounted = true;
     const refreshCounts = async () => {
       try {
-        const [messages, complaintCount] = await Promise.all([
+        const [messages, emergencyCount] = await Promise.all([
           listMessages().catch(() => []),
-          fetchUnreadComplaintCount().catch(() => 0),
+          fetchUnreviewedEmergencyCount().catch(() => 0),
         ]);
         if (!mounted) return;
         const senders = new Set(
@@ -80,18 +79,23 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
             .map((m) => Number(m.sender_id))
         );
         setUnreadConversations(senders.size);
-        setUnreadComplaints(Number(complaintCount) || 0);
+        setUnreviewedEmergencies(Number(emergencyCount) || 0);
       } catch {
         // Keep the sidebar usable
       }
     };
     refreshCounts();
     const timer = setInterval(refreshCounts, 15000);
-    return () => { mounted = false; clearInterval(timer); };
+    window.addEventListener("logisync:emergency-updated", refreshCounts);
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+      window.removeEventListener("logisync:emergency-updated", refreshCounts);
+    };
   }, [currentUserId]);
 
   const unread = useNotifications().filter((n) => !n.read).length;
-  const badges = { messages: unreadConversations, notifications: unread, complaints: unreadComplaints };
+  const badges = { messages: unreadConversations, notifications: unread, emergencies: unreviewedEmergencies };
 
   const navClass = ({ isActive }) =>
     `group relative flex items-center rounded-[10px] py-[11px] text-[14px] transition ${
@@ -119,7 +123,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
         }`}
       >
-        <div className={`flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
+        <div className={`logisync-sidebar-scroll flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>
           {/* Branding Header + Upper-Right Hamburger Toggle */}
           <div className={`mb-3.5 border-b border-white/20 pb-3.5 ${collapsed ? "min-[821px]:flex min-[821px]:flex-col min-[821px]:items-center min-[821px]:gap-2.5 min-[821px]:px-0 max-[820px]:px-1" : "px-1"}`}>
             <div className={`flex items-center justify-between gap-2.5 ${collapsed ? "min-[821px]:flex-col min-[821px]:justify-center" : ""}`}>
@@ -221,7 +225,13 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                         <Icon name={l.icon} className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
                         <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                         {count > 0 && (
-                          <span className={`min-w-[18px] h-[18px] px-1 rounded-full bg-white text-brand text-[11px] font-bold flex items-center justify-center shadow-xs ${collapsed ? "min-[821px]:hidden" : ""}`}>
+                          <span
+                            className={`min-w-[18px] h-[18px] px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center shadow-xs ${
+                              l.badge === "emergencies"
+                                ? "bg-[#dc2626] text-white ring-1 ring-white/70"
+                                : "bg-white text-brand"
+                            } ${collapsed ? "min-[821px]:hidden" : ""}`}
+                          >
                             {count}
                           </span>
                         )}

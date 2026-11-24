@@ -162,9 +162,11 @@ export default function SellerProfile() {
                 to="/seller/analytics"
               />
               <MenuRow
-                icon="clipboard-list"
-                label="Complaints"
-                to="/seller/complaints"
+                icon="triangle-alert"
+                iconTone="brand"
+                label="Report Emergency"
+                sublabel="Alert hub coordinators immediately"
+                to="/seller/report-emergency"
               />
             </div>
           </div>

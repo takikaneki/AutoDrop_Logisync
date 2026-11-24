@@ -10,6 +10,10 @@ export const usePopups = popupStore.use;
 
 function playNotificationCategorySound(category) {
   const prefs = getPrefs();
+  if (category === "emergency") {
+    if (prefs.sound !== false) previewTone("emergency");
+    return;
+  }
   if (prefs.notificationsEnabled === false || prefs.sound === false) return;
   if (category === "messages") {
     if (prefs.notifyMessages !== false && prefs.soundMessages !== false) previewTone("messages");
@@ -27,14 +31,15 @@ export function toast(message, type = "success") {
   setTimeout(() => store.set((l) => l.filter((t) => t.id !== id)), 3200);
 }
 
-export function notifyPopup({ title, message, icon = "bell", to = "", category = "parcel" }) {
+export function notifyPopup({ title, message, icon = "bell", to = "", category = "parcel", priority = "normal" }) {
   const prefs = getPrefs();
-  if (prefs.notificationsEnabled === false) return;
-  playNotificationCategorySound(category);
-  if (prefs.inAppPopups === false) return;
+  const isEmergency = category === "emergency" || priority === "high";
+  if (!isEmergency && prefs.notificationsEnabled === false) return;
+  playNotificationCategorySound(isEmergency ? "emergency" : category);
+  if (!isEmergency && prefs.inAppPopups === false) return;
   const id = Date.now() + Math.random();
-  popupStore.set((l) => [{ id, title, message, icon, to }, ...l].slice(0, 3));
-  setTimeout(() => popupStore.set((l) => l.filter((p) => p.id !== id)), 4500);
+  popupStore.set((l) => [{ id, title, message, icon, to, category, priority: isEmergency ? "high" : priority }, ...l].slice(0, 3));
+  setTimeout(() => popupStore.set((l) => l.filter((p) => p.id !== id)), isEmergency ? 7500 : 4500);
 }
 
 export const dismissToast = (id) => store.set((l) => l.filter((t) => t.id !== id));

@@ -1,6 +1,6 @@
 import { createStore } from "./createStore.js";
 import { api, getRole, getUser } from "../api.js";
-import { fetchComplaints } from "../services/complaintService.js";
+import { fetchEmergencyReports } from "../services/emergencyService.js";
 import { listMessages } from "../services/messageService.js";
 import { isOnline } from "../utils/network.js";
 
@@ -60,42 +60,38 @@ export async function syncCoordinatorNotificationsFromServer() {
   notifSyncStore.set((s) => ({ ...s, syncing: true }));
   try {
     const me = Number(getUser()?.user_id);
-    const [complaints, messages, parcelsRes] = await Promise.all([
-      fetchComplaints().catch(() => []),
+    const [emergencyRes, messages, parcelsRes] = await Promise.all([
+      fetchEmergencyReports().catch(() => ({ reports: [] })),
       listMessages().catch(() => []),
       api("/parcels").catch(() => null),
     ]);
 
     const incoming = [];
+    const emergencyReports = Array.isArray(emergencyRes?.reports) ? emergencyRes.reports : [];
 
-    if (Array.isArray(complaints)) {
-      complaints.forEach((c) => {
-        const rawId = c?.complaint_id || c?.id;
-        if (!rawId) return;
-        const ticketId = String(rawId).startsWith("C-") ? String(rawId) : `C-${rawId}`;
-        const isUrgent =
-          String(c.priority || "").toLowerCase() === "high" ||
-          /urgent/i.test(String(c.category || c.complaint_kind || c.kind || ""));
-        const senderRole =
-          String(c.complainant_role || c.role || "").toLowerCase() === "seller" ? "seller" : "rider";
-        const senderName = c.complainant_name || c.from || c.role || "User";
-        const tsVal =
-          new Date(c.created_at || c.createdAt || c.updated_at || c.updatedAt || Date.now()).getTime() ||
-          Date.now();
-        incoming.push({
-          id: `complaint:${ticketId}`,
-          kind: senderRole,
-          category: "messages",
-          icon: isUrgent ? "triangle-alert" : "clipboard-list",
-          tone: isUrgent ? "red" : "orange",
-          read: Boolean(c.is_read || c.isRead || c.status === "Resolved"),
-          title: `${senderName} sent ${isUrgent ? "an urgent complaint" : "a complaint"} (${ticketId})`,
-          text: c.subject || c.category || "New complaint submitted",
-          ts: tsVal,
-          to: "/complaints",
-        });
+    emergencyReports.forEach((r) => {
+      if (!r?.report_code) return;
+      const senderRole = String(r.reporter_role || "").toLowerCase() === "seller" ? "seller" : "rider";
+      const roleLabel = senderRole === "seller" ? "Seller" : "Rider";
+      const tsVal = new Date(r.created_at || Date.now()).getTime() || Date.now();
+      const status = String(r.status || "NEW").toUpperCase();
+      incoming.push({
+        id: `emergency:${r.report_code}`,
+        kind: "emergency",
+        category: "emergency",
+        priority: "high",
+        reportCode: r.report_code,
+        reporterRole: senderRole,
+        emergencyStatus: status,
+        icon: "triangle-alert",
+        tone: "red",
+        read: status !== "NEW",
+        title: `${r.report_code}: ${r.subject || "Emergency Report"}`,
+        text: `${roleLabel} ${r.reporter_name || roleLabel} · ${r.category || "Emergency"}`,
+        ts: tsVal,
+        to: `/emergency-reports?report=${encodeURIComponent(r.report_code)}`,
       });
-    }
+    });
 
     if (Array.isArray(messages) && me) {
       messages
@@ -221,6 +217,15 @@ export async function syncCoordinatorNotificationsFromServer() {
 
 export function classifyNotification(n, isAnnouncement = false) {
   if (isAnnouncement) return "announcements";
+  if (
+    n?.category === "emergency" ||
+    n?.kind === "emergency" ||
+    n?.priority === "high" ||
+    String(n?.to || "").startsWith("/emergency-reports") ||
+    String(n?.to || "").includes("/report-emergency")
+  ) {
+    return "emergency";
+  }
   if (n?.category === "announcements") return "announcements";
   if (n?.category === "messages") return "messages";
   if (n?.category === "verification") return "verification";
