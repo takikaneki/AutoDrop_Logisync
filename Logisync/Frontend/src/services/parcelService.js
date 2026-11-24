@@ -147,6 +147,7 @@ export async function createParcel({
   receiver_province = "",
   receiver_contact,
   contents,
+  quantity = 1,
   content_category = "",
   other_category_description = "",
   discrete_item = false,
@@ -154,6 +155,8 @@ export async function createParcel({
   updateExistingCustomer = false,
   is_cod = false,
   payment_method = "NON_COD",
+  draft_id = null,
+  idempotency_key = null,
 }) {
   const data = await api("/parcels", {
     method: "POST",
@@ -168,6 +171,7 @@ export async function createParcel({
       receiver_province,
       receiver_contact,
       contents,
+      quantity,
       content_category,
       other_category_description,
       discrete_item,
@@ -175,6 +179,8 @@ export async function createParcel({
       updateExistingCustomer,
       is_cod,
       payment_method,
+      ...(draft_id ? { draft_id } : {}),
+      ...(idempotency_key ? { idempotency_key } : {}),
     },
   });
   const created = {
@@ -398,3 +404,18 @@ export const confirmCoordinatorRth = (parcelId, { notes } = {}) =>
 // Complete movement and status history for a parcel
 export const fetchParcelHistory = (parcelId) =>
   api(`/parcels/${enc(parcelId)}/history`);
+
+// Seller Create Parcel Draft API (strictly isolated per authenticated Seller account)
+export const fetchServerParcelDraft = () =>
+  api("/parcels/draft");
+
+export const saveServerParcelDraft = (payload) =>
+  api("/parcels/draft", {
+    method: "PUT",
+    body: payload,
+  });
+
+export const deleteServerParcelDraft = () =>
+  api("/parcels/draft", {
+    method: "DELETE",
+  });

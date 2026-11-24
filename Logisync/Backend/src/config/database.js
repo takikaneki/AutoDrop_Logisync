@@ -315,6 +315,16 @@ async function ensureSchema() {
 
       CREATE INDEX IF NOT EXISTS idx_seller_customers_seller ON seller_customers(seller_id);
 
+      CREATE TABLE IF NOT EXISTS seller_parcel_drafts (
+        seller_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+        draft_id VARCHAR(80) NOT NULL,
+        client_updated_at BIGINT NOT NULL DEFAULT 0,
+        draft_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+        photo_meta JSONB,
+        photo_data_url TEXT,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+
       -- Backfill seller_customers from actual seller parcels (excluding any demo seed PX123456)
       INSERT INTO seller_customers (seller_id, normalized_name, receiver_name, receiver_contact, receiver_address, created_at, updated_at)
       SELECT DISTINCT ON (p.seller_id, LOWER(REGEXP_REPLACE(BTRIM(p.receiver_name), '\\s+', ' ', 'g')))

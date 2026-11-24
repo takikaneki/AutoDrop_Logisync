@@ -2,6 +2,9 @@ const express = require("express");
 
 const {
   listSellerCustomers,
+  getParcelDraft,
+  saveParcelDraft,
+  deleteParcelDraft,
   riderScanParcel,
   riderDelivered,
   riderFailed,
@@ -41,6 +44,12 @@ router.get("/", authenticateToken, authorizeRoles("seller", "coordinator"), list
 
 // Saved customers mula sa database para sa kasalukuyang naka-login na seller
 router.get("/customers", authenticateToken, authorizeRoles("seller"), listSellerCustomers);
+
+// Seller Create Parcel Auto-Save & Draft Recovery (ilagay bago ang "/:parcelId")
+router.get("/draft", authenticateToken, authorizeRoles("seller"), getParcelDraft);
+router.put("/draft", authenticateToken, authorizeRoles("seller"), saveParcelDraft);
+router.post("/draft", authenticateToken, authorizeRoles("seller"), saveParcelDraft);
+router.delete("/draft", authenticateToken, authorizeRoles("seller"), deleteParcelDraft);
 
 // Hanapin gamit ang transaction number (ilagay bago ang "/:parcelId")
 router.get("/by-transaction/:transactionNumber", authenticateToken, getParcelByTransaction);
