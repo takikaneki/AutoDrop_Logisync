@@ -85,6 +85,7 @@ export default function CreateParcel() {
   const draftHydratedRef = useRef(false);
   const skipNextAutoSaveRef = useRef(false);
   const submittedSuccessRef = useRef(false);
+  const isMountedRef = useRef(true);
   const saveTimerRef = useRef(null);
   const latestStateRef = useRef({
     values: EMPTY_PARCEL,
@@ -167,10 +168,14 @@ export default function CreateParcel() {
       };
 
       if (!hasMeaningfulDraftContent(draftValues, st.photoMeta)) {
+        await clearParcelDraft(currentUserId, { clearServer: !forceOffline });
+        if (isMountedRef.current && !submittedSuccessRef.current) {
+          setSaveStatus("idle");
+        }
         return;
       }
 
-      if (!immediate) {
+      if (!immediate && isMountedRef.current) {
         setSaveStatus("saving");
       }
 
@@ -186,7 +191,7 @@ export default function CreateParcel() {
         forceOffline,
       });
 
-      if (submittedSuccessRef.current) return;
+      if (!isMountedRef.current || submittedSuccessRef.current) return;
       if (res.status === "saved") {
         setSaveStatus("saved");
       } else if (res.status === "offline") {
@@ -269,6 +274,11 @@ export default function CreateParcel() {
     };
 
     if (!hasMeaningfulDraftContent(draftValues, photoMeta)) {
+      if (saveStatus !== "idle") {
+        clearParcelDraft(currentUserId, { clearServer: true }).catch(() => {});
+        setSaveStatus("idle");
+        setDraftRestoredNotice(false);
+      }
       return;
     }
 
@@ -281,10 +291,11 @@ export default function CreateParcel() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [values, scanned, updateSavedCustomer, photoFile, photoPreviewUrl, photoMeta, created, performAutoSave]);
+  }, [values, scanned, updateSavedCustomer, photoFile, photoPreviewUrl, photoMeta, created, performAutoSave, currentUserId, saveStatus]);
 
   // 3. Save immediately on navigation away (unmount), browser refresh/close, tab hide, and online/offline transitions
   useEffect(() => {
+    isMountedRef.current = true;
     if (!currentUserId) return;
 
     const flushSyncSnapshot = () => {
@@ -344,6 +355,7 @@ export default function CreateParcel() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
+      isMountedRef.current = false;
       window.removeEventListener("beforeunload", flushSyncSnapshot);
       window.removeEventListener("pagehide", flushSyncSnapshot);
       window.removeEventListener("offline", handleOffline);
@@ -1545,20 +1557,28 @@ export default function CreateParcel() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <input
                   ref={photoInputRef}
                   id="parcel_draft_photo"
                   type="file"
                   accept="image/*"
                   onChange={onSelectPhoto}
-                  className="block text-[12.5px] text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-soft file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-brand hover:file:bg-[#ffe4d1] dark:text-[#d1c9c2] dark:file:bg-night-head"
+                  className="hidden"
                 />
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3.5 py-2 text-[12.5px] font-bold text-brand transition hover:bg-[#ffe4d1] dark:border-brand/40 dark:bg-night-head dark:hover:bg-brand/20"
+                >
+                  <Icon name="image" className="text-[13px]" />
+                  <span>{photoPreviewUrl || photoFile ? "Change photo" : "Select photo"}</span>
+                </button>
                 {(photoFile || photoPreviewUrl) && (
                   <button
                     type="button"
                     onClick={onRemovePhoto}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-[#d94747] transition hover:border-red-300 hover:bg-red-50 dark:border-night-line dark:bg-night-head"
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-semibold text-[#d94747] transition hover:border-red-300 hover:bg-red-50 dark:border-night-line dark:bg-night-head"
                   >
                     <Icon name="x" className="text-[11px]" />
                     <span>Remove photo</span>

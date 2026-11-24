@@ -1,18 +1,40 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRole, getUser, logoutUser } from "../api.js";
-import { hasUnsyncedOfflineDraft } from "../utils/parcelDraftStore.js";
+import {
+  clearLocalDraftOnly,
+  hasUnsyncedOfflineDraft,
+  syncPendingDraftToServer,
+} from "../utils/parcelDraftStore.js";
 import Icon from "./Icon.jsx";
 
 export default function LogoutModal({ open, onClose }) {
   const navigate = useNavigate();
+  const [loggingOut, setLoggingOut] = useState(false);
   if (!open) return null;
 
-  const isSeller = String(getUser()?.role || getRole() || "").toLowerCase() === "seller";
-  const hasOfflineDraft = isSeller && hasUnsyncedOfflineDraft(getUser()?.user_id);
+  const currentUser = getUser();
+  const isSeller = String(currentUser?.role || getRole() || "").toLowerCase() === "seller";
+  const sellerId = currentUser?.user_id;
+  const hasOfflineDraft = isSeller && hasUnsyncedOfflineDraft(sellerId);
 
   const handleLogout = async () => {
-    await logoutUser();
-    navigate("/login", { replace: true, state: { fromLogout: true } });
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      if (isSeller && sellerId) {
+        // If online and a local draft is unsynced, try syncing it to the Seller's server draft first
+        if (typeof navigator === "undefined" || navigator.onLine !== false) {
+          await syncPendingDraftToServer(sellerId).catch(() => {});
+        }
+        // Clear account-specific local browser draft so customer data does not linger on shared devices
+        await clearLocalDraftOnly(sellerId).catch(() => {});
+      }
+      await logoutUser();
+      navigate("/login", { replace: true, state: { fromLogout: true } });
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -45,24 +67,26 @@ export default function LogoutModal({ open, onClose }) {
               <span>Unfinished Offline Parcel Draft</span>
             </strong>
             <p className="mt-1">
-              You have an unfinished Create Parcel draft saved offline on this device that has not synced to the server yet. Your draft remains isolated to your account, but unsynced offline changes may be lost if browser storage is cleared.
+              You have an unfinished Create Parcel draft saved offline on this device that has not synced to the server yet. Logging out while offline will clear local browser draft data and your unsynced changes may be lost.
             </p>
           </div>
         )}
         <div className="flex items-center justify-center gap-2.5">
           <button
             type="button"
-            className="flex-1 rounded-xl border border-[#cbd5e1] bg-white px-4 py-2.5 text-[13.5px] font-semibold text-[#475569] transition hover:bg-[#f8fafc] dark:border-night-line dark:bg-night-head dark:text-[#e2dad3] dark:hover:bg-[#3d3732]"
+            disabled={loggingOut}
+            className="flex-1 rounded-xl border border-[#cbd5e1] bg-white px-4 py-2.5 text-[13.5px] font-semibold text-[#475569] transition hover:bg-[#f8fafc] disabled:opacity-60 dark:border-night-line dark:bg-night-head dark:text-[#e2dad3] dark:hover:bg-[#3d3732]"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="button"
-            className="flex-1 rounded-xl bg-brand px-4 py-2.5 text-[13.5px] font-bold text-white shadow-xs transition hover:bg-brand-dark"
+            disabled={loggingOut}
+            className="flex-1 rounded-xl bg-brand px-4 py-2.5 text-[13.5px] font-bold text-white shadow-xs transition hover:bg-brand-dark disabled:opacity-60"
             onClick={handleLogout}
           >
-            Log Out
+            {loggingOut ? "Logging out…" : "Log Out"}
           </button>
         </div>
       </div>

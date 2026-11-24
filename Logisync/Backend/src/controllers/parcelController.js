@@ -125,6 +125,7 @@ async function ensureCustomerSchema() {
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS rth_confirmed_notes VARCHAR(500);
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS next_day_attempt_count INTEGER NOT NULL DEFAULT 0;
         ALTER TABLE parcels ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
+        ALTER TABLE parcels ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100);
 
         ALTER TABLE parcels DROP CONSTRAINT IF EXISTS parcels_status_check;
         ALTER TABLE parcels DROP CONSTRAINT IF EXISTS parcels_delivery_status_check;
@@ -711,6 +712,31 @@ async function createParcel(req, res) {
       discreet_reason: cleanDiscreetReason
     });
 
+    const incomingIdempotencyKey =
+      typeof (req.body?.idempotency_key || req.body?.draft_id) === "string"
+        ? String(req.body.idempotency_key || req.body.draft_id).trim().slice(0, 100)
+        : null;
+
+    if (incomingIdempotencyKey) {
+      const [idemRows] = await pool.query(
+        "SELECT * FROM parcels WHERE seller_id = ? AND idempotency_key = ? LIMIT 1",
+        [req.user.user_id, incomingIdempotencyKey]
+      );
+      if (idemRows.length > 0) {
+        try {
+          await pool.query("DELETE FROM seller_parcel_drafts WHERE seller_id = ?", [req.user.user_id]);
+        } catch {
+          /* non-fatal draft cleanup */
+        }
+        return res.status(200).json({
+          success: true,
+          idempotentReplay: true,
+          message: "Parcel registered successfully.",
+          parcel: idemRows[0]
+        });
+      }
+    }
+
     const [existing] = await pool.query(
       "SELECT * FROM parcels WHERE UPPER(transaction_number) = ?",
       [transactionNumber]
@@ -719,20 +745,12 @@ async function createParcel(req, res) {
     if (existing.length > 0) {
       const existingParcel = existing[0];
       const isMine = Number(existingParcel.seller_id) === Number(req.user.user_id);
-      const isRetrySubmission = Boolean(req.body?.idempotency_key || req.body?.draft_id);
-      const createdRecently =
-        existingParcel.created_at &&
-        Date.now() - new Date(existingParcel.created_at).getTime() < 10 * 60 * 1000;
+      const isExactIdemMatch =
+        incomingIdempotencyKey &&
+        existingParcel.idempotency_key &&
+        String(existingParcel.idempotency_key) === incomingIdempotencyKey;
 
-      // If the Seller is retrying an uncertain submission for the exact same parcel they just created,
-      // clear their draft and return the existing created parcel idempotently instead of creating a duplicate.
-      if (
-        isMine &&
-        isRetrySubmission &&
-        createdRecently &&
-        String(existingParcel.receiver_name || "").trim().toLowerCase() === cleanReceiverName.toLowerCase() &&
-        String(existingParcel.contents || "").trim().toLowerCase() === cleanContents.toLowerCase()
-      ) {
+      if (isMine && isExactIdemMatch) {
         try {
           await pool.query("DELETE FROM seller_parcel_drafts WHERE seller_id = ?", [req.user.user_id]);
         } catch {
@@ -782,9 +800,9 @@ async function createParcel(req, res) {
         contents, quantity, content_category, other_category_description,
         discrete_item, discreet_reason, discreet_status,
         declaration_flagged, declaration_flag_reason,
-        is_cod, payment_method,
+        is_cod, payment_method, idempotency_key,
         status, verification_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_VIDEO', 'PENDING')`,
       [
         parcelId,
         transactionNumber,
@@ -807,7 +825,8 @@ async function createParcel(req, res) {
         riskAssessment.flagged,
         riskAssessment.flagReason || null,
         isCod,
-        resolvedPaymentMethod
+        resolvedPaymentMethod,
+        incomingIdempotencyKey
       ]
     );
 

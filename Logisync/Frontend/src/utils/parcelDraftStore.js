@@ -1,4 +1,4 @@
-import { getRole, getToken, getUser } from "../api.js";
+import { API_BASE_URL, getRole, getToken, getUser } from "../api.js";
 import {
   deleteServerParcelDraft,
   fetchServerParcelDraft,
@@ -370,6 +370,33 @@ export function saveDraftSnapshotSync({
   writeLocalMetaBackup(sellerId, record);
   // Also fire async IndexedDB write
   idbPut(record).catch(() => {});
+
+  // Best-effort keepalive PUT to backend when online so browser close/refresh syncs immediately
+  if (isOnlineNow() && getToken() && typeof fetch === "function") {
+    try {
+      const payload = JSON.stringify({
+        draftId: record.draftId,
+        clientUpdatedAt: record.clientUpdatedAt,
+        values: record.values,
+        photoMeta: record.photoMeta,
+        photoDataUrl:
+          record.photoDataUrl && record.photoDataUrl.length <= 45000 ? record.photoDataUrl : null,
+      });
+      if (payload.length <= 60000) {
+        fetch(`${API_BASE_URL}/parcels/draft`, {
+          method: "PUT",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: payload,
+        }).catch(() => {});
+      }
+    } catch {
+      /* ignore keepalive fallback errors */
+    }
+  }
   return record;
 }
 
@@ -688,6 +715,14 @@ export async function clearParcelDraft(userId, { clearServer = true } = {}) {
   }
 }
 
+export async function clearLocalDraftOnly(userId) {
+  const sellerId = resolveSellerId(userId);
+  const key = getSellerDraftKey(sellerId);
+  if (!sellerId || !key) return;
+  await idbDelete(key);
+  removeLocalMetaBackup(sellerId);
+}
+
 /**
  * Checks synchronously whether the current Seller has an unfinished offline/unsynced draft
  * so LogoutModal can warn the user before logging out.
@@ -706,4 +741,15 @@ export function hasUnsyncedOfflineDraft(userId) {
     return true;
   }
   return false;
+}
+
+// Automatically sync any dirty offline Seller draft whenever browser connectivity returns,
+// even if the Seller navigated away from Create Parcel while offline.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("online", () => {
+    const sid = resolveSellerId();
+    if (sid && hasUnsyncedOfflineDraft(sid)) {
+      syncPendingDraftToServer(sid).catch(() => {});
+    }
+  });
 }
