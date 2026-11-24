@@ -10,6 +10,19 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { formatDate } from "../utils/format.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
+import {
+  isOnline,
+  readViewCache,
+  useNetworkStatus,
+  useReconnectRefresh,
+  writeViewCache,
+} from "../utils/network.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const tone = {
@@ -173,8 +186,23 @@ export default function Riders() {
     }
   };
 
+  const { online } = useNetworkStatus();
+  const [cachedAt, setCachedAt] = useState(() => readViewCache("coordinator-riders")?.updatedAt || null);
+  const [hasData, setHasData] = useState(() => Boolean(readViewCache("coordinator-riders")?.data));
+
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (!isOnline()) {
+      const cached = readViewCache("coordinator-riders");
+      if (cached?.data) {
+        setRawRiders(cached.data.riders || []);
+        setParcels(cached.data.parcels || []);
+        setCachedAt(cached.updatedAt || null);
+        setHasData(true);
+      }
+      setLoading(false);
+      return;
+    }
+    setLoading((prev) => (hasData ? prev : true));
     setError("");
     try {
       const [usersData, parcelsData] = await Promise.all([
@@ -189,16 +217,32 @@ export default function Riders() {
       );
       setRawRiders(onlyRiders);
       setParcels(realParcels);
+      setHasData(true);
+      setCachedAt(Date.now());
+      writeViewCache("coordinator-riders", { riders: onlyRiders, parcels: realParcels });
     } catch (err) {
-      setError(err.message || "Failed to load riders from the database.");
+      if (isOnline()) setError(err.message || "Failed to load riders from the database.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hasData]);
 
   useEffect(() => {
+    const cached = readViewCache("coordinator-riders");
+    if (cached?.data) {
+      setRawRiders(cached.data.riders || []);
+      setParcels(cached.data.parcels || []);
+      setHasData(true);
+      setLoading(false);
+    }
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useReconnectRefresh(loadData);
+
+  const offlineEmpty = !online && !hasData;
+  const showCachedNotice = !online && hasData;
 
   // Build database-driven rider records with live parcel metrics
   const riders = useMemo(() => {
@@ -470,6 +514,13 @@ export default function Riders() {
           </select>
         </div>
 
+        {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
+        {error && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load riders" message={error} onRetry={loadData} />
+          </div>
+        )}
+
         <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[700px] border-collapse">
             <thead className={stickyThead}>
@@ -548,7 +599,12 @@ export default function Riders() {
               </tbody>
             )}
           </table>
-          {!loading && rows.length === 0 && (
+          {!loading && offlineEmpty && (
+            <div className="p-4">
+              <OfflineState compact title="Rider directory unavailable offline" text="Reconnect to load rider accounts." onRetry={loadData} />
+            </div>
+          )}
+          {!loading && !offlineEmpty && !error && rows.length === 0 && (
             <EmptyState
               icon="bike"
               title="No riders found"
@@ -564,7 +620,9 @@ export default function Riders() {
         {/* Mobile Card List */}
         <div className="min-[701px]:hidden space-y-3">
           {loading ? (
-            <div className="py-8 text-center text-[13px] text-[#888]">Loading riders…</div>
+            <ParcelCardListSkeleton count={4} label="Loading riders" />
+          ) : offlineEmpty ? (
+            <OfflineState compact title="Rider directory unavailable offline" text="Reconnect to load rider accounts." onRetry={loadData} />
           ) : pageRows.length === 0 ? (
             <EmptyState
               icon="bike"

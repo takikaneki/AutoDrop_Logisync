@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import Icon from "../Icon.jsx";
+import { BentoKpiSkeleton } from "../Skeletons.jsx";
 
 const TONE_STYLES = {
   dark: {
@@ -53,7 +54,10 @@ const TONE_STYLES = {
   },
 };
 
-export default function BentoKpiRow({ cards = [] }) {
+export default function BentoKpiRow({ cards = [], loading = false }) {
+  if (loading) {
+    return <BentoKpiSkeleton count={cards.length || 3} />;
+  }
   return (
     <div className="grid grid-cols-3 gap-4 max-[960px]:grid-cols-1 max-[600px]:gap-3">
       {cards.map((c) => {

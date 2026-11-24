@@ -9,8 +9,15 @@ import {
   markRead,
   syncCoordinatorNotificationsFromServer,
   timeAgo,
+  useCoordinatorNotificationSyncState,
   useNotifications,
 } from "../store/notifications.js";
+import { useNetworkStatus, useReconnectRefresh } from "../utils/network.js";
+import {
+  CachedDataNotice,
+  NotificationListSkeleton,
+  OfflineState,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const tones = {
@@ -40,12 +47,19 @@ function compactNotifText(text = "") {
 
 export default function Notifications() {
   const items = useNotifications();
+  const syncState = useCoordinatorNotificationSyncState();
+  const { online } = useNetworkStatus();
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
 
   useEffect(() => {
     syncCoordinatorNotificationsFromServer();
   }, []);
+  useReconnectRefresh(syncCoordinatorNotificationsFromServer);
+
+  const loading = online && syncState.syncing && items.length === 0;
+  const offlineEmpty = !online && items.length === 0 && !syncState.syncedOnce;
+  const showCachedNotice = !online && items.length > 0;
   const unread = items.filter((n) => !n.read).length;
 
   const list = useMemo(() => {
@@ -105,8 +119,20 @@ export default function Notifications() {
       {/* Rescheduled & Return-to-Hub review panel (only shown under their dedicated filter tabs) */}
       {(tab === "rescheduled" || tab === "return_to_hub") && <FailedDeliveryReview mode={tab} />}
 
+      {showCachedNotice && <CachedDataNotice updatedAt={syncState.lastSyncedAt} />}
+
       <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
-        {list.length === 0 ? (
+        {loading ? (
+          <NotificationListSkeleton count={6} />
+        ) : offlineEmpty ? (
+          <div className="p-6">
+            <OfflineState
+              title="Notifications unavailable offline"
+              text="Reconnect to fetch your latest hub alerts."
+              onRetry={syncCoordinatorNotificationsFromServer}
+            />
+          </div>
+        ) : list.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>

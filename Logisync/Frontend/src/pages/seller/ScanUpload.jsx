@@ -5,6 +5,7 @@ import ScanPanel from "../../components/qr/ScanPanel.jsx";
 import PortalRecentScans from "../../components/qr/PortalRecentScans.jsx";
 import ShipmentDetailsView from "../../components/parcels/ShipmentDetailsView.jsx";
 import { Notice } from "../../components/portal.jsx";
+import { ShipmentDetailSkeleton } from "../../components/Skeletons.jsx";
 import { panel } from "../../components/styles.js";
 import { findParcel, getSellerParcel, uploadVideo } from "../../services/parcelService.js";
 import { formatSize } from "../../utils/format.js";
@@ -136,11 +137,7 @@ export default function ScanUpload() {
   }
 
   if (initialQuery && looking) {
-    return (
-      <section className={`${panel} mx-auto max-w-5xl p-8 text-sm text-[#888]`}>
-        Loading shipment details…
-      </section>
-    );
+    return <ShipmentDetailSkeleton />;
   }
 
   return (

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ShipmentDetailsView from "../components/parcels/ShipmentDetailsView.jsx";
 import { EmptyState } from "../components/ui.jsx";
+import { LoadErrorState, OfflineState, ShipmentDetailSkeleton } from "../components/Skeletons.jsx";
+import { isOnline, useReconnectRefresh } from "../utils/network.js";
 import { btnGhost, inputCls, panel } from "../components/styles.js";
 import {
   decideDiscreetHandling,
@@ -30,6 +32,11 @@ export default function ParcelDetails() {
   const isCoordinator = user?.role === "coordinator";
 
   const load = async () => {
+    if (!isOnline()) {
+      setLoading(false);
+      setError("");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -61,6 +68,8 @@ export default function ParcelDetails() {
     load();
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useReconnectRefresh(load);
+
   const handleDiscreetDecision = async (decision) => {
     if (!parcel?.parcel_id) return;
     if (decision === "REJECT" && !discreetRemarks.trim()) {
@@ -89,18 +98,35 @@ export default function ParcelDetails() {
     }
   };
 
-  if (loading) {
+  if (loading && isOnline()) {
+    return <ShipmentDetailSkeleton />;
+  }
+
+  if (!parcel && !isOnline()) {
     return (
-      <section className={`${panel} mx-auto max-w-5xl p-8 text-sm text-[#999]`}>
-        Loading shipment details…
+      <section className="mx-auto max-w-5xl">
+        <OfflineState
+          title="Shipment details unavailable offline"
+          text="Reconnect to the internet to load full shipment details."
+          onRetry={load}
+        />
+        <div className="mt-4 text-center">
+          <Link to="/parcels" className={btnGhost}>
+            Back to Parcel Records
+          </Link>
+        </div>
       </section>
     );
   }
 
   if (error || !parcel) {
     return (
-      <section className={`${panel} mx-auto max-w-5xl p-8`}>
-        <EmptyState icon="package-open" title="Shipment details unavailable" text={error || "Parcel not found."} />
+      <section className="mx-auto max-w-5xl">
+        <LoadErrorState
+          title="Shipment details unavailable"
+          message={error || "Parcel not found."}
+          onRetry={load}
+        />
         <div className="mt-4 text-center">
           <Link to="/parcels" className={btnGhost}>
             Back to Parcel Records

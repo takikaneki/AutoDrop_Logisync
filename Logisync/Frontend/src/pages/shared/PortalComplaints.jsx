@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import Topbar from "../../components/Topbar.jsx";
-import { EmptyState } from "../../components/ui.jsx";
+import { EmptyState, TableSkeleton } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
+import {
+  CachedDataNotice,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../../components/Skeletons.jsx";
+import { isOnline, useNetworkStatus, useReconnectRefresh } from "../../utils/network.js";
 import { btnPrimary, inputCls, labelCls, panel, stickyThead, tableScrollCompact, td, textareaCls, th } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { getUser } from "../../api.js";
@@ -55,13 +61,19 @@ export default function PortalComplaints() {
   const cfg = CONFIG[role];
   const user = getUser();
   const fallbackComplaints = useComplaints();
+  const { online } = useNetworkStatus();
   const [dbComplaints, setDbComplaints] = useState([]);
+  const [loadingList, setLoadingList] = useState(() => isOnline() && fallbackComplaints.length === 0);
   const [form, setForm] = useState(empty);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [openId, setOpenId] = useState(null);
 
   const loadData = async () => {
+    if (!isOnline()) {
+      setLoadingList(false);
+      return;
+    }
     try {
       const list = await fetchComplaints();
       if (Array.isArray(list) && list.length > 0) {
@@ -69,12 +81,17 @@ export default function PortalComplaints() {
       }
     } catch {
       // fallback
+    } finally {
+      setLoadingList(false);
     }
   };
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useReconnectRefresh(loadData);
 
   const rawList = dbComplaints.length > 0 ? dbComplaints : fallbackComplaints;
 
@@ -230,7 +247,22 @@ export default function PortalComplaints() {
 
       <section className={`${panel} p-[26px] max-[600px]:p-5`}>
         <h2 className="mb-4 text-[17px] font-bold"><Icon name="history" className="mr-2 text-brand" />My submissions</h2>
-        {mine.length === 0 ? (
+        {!online && mine.length > 0 && <CachedDataNotice />}
+        {loadingList && online && mine.length === 0 ? (
+          <>
+            <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
+              <table className="w-full min-w-[640px] border-collapse">
+                <thead className={stickyThead}><tr>{["Ticket", "Subject", "Type", "Date", "Status", ""].map((h, i) => <th key={i} className={th}>{h}</th>)}</tr></thead>
+                <TableSkeleton rows={4} cols={6} />
+              </table>
+            </div>
+            <div className="min-[701px]:hidden">
+              <ParcelCardListSkeleton count={3} label="Loading your submissions" />
+            </div>
+          </>
+        ) : !online && mine.length === 0 ? (
+          <OfflineState compact title="Submissions unavailable offline" text="Reconnect to view your submitted complaints and coordinator replies." onRetry={loadData} />
+        ) : mine.length === 0 ? (
           <EmptyState icon="inbox" title="Nothing submitted yet" text="Your complaints and requests will be listed here with the coordinator's response." />
         ) : (
           <>

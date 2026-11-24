@@ -1,33 +1,40 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
-import { EmptyState, CodBadge } from "../../components/ui.jsx";
-import { LoadingRow, Notice, PanelLink, PanelTitle } from "../../components/portal.jsx";
+import { EmptyState, CodBadge, TableSkeleton } from "../../components/ui.jsx";
+import { PanelLink, PanelTitle } from "../../components/portal.jsx";
 import { panel, stickyThead, tableScrollCompact, td, th } from "../../components/styles.js";
 import RecentActivity from "../../components/audit/RecentActivity.jsx";
 import BentoKpiRow from "../../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../../components/dashboard/PortalHeroBanner.jsx";
 import DashboardRightRail from "../../components/dashboard/DashboardRightRail.jsx";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../../components/Skeletons.jsx";
 import { listParcels } from "../../services/parcelService.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
 import { formatDate, formatDay } from "../../utils/format.js";
-import { toast } from "../../store/toast.js";
 
 export default function SellerDashboard() {
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const refreshParcels = () => {
-    listParcels()
-      .then(setParcels)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    refreshParcels();
-  }, []);
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: refreshParcels,
+  } = useNetworkResource(
+    "seller-dashboard-parcels",
+    async () => {
+      const list = await listParcels();
+      return Array.isArray(list) ? list : [];
+    },
+    { initialData: [] }
+  );
 
   const count = (...s) => parcels.filter((p) => s.includes(p.status)).length;
   const needsVideoParcels = parcels.filter(
@@ -72,68 +79,84 @@ export default function SellerDashboard() {
     <>
       <Topbar title="Dashboard" />
 
-      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
+      {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+      {error && !parcels.length && (
+        <div className="mb-5">
+          <LoadErrorState compact title="Unable to load your dashboard" message={error} onRetry={refreshParcels} />
+        </div>
+      )}
 
       {/* BENTO OVERVIEW GRID (No Maps) — Mobile: Banner -> Cards -> Action Needed; Desktop: Cards -> Banner + Right Rail */}
       <section className="mb-7 max-[820px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
         <div className="flex flex-col gap-4">
           <div className="order-2 min-[821px]:order-1">
-            <BentoKpiRow
-              cards={[
-                {
-                  label: "Total Parcels",
-                  value: v(parcels.length),
-                  tone: "dark",
-                  to: "/seller/parcels",
-                  badge: "All Orders",
-                  icon: "package",
-                  subtext: `${v(returnToHubParcels.length)} return to hub`,
-                },
-                {
-                  label: "Needs Video",
-                  value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
-                  tone: "blue",
-                  to: "/seller/parcels?status=NEEDS_VIDEO",
-                  badge: "Action Required",
-                  icon: "video",
-                  subtext: `${v(count("VIDEO_SUBMITTED"))} under verification`,
-                },
-                {
-                  label: "Verified / In Delivery",
-                  value: v(verifiedOrInDelivery),
-                  tone: "green",
-                  to: "/seller/parcels?status=VERIFIED",
-                  badge: "Cleared",
-                  icon: "circle-check",
-                  subtext: "Approved for SPX dispatch",
-                },
-              ]}
-            />
+            {offlineEmpty ? (
+              <OfflineState compact title="Parcel summary unavailable offline" text="Connect to the internet to load your parcel statistics." onRetry={refreshParcels} />
+            ) : (
+              <BentoKpiRow
+                loading={loading}
+                cards={[
+                  {
+                    label: "Total Parcels",
+                    value: v(parcels.length),
+                    tone: "dark",
+                    to: "/seller/parcels",
+                    badge: "All Orders",
+                    icon: "package",
+                    subtext: `${v(returnToHubParcels.length)} return to hub`,
+                  },
+                  {
+                    label: "Needs Video",
+                    value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
+                    tone: "blue",
+                    to: "/seller/parcels?status=NEEDS_VIDEO",
+                    badge: "Action Required",
+                    icon: "video",
+                    subtext: `${v(count("VIDEO_SUBMITTED"))} under verification`,
+                  },
+                  {
+                    label: "Verified / In Delivery",
+                    value: v(verifiedOrInDelivery),
+                    tone: "green",
+                    to: "/seller/parcels?status=VERIFIED",
+                    badge: "Cleared",
+                    icon: "circle-check",
+                    subtext: "Approved for SPX dispatch",
+                  },
+                ]}
+              />
+            )}
           </div>
 
           <div className="order-1 min-[821px]:order-2">
             <PortalHeroBanner
               role="seller"
+              loading={loading}
               pipeline={[
-                { label: "Needs Video", count: v(needsVideoParcels.length), icon: "video", tone: "blue", to: "/seller/parcels?status=NEEDS_VIDEO" },
-                { label: "Under Review", count: v(count("VIDEO_SUBMITTED")), icon: "clock", tone: "yellow", to: "/seller/parcels?status=UNDER_VERIFICATION" },
-                { label: "Verified", count: v(count("VERIFIED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
-                { label: "Delivered", count: v(count("DELIVERED")), icon: "package-check", tone: "green", to: "/seller/parcels" },
+                { label: "Needs Video", count: offlineEmpty ? "—" : v(needsVideoParcels.length), icon: "video", tone: "blue", to: "/seller/parcels?status=NEEDS_VIDEO" },
+                { label: "Under Review", count: offlineEmpty ? "—" : v(count("VIDEO_SUBMITTED")), icon: "clock", tone: "yellow", to: "/seller/parcels?status=UNDER_VERIFICATION" },
+                { label: "Verified", count: offlineEmpty ? "—" : v(count("VERIFIED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
+                { label: "Delivered", count: offlineEmpty ? "—" : v(count("DELIVERED")), icon: "package-check", tone: "green", to: "/seller/parcels" },
               ]}
             />
           </div>
         </div>
 
         <DashboardRightRail
+          loading={loading}
           tasksTitle="Action Needed"
           seeAllTo="/seller/parcels?status=NEEDS_VIDEO"
           tasks={actionTasks}
-          emptyText={loading ? "Checking parcels…" : "No seller action is currently required. You're all set."}
+          emptyText={
+            offlineEmpty
+              ? "Action items are unavailable while offline."
+              : "No seller action is currently required. You're all set."
+          }
           hideSummaryOnMobile
           summary={{
             label: "Dispatch Rate",
-            value: loading ? "…" : dispatchRate,
-            sublabel: `${v(verifiedOrInDelivery)} of ${v(parcels.length)} cleared`,
+            value: offlineEmpty ? "—" : loading ? "…" : dispatchRate,
+            sublabel: offlineEmpty ? "Offline" : `${v(verifiedOrInDelivery)} of ${v(parcels.length)} cleared`,
             bars: sellerBars,
           }}
         />
@@ -144,7 +167,25 @@ export default function SellerDashboard() {
         <PanelTitle icon="package" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
 
         {loading ? (
-          <LoadingRow />
+          <>
+            <div className={`hidden min-[701px]:block ${tableScrollCompact}`}>
+              <table className="w-full min-w-[680px] border-collapse">
+                <thead className={stickyThead}>
+                  <tr>
+                    {["Transaction no.", "Receiver", "Contents", "Status", "Updated", ""].map((h) => <th key={h} className={th}>{h}</th>)}
+                  </tr>
+                </thead>
+                <TableSkeleton rows={5} cols={6} />
+              </table>
+            </div>
+            <div className="min-[701px]:hidden">
+              <ParcelCardListSkeleton count={4} label="Loading recent parcels" />
+            </div>
+          </>
+        ) : offlineEmpty ? (
+          <OfflineState compact title="Recent parcels unavailable offline" text="Reconnect to fetch your latest registered parcels." onRetry={refreshParcels} />
+        ) : error && parcels.length === 0 ? (
+          <LoadErrorState compact title="Unable to load parcels" message={error} onRetry={refreshParcels} />
         ) : parcels.length === 0 ? (
           <EmptyState title="No parcels yet" text="Register your first parcel to get started." />
         ) : (

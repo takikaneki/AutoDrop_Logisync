@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Topbar from "../components/Topbar.jsx";
-import { EmptyState } from "../components/ui.jsx";
+import { EmptyState, TableSkeleton } from "../components/ui.jsx";
 import { Notice } from "../components/portal.jsx";
+import { useNetworkResource } from "../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../components/Skeletons.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, stickyThead, td, th } from "../components/styles.js";
 import { createUser, listUsers, resendCredentialsEmail } from "../services/userService.js";
 import { toast } from "../store/toast.js";
@@ -49,18 +56,24 @@ export default function Accounts() {
   const [retryingEmail, setRetryingEmail] = useState(false);
   const [created, setCreated] = useState(null);
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const {
+    data: users,
+    loading,
+    error: loadError,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: load,
+  } = useNetworkResource(
+    "coordinator-accounts",
+    async () => {
+      const list = await listUsers();
+      return Array.isArray(list) ? list : [];
+    },
+    { initialData: [] }
+  );
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
-
-  const load = () => {
-    setLoading(true);
-    setLoadError("");
-    listUsers().then(setUsers).catch((e) => setLoadError(e.message)).finally(() => setLoading(false));
-  };
-  useEffect(load, []);
 
   const set = (k) => (e) => {
     const val = k === "phone" ? sanitizeLocalMobileDigits(e.target.value) : e.target.value;
@@ -443,10 +456,11 @@ export default function Accounts() {
             />
           </div>
 
-          {loadError && (
-            <Notice tone="error" icon="circle-alert" role="alert">
-              {loadError}
-            </Notice>
+          {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+          {loadError && !offlineEmpty && (
+            <div className="mb-4">
+              <LoadErrorState compact title="Unable to load accounts" message={loadError} onRetry={load} />
+            </div>
           )}
           {!loadError && (
             <>
@@ -461,16 +475,11 @@ export default function Accounts() {
                       ))}
                     </tr>
                   </thead>
+                  {loading ? (
+                    <TableSkeleton rows={6} cols={4} />
+                  ) : (
                   <tbody>
-                    {loading && (
-                      <tr>
-                        <td colSpan={4} className={`${td} text-center text-[#999]`}>
-                          Loading…
-                        </td>
-                      </tr>
-                    )}
-                    {!loading &&
-                      rows.map((u) => (
+                    {rows.map((u) => (
                         <tr key={u.user_id}>
                           <td className={`${td} font-semibold`}>{u.name}</td>
                           <td className={`${td} break-all`}>{u.email}</td>
@@ -487,14 +496,22 @@ export default function Accounts() {
                         </tr>
                       ))}
                   </tbody>
+                  )}
                 </table>
-                {!loading && rows.length === 0 && <EmptyState icon="users" title="No accounts found" />}
+                {!loading && offlineEmpty && (
+                  <div className="p-4">
+                    <OfflineState compact title="Accounts unavailable offline" text="Reconnect to view registered accounts." onRetry={load} />
+                  </div>
+                )}
+                {!loading && !offlineEmpty && rows.length === 0 && <EmptyState icon="users" title="No accounts found" />}
               </div>
 
               {/* Mobile Card List */}
               <div className="min-[701px]:hidden space-y-3">
                 {loading ? (
-                  <div className="py-8 text-center text-[13px] text-[#888]">Loading accounts…</div>
+                  <ParcelCardListSkeleton count={4} label="Loading accounts" />
+                ) : offlineEmpty ? (
+                  <OfflineState compact title="Accounts unavailable offline" text="Reconnect to view registered accounts." onRetry={load} />
                 ) : rows.length === 0 ? (
                   <EmptyState icon="users" title="No accounts found" />
                 ) : (

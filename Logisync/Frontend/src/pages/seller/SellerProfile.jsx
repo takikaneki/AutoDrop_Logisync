@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import UserAvatar from "../../components/Avatar.jsx";
 import ContactUsModal from "../../components/auth/ContactUsModal.jsx";
 import LogoutModal from "../../components/LogoutModal.jsx";
-import { syncProfileFromServer, useProfile } from "../../store/profile.js";
+import { syncProfileFromServer, useProfile, useProfileSyncState } from "../../store/profile.js";
+import { useNetworkStatus } from "../../utils/network.js";
+import { CachedDataNotice, ProfileHeaderSkeleton } from "../../components/Skeletons.jsx";
 import Icon from "../../components/Icon.jsx";
 
 function formatSellerId(profile) {
@@ -69,8 +71,11 @@ function MenuRow({ icon, label, sublabel, to, onClick, iconTone = "default" }) {
 export default function SellerProfile() {
   const navigate = useNavigate();
   const profile = useProfile();
+  const syncState = useProfileSyncState();
+  const { online } = useNetworkStatus();
   const [contactOpen, setContactOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const showProfileSkeleton = online && syncState.syncing && (!profile.name || profile.name === "Guest");
 
   useEffect(() => {
     document.title = "Profile · LogiSync";
@@ -92,7 +97,12 @@ export default function SellerProfile() {
           className="pointer-events-none absolute top-28 -right-14 h-36 w-36 rounded-full bg-[#e0f2fe]/65 blur-2xl dark:bg-sky-500/10"
         />
 
+        {!online && <CachedDataNotice updatedAt={syncState.lastSyncedAt} className="relative z-10 mb-4" />}
+
         {/* Profile Header */}
+        {showProfileSkeleton ? (
+          <ProfileHeaderSkeleton />
+        ) : (
         <section className="relative z-10 flex flex-col items-center text-center">
           <div className="relative">
             <div className="rounded-full bg-white p-1 shadow-sm ring-2 ring-brand/25 dark:bg-night-panel">
@@ -126,6 +136,7 @@ export default function SellerProfile() {
             <span>Edit Profile</span>
           </button>
         </section>
+        )}
 
         {/* Sectioned Seller Profile Menu */}
         <nav aria-label="Seller profile menu" className="relative z-10 mt-6 space-y-3">

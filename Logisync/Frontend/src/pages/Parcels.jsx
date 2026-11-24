@@ -33,6 +33,13 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { getParcelAddress, syncCustomersFromParcels } from "../store/customers.js";
 import { enrichParcel } from "../services/parcelService.js";
+import { useNetworkResource } from "../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const statusIcons = {
@@ -183,9 +190,26 @@ export default function Parcels() {
   const urlStatus = searchParams.get("status");
   const initialStatus = STATUS_OPTIONS.includes(urlStatus) ? urlStatus : "All Status";
 
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: reloadParcels,
+  } = useNetworkResource(
+    "coordinator-parcels",
+    async () => {
+      const data = await api("/parcels");
+      if (!Array.isArray(data.parcels)) {
+        throw new Error("Invalid parcel data returned by the server.");
+      }
+      syncCustomersFromParcels(data.parcels);
+      return data.parcels.map(mapParcel);
+    },
+    { initialData: [] }
+  );
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState(initialStatus);
@@ -199,42 +223,7 @@ export default function Parcels() {
   const [reportPage, setReportPage] = useState(1);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadParcels() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const data = await api("/parcels");
-
-        if (!Array.isArray(data.parcels)) {
-          throw new Error("Invalid parcel data returned by the server.");
-        }
-
-        syncCustomersFromParcels(data.parcels);
-        const mappedParcels = data.parcels.map(mapParcel);
-
-        if (active) {
-          setParcels(mappedParcels);
-          setPage(1);
-        }
-      } catch (err) {
-        if (active) {
-          setError(err.message || "Failed to load parcels.");
-          setParcels([]);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    loadParcels();
     listUsers().then(setDbUsers).catch(() => {});
-
-    return () => {
-      active = false;
-    };
   }, []);
 
   useEffect(() => {
@@ -815,19 +804,11 @@ export default function Parcels() {
           </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
-          >
-            <p>{error}</p>
-            <button
-              type="button"
-              className="mt-2 font-semibold underline"
-              onClick={() => window.location.reload()}
-            >
-              Try again
-            </button>
+        {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+
+        {error && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load parcels" message={error} onRetry={reloadParcels} />
           </div>
         )}
 
@@ -960,7 +941,13 @@ export default function Parcels() {
             )}
           </table>
 
-          {!loading && !error && rows.length === 0 && (
+          {!loading && offlineEmpty && (
+            <div className="p-4">
+              <OfflineState compact title="Parcel records unavailable offline" text="Reconnect to load parcel records from the hub." onRetry={reloadParcels} />
+            </div>
+          )}
+
+          {!loading && !offlineEmpty && !error && rows.length === 0 && (
             <EmptyState
               title="No parcels found"
               text="Try a different search or filter."
@@ -970,8 +957,11 @@ export default function Parcels() {
 
         {/* Mobile Card View */}
         <div className="min-[701px]:hidden space-y-3">
-          {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading parcels…</p>}
-          {!loading && !error && rows.length === 0 && (
+          {loading && <ParcelCardListSkeleton count={4} label="Loading parcels" />}
+          {!loading && offlineEmpty && (
+            <OfflineState compact title="Parcel records unavailable offline" text="Reconnect to load parcel records from the hub." onRetry={reloadParcels} />
+          )}
+          {!loading && !offlineEmpty && !error && rows.length === 0 && (
             <EmptyState title="No parcels found" text="Try a different search or filter." />
           )}
           {!loading &&

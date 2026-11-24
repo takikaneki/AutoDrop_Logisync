@@ -1,25 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import StatusBadge from "../StatusBadge.jsx";
 import CoordinatorRthModal from "./CoordinatorRthModal.jsx";
-import { EmptyState } from "../ui.jsx";
+import { EmptyState, TableSkeleton } from "../ui.jsx";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../Skeletons.jsx";
 import { btnGhost, btnPrimary, panel } from "../styles.js";
 import { fetchCoordinatorRth } from "../../services/parcelService.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
 import { formatDate } from "../../utils/format.js";
 import Icon from "../Icon.jsx";
 
-export default function CoordinatorRthSection() {
-  const [data, setData] = useState({ pending: [], confirmed: [], counts: { pending: 0, confirmed: 0, total: 0 } });
-  const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("pending"); // "pending" | "confirmed"
-  const [selectedParcel, setSelectedParcel] = useState(null);
+const EMPTY_RTH = { pending: [], confirmed: [], counts: { pending: 0, confirmed: 0, total: 0 } };
 
-  const loadRth = async () => {
-    try {
-      setLoading(true);
+export default function CoordinatorRthSection() {
+  const {
+    data,
+    loading,
+    refreshing,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: loadRth,
+  } = useNetworkResource(
+    "coordinator-rth",
+    async () => {
       const res = await fetchCoordinatorRth();
       if (res?.success) {
-        setData({
+        return {
           pending: res.pending || [],
           confirmed: res.confirmed || [],
           counts: res.counts || {
@@ -27,18 +40,14 @@ export default function CoordinatorRthSection() {
             confirmed: res.confirmed?.length || 0,
             total: (res.pending?.length || 0) + (res.confirmed?.length || 0),
           },
-        });
+        };
       }
-    } catch {
-      // silently handle or empty
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadRth();
-  }, []);
+      return EMPTY_RTH;
+    },
+    { initialData: EMPTY_RTH }
+  );
+  const [tab, setTab] = useState("pending"); // "pending" | "confirmed"
+  const [selectedParcel, setSelectedParcel] = useState(null);
 
   const list = tab === "pending" ? data.pending : data.confirmed;
 
@@ -77,10 +86,12 @@ export default function CoordinatorRthSection() {
             title="Refresh list"
             aria-label="Refresh list"
           >
-            <Icon name="refresh-cw" className={`${loading ? "animate-spin" : ""}`} />
+            <Icon name="refresh-cw" className={`${loading || refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
+
+      {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
 
       {/* Tabs: Pending vs Confirmed */}
       <div className="mb-4 grid grid-cols-2 items-stretch gap-2.5 sm:inline-flex sm:items-center sm:gap-3">
@@ -119,10 +130,31 @@ export default function CoordinatorRthSection() {
 
       {/* Content Table / Cards */}
       {loading ? (
-        <div className="py-12 text-center text-[13px] text-[#64748b]">
-          <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
-          Loading Return to Hub parcels…
-        </div>
+        <>
+          <div className="hidden min-[701px]:block overflow-x-auto rounded-xl border border-[#e5e7eb] dark:border-night-line">
+            <table className="w-full min-w-[700px] border-collapse text-left text-[13px]">
+              <thead className="bg-[#f8fafc] text-xs font-semibold uppercase tracking-wider text-[#64748b] dark:bg-night-head dark:text-[#9c948c]">
+                <tr>
+                  <th className="px-4 py-3">Transaction Number</th>
+                  <th className="px-4 py-3">Assigned Rider</th>
+                  <th className="px-4 py-3">Seller</th>
+                  <th className="px-4 py-3">Return Reason</th>
+                  <th className="px-4 py-3">{tab === "pending" ? "Marked For Return" : "Confirmed Date"}</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <TableSkeleton rows={4} cols={7} />
+            </table>
+          </div>
+          <div className="min-[701px]:hidden">
+            <ParcelCardListSkeleton count={3} label="Loading Return to Hub parcels" />
+          </div>
+        </>
+      ) : offlineEmpty ? (
+        <OfflineState compact title="Return to Hub queue unavailable offline" text="Reconnect to the internet to check returned parcels awaiting arrival." onRetry={loadRth} />
+      ) : error && list.length === 0 ? (
+        <LoadErrorState compact title="Unable to load Return to Hub parcels" message={error} onRetry={loadRth} />
       ) : list.length === 0 ? (
         <div className="py-8">
           <EmptyState

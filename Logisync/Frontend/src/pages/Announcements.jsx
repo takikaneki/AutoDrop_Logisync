@@ -4,17 +4,37 @@ import AnnouncementModal from "../components/AnnouncementModal.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { btnPrimary, panel } from "../components/styles.js";
 import { syncAnnouncementsFromServer, useAnnouncements } from "../store/announcements.js";
+import { useNetworkStatus, useReconnectRefresh } from "../utils/network.js";
+import {
+  CachedDataNotice,
+  NotificationListSkeleton,
+  OfflineState,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const when = (ts) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 export default function Announcements() {
   const list = useAnnouncements();
+  const { online } = useNetworkStatus();
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(() => online && list.length === 0);
+
+  const refresh = () => {
+    if (!online) {
+      setLoading(false);
+      return;
+    }
+    if (list.length === 0) setLoading(true);
+    Promise.resolve(syncAnnouncementsFromServer()).finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    syncAnnouncementsFromServer();
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useReconnectRefresh(refresh);
 
   return (
     <>
@@ -22,8 +42,16 @@ export default function Announcements() {
         <button onClick={() => setOpen(true)} className={btnPrimary}><Icon name="megaphone" /> New Announcement</button>
       </Topbar>
 
+      {!online && list.length > 0 && <CachedDataNotice />}
+
       <section className={`${panel} p-2`}>
-        {list.length === 0 ? (
+        {loading && online && list.length === 0 ? (
+          <NotificationListSkeleton count={5} label="Loading announcements" />
+        ) : !online && list.length === 0 ? (
+          <div className="p-4">
+            <OfflineState title="Announcements unavailable offline" text="Reconnect to load announcement history." onRetry={refresh} />
+          </div>
+        ) : list.length === 0 ? (
           <EmptyState icon="megaphone" title="No announcements yet" text="Use the megaphone icon at the top to send one." />
         ) : (
           <ul>

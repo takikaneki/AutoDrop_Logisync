@@ -3,7 +3,16 @@ import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
 import { StatCard, StatGrid } from "../components/portal.jsx";
 import ScanPanel from "../components/qr/ScanPanel.jsx";
-import { EmptyState, Modal } from "../components/ui.jsx";
+import { EmptyState, Modal, TableSkeleton } from "../components/ui.jsx";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+  ShipmentDetailSkeleton,
+  SkeletonBlock,
+} from "../components/Skeletons.jsx";
+import { useNetworkResource } from "../hooks/useNetworkResource.js";
 import { btnDanger, btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, textareaCls, th } from "../components/styles.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import CoordinatorRthModal from "../components/coordinator/CoordinatorRthModal.jsx";
@@ -66,9 +75,6 @@ function DiscreetStatusBadge({ discreteItem, discreetStatus }) {
 }
 
 export default function Verification() {
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [params] = useSearchParams();
   const urlStatus = params.get("status");
   const initialFilter = FILTERS.includes(urlStatus) ? urlStatus : "VIDEO_SUBMITTED";
@@ -102,15 +108,22 @@ export default function Verification() {
 
   useEffect(() => setFilter(initialFilter), [initialFilter]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError("");
-    listParcels()
-      .then(setParcels)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-  useEffect(load, [load]);
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: load,
+  } = useNetworkResource(
+    "coordinator-verification-parcels",
+    async () => {
+      const list = await listParcels();
+      return Array.isArray(list) ? list : [];
+    },
+    { initialData: [] }
+  );
 
   const count = (s) => parcels.filter((p) => p.status === s).length;
   const discreetPendingCount = parcels.filter(
@@ -389,7 +402,12 @@ export default function Verification() {
           </select>
         </div>
 
-        {error && <p role="alert" className="mb-4 rounded-lg bg-[#fff1f1] px-4 py-3 text-sm text-[#d94a4a]">{error} <button onClick={load} className="font-semibold underline">Try again</button></p>}
+        {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+        {error && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load verification queue" message={error} onRetry={load} />
+          </div>
+        )}
 
         {/* Desktop & Tablet Table */}
         <div className={`hidden min-[701px]:block ${tableScroll}`}>
@@ -410,9 +428,11 @@ export default function Verification() {
                 ))}
               </tr>
             </thead>
+            {loading ? (
+              <TableSkeleton rows={6} cols={8} />
+            ) : (
             <tbody>
-              {loading && <tr><td colSpan={8} className={`${td} text-center text-[#999]`}>Loading…</td></tr>}
-              {!loading && visible.map((r) => (
+              {visible.map((r) => (
                 <tr key={r.parcel_id} className="hover:bg-[#fffaf7] dark:hover:bg-night-head">
                   <td className={`${td} font-mono text-[13px]`}>
                     <div>{r.parcel_id}</div>
@@ -447,13 +467,17 @@ export default function Verification() {
                 </tr>
               ))}
             </tbody>
+            )}
           </table>
         </div>
 
         {/* Mobile Cards */}
         <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
-          {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
-          {!loading && visible.map((r) => (
+          {loading && <ParcelCardListSkeleton count={4} label="Loading verification queue" />}
+          {!loading && offlineEmpty && (
+            <OfflineState compact title="Verification queue unavailable offline" text="Reconnect to review parcels waiting for verification." onRetry={load} />
+          )}
+          {!loading && !offlineEmpty && visible.map((r) => (
             <article key={r.parcel_id} className="rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 dark:border-night-line dark:bg-night-head">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -490,7 +514,13 @@ export default function Verification() {
           ))}
         </div>
 
-        {!loading && rows.length === 0 && (
+        {!loading && offlineEmpty && (
+          <div className="hidden min-[701px]:block pt-4">
+            <OfflineState compact title="Verification queue unavailable offline" text="Reconnect to review parcels waiting for verification." onRetry={load} />
+          </div>
+        )}
+
+        {!loading && !offlineEmpty && !error && rows.length === 0 && (
           <EmptyState icon="clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
         )}
       </section>
@@ -499,7 +529,7 @@ export default function Verification() {
       <Modal open={open} onClose={close} className="w-full max-w-[900px] max-h-[92vh] overflow-y-auto p-7 max-[600px]:p-5 dark:bg-night-panel">
         <button onClick={close} aria-label="Close" className="absolute top-[15px] right-[17px] w-8 h-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] text-[21px] leading-none dark:bg-night-head">×</button>
 
-        {detailLoading && <p className="py-16 text-center text-[#999]">Loading parcel…</p>}
+        {detailLoading && <ShipmentDetailSkeleton />}
         {detailError && <p role="alert" className="py-10 text-center text-[#d94a4a]">{detailError}</p>}
 
         {p && (
@@ -659,7 +689,7 @@ export default function Verification() {
                     </button>
                   ))}
                 </div>
-                {videoLoading && <p className="py-10 text-center text-[14px] text-[#999]">Loading video…</p>}
+                {videoLoading && <SkeletonBlock className="h-[260px] w-full rounded-xl" />}
                 {videoError && <p role="alert" className="rounded-lg bg-[#fff1f1] px-4 py-3 text-[14px] text-[#d94a4a]">{videoError}</p>}
                 {videoUrl && <video key={videoUrl} src={videoUrl} controls className="max-h-[360px] w-full rounded-xl bg-black" />}
                 {videoId && (() => { const v = detail.videos.find((x) => x.video_id === videoId); return v ? <p className="mt-1 text-[12px] text-[#999]">{v.file_name} · {formatSize(v.file_size)}</p> : null; })()}

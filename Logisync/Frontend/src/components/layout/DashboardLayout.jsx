@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Footer from "../Footer.jsx";
 import Toaster from "../Toaster.jsx";
+import NetworkStatusBanner from "../NetworkStatusBanner.jsx";
 import PortalHeader from "./PortalHeader.jsx";
 import PortalSidebar from "./PortalSidebar.jsx";
 import MobileBottomNav from "./MobileBottomNav.jsx";
@@ -11,6 +12,8 @@ import { syncRiderDeliveriesWithServer } from "../../store/riderDeliveries.js";
 import RiderFloatingCallButton from "../rider/RiderFloatingCallButton.jsx";
 import { syncPrefsFromServer } from "../../store/prefs.js";
 import { syncProfileFromServer } from "../../store/profile.js";
+import { syncAnnouncementsFromServer } from "../../store/announcements.js";
+import { useReconnectRefresh } from "../../utils/network.js";
 
 // Shared responsive layout shell for Seller and Rider portals.
 // role = "seller" | "rider". Page content renders inside <Outlet />.
@@ -24,6 +27,15 @@ export default function DashboardLayout({ role }) {
     syncPrefsFromServer();
     syncProfileFromServer();
   }, []);
+
+  useReconnectRefresh(() => {
+    syncPrefsFromServer();
+    syncProfileFromServer();
+    syncAnnouncementsFromServer();
+    if (role === "rider") {
+      syncRiderDeliveriesWithServer();
+    }
+  });
 
   useEffect(() => {
     closeMobile();
@@ -99,6 +111,7 @@ export default function DashboardLayout({ role }) {
       <PortalSidebar role={role} collapsed={collapsed} mobileOpen={mobileOpen} onClose={closeMobile} onCloseDesktop={closeDesktop} onToggleSidebar={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
         <PortalHeader role={role} collapsed={collapsed} mobileOpen={mobileOpen} onToggleSidebar={toggleSidebar} />
+        <NetworkStatusBanner />
         <main
           className={`flex min-w-0 max-w-full flex-1 flex-col overflow-x-clip px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 print:p-0 ${
             isEdgeMobile

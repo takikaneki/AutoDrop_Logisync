@@ -10,6 +10,19 @@ import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
 import { formatDate } from "../utils/format.js";
 import { getParcelStatus } from "../utils/parcelStatus.js";
+import {
+  isOnline,
+  readViewCache,
+  useNetworkStatus,
+  useReconnectRefresh,
+  writeViewCache,
+} from "../utils/network.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const tone = {
@@ -65,8 +78,23 @@ export default function Sellers() {
   const [viewId, setViewId] = useState(null);
   const [confirm, setConfirm] = useState(null); // { seller, kind }
 
+  const { online } = useNetworkStatus();
+  const [cachedAt, setCachedAt] = useState(() => readViewCache("coordinator-sellers")?.updatedAt || null);
+  const [hasData, setHasData] = useState(() => Boolean(readViewCache("coordinator-sellers")?.data));
+
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (!isOnline()) {
+      const cached = readViewCache("coordinator-sellers");
+      if (cached?.data) {
+        setRawSellers(cached.data.sellers || []);
+        setParcels(cached.data.parcels || []);
+        setCachedAt(cached.updatedAt || null);
+        setHasData(true);
+      }
+      setLoading(false);
+      return;
+    }
+    setLoading((prev) => (hasData ? prev : true));
     setError("");
     try {
       const [usersData, parcelsData] = await Promise.all([
@@ -81,16 +109,32 @@ export default function Sellers() {
       );
       setRawSellers(onlySellers);
       setParcels(realParcels);
+      setHasData(true);
+      setCachedAt(Date.now());
+      writeViewCache("coordinator-sellers", { sellers: onlySellers, parcels: realParcels });
     } catch (err) {
-      setError(err.message || "Failed to load sellers from the database.");
+      if (isOnline()) setError(err.message || "Failed to load sellers from the database.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [hasData]);
 
   useEffect(() => {
+    const cached = readViewCache("coordinator-sellers");
+    if (cached?.data) {
+      setRawSellers(cached.data.sellers || []);
+      setParcels(cached.data.parcels || []);
+      setHasData(true);
+      setLoading(false);
+    }
     loadData();
-  }, [loadData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useReconnectRefresh(loadData);
+
+  const offlineEmpty = !online && !hasData;
+  const showCachedNotice = !online && hasData;
 
   // Build database-driven seller records with live parcel metrics
   const sellers = useMemo(() => {
@@ -442,6 +486,13 @@ export default function Sellers() {
           </select>
         </div>
 
+        {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
+        {error && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load sellers" message={error} onRetry={loadData} />
+          </div>
+        )}
+
         <div className={`hidden min-[701px]:block ${tableScroll}`}>
           <table className="w-full min-w-[780px] border-collapse">
             <thead className={stickyThead}>
@@ -521,7 +572,12 @@ export default function Sellers() {
               </tbody>
             )}
           </table>
-          {!loading && rows.length === 0 && (
+          {!loading && offlineEmpty && (
+            <div className="p-4">
+              <OfflineState compact title="Seller directory unavailable offline" text="Reconnect to load seller accounts." onRetry={loadData} />
+            </div>
+          )}
+          {!loading && !offlineEmpty && !error && rows.length === 0 && (
             <EmptyState
               icon="store"
               title="No sellers found"
@@ -537,7 +593,9 @@ export default function Sellers() {
         {/* Mobile Card List */}
         <div className="min-[701px]:hidden space-y-3">
           {loading ? (
-            <div className="py-8 text-center text-[13px] text-[#888]">Loading sellers…</div>
+            <ParcelCardListSkeleton count={4} label="Loading sellers" />
+          ) : offlineEmpty ? (
+            <OfflineState compact title="Seller directory unavailable offline" text="Reconnect to load seller accounts." onRetry={loadData} />
           ) : pageRows.length === 0 ? (
             <EmptyState
               icon="store"

@@ -18,9 +18,17 @@ import {
   markDelivered,
   markFailed,
   reattempt,
+  syncRiderDeliveriesWithServer,
   todayIso,
   useMyDeliveries,
+  useRiderDeliverySyncState,
 } from "../../store/riderDeliveries.js";
+import { useNetworkStatus } from "../../utils/network.js";
+import {
+  CachedDataNotice,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../../components/Skeletons.jsx";
 import { compressImage } from "../../utils/image.js";
 import {
   formatDate,
@@ -304,7 +312,12 @@ export default function RiderDeliveries() {
   const stage = [STAGE.DELIVERED, STAGE.RESCHEDULED, STAGE.FAILED].includes(tab) ? tab : STAGE.TO_DELIVER;
   const copy = COPY[stage];
   const all = useMyDeliveries();
+  const syncState = useRiderDeliverySyncState();
+  const { online } = useNetworkStatus();
   const failures = useFailedDeliveries();
+  const isInitialSyncLoading = online && syncState.syncing && all.length === 0;
+  const isOfflineEmpty = !online && all.length === 0 && !syncState.syncedOnce;
+  const showCachedNotice = !online && all.length > 0;
   const [limit, setLimit] = useState(STEP);
   const [search, setSearch] = useState("");
   const [byArea, setByArea] = useState(false);
@@ -970,6 +983,8 @@ export default function RiderDeliveries() {
         </div>
       </Topbar>
 
+      {showCachedNotice && <CachedDataNotice updatedAt={syncState.lastSyncedAt} />}
+
       <DeliveryTabs value={stage} onChange={switchTab} />
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -1025,9 +1040,19 @@ export default function RiderDeliveries() {
         </button>
       </div>
 
-      <section className={stage === STAGE.TO_DELIVER && list.length === 0 ? `${panel} p-6` : ""}>
-        {body}
-        {list.length > shown.length && (
+      <section className={stage === STAGE.TO_DELIVER && list.length === 0 && !isInitialSyncLoading ? `${panel} p-6` : ""}>
+        {isInitialSyncLoading ? (
+          <ParcelCardListSkeleton count={4} label="Loading deliveries" />
+        ) : isOfflineEmpty ? (
+          <OfflineState
+            title="Deliveries unavailable offline"
+            text="Reconnect to sync your assigned deliveries."
+            onRetry={() => syncRiderDeliveriesWithServer()}
+          />
+        ) : (
+          body
+        )}
+        {!isInitialSyncLoading && !isOfflineEmpty && list.length > shown.length && (
           <div className="mt-6 text-center">
             <button onClick={() => setLimit((n) => n + STEP)} className={`${btnGhost} !px-8`}>
               Show more ({list.length - shown.length} left)

@@ -9,6 +9,19 @@ import {
 } from "../services/complaintService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
+import {
+  isOnline,
+  readViewCache,
+  useNetworkStatus,
+  useReconnectRefresh,
+  writeViewCache,
+} from "../utils/network.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const statusTone = {
@@ -37,8 +50,15 @@ function formatDate(val) {
 }
 
 export default function Complaints() {
-  const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { online } = useNetworkStatus();
+  const initialCached = useMemo(() => readViewCache("coordinator-complaints"), []);
+  const [complaints, setComplaints] = useState(() =>
+    Array.isArray(initialCached?.data) ? initialCached.data : []
+  );
+  const [hasData, setHasData] = useState(() => Boolean(initialCached?.data));
+  const [cachedAt, setCachedAt] = useState(() => initialCached?.updatedAt || null);
+  const [loading, setLoading] = useState(() => isOnline() && !initialCached?.data);
+  const [loadError, setLoadError] = useState("");
   const [status, setStatus] = useState("All");
   const [priority, setPriority] = useState("All");
   const [search, setSearch] = useState("");
@@ -47,50 +67,57 @@ export default function Complaints() {
   const [note, setNote] = useState("");
   const hasMarkedReadRef = useRef(false);
 
+  const loadData = async () => {
+    if (!isOnline()) {
+      setLoading(false);
+      return;
+    }
+    if (!hasData) setLoading(true);
+    setLoadError("");
+    try {
+      const list = await fetchComplaints();
+      const safeList = Array.isArray(list) ? list : [];
+      setComplaints(safeList);
+      setHasData(true);
+      setCachedAt(Date.now());
+      writeViewCache("coordinator-complaints", safeList);
+
+      // Automatic Mark as Read: When Coordinator views complaints, mark unread records in database
+      if (!hasMarkedReadRef.current) {
+        hasMarkedReadRef.current = true;
+        const unreadIds = safeList
+          .filter((c) => !c.is_read)
+          .map((c) => c.complaint_id || c.id)
+          .filter(Boolean);
+
+        if (unreadIds.length > 0) {
+          await markComplaintsAsRead(unreadIds);
+          setComplaints((prev) =>
+            prev.map((c) => ({
+              ...c,
+              is_read: true,
+              read_at: c.read_at || new Date().toISOString(),
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      if (isOnline()) setLoadError(err?.message || "Failed to load complaints.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load complaints from database on mount & automatically mark viewed complaints as READ
   useEffect(() => {
-    let mounted = true;
-
-    async function loadData() {
-      setLoading(true);
-      try {
-        const list = await fetchComplaints();
-        if (!mounted) return;
-        setComplaints(list);
-
-        // Automatic Mark as Read: When Coordinator views complaints, mark unread records in database
-        if (!hasMarkedReadRef.current) {
-          hasMarkedReadRef.current = true;
-          const unreadIds = list
-            .filter((c) => !c.is_read)
-            .map((c) => c.complaint_id || c.id)
-            .filter(Boolean);
-
-          if (unreadIds.length > 0) {
-            await markComplaintsAsRead(unreadIds);
-            if (!mounted) return;
-            // Update local state to reflect read status across viewed records
-            setComplaints((prev) =>
-              prev.map((c) => ({
-                ...c,
-                is_read: true,
-                read_at: c.read_at || new Date().toISOString(),
-              }))
-            );
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load complaints:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
     loadData();
-    return () => {
-      mounted = false;
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useReconnectRefresh(loadData);
+
+  const offlineEmpty = !online && !hasData;
+  const showCachedNotice = !online && hasData;
 
   const normalizedComplaints = useMemo(() => {
     return complaints.map((c) => {
@@ -337,6 +364,13 @@ export default function Complaints() {
         </div>
 
         {/* Desktop & Tablet Table Layout */}
+        {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}
+        {loadError && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load complaints" message={loadError} onRetry={loadData} />
+          </div>
+        )}
+
         <div className={`hidden min-[768px]:block ${tableScroll}`}>
           <table className="w-full min-w-[820px] border-collapse">
             <thead className={stickyThead}>
@@ -405,7 +439,12 @@ export default function Complaints() {
               </tbody>
             )}
           </table>
-          {!loading && rows.length === 0 && (
+          {!loading && offlineEmpty && (
+            <div className="p-4">
+              <OfflineState compact title="Complaints unavailable offline" text="Reconnect to review complaint tickets." onRetry={loadData} />
+            </div>
+          )}
+          {!loading && !offlineEmpty && !loadError && rows.length === 0 && (
             <EmptyState
               icon="inbox"
               title="No complaints found"
@@ -417,10 +456,9 @@ export default function Complaints() {
         {/* Mobile View: Dedicated Individual Cards */}
         <div className="min-[768px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3.5 pr-1">
           {loading ? (
-            <div className="py-10 text-center text-[13px] text-[#888]">
-              <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
-              Loading complaints…
-            </div>
+            <ParcelCardListSkeleton count={4} label="Loading complaints" />
+          ) : offlineEmpty ? (
+            <OfflineState compact title="Complaints unavailable offline" text="Reconnect to review complaint tickets." onRetry={loadData} />
           ) : rows.length === 0 ? (
             <EmptyState
               icon="inbox"

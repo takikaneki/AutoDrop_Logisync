@@ -9,6 +9,7 @@ import { btnGhost, btnPrimary, panel } from "../styles.js";
 import UnifiedQrModal from "../qr/UnifiedQrModal.jsx";
 import StatusBadge from "../StatusBadge.jsx";
 import Icon from "../Icon.jsx";
+import { ActivityListSkeleton, SkeletonBlock } from "../Skeletons.jsx";
 
 function shortParcelId(id) {
   const str = String(id || "").trim();
@@ -942,10 +943,7 @@ export default function ShipmentDetailsView({
                 </div>
 
                 {historyLoading ? (
-                  <div className="py-10 text-center text-[13px] text-[#64748b]">
-                    <Icon name="loader-2" className="mr-2 text-brand animate-spin" />
-                    Loading movement history…
-                  </div>
+                  <ActivityListSkeleton count={4} label="Loading movement history" />
                 ) : historyList.length === 0 ? (
                   <div className="py-8 text-center text-[13px] text-[#64748b]">
                     <Icon name="history" className="mb-2 block text-2xl text-[#94a3b8]" />
@@ -1250,7 +1248,7 @@ export default function ShipmentDetailsView({
             </div>
             <div className="p-5">
               {videoLoading ? (
-                <p className="py-12 text-center text-sm text-[#64748b]">Loading video stream…</p>
+                <SkeletonBlock className="h-[320px] w-full rounded-xl" />
               ) : videoError ? (
                 <p className="py-12 text-center text-sm text-[#d94747]">{videoError}</p>
               ) : videoSrc ? (

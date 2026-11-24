@@ -7,6 +7,12 @@ import { btnGhost, panel } from "../../components/styles.js";
 import useBase from "../../hooks/useBase.js";
 import { timeAgo } from "../../store/notifications.js";
 import { markAllPortalRead, markPortalRead, usePortalNotifications } from "../../store/portalNotifications.js";
+import { useNetworkStatus } from "../../utils/network.js";
+import {
+  CachedDataNotice,
+  NotificationListSkeleton,
+  OfflineState,
+} from "../../components/Skeletons.jsx";
 import Icon from "../../components/Icon.jsx";
 
 const tones = {
@@ -22,8 +28,11 @@ const tones = {
 export default function PortalNotifications() {
   const role = useBase().slice(1);
   const navigate = useNavigate();
-  const { items, announcements, notifications, unread } = usePortalNotifications(role);
+  const { online } = useNetworkStatus();
+  const { items, announcements, notifications, unread, loading, syncedOnce, lastSyncedAt, reload } = usePortalNotifications(role);
   const [tab, setTab] = useState("all");
+  const offlineEmpty = !online && items.length === 0 && !syncedOnce;
+  const showCachedNotice = !online && items.length > 0;
 
   const tabs = [
     ["all", "All"],
@@ -40,6 +49,8 @@ export default function PortalNotifications() {
   return (
     <>
       <Topbar title="Notifications" subtitle={unread ? `You have ${unread} unread update${unread > 1 ? "s" : ""}, including announcements.` : "You're all caught up."} />
+
+      {showCachedNotice && <CachedDataNotice updatedAt={lastSyncedAt} />}
 
       {/* ANNOUNCEMENTS NG COORDINATOR (laging nasa itaas) */}
       <AnnouncementsPanel items={announcements} onOpen={(a) => markPortalRead(a.id)} />
@@ -63,7 +74,17 @@ export default function PortalNotifications() {
       </div>
 
       <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
-        {list.length === 0 ? (
+        {loading ? (
+          <NotificationListSkeleton count={6} />
+        ) : offlineEmpty ? (
+          <div className="p-6">
+            <OfflineState
+              title="Notifications unavailable offline"
+              text="Reconnect to the internet to check for new updates and announcements."
+              onRetry={reload}
+            />
+          </div>
+        ) : list.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>

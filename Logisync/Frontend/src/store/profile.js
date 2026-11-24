@@ -1,6 +1,7 @@
 import { createStore } from "./createStore.js";
 import { getToken, getUser, updateStoredUser } from "../api.js";
 import { fetchMyProfile, updateMyProfile } from "../services/userService.js";
+import { isOnline } from "../utils/network.js";
 
 const EMPTY = {
   userId: null,
@@ -77,6 +78,8 @@ function seedState() {
 }
 
 const store = createStore(seedState());
+const profileSyncStore = createStore({ syncing: false, syncedOnce: false, lastSyncedAt: null });
+export const useProfileSyncState = () => profileSyncStore.use();
 
 export const setProfile = (patch) => {
   const uid = currentUid();
@@ -99,10 +102,17 @@ function applyServerUser(serverUser) {
 
 export async function syncProfileFromServer() {
   if (!getToken()) return null;
+  if (!isOnline()) {
+    profileSyncStore.set((s) => ({ ...s, syncing: false }));
+    return null;
+  }
+  profileSyncStore.set((s) => ({ ...s, syncing: true }));
   try {
     const serverUser = await fetchMyProfile();
+    profileSyncStore.set({ syncing: false, syncedOnce: true, lastSyncedAt: Date.now() });
     return applyServerUser(serverUser);
   } catch {
+    profileSyncStore.set((s) => ({ ...s, syncing: false }));
     return null;
   }
 }

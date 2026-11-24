@@ -1,30 +1,39 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { listParcels } from "../services/parcelService.js";
+import { useNetworkResource } from "../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  ChartCardSkeleton,
+  LoadErrorState,
+  OfflineState,
+  SkeletonBlock,
+} from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
 
 const VERIFIED_STATUSES = new Set(["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"]);
 
 export default function CoordinatorAnalytics() {
   const navigate = useNavigate();
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload,
+  } = useNetworkResource(
+    "coordinator-analytics-parcels",
+    async () => {
+      const list = await listParcels();
+      return (Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456");
+    },
+    { initialData: [] }
+  );
 
   useEffect(() => {
     document.title = "Analytics · LogiSync";
-    let alive = true;
-    listParcels()
-      .then((list) => {
-        if (!alive) return;
-        setParcels((Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456"));
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
   }, []);
 
   const stats = useMemo(() => {
@@ -67,6 +76,13 @@ export default function CoordinatorAnalytics() {
       </div>
 
       <div className="mx-auto max-w-xl space-y-4 px-4 pt-4">
+        {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} className="mb-0" />}
+        {offlineEmpty ? (
+          <OfflineState title="Analytics unavailable offline" text="Reconnect to the internet to load live verification analytics." onRetry={reload} />
+        ) : error && !parcels.length ? (
+          <LoadErrorState title="Unable to load analytics" message={error} onRetry={reload} />
+        ) : (
+        <>
         {/* Verification Rate Donut Card */}
         <section
           aria-label="Verification Rate"
@@ -77,10 +93,13 @@ export default function CoordinatorAnalytics() {
               Verification Rate
             </h2>
             <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
-              Live
+              {isStaleOffline ? "Cached" : "Live"}
             </span>
           </div>
 
+          {loading ? (
+            <ChartCardSkeleton variant="donut" heightClass="h-[200px]" />
+          ) : (
           <div className="mt-5 flex flex-wrap items-center justify-around gap-5">
             {/* Circular Donut Progress */}
             <div className="relative flex h-[148px] w-[148px] shrink-0 items-center justify-center">
@@ -101,13 +120,13 @@ export default function CoordinatorAnalytics() {
                   strokeWidth="16"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
-                  strokeDashoffset={loading ? circumference : strokeDashoffset}
+                  strokeDashoffset={strokeDashoffset}
                   className="stroke-brand transition-[stroke-dashoffset] duration-700 ease-out"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <strong className="text-[30px] font-extrabold leading-none tracking-tight text-[#0f172a] dark:text-white">
-                  {loading ? "…" : `${stats.verifiedPct}%`}
+                  {`${stats.verifiedPct}%`}
                 </strong>
                 <span className="mt-1 text-[11px] font-semibold text-slate-400">
                   Verified
@@ -124,7 +143,7 @@ export default function CoordinatorAnalytics() {
                     Verified
                   </span>
                   <strong className="block text-[16px] font-extrabold text-[#0f172a] dark:text-white">
-                    {loading ? "…" : `${stats.verifiedPct}%`}
+                    {`${stats.verifiedPct}%`}
                   </strong>
                 </div>
               </div>
@@ -135,12 +154,13 @@ export default function CoordinatorAnalytics() {
                     Not Verified
                   </span>
                   <strong className="block text-[16px] font-extrabold text-[#0f172a] dark:text-white">
-                    {loading ? "…" : `${stats.notVerifiedPct}%`}
+                    {`${stats.notVerifiedPct}%`}
                   </strong>
                 </div>
               </div>
             </div>
           </div>
+          )}
         </section>
 
         {/* Verification Statistics Breakdown */}
@@ -160,9 +180,13 @@ export default function CoordinatorAnalytics() {
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
                   Total Verifications
                 </span>
-                <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
-                  {loading ? "…" : stats.total.toLocaleString()}
-                </strong>
+                {loading ? (
+                  <SkeletonBlock className="mt-1 h-5 w-16" />
+                ) : (
+                  <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
+                    {stats.total.toLocaleString()}
+                  </strong>
+                )}
               </div>
             </div>
 
@@ -174,9 +198,13 @@ export default function CoordinatorAnalytics() {
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
                   Verified
                 </span>
-                <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
-                  {loading ? "…" : stats.verified.toLocaleString()}
-                </strong>
+                {loading ? (
+                  <SkeletonBlock className="mt-1 h-5 w-16" />
+                ) : (
+                  <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
+                    {stats.verified.toLocaleString()}
+                  </strong>
+                )}
               </div>
             </div>
 
@@ -188,13 +216,19 @@ export default function CoordinatorAnalytics() {
                 <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
                   Not Verified
                 </span>
-                <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
-                  {loading ? "…" : stats.notVerified.toLocaleString()}
-                </strong>
+                {loading ? (
+                  <SkeletonBlock className="mt-1 h-5 w-16" />
+                ) : (
+                  <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
+                    {stats.notVerified.toLocaleString()}
+                  </strong>
+                )}
               </div>
             </div>
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   );

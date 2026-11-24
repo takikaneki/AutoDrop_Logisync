@@ -2,6 +2,7 @@ import { createStore } from "./createStore.js";
 import { api, getRole, getUser } from "../api.js";
 import { fetchComplaints } from "../services/complaintService.js";
 import { listMessages } from "../services/messageService.js";
+import { isOnline } from "../utils/network.js";
 
 // Notifications ng Coordinator (local + live backend sync for complaints & messages).
 // Ang Coordinator ang gumagawa ng announcements kaya HINDI dapat nagno-notif sa sarili niya ang announcements.
@@ -46,10 +47,17 @@ export function addNotification(n) {
 }
 
 let syncing = false;
+const notifSyncStore = createStore({ syncing: false, syncedOnce: false, lastSyncedAt: null });
+export const useCoordinatorNotificationSyncState = () => notifSyncStore.use();
 
 export async function syncCoordinatorNotificationsFromServer() {
   if (syncing || getRole() !== "coordinator") return;
+  if (!isOnline()) {
+    notifSyncStore.set((s) => ({ ...s, syncing: false }));
+    return;
+  }
   syncing = true;
+  notifSyncStore.set((s) => ({ ...s, syncing: true }));
   try {
     const me = Number(getUser()?.user_id);
     const [complaints, messages, parcelsRes] = await Promise.all([
@@ -203,6 +211,11 @@ export async function syncCoordinatorNotificationsFromServer() {
     /* keep bell usable on transient network errors */
   } finally {
     syncing = false;
+    notifSyncStore.set((s) => ({
+      syncing: false,
+      syncedOnce: true,
+      lastSyncedAt: isOnline() ? Date.now() : s.lastSyncedAt,
+    }));
   }
 }
 

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { panel } from "./styles.js";
 import Icon from "./Icon.jsx";
+import { ParcelCardListSkeleton, SkeletonBlock } from "./Skeletons.jsx";
 
 // Mga maliliit na piraso na pinagsasaluhan ng mga page ng Seller at Rider.
 // Kapareho ng itsura ng mga card at panel ng Coordinator.
@@ -24,7 +25,8 @@ const cardBorders = {
 };
 
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).
-export function StatCard({ label, value, icon, tone = "orange", to, active = false, interactive = false }) {
+export function StatCard({ label, value, icon, tone = "orange", to, active = false, interactive = false, loading = false }) {
+  const isPlaceholderValue = loading || value === "…" || value === "—";
   const body = (
     <div
       className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
@@ -40,16 +42,22 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
         <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[14.5px] max-[1280px]:text-[13.5px] max-[480px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
           {label}
         </h3>
-        <h2 className="truncate text-[30px] max-[1280px]:text-[26px] max-[600px]:text-[22px] max-[480px]:text-[20px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
-          {value}
-        </h2>
+        {isPlaceholderValue ? (
+          <div role="status" aria-busy="true" aria-label={`Loading ${label}`}>
+            <SkeletonBlock className="h-7 w-14 rounded-lg max-[600px]:h-6 max-[480px]:h-5 max-[480px]:w-11" />
+          </div>
+        ) : (
+          <h2 className="truncate text-[30px] max-[1280px]:text-[26px] max-[600px]:text-[22px] max-[480px]:text-[20px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
+            {value}
+          </h2>
+        )}
       </div>
     </div>
   );
   return to ? (
     <Link
       to={to}
-      aria-label={`${label}: ${value}. View records`}
+      aria-label={`${label}: ${isPlaceholderValue ? "loading" : value}. View records`}
       className="block h-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
     >
       {body}
@@ -166,6 +174,10 @@ export function Steps({ steps }) {
   );
 }
 
-export function LoadingRow({ children = "Loading…" }) {
-  return <p className="py-10 text-center text-[14px] text-[#999]">{children}</p>;
+export function LoadingRow({ rows = 4, label = "Loading records" }) {
+  return (
+    <div className="py-2">
+      <ParcelCardListSkeleton count={rows} label={label} />
+    </div>
+  );
 }

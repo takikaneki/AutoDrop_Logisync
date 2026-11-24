@@ -1,28 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { listParcels } from "../../services/parcelService.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  ChartCardSkeleton,
+  LoadErrorState,
+  OfflineState,
+  SkeletonBlock,
+} from "../../components/Skeletons.jsx";
 import Icon from "../../components/Icon.jsx";
 
 export default function SellerAnalytics() {
   const navigate = useNavigate();
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload,
+  } = useNetworkResource(
+    "seller-analytics-parcels",
+    async () => {
+      const list = await listParcels();
+      return Array.isArray(list) ? list : [];
+    },
+    { initialData: [] }
+  );
 
   useEffect(() => {
     document.title = "Analytics · LogiSync";
-    let alive = true;
-    listParcels()
-      .then((list) => {
-        if (!alive) return;
-        setParcels(Array.isArray(list) ? list : []);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
   }, []);
 
   const stats = useMemo(() => {
@@ -90,6 +99,13 @@ export default function SellerAnalytics() {
       </div>
 
       <div className="mx-auto max-w-xl space-y-4 px-4 pt-4">
+        {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} className="mb-0" />}
+        {offlineEmpty ? (
+          <OfflineState title="Analytics unavailable offline" text="Reconnect to the internet to load your dispatch rate analytics." onRetry={reload} />
+        ) : error && !parcels.length ? (
+          <LoadErrorState title="Unable to load analytics" message={error} onRetry={reload} />
+        ) : (
+        <>
         {/* Seller Dispatch Rate Card (same live card from desktop Right Rail) */}
         <section
           aria-label="Dispatch Rate"
@@ -105,30 +121,42 @@ export default function SellerAnalytics() {
               Dispatch Rate
             </span>
             <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
-              Live
+              {isStaleOffline ? "Cached" : "Live"}
             </span>
           </div>
 
           <div className="relative mt-2.5 flex flex-wrap items-baseline gap-2.5">
-            <strong className="text-[40px] font-extrabold leading-none tracking-tight">
-              {loading ? "…" : stats.dispatchRate}
-            </strong>
-            <span className="text-[13px] text-slate-400">
-              {loading ? "…" : `${stats.verifiedOrInDelivery} of ${stats.total} cleared`}
-            </span>
+            {loading ? (
+              <>
+                <SkeletonBlock darkSurface className="h-10 w-24 rounded-xl" />
+                <SkeletonBlock darkSurface className="h-4 w-28" />
+              </>
+            ) : (
+              <>
+                <strong className="text-[40px] font-extrabold leading-none tracking-tight">
+                  {stats.dispatchRate}
+                </strong>
+                <span className="text-[13px] text-slate-400">
+                  {`${stats.verifiedOrInDelivery} of ${stats.total} cleared`}
+                </span>
+              </>
+            )}
           </div>
 
           {/* 5-Bar Visual Breakdown matching Desktop Right Rail */}
+          {loading ? (
+            <ChartCardSkeleton variant="bar" heightClass="h-[130px]" darkSurface />
+          ) : (
           <div className="relative mt-6 flex h-[110px] items-end gap-2.5">
             {stats.bars.map((b) => {
               const pct = Math.max(16, Math.round(((Number(b.value) || 0) / maxBar) * 100));
               return (
                 <div key={b.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-200">{loading ? "…" : b.value}</span>
+                  <span className="text-[11px] font-bold text-slate-200">{b.value}</span>
                   <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-lg bg-white/10">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-[#ee4d2d] to-[#fb923c] transition-all duration-500"
-                      style={{ height: `${loading ? 16 : pct}%` }}
+                      style={{ height: `${pct}%` }}
                       title={`${b.label}: ${b.value}`}
                     />
                   </div>
@@ -137,6 +165,7 @@ export default function SellerAnalytics() {
               );
             })}
           </div>
+          )}
         </section>
 
         {/* Detailed Dispatch Summary */}
@@ -168,15 +197,21 @@ export default function SellerAnalytics() {
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  <strong className={`text-[15px] font-extrabold ${row.tone}`}>
-                    {loading ? "…" : row.value}
-                  </strong>
+                  {loading ? (
+                    <SkeletonBlock className="h-5 w-10 rounded-md" />
+                  ) : (
+                    <strong className={`text-[15px] font-extrabold ${row.tone}`}>
+                      {row.value}
+                    </strong>
+                  )}
                   <Icon name="chevron-right" className="text-[11px] text-slate-400" />
                 </span>
               </Link>
             ))}
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   );

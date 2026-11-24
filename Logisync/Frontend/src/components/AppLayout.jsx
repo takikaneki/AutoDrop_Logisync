@@ -4,11 +4,14 @@ import Sidebar from "./Sidebar.jsx";
 import SiteHeader from "./SiteHeader.jsx";
 import Footer from "./Footer.jsx";
 import Toaster from "./Toaster.jsx";
+import NetworkStatusBanner from "./NetworkStatusBanner.jsx";
 import MobileBottomNav from "./layout/MobileBottomNav.jsx";
 import useResponsiveSidebar from "../hooks/useResponsiveSidebar.js";
 import { syncPrefsFromServer } from "../store/prefs.js";
 import { syncProfileFromServer } from "../store/profile.js";
 import { syncAnnouncementsFromServer } from "../store/announcements.js";
+import { syncCoordinatorNotificationsFromServer } from "../store/notifications.js";
+import { useReconnectRefresh } from "../utils/network.js";
 
 // Keyboard shortcuts: "g" tapos d/p/r/v/m/n/a/s  ·  "?" = Help
 const go = {
@@ -33,6 +36,13 @@ export default function AppLayout() {
     syncProfileFromServer();
     syncAnnouncementsFromServer();
   }, []);
+
+  useReconnectRefresh(() => {
+    syncPrefsFromServer();
+    syncProfileFromServer();
+    syncAnnouncementsFromServer();
+    syncCoordinatorNotificationsFromServer();
+  });
 
   useEffect(() => {
     closeMobile();
@@ -78,6 +88,7 @@ export default function AppLayout() {
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <SiteHeader collapsed={collapsed} mobileOpen={mobileOpen} onToggleSidebar={toggleSidebar} />
+        <NetworkStatusBanner />
         <main
           className={`flex min-w-0 max-w-full flex-1 flex-col overflow-x-clip px-[35px] pt-6 pb-6 max-[1280px]:px-6 max-[1024px]:px-5 print:p-0 ${
             isEdgeMobile

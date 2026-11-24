@@ -130,6 +130,8 @@ import {
   Video,
   WandSparkles,
   Warehouse,
+  Wifi,
+  WifiOff,
   X,
 } from "lucide-react";
 
@@ -280,6 +282,8 @@ export const ICONS = {
   unlink: Unlink,
   history: History,
   car: Car,
+  wifi: Wifi,
+  "wifi-off": WifiOff,
 };
 
 const STORED_ALIASES = {

@@ -8,6 +8,7 @@ import { filterAnnouncementsForRole, syncAnnouncementsFromServer, useAnnouncemen
 import { useComplaints } from "./records.js";
 import { MAX_RESCHEDULES, STAGE, useAssignedParcels, useMyDeliveries } from "./riderDeliveries.js";
 import { formatDay } from "../utils/format.js";
+import { isOnline, readViewCache, useReconnectRefresh, writeViewCache } from "../utils/network.js";
 import { createStore } from "./createStore.js";
 
 // Role-Based at Owner-Isolated Notifications para sa Seller at Rider:
@@ -63,14 +64,28 @@ export function usePortalNotifications(roleProp) {
   const localComplaints = useComplaints();
   const assigned = useAssignedParcels();
   const myDeliveries = useMyDeliveries();
-  const [remote, setRemote] = useState([]);
+  const cachedRemote = useMemo(
+    () => (activeRole ? readViewCache(`portal-notifs-${activeRole}`) : null),
+    [activeRole]
+  );
+  const [remote, setRemote] = useState(() =>
+    Array.isArray(cachedRemote?.data) ? cachedRemote.data : []
+  );
   const [serverRiderParcels, setServerRiderParcels] = useState([]);
+  const [loading, setLoading] = useState(() => Boolean(isOnline() && !cachedRemote?.data));
+  const [syncedOnce, setSyncedOnce] = useState(() => Boolean(cachedRemote?.data));
+  const [lastSyncedAt, setLastSyncedAt] = useState(() => cachedRemote?.updatedAt || null);
   const me = Number(getUser()?.user_id);
   const name = getUser()?.name;
 
   const load = useCallback(async () => {
     if (!me || (activeRole !== "seller" && activeRole !== "rider")) {
       setRemote([]);
+      setLoading(false);
+      return;
+    }
+    if (!isOnline()) {
+      setLoading(false);
       return;
     }
 
@@ -235,6 +250,10 @@ export function usePortalNotifications(roleProp) {
       /* keep header bell resilient */
     }
     setRemote(next);
+    writeViewCache(`portal-notifs-${activeRole}`, next);
+    setLastSyncedAt(Date.now());
+    setSyncedOnce(true);
+    setLoading(false);
   }, [me, activeRole, name]);
 
   useEffect(() => {
@@ -242,6 +261,8 @@ export function usePortalNotifications(roleProp) {
     const t = setInterval(load, 20000);
     return () => clearInterval(t);
   }, [load]);
+
+  useReconnectRefresh(load);
 
   const items = useMemo(() => {
     if (activeRole !== "seller" && activeRole !== "rider") return [];
@@ -406,6 +427,9 @@ export function usePortalNotifications(roleProp) {
     announcements: pinned,
     notifications: regular,
     unread: items.filter((n) => !n.read).length,
+    loading: loading && items.length === 0 && isOnline(),
+    syncedOnce,
+    lastSyncedAt,
     reload: load,
   };
 }

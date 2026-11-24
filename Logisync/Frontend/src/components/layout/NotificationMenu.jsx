@@ -6,6 +6,8 @@ import { classifyNotification, timeAgo } from "../../store/notifications.js";
 import { usePrefs } from "../../store/prefs.js";
 import { notifyPopup } from "../../store/toast.js";
 import { toPath } from "./navConfig.js";
+import { useNetworkStatus } from "../../utils/network.js";
+import { NotificationListSkeleton } from "../Skeletons.jsx";
 import Icon from "../Icon.jsx";
 
 const iconBtn =
@@ -18,7 +20,8 @@ export default function NotificationMenu({ role, btnClass }) {
   const seenIdsRef = useRef(null);
   const navigate = useNavigate();
   const prefs = usePrefs();
-  const { items: rawItems, announcements: rawAnnouncements, notifications: rawNotifications, reload } = usePortalNotifications(role);
+  const { online } = useNetworkStatus();
+  const { items: rawItems, announcements: rawAnnouncements, notifications: rawNotifications, loading, reload } = usePortalNotifications(role);
   useClickOutside(ref, () => setOpen(false), open);
 
   const bellEnabled = prefs.notificationsEnabled !== false && prefs.inAppNotifications !== false;
@@ -101,8 +104,12 @@ export default function NotificationMenu({ role, btnClass }) {
             <p className="px-5 py-8 text-center text-[13px] text-[#888]">
               In-App Notifications in the header bell are turned off. Existing history is preserved below.
             </p>
+          ) : loading && items.length === 0 ? (
+            <NotificationListSkeleton count={4} compact />
           ) : items.length === 0 ? (
-            <p className="p-8 text-center text-[14px] text-[#999]">You're all caught up.</p>
+            <p className="p-8 text-center text-[14px] text-[#999]">
+              {online ? "You're all caught up." : "You're offline. Notifications will refresh when reconnected."}
+            </p>
           ) : (
             <ul className="max-h-80 overflow-y-auto">
               {announcements.slice(0, 3).map((n) => (

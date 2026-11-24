@@ -1,43 +1,60 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getUser } from "../../api.js";
 import { EmptyState } from "../ui.jsx";
-import { Notice, PanelLink, PanelTitle } from "../portal.jsx";
+import { PanelLink, PanelTitle } from "../portal.jsx";
 import { panel } from "../styles.js";
 import { listAudit } from "../../services/auditService.js";
 import { timeAgo } from "../../store/notifications.js";
 import { metaOf } from "../../utils/activity.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
+import {
+  ActivityListSkeleton,
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+} from "../Skeletons.jsx";
 import Icon from "../Icon.jsx";
 
 // "Recent Activity" para sa dashboard ng Coordinator, Seller at Rider. Totoong data mula sa /api/audit-logs;
 // ang backend ang nagtatakda kung ano ang makikita ng bawat role. Nagre-refresh bawat 30 segundo.
 export default function RecentActivity({ to, limit = 8, title = "Recent Activity" }) {
   const me = Number(getUser()?.user_id);
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data: logs,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload,
+    silentReload,
+  } = useNetworkResource(
+    `recent-activity-${limit}`,
+    async () => {
+      const res = await listAudit({ limit });
+      return Array.isArray(res?.logs) ? res.logs : [];
+    },
+    { initialData: [], deps: [limit] }
+  );
 
   useEffect(() => {
-    let alive = true;
-    const load = () =>
-      listAudit({ limit })
-        .then(({ logs }) => alive && (setLogs(logs), setError("")))
-        .catch((e) => alive && setError(e.message))
-        .finally(() => alive && setLoading(false));
-    load();
-    const t = setInterval(load, 30000);
-    return () => {
-      alive = false;
-      clearInterval(t);
-    };
-  }, [limit]);
+    const t = setInterval(() => silentReload(), 30000);
+    return () => clearInterval(t);
+  }, [silentReload]);
 
   return (
     <section className={`${panel} p-[30px] max-[600px]:p-4`}>
       <PanelTitle icon="history" action={to && <PanelLink to={to}>View all</PanelLink>}>{title}</PanelTitle>
 
-      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
-      {!error && loading && <p className="py-8 text-center text-[14px] text-[#999]">Loading…</p>}
-      {!error && !loading && logs.length === 0 && (
+      {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+      {error && !logs.length && (
+        <LoadErrorState compact title="Unable to load recent activity" message={error} onRetry={reload} />
+      )}
+      {!error && loading && <ActivityListSkeleton count={5} label="Loading recent activity" />}
+      {!error && !loading && offlineEmpty && (
+        <OfflineState compact title="Recent activity unavailable offline" text="Reconnect to load the latest activity history." onRetry={reload} />
+      )}
+      {!error && !loading && !offlineEmpty && logs.length === 0 && (
         <EmptyState icon="history" title="No activity yet" text="Actions will be listed here as they happen." />
       )}
 

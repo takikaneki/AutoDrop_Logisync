@@ -107,6 +107,68 @@ body.dark {
   scroll-behavior: auto !important;
 }
 
+/* Facebook / Instagram-inspired subtle shimmer skeleton */
+@keyframes logisyncShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.logisync-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #e6e9ef;
+  background-image: linear-gradient(
+    90deg,
+    #e6e9ef 0%,
+    #f3f5f8 45%,
+    #e6e9ef 90%
+  );
+  background-size: 200% 100%;
+  animation: logisyncShimmer 1.55s ease-in-out infinite;
+}
+
+.dark .logisync-skeleton {
+  background-color: #1e293b;
+  background-image: linear-gradient(
+    90deg,
+    #1e293b 0%,
+    #2b3950 45%,
+    #1e293b 90%
+  );
+}
+
+.logisync-skeleton-dark-surface {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.1);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.2) 45%,
+    rgba(255, 255, 255, 0.08) 90%
+  );
+  background-size: 200% 100%;
+  animation: logisyncShimmer 1.55s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logisync-skeleton,
+  .logisync-skeleton-dark-surface {
+    animation: none !important;
+    background-image: none !important;
+  }
+}
+
+.reduced-motion .logisync-skeleton,
+.reduced-motion .logisync-skeleton-dark-surface {
+  animation: none !important;
+  background-image: none !important;
+}
+
 .underline-links main a {
   text-decoration: underline;
 }

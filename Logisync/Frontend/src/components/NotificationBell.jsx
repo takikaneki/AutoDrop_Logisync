@@ -6,10 +6,13 @@ import {
   markRead,
   syncCoordinatorNotificationsFromServer,
   timeAgo,
+  useCoordinatorNotificationSyncState,
   useNotifications,
 } from "../store/notifications.js";
 import { usePrefs } from "../store/prefs.js";
 import { notifyPopup } from "../store/toast.js";
+import { useNetworkStatus } from "../utils/network.js";
+import { NotificationListSkeleton } from "./Skeletons.jsx";
 import Icon from "./Icon.jsx";
 
 const tones = {
@@ -33,7 +36,10 @@ export default function NotificationBell() {
   const seenIdsRef = useRef(null);
   const navigate = useNavigate();
   const rawNotifications = useNotifications();
+  const syncState = useCoordinatorNotificationSyncState();
+  const { online } = useNetworkStatus();
   const prefs = usePrefs();
+  const isInitialLoading = online && syncState.syncing && rawNotifications.length === 0;
 
   useEffect(() => {
     syncCoordinatorNotificationsFromServer();
@@ -164,10 +170,12 @@ export default function NotificationBell() {
                 <Icon name="bell-off" className="mb-2 block text-[22px] text-[#bbb]" />
                 In-App Notifications in the header bell are turned off. Existing history is preserved.
               </div>
+            ) : isInitialLoading ? (
+              <NotificationListSkeleton count={4} compact />
             ) : list.length === 0 ? (
               <div className="py-10 text-center text-[12px] text-[#aaa]">
-                <Icon name="bell-off" className="mb-2 block text-[22px]" />
-                No notifications here yet.
+                <Icon name={online ? "bell-off" : "wifi-off"} className="mb-2 block text-[22px]" />
+                {online ? "No notifications here yet." : "You're offline. Notifications will refresh when reconnected."}
               </div>
             ) : (
               list.map((n) => (

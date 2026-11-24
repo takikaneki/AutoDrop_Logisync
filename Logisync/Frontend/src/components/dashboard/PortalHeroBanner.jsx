@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import { useProfile } from "../../store/profile.js";
 import Icon from "../Icon.jsx";
+import { SkeletonBlock } from "../Skeletons.jsx";
 
 const ROLE_CONFIG = {
   coordinator: {
@@ -45,7 +46,7 @@ const PIPELINE_TONES = {
   orange: "bg-[#fff0e5] text-[#ee4d2d] dark:bg-brand/20",
 };
 
-export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }) {
+export default function PortalHeroBanner({ role = "coordinator", pipeline = [], loading = false }) {
   const { name } = useProfile();
   const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.coordinator;
 
@@ -118,9 +119,13 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [] }
                   <span className="block truncate text-[11px] font-medium text-[#64748b] dark:text-[#b8b0a8]">
                     {idx + 1}. {step.label}
                   </span>
-                  <strong className="block text-[14px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                    {step.count}
-                  </strong>
+                  {loading ? (
+                    <SkeletonBlock className="mt-1 h-4 w-9 rounded-md" />
+                  ) : (
+                    <strong className="block text-[14px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                      {step.count}
+                    </strong>
+                  )}
                 </div>
               </div>
               <Icon name="chevron-right" className="text-[10px] text-[#cbd5e1] transition group-hover:translate-x-0.5 group-hover:text-[#ee4d2d]" />

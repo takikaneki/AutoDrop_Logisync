@@ -5,18 +5,33 @@ import {
   syncRiderDeliveriesWithServer,
   useAssignedParcels,
   useMyDeliveries,
+  useRiderDeliverySyncState,
 } from "../../store/riderDeliveries.js";
+import { useNetworkStatus } from "../../utils/network.js";
+import {
+  CachedDataNotice,
+  ChartCardSkeleton,
+  OfflineState,
+  SkeletonBlock,
+} from "../../components/Skeletons.jsx";
 import Icon from "../../components/Icon.jsx";
 
 export default function RiderAnalytics() {
   const navigate = useNavigate();
   const assigned = useAssignedParcels();
   const mine = useMyDeliveries();
+  const syncState = useRiderDeliverySyncState();
+  const { online } = useNetworkStatus();
 
   useEffect(() => {
     document.title = "Analytics · LogiSync";
     syncRiderDeliveriesWithServer();
   }, []);
+
+  const hasLocalData = assigned.length > 0 || mine.length > 0;
+  const loading = online && syncState.syncing && !hasLocalData;
+  const offlineEmpty = !online && !hasLocalData && !syncState.syncedOnce;
+  const showCachedNotice = !online && hasLocalData;
 
   const stats = riderCounts(assigned, mine);
   const deliveryRate = stats.total ? `${Math.round((stats.delivered / stats.total) * 100)}%` : "0%";
@@ -59,6 +74,11 @@ export default function RiderAnalytics() {
       </div>
 
       <div className="mx-auto max-w-xl space-y-4 px-4 pt-4">
+        {showCachedNotice && <CachedDataNotice updatedAt={syncState.lastSyncedAt} className="mb-0" />}
+        {offlineEmpty ? (
+          <OfflineState title="Analytics unavailable offline" text="Reconnect to the internet to sync your delivery statistics." onRetry={() => syncRiderDeliveriesWithServer()} />
+        ) : (
+        <>
         {/* Rider Delivery Rate Card (same live analytics card from desktop view) */}
         <section
           aria-label="Delivery Rate"
@@ -74,20 +94,32 @@ export default function RiderAnalytics() {
               Delivery Rate
             </span>
             <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
-              Live
+              {showCachedNotice ? "Cached" : "Live"}
             </span>
           </div>
 
           <div className="relative mt-2.5 flex flex-wrap items-baseline gap-2.5">
-            <strong className="text-[40px] font-extrabold leading-none tracking-tight">
-              {deliveryRate}
-            </strong>
-            <span className="text-[13px] text-slate-400">
-              {stats.delivered} of {stats.total} completed
-            </span>
+            {loading ? (
+              <>
+                <SkeletonBlock darkSurface className="h-10 w-24 rounded-xl" />
+                <SkeletonBlock darkSurface className="h-4 w-28" />
+              </>
+            ) : (
+              <>
+                <strong className="text-[40px] font-extrabold leading-none tracking-tight">
+                  {deliveryRate}
+                </strong>
+                <span className="text-[13px] text-slate-400">
+                  {stats.delivered} of {stats.total} completed
+                </span>
+              </>
+            )}
           </div>
 
           {/* 4-Bar Visual Breakdown matching Desktop Right Rail */}
+          {loading ? (
+            <ChartCardSkeleton variant="bar" heightClass="h-[130px]" darkSurface />
+          ) : (
           <div className="relative mt-6 flex h-[110px] items-end gap-3">
             {bars.map((b) => {
               const pct = Math.max(16, Math.round(((Number(b.value) || 0) / maxBar) * 100));
@@ -106,6 +138,7 @@ export default function RiderAnalytics() {
               );
             })}
           </div>
+          )}
         </section>
 
         {/* Detailed Delivery Breakdown */}
@@ -137,13 +170,19 @@ export default function RiderAnalytics() {
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-2">
-                  <strong className={`text-[15px] font-extrabold ${row.tone}`}>{row.value}</strong>
+                  {loading ? (
+                    <SkeletonBlock className="h-5 w-10 rounded-md" />
+                  ) : (
+                    <strong className={`text-[15px] font-extrabold ${row.tone}`}>{row.value}</strong>
+                  )}
                   <Icon name="chevron-right" className="text-[11px] text-slate-400" />
                 </span>
               </Link>
             ))}
           </div>
         </section>
+        </>
+        )}
       </div>
     </div>
   );

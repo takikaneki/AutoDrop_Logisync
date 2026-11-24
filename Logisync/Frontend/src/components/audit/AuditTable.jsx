@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUser } from "../../api.js";
-import { EmptyState } from "../ui.jsx";
-import { Notice } from "../portal.jsx";
+import { EmptyState, TableSkeleton } from "../ui.jsx";
 import { inputCls, panel, stickyThead, tableScroll, td, th } from "../styles.js";
 import { listAudit } from "../../services/auditService.js";
 import { CATEGORIES, ROLE_BADGE, metaOf } from "../../utils/activity.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../Skeletons.jsx";
 import Icon from "../Icon.jsx";
 
 const FETCH_LIMIT = 200;
@@ -18,9 +24,6 @@ export default function AuditTable({ note }) {
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
-  const [data, setData] = useState({ logs: [], total: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   // Hintayin muna ang user na tumigil sa pagta-type bago maghanap
   useEffect(() => {
@@ -30,17 +33,20 @@ export default function AuditTable({ note }) {
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    listAudit({ limit: FETCH_LIMIT, offset: 0, category: category === "All" ? "" : category, q })
-      .then((d) => alive && (setData(d), setError("")))
-      .catch((e) => alive && setError(e.message))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, [category, q]);
+  const cacheKey = category === "All" && !q ? "audit-table-all" : "";
+  const {
+    data,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload,
+  } = useNetworkResource(
+    cacheKey,
+    () => listAudit({ limit: FETCH_LIMIT, offset: 0, category: category === "All" ? "" : category, q }),
+    { initialData: { logs: [], total: 0 }, deps: [category, q] }
+  );
 
   const destinationFor = (log) => {
     const target = String(log.target || "").trim();
@@ -69,7 +75,12 @@ export default function AuditTable({ note }) {
         </select>
       </div>
 
-      {error && <Notice tone="error" icon="circle-alert" role="alert">{error}</Notice>}
+      {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+      {error && (
+        <div className="mb-4">
+          <LoadErrorState compact title="Unable to load activity log" message={error} onRetry={reload} />
+        </div>
+      )}
 
       {!error && (
         <>
@@ -78,9 +89,11 @@ export default function AuditTable({ note }) {
               <thead className={stickyThead}>
                 <tr>{["When", "Who", "Action", "Target", "Details"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
               </thead>
+              {loading ? (
+                <TableSkeleton rows={6} cols={5} />
+              ) : (
               <tbody>
-                {loading && <tr><td colSpan={5} className={`${td} text-center text-[#999]`}>Loading…</td></tr>}
-                {!loading && data.logs.map((l) => {
+                {data.logs.map((l) => {
                   const m = metaOf(l.category);
                   return (
                     <tr
@@ -109,14 +122,22 @@ export default function AuditTable({ note }) {
                   );
                 })}
               </tbody>
+              )}
             </table>
-            {!loading && data.logs.length === 0 && <EmptyState icon="clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
+            {!loading && offlineEmpty && (
+              <div className="p-4">
+                <OfflineState compact title="Activity log unavailable offline" text="Reconnect to load activity records." onRetry={reload} />
+              </div>
+            )}
+            {!loading && !offlineEmpty && data.logs.length === 0 && <EmptyState icon="clipboard-list" title="No log entries" text="Nothing matches your search yet." />}
           </div>
 
           {/* Mobile Card List */}
           <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
             {loading ? (
-              <div className="py-8 text-center text-[13px] text-[#888]">Loading activity…</div>
+              <ParcelCardListSkeleton count={4} label="Loading activity log" />
+            ) : offlineEmpty ? (
+              <OfflineState compact title="Activity log unavailable offline" text="Reconnect to load activity records." onRetry={reload} />
             ) : data.logs.length === 0 ? (
               <EmptyState icon="clipboard-list" title="No log entries" text="Nothing matches your search yet." />
             ) : (

@@ -6,6 +6,19 @@ import { initiateReturnToHub } from "../../services/parcelService.js";
 import { getDeliveryRecordForParcel, initiateReturnToHubLocal } from "../../store/riderDeliveries.js";
 import { toast } from "../../store/toast.js";
 import { formatDate } from "../../utils/format.js";
+import {
+  isOnline,
+  readViewCache,
+  useNetworkStatus,
+  useReconnectRefresh,
+  writeViewCache,
+} from "../../utils/network.js";
+import {
+  CachedDataNotice,
+  ChatSkeleton,
+  LoadErrorState,
+  OfflineState,
+} from "../Skeletons.jsx";
 import CallUserModal from "./CallUserModal.jsx";
 import Icon from "../Icon.jsx";
 
@@ -55,9 +68,17 @@ export default function ChatView({
   const coordinatorOnly = myRole !== "coordinator"; // seller at rider: Coordinator lang ang pwedeng kausapin
   const [params, setParams] = useSearchParams();
 
-  const [contacts, setContacts] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { online } = useNetworkStatus();
+  const cachedBundle = useMemo(() => readViewCache("messages-bundle"), []);
+  const [contacts, setContacts] = useState(() =>
+    Array.isArray(cachedBundle?.data?.contacts) ? cachedBundle.data.contacts : []
+  );
+  const [messages, setMessages] = useState(() =>
+    Array.isArray(cachedBundle?.data?.messages) ? cachedBundle.data.messages : []
+  );
+  const [hasLoadedData, setHasLoadedData] = useState(() => Boolean(cachedBundle?.data));
+  const [cachedAt, setCachedAt] = useState(() => cachedBundle?.updatedAt || null);
+  const [loading, setLoading] = useState(() => isOnline() && !cachedBundle?.data);
   const [error, setError] = useState("");
   const [activeId, setActiveId] = useState(null);
   const [callModalOpen, setCallModalOpen] = useState(false);
@@ -115,14 +136,22 @@ export default function ChatView({
   };
 
   const load = useCallback(async (silent = false) => {
+    if (!isOnline()) {
+      setLoading(false);
+      return;
+    }
     try {
       const [c, m] = await Promise.all([listContacts(), listMessages()]);
       // Dobleng proteksyon: kahit ano ang ibalik ng API, coordinator lang ang ipapakita sa seller/rider
-      setContacts(coordinatorOnly ? c.filter((x) => x.role === "coordinator") : c);
+      const nextContacts = coordinatorOnly ? c.filter((x) => x.role === "coordinator") : c;
+      setContacts(nextContacts);
       setMessages(m);
+      setHasLoadedData(true);
+      setCachedAt(Date.now());
+      writeViewCache("messages-bundle", { contacts: nextContacts, messages: m });
       setError("");
     } catch (err) {
-      if (!silent) setError(err.message);
+      if (!silent && isOnline()) setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -133,6 +162,8 @@ export default function ChatView({
     const t = setInterval(() => load(true), POLL_MS);
     return () => clearInterval(t);
   }, [load]);
+
+  useReconnectRefresh(() => load(true));
 
   // Buksan agad ang usapan kung may ?contact=<id o pangalan> sa URL
   useEffect(() => {
@@ -224,17 +255,38 @@ export default function ChatView({
     }
   };
 
-  if (loading) return <p className="py-10 text-center text-sm text-slate-500">Loading messages…</p>;
-  if (error)
+  if (loading && online && !hasLoadedData) {
+    return <ChatSkeleton directMode={directMode} surface={surface} />;
+  }
+  if (!online && !hasLoadedData) {
     return (
-      <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
-        {error}{" "}
-        <button onClick={() => { setLoading(true); load(); }} className="font-semibold underline">Try again</button>
-      </div>
+      <OfflineState
+        title="Messages unavailable offline"
+        text="Reconnect to the internet to load your conversations and send messages."
+        onRetry={() => {
+          setLoading(true);
+          load();
+        }}
+      />
     );
+  }
+  if (error && !hasLoadedData) {
+    return (
+      <LoadErrorState
+        title="Unable to load messages"
+        message={error}
+        onRetry={() => {
+          setLoading(true);
+          load();
+        }}
+      />
+    );
+  }
 
   return (
-    <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
+    <div className="min-w-0">
+      {!online && hasLoadedData && <CachedDataNotice updatedAt={cachedAt} />}
+      <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
         <aside className={`min-w-0 w-full max-w-full min-h-0 flex-col overflow-hidden border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
@@ -526,6 +578,7 @@ export default function ChatView({
           onClose={() => setCallModalOpen(false)}
         />
       )}
+    </div>
     </div>
   );
 }

@@ -98,15 +98,19 @@ export function EmptyState({ icon = "package-open", title = "Nothing here yet", 
   );
 }
 
-// Skeleton rows habang naglo-load (mock delay; magiging totoong loading kapag API na)
+// Shimmer skeleton rows habang naglo-load ang table
 export function TableSkeleton({ rows = 6, cols = 4 }) {
   return (
-    <tbody>
+    <tbody aria-busy="true" aria-label="Loading table rows">
       {Array.from({ length: rows }).map((_, r) => (
         <tr key={r}>
           {Array.from({ length: cols }).map((_, c) => (
             <td key={c} className="px-4 py-4 border-t border-[#f1f1f1] dark:border-night-line">
-              <div className="h-3.5 rounded bg-[#eee] animate-pulse dark:bg-night-line" style={{ width: `${55 + ((r + c) % 4) * 11}%` }} />
+              <div
+                aria-hidden="true"
+                className="logisync-skeleton h-3.5 rounded-md"
+                style={{ width: `${55 + ((r + c) % 4) * 11}%` }}
+              />
             </td>
           ))}
         </tr>

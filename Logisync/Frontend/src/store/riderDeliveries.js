@@ -7,6 +7,7 @@ import { fetchMyRiderParcels, reportDelivered, reportFailed, scanForDelivery } f
 import { listContacts, sendMessage } from "../services/messageService.js";
 import { addNotification, markRead } from "./notifications.js";
 import { getParcelAddress } from "./customers.js";
+import { isOnline } from "../utils/network.js";
 
 const cleanField = (val) => {
   if (val === null || val === undefined) return "";
@@ -493,6 +494,8 @@ export const useAllDeliveries = () => {
 const hydratedLookupKeys = new Set();
 const pushedLocalKeys = new Set();
 let syncInFlight = false;
+const syncStatusStore = createStore({ syncing: false, syncedOnce: false, lastSyncedAt: null, error: "" });
+export const useRiderDeliverySyncState = () => syncStatusStore.use();
 
 function mapServerParcelToDelivery(row, riderId) {
   const user = getUser();
@@ -576,7 +579,12 @@ function mapServerParcelToDelivery(row, riderId) {
 
 export async function syncRiderDeliveriesWithServer(riderId = me()) {
   if (!riderId || syncInFlight) return;
+  if (!isOnline()) {
+    syncStatusStore.set((s) => ({ ...s, syncing: false }));
+    return;
+  }
   syncInFlight = true;
+  syncStatusStore.set((s) => ({ ...s, syncing: true, error: "" }));
   try {
     const user = getUser();
 
@@ -857,6 +865,12 @@ export async function syncRiderDeliveriesWithServer(riderId = me()) {
     }
   } finally {
     syncInFlight = false;
+    syncStatusStore.set((s) => ({
+      ...s,
+      syncing: false,
+      syncedOnce: true,
+      lastSyncedAt: isOnline() ? Date.now() : s.lastSyncedAt,
+    }));
   }
 }
 

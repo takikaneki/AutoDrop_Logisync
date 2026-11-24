@@ -2,12 +2,20 @@ import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Topbar from "../components/Topbar.jsx";
-import { EmptyState, Modal, StatusBadge } from "../components/ui.jsx";
+import { EmptyState, Modal, StatusBadge, TableSkeleton } from "../components/ui.jsx";
 import BentoKpiRow from "../components/dashboard/BentoKpiRow.jsx";
 import PortalHeroBanner from "../components/dashboard/PortalHeroBanner.jsx";
 import DashboardRightRail from "../components/dashboard/DashboardRightRail.jsx";
 import RecentActivity from "../components/audit/RecentActivity.jsx";
 import CoordinatorRthSection from "../components/coordinator/CoordinatorRthSection.jsx";
+import {
+  CachedDataNotice,
+  ChartCardSkeleton,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+  SkeletonBlock,
+} from "../components/Skeletons.jsx";
 import { btnGhost, btnPrimary, inputCls } from "../components/styles.js";
 import {
   listParcels,
@@ -15,6 +23,8 @@ import {
   confirmIncident,
   actionIncident,
 } from "../services/parcelService.js";
+import { useNetworkResource } from "../hooks/useNetworkResource.js";
+import { useReconnectRefresh } from "../utils/network.js";
 import { toast } from "../store/toast.js";
 import { parcelStats } from "../utils/stats.js";
 import { buildParcelSeries, statusTotals } from "../utils/analytics.js";
@@ -29,8 +39,22 @@ const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", m
 const tick = { fontSize: 13, fill: "#8a8a8a" };
 
 export default function Dashboard() {
-  const [real, setReal] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const {
+    data: real,
+    loading: loadingStats,
+    error: parcelsError,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: reloadParcels,
+  } = useNetworkResource(
+    "coordinator-dashboard-parcels",
+    async () => {
+      const list = await listParcels();
+      return (Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456");
+    },
+    { initialData: [] }
+  );
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 820px)").matches : false
   );
@@ -46,13 +70,6 @@ export default function Dashboard() {
     }
     mq.addListener(onChange);
     return () => mq.removeListener(onChange);
-  }, []);
-
-  useEffect(() => {
-    listParcels()
-      .then((list) => setReal((Array.isArray(list) ? list : []).filter((p) => p && p.parcel_id !== "PX123456")))
-      .catch(() => { })
-      .finally(() => setLoadingStats(false));
   }, []);
 
   const [incidents, setIncidents] = useState([]);
@@ -72,12 +89,14 @@ export default function Dashboard() {
     loadIncidents();
   }, []);
 
+  useReconnectRefresh(loadIncidents);
+
   const handleConfirmIncident = async (incidentId) => {
     try {
       await confirmIncident(incidentId);
       toast("Incident confirmed. Affected rider parcels are placed on delivery hold.", "info");
       loadIncidents();
-      listParcels().then(setReal).catch(() => { });
+      reloadParcels();
     } catch (e) {
       toast(e.message || "Failed to confirm incident", "error");
     }
@@ -96,7 +115,7 @@ export default function Dashboard() {
       toast(`Action '${actionType}' applied to incident.`, "success");
       setIncidentActionTarget(null);
       loadIncidents();
-      listParcels().then(setReal).catch(() => { });
+      reloadParcels();
     } catch (e) {
       toast(e.message || "Failed to execute action", "error");
     } finally {
@@ -186,51 +205,69 @@ export default function Dashboard() {
     <>
       <Topbar title="Dashboard" />
 
+      {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+      {parcelsError && !real.length && (
+        <div className="mb-6">
+          <LoadErrorState title="Unable to load dashboard data" message={parcelsError} onRetry={reloadParcels} compact />
+        </div>
+      )}
+
       {/* 1. BENTO OVERVIEW GRID (No Maps) — Mobile: Banner -> Cards; Desktop: Cards -> Banner + Right Rail */}
       <section className="mb-7 max-[600px]:mb-4 grid grid-cols-[1.85fr_1fr] items-stretch gap-5 max-[1150px]:grid-cols-1">
         <div className="flex flex-col gap-4">
           <div className="order-2 min-[821px]:order-1">
-            <BentoKpiRow
-              cards={[
-                {
-                  label: "Total Parcels",
-                  value: v(stats.total),
-                  tone: "dark",
-                  to: "/parcels",
-                  badge: "All Shipments",
-                  icon: "package",
-                  subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
-                },
-                {
-                  label: "Needs Verification",
-                  value: v(stats.flagged),
-                  tone: "yellow",
-                  to: "/verification?status=VIDEO_SUBMITTED",
-                  badge: "Pending Review",
-                  icon: "clock",
-                  subtext: "Awaiting hub approval",
-                },
-                {
-                  label: "Verified Parcels",
-                  value: v(stats.pending),
-                  tone: "green",
-                  to: "/verification?status=VERIFIED",
-                  badge: "Cleared",
-                  icon: "circle-check",
-                  subtext: "Ready for rider dispatch",
-                },
-              ]}
-            />
+            {offlineEmpty ? (
+              <OfflineState
+                compact
+                title="Dashboard metrics unavailable offline"
+                text="Connect to the internet to fetch the latest hub counts."
+                onRetry={reloadParcels}
+              />
+            ) : (
+              <BentoKpiRow
+                loading={loadingStats}
+                cards={[
+                  {
+                    label: "Total Parcels",
+                    value: v(stats.total),
+                    tone: "dark",
+                    to: "/parcels",
+                    badge: "All Shipments",
+                    icon: "package",
+                    subtext: `${v(real.filter((p) => p.returnToHub || p.status === "RETURN_TO_HUB" || p.status === "DELIVERY_FAILED").length)} failed / return to hub`,
+                  },
+                  {
+                    label: "Needs Verification",
+                    value: v(stats.flagged),
+                    tone: "yellow",
+                    to: "/verification?status=VIDEO_SUBMITTED",
+                    badge: "Pending Review",
+                    icon: "clock",
+                    subtext: "Awaiting hub approval",
+                  },
+                  {
+                    label: "Verified Parcels",
+                    value: v(stats.pending),
+                    tone: "green",
+                    to: "/verification?status=VERIFIED",
+                    badge: "Cleared",
+                    icon: "circle-check",
+                    subtext: "Ready for rider dispatch",
+                  },
+                ]}
+              />
+            )}
           </div>
 
           <div className="order-1 min-[821px]:order-2">
             <PortalHeroBanner
               role="coordinator"
+              loading={loadingStats}
               pipeline={[
-                { label: "Needs Review", count: v(countStatus("VIDEO_SUBMITTED")), icon: "video", tone: "yellow", to: "/verification?status=VIDEO_SUBMITTED" },
-                { label: "Verified", count: v(countStatus("VERIFIED")), icon: "circle-check", tone: "green", to: "/verification?status=VERIFIED" },
-                { label: "Out / Delivered", count: v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", tone: "blue", to: "/parcels" },
-                { label: "Failed / Return", count: v(stats.flagged), icon: "triangle-alert", tone: "red", to: "/parcels" },
+                { label: "Needs Review", count: offlineEmpty ? "—" : v(countStatus("VIDEO_SUBMITTED")), icon: "video", tone: "yellow", to: "/verification?status=VIDEO_SUBMITTED" },
+                { label: "Verified", count: offlineEmpty ? "—" : v(countStatus("VERIFIED")), icon: "circle-check", tone: "green", to: "/verification?status=VERIFIED" },
+                { label: "Out / Delivered", count: offlineEmpty ? "—" : v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", tone: "blue", to: "/parcels" },
+                { label: "Failed / Return", count: offlineEmpty ? "—" : v(stats.flagged), icon: "triangle-alert", tone: "red", to: "/parcels" },
               ]}
             />
           </div>
@@ -239,14 +276,19 @@ export default function Dashboard() {
         <div className="hidden min-[821px]:grid">
           <DashboardRightRail
             variant="slate"
+            loading={loadingStats}
             tasksTitle="Action Queue"
             seeAllTo="/verification"
             tasks={actionQueue}
-            emptyText="No pending verification proofs or rider incidents right now."
+            emptyText={
+              offlineEmpty
+                ? "Action queue is unavailable while offline."
+                : "No pending verification proofs or rider incidents right now."
+            }
             summary={{
               label: "Verification Rate",
-              value: loadingStats ? "…" : verificationRate,
-              sublabel: `${v(verifiedTotal)} of ${v(real.length)} cleared`,
+              value: offlineEmpty ? "—" : loadingStats ? "…" : verificationRate,
+              sublabel: offlineEmpty ? "Offline" : `${v(verifiedTotal)} of ${v(real.length)} cleared`,
               bars: miniBars,
             }}
           />
@@ -343,7 +385,11 @@ export default function Dashboard() {
             {period === "day" && (
               <button type="button" onClick={() => setWeekOffset((n) => n - 1)} aria-label="Previous week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 dark:border-night-line"><Icon name="chevron-left" className="text-[11px]" /></button>
             )}
-            <span>{series.range} · {loadingStats ? "…" : series.total} parcels</span>
+            {loadingStats ? (
+              <SkeletonBlock className="h-4 w-36" />
+            ) : (
+              <span>{series.range} · {offlineEmpty ? "—" : series.total} parcels</span>
+            )}
             {period === "day" && (
               <>
                 <button type="button" onClick={() => setWeekOffset((n) => Math.min(0, n + 1))} disabled={weekOffset === 0} aria-label="Next week" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e5e5] hover:border-orange-500 hover:text-orange-500 disabled:opacity-40 disabled:hover:border-[#e5e5e5] disabled:hover:text-inherit dark:border-night-line"><Icon name="chevron-right" className="text-[11px]" /></button>
@@ -351,6 +397,11 @@ export default function Dashboard() {
               </>
             )}
           </div>
+          {loadingStats ? (
+            <ChartCardSkeleton variant="bar" heightClass="h-[380px] max-[820px]:h-[260px]" />
+          ) : offlineEmpty ? (
+            <OfflineState compact title="Analytics unavailable offline" text="Charts will refresh automatically once you reconnect." onRetry={reloadParcels} />
+          ) : (
           <div className="h-[380px] max-[820px]:h-[260px] w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -394,10 +445,16 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
 
         <div className={panel}>
           <h3 className="mb-5 max-[600px]:mb-2 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
+          {loadingStats ? (
+            <ChartCardSkeleton variant="donut" heightClass="h-[380px] max-[820px]:h-[275px]" />
+          ) : offlineEmpty ? (
+            <OfflineState compact title="Status breakdown unavailable" text="Reconnect to view live status percentages." onRetry={reloadParcels} />
+          ) : (
           <div className="h-[380px] max-[820px]:h-[275px] w-full min-w-0 overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart margin={{ top: 6, right: 6, left: 6, bottom: 6 }}>
@@ -429,6 +486,7 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
       </section>
 
@@ -439,6 +497,10 @@ export default function Dashboard() {
             <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><Icon name="package" className="mr-2 text-orange-500" />Recent Parcels</h2>
             <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
           </div>
+          {offlineEmpty ? (
+            <OfflineState compact title="Recent parcels unavailable offline" text="Reconnect to load recent hub parcels." onRetry={reloadParcels} />
+          ) : (
+          <>
           <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
             <table className="w-full min-w-[580px] border-collapse">
               <thead className="sticky top-0 z-10 bg-[#0f172a] dark:bg-[#ee4d2d]">
@@ -448,6 +510,9 @@ export default function Dashboard() {
                   ))}
                 </tr>
               </thead>
+              {loadingStats ? (
+                <TableSkeleton rows={5} cols={5} />
+              ) : (
               <tbody>
                 {recentRows.map((p) => {
                   const cell = "px-4 py-3.5 border-b border-[#edf0f4] dark:border-night-line";
@@ -464,10 +529,16 @@ export default function Dashboard() {
                   );
                 })}
               </tbody>
+              )}
             </table>
+            {!loadingStats && recentRows.length === 0 && (
+              <EmptyState icon="package-open" title="No parcels yet" text="Registered parcels will appear here." />
+            )}
           </div>
           <div className="min-[701px]:hidden space-y-2.5">
-            {recentRows.map((p) => (
+            {loadingStats ? (
+              <ParcelCardListSkeleton count={3} label="Loading recent parcels" />
+            ) : recentRows.map((p) => (
               <div
                 key={p.id}
                 className="rounded-xl border border-[#edf0f4] bg-[#fcfcfd] p-3.5 dark:border-night-line dark:bg-night-head"
@@ -492,6 +563,8 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+          </>
+          )}
         </div>
       </section>
 

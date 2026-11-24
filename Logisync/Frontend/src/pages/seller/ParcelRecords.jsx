@@ -2,11 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
-import { EmptyState, CodBadge } from "../../components/ui.jsx";
+import { EmptyState, CodBadge, TableSkeleton } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
 import { btnGhost, btnPrimary, inputCls, tableCard, tableHead, tableRow, tableScroll, td, th } from "../../components/styles.js";
 import { listParcels } from "../../services/parcelService.js";
+import { useNetworkResource } from "../../hooks/useNetworkResource.js";
+import {
+  CachedDataNotice,
+  LoadErrorState,
+  OfflineState,
+  ParcelCardListSkeleton,
+} from "../../components/Skeletons.jsx";
 import { formatDate, formatDay } from "../../utils/format.js";
 import { statusInfo } from "../../utils/parcelStatus.js";
 import { bucketOf } from "../../utils/stats.js";
@@ -33,9 +40,22 @@ const BUCKETS = { FLAGGED: "Flagged", PENDING: "Pending", DELIVERED: "Delivered"
 
 export default function ParcelRecords() {
   const [params, setParams] = useSearchParams();
-  const [parcels, setParcels] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data: parcels,
+    loading,
+    error,
+    offlineEmpty,
+    isStaleOffline,
+    cachedAt,
+    reload: load,
+  } = useNetworkResource(
+    "seller-parcels",
+    async () => {
+      const list = await listParcels();
+      return Array.isArray(list) ? list : [];
+    },
+    { initialData: [] }
+  );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
@@ -46,16 +66,6 @@ export default function ParcelRecords() {
   useEffect(() => {
     if (params.get("report") === "1") setReportOpen(true);
   }, [params]);
-
-  const load = () => {
-    setLoading(true);
-    setError("");
-    listParcels()
-      .then(setParcels)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  };
-  useEffect(load, []);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -256,6 +266,12 @@ export default function ParcelRecords() {
       </div>
 
       <section className={`${tableCard} p-[26px] max-[600px]:p-4 ${reportOpen ? "print:hidden" : ""}`}>
+        {isStaleOffline && <CachedDataNotice updatedAt={cachedAt} />}
+        {error && !offlineEmpty && (
+          <div className="mb-4">
+            <LoadErrorState compact title="Unable to load parcel records" message={error} onRetry={load} />
+          </div>
+        )}
         <div className="mb-[18px] grid grid-cols-[1fr_190px_170px] gap-3 max-[900px]:grid-cols-2 max-[600px]:grid-cols-1">
           <div className="relative max-[900px]:col-span-2 max-[600px]:col-span-1">
             <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
@@ -288,6 +304,9 @@ export default function ParcelRecords() {
                   {["Parcel ID", "Transaction no.", "Customer / Receiver", "Address", "Category & Contents", "Status", "Created", ""].map((h) => <th key={h} className={th}>{h}</th>)}
                 </tr>
               </thead>
+              {loading ? (
+                <TableSkeleton rows={6} cols={8} />
+              ) : (
               <tbody>
                 {visible.map((p) => {
                   const needsVideo = PENDING.includes(p.status);
@@ -358,9 +377,14 @@ export default function ParcelRecords() {
                 );
               })}
             </tbody>
+              )}
           </table>
-          {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
-            {!loading && visible.length === 0 && (
+          {!loading && offlineEmpty && (
+            <div className="p-4">
+              <OfflineState compact title="Your parcel records are unavailable offline" text="Reconnect to load your registered parcels." onRetry={load} />
+            </div>
+          )}
+            {!loading && !offlineEmpty && !error && visible.length === 0 && (
               <EmptyState
                 title={parcels.length ? "No parcels match your filters" : "You have no parcels yet"}
                 text={parcels.length ? "Try a different search or status." : "Create your first parcel to see it here."}
@@ -386,8 +410,11 @@ export default function ParcelRecords() {
 
         {/* Mobile Card View */}
         <div className="min-[701px]:hidden space-y-3">
-          {loading && <p className="py-10 text-center text-[14px] text-[#999]">Loading…</p>}
-          {!loading && visible.length === 0 && (
+          {loading && <ParcelCardListSkeleton count={4} label="Loading parcel records" />}
+          {!loading && offlineEmpty && (
+            <OfflineState compact title="Your parcel records are unavailable offline" text="Reconnect to load your registered parcels." onRetry={load} />
+          )}
+          {!loading && !offlineEmpty && !error && visible.length === 0 && (
             <EmptyState
               title={parcels.length ? "No parcels match your filters" : "You have no parcels yet"}
               text={parcels.length ? "Try a different search or status." : "Create your first parcel to see it here."}

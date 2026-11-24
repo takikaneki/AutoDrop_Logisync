@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
 import Icon from "../Icon.jsx";
+import { DashboardRightRailSkeleton } from "../Skeletons.jsx";
 
 export default function DashboardRightRail({
   variant = "slate",
   tasksTitle = "Action Queue",
   seeAllTo = "#",
   tasks = [],
+  loading = false,
   emptyText = "You're all caught up! No pending actions.",
   hideSummaryOnMobile = false,
   summary = {
@@ -15,6 +17,9 @@ export default function DashboardRightRail({
     bars: [],
   },
 }) {
+  if (loading) {
+    return <DashboardRightRailSkeleton hideSummaryOnMobile={hideSummaryOnMobile} />;
+  }
   const maxBar = Math.max(1, ...(summary.bars || []).map((b) => Number(b.value) || 0));
   const isSlate = variant === "slate";
 
