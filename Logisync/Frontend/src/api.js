@@ -148,7 +148,19 @@ export async function api(path, { method = "GET", body, headers } = {}) {
       window.location.href = "/login";
     }
     // Walang JSON galing sa 5xx = hindi naabot ng Vite proxy ang backend
-    throw new Error(data?.message || (res.status >= 500 ? SERVER_DOWN : `Request failed (${res.status})`));
+    const err = new Error(
+      data?.message || (res.status >= 500 ? SERVER_DOWN : `Request failed (${res.status})`)
+    );
+    err.status = res.status;
+    err.data = data;
+    if (data && typeof data === "object") {
+      if (data.remainingAttempts !== undefined) err.remainingAttempts = data.remainingAttempts;
+      if (data.remainingSeconds !== undefined) err.remainingSeconds = data.remainingSeconds;
+      if (data.locked !== undefined) err.locked = data.locked;
+      if (data.expired !== undefined) err.expired = data.expired;
+      if (data.code !== undefined) err.code = data.code;
+    }
+    throw err;
   }
 
   if (data === null) {

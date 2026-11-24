@@ -15,6 +15,10 @@ const announcementRoutes = require("./routes/announcementRoutes");
 
 const app = express();
 
+if (process.env.VERCEL || process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));

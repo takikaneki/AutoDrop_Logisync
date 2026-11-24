@@ -11,6 +11,10 @@ async function authenticateToken(req, res, next) {
     return res.status(401).json({ success: false, message: "Authentication required." });
   }
 
+  if (!process.env.JWT_SECRET) {
+    return res.status(500).json({ success: false, message: "Server authentication configuration error." });
+  }
+
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -18,10 +22,22 @@ async function authenticateToken(req, res, next) {
     return res.status(401).json({ success: false, message: "Invalid or expired token." });
   }
 
+  // Strictly reject temporary OTP / first-login tokens from accessing protected APIs
+  if (
+    (decoded.token_type && decoded.token_type !== "session") ||
+    decoded.purpose ||
+    decoded.otp_id
+  ) {
+    return res.status(401).json({
+      success: false,
+      message: "Temporary verification tokens cannot be used to access protected resources."
+    });
+  }
+
   try {
     // Retrieve actual user record from trusted database
     const [rows] = await pool.query(
-      "SELECT user_id, name, email, role, verification_status FROM users WHERE user_id = ?",
+      "SELECT user_id, name, email, role, verification_status, first_login FROM users WHERE user_id = $1",
       [decoded.user_id]
     );
 
@@ -42,22 +58,31 @@ async function authenticateToken(req, res, next) {
       });
     }
 
+    // Enforce mandatory first-time login password change on the backend
+    if (Boolean(dbUser.first_login)) {
+      return res.status(403).json({
+        success: false,
+        code: "FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED",
+        message: "You must complete first-time password setup before accessing this resource."
+      });
+    }
+
     // Attach verified user info with trusted database role
     req.user = {
       ...decoded,
       user_id: dbUser.user_id,
       name: dbUser.name,
       email: dbUser.email,
-      role: String(dbUser.role || "").toLowerCase()
+      role: String(dbUser.role || "").toLowerCase(),
+      first_login: false
     };
     next();
-  } catch {
-    // Fallback to cryptographically verified decoded JWT if DB is temporarily unreachable
-    req.user = {
-      ...decoded,
-      role: String(decoded.role || "").toLowerCase()
-    };
-    next();
+  } catch (err) {
+    console.error("authenticateToken database verification error:", err?.code || err?.message);
+    return res.status(503).json({
+      success: false,
+      message: "Authentication service is temporarily unavailable. Please try again."
+    });
   }
 }
 

@@ -5,6 +5,7 @@ import TermsModal from "../components/TermsModal.jsx";
 import ContactUsModal from "../components/auth/ContactUsModal.jsx";
 import ForgotPasswordModal from "../components/auth/ForgotPasswordModal.jsx";
 import ResetPasswordModal from "../components/auth/ResetPasswordModal.jsx";
+import FirstLoginModal from "../components/auth/FirstLoginModal.jsx";
 import WelcomeIntro from "../components/auth/WelcomeIntro.jsx";
 import { SPX_LOGO_DATA_URL } from "../data/spxLogo.js";
 import {
@@ -343,8 +344,8 @@ export default function Login({ portalRole: propPortalRole } = {}) {
     const targetRole = VALID_PORTAL_ROLES.includes(cleanParam)
       ? cleanParam
       : VALID_PORTAL_ROLES.includes(queryRole)
-      ? queryRole
-      : null;
+        ? queryRole
+        : null;
 
     if (targetRole && targetRole !== selectedRole) {
       setSelectedRole(targetRole);
@@ -364,6 +365,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
   const [legalDocModal, setLegalDocModal] = useState(null); // "terms" | "privacy" | null
   const [contactOpen, setContactOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [firstLoginModalData, setFirstLoginModalData] = useState(null);
 
   // Detect password reset token from URL
   const resetTokenFromUrl = searchParams.get("resetToken") || searchParams.get("token") || "";
@@ -450,6 +452,12 @@ export default function Login({ portalRole: propPortalRole } = {}) {
           policyVersion: POLICY_VERSION,
         },
       });
+
+      // FIRST-TIME LOGIN PASSWORD SETUP DETECTION:
+      if (data?.requireFirstLoginPasswordChange) {
+        setFirstLoginModalData(data);
+        return;
+      }
 
       // AUTOMATIC ROLE DETECTION:
       // The backend detects the verified account role from the database.
@@ -786,6 +794,23 @@ export default function Login({ portalRole: propPortalRole } = {}) {
         open={forgotOpen}
         defaultEmail={email}
         onClose={() => setForgotOpen(false)}
+      />
+      <FirstLoginModal
+        open={Boolean(firstLoginModalData)}
+        firstLoginData={firstLoginModalData}
+        onClose={() => setFirstLoginModalData(null)}
+        onSuccess={(authData) => {
+          setFirstLoginModalData(null);
+          if (rememberMe) {
+            saveTermsRecord();
+            saveRememberedAccount(selectedRole, email.trim(), true);
+          } else {
+            clearRememberedAccount(selectedRole, email.trim());
+          }
+          const actualRole = String(authData?.user?.role || "").toLowerCase();
+          const home = authData?.redirectUrl || homePathForRole(actualRole);
+          navigate(home || "/dashboard", { replace: true });
+        }}
       />
       <ResetPasswordModal
         open={resetOpen}

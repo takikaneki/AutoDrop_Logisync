@@ -9,6 +9,10 @@ const {
   forgotPassword,
   verifyResetToken,
   resetPassword,
+  requestOtp,
+  verifyOtp,
+  resetPasswordWithOtp,
+  firstLoginChangePassword,
 } = require("../controllers/authController");
 const { createUser, updateMyProfile } = require("../controllers/userController");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
@@ -28,6 +32,13 @@ router.post("/login/coordinator", login);
 router.post("/forgot-password", forgotPassword);
 router.get("/reset-password/verify", verifyResetToken);
 router.post("/reset-password", resetPassword);
+
+// OTP Verification & Password Management
+router.post("/otp/request", requestOtp);
+router.post("/otp/resend", requestOtp);
+router.post("/otp/verify", verifyOtp);
+router.post("/reset-password-otp", resetPasswordWithOtp);
+router.post("/first-login-change-password", firstLoginChangePassword);
 
 // Session management
 router.post("/logout", authenticateToken, logout);

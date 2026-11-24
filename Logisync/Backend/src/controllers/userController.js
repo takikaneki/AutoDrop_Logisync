@@ -19,6 +19,7 @@ async function ensureUserColumns() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS agency VARCHAR(150);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS rider_type VARCHAR(2);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS first_login BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE SEQUENCE IF NOT EXISTS rider_code_seq START 1;
     CREATE UNIQUE INDEX IF NOT EXISTS uq_users_rider_code ON users(rider_code) WHERE rider_code IS NOT NULL;
     UPDATE users u
@@ -205,8 +206,8 @@ async function createUser(req, res) {
     const riderCodeSql = role === "rider" ? "'RID-' || LPAD(nextval('rider_code_seq')::text, 4, '0')" : "NULL";
     const [result] = await pool.query(
       `INSERT INTO users
-       (name, email, password_hash, role, verification_status, phone, shop_name, zone, vehicle, plate_number, pickup_address, agency, rider_type, seller_code, rider_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${sellerCodeSql}, ${riderCodeSql})`,
+       (name, email, password_hash, role, verification_status, phone, shop_name, zone, vehicle, plate_number, pickup_address, agency, rider_type, first_login, seller_code, rider_code)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, ${sellerCodeSql}, ${riderCodeSql})`,
       [cleanName, cleanEmail, passwordHash, role, verificationStatus, cleanPhone, cleanShop, cleanZone, cleanVehicle, cleanPlate, cleanPickup, cleanAgency, cleanRiderType]
     );
 
