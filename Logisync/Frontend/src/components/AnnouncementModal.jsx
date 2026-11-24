@@ -5,7 +5,7 @@ import { toast } from "../store/toast.js";
 import Icon from "./Icon.jsx";
 
 const input =
-  "w-full rounded-lg border border-[#e8e8e8] bg-white px-[11px] py-2.5 text-[13px] outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/10 text-ink";
+  "w-full rounded-lg border border-[#e8e8e8] bg-white px-[11px] py-2.5 text-[13px] text-ink placeholder:text-slate-400 outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/10 dark:border-slate-700/80 dark:bg-[#0f172a] dark:text-[#f1eeeb] dark:placeholder:text-slate-400 dark:focus:border-brand dark:focus:ring-brand/20";
 const labelCls = "block mb-1.5 text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]";
 
 // Global na Delivery Announcement. Binubuksan galing sa icon sa Topbar kaya available sa lahat ng module.
@@ -69,7 +69,7 @@ export default function AnnouncementModal({ open, onClose }) {
           <div className="w-full max-w-[560px] max-h-[92vh] overflow-y-auto rounded-[17px] bg-white p-[22px] border-l-4 border-l-brand shadow-[0_20px_60px_rgba(0,0,0,.2)] animate-popup dark:bg-night-panel">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-[42px] h-[42px] rounded-[10px] bg-brand-soft text-brand flex items-center justify-center">
+                <div className="w-[42px] h-[42px] rounded-[10px] bg-brand-soft text-brand flex items-center justify-center dark:bg-brand/15">
                   <Icon name="megaphone" />
                 </div>
                 <div>
