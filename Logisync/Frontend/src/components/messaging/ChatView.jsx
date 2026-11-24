@@ -287,11 +287,11 @@ export default function ChatView({
   return (
     <div className="min-w-0">
       {!online && hasLoadedData && <CachedDataNotice updatedAt={cachedAt} />}
-      <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[300px_1fr]"} ${surface}`}>
+      <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[205px_minmax(0,1fr)] lg:grid-cols-[235px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
         <aside className={`min-w-0 w-full max-w-full min-h-0 flex-col overflow-hidden border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>
-          <div className="space-y-3 border-b border-slate-200 p-3 dark:border-slate-700">
+          <div className="space-y-2.5 border-b border-slate-200 p-2.5 dark:border-slate-700 xl:space-y-3 xl:p-3">
             {!coordinatorOnly && (
               <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-night-head">
                 {[
@@ -303,7 +303,7 @@ export default function ChatView({
                     key={option.value}
                     type="button"
                     onClick={() => setRoleFilter(option.value)}
-                    className={`rounded-md px-2 py-2 text-xs font-semibold transition ${roleFilter === option.value
+                    className={`truncate rounded-md px-1.5 py-1.5 text-[11px] font-semibold transition xl:px-2 xl:py-2 xl:text-xs ${roleFilter === option.value
                         ? `${btnClass} text-white`
                         : "text-slate-600 hover:bg-[#0f172a] hover:text-white dark:text-slate-300 dark:hover:bg-[#0f172a] dark:hover:text-white"
                       }`}
@@ -331,16 +331,16 @@ export default function ChatView({
                     setActiveId(contact.user_id);
                     setCallModalOpen(false);
                   }}
-                  className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 ${Number(activeId) === Number(contact.user_id) ? activeClass : ""
+                  className={`flex w-full min-w-0 items-center gap-2.5 px-3 py-2.5 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800 xl:gap-3 xl:px-4 xl:py-3 ${Number(activeId) === Number(contact.user_id) ? activeClass : ""
                     }`}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold dark:bg-slate-700">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold dark:bg-slate-700 xl:h-10 xl:w-10 xl:text-sm">
                     {contact.name.charAt(0).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-2">
-                      <strong className="truncate text-sm">{contact.name}</strong>
-                      <span className="shrink-0 text-[11px] capitalize text-slate-400">{contact.role}</span>
+                    <span className="flex items-center justify-between gap-1.5">
+                      <strong className="truncate text-[13px] xl:text-sm">{contact.name}</strong>
+                      <span className="shrink-0 text-[10.5px] capitalize text-slate-400 xl:text-[11px]">{contact.role}</span>
                     </span>
                     <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
                       {(() => {
