@@ -23,20 +23,22 @@ export function Avatar({ initials, tone = "orange", className = "w-8 h-8 text-[1
 }
 
 const badgeTones = {
-  "In Transit": "bg-[#fff0e7] text-[#e9651c]",
-  Delivered: "bg-[#eaf8ef] text-[#29945a]",
-  "Failed Delivery": "bg-[#fff0f0] text-[#d94747]",
-  Rescheduled: "bg-[#fff4d8] text-[#c98200]",
-  "Return to Hub": "bg-[#fff0f0] text-[#d94747]",
-  "Return to Hub – Confirmed": "bg-[#fff0f0] text-[#d94747]",
-  "Return to Hub - Confirmed": "bg-[#fff0f0] text-[#d94747]",
-  "Return to Hub – Pending Confirmation": "bg-[#fff0f0] text-[#d94747]",
-  "Return to Hub - Pending Confirmation": "bg-[#fff0f0] text-[#d94747]",
-  Processing: "bg-[#ede9fe] text-[#7c3aed]",
-  Pending: "bg-[#fef3c7] text-[#d97706]",
-  Verified: "bg-[#dcfce7] text-[#15803d]",
-  Flagged: "bg-[#fff0f0] text-[#c94747]",
-  "Delivery Hold": "bg-[#fef3c7] text-[#b45309]",
+  "In Transit": "text-[#c84227] dark:text-[#ff8a65]",
+  Delivered: "text-[#15803d] dark:text-[#4ade80]",
+  "Failed Delivery": "text-[#dc2626] dark:text-[#ff7b7b]",
+  Rescheduled: "text-[#b45309] dark:text-[#fcd34d]",
+  "Rescheduled for Delivery": "text-[#b45309] dark:text-[#fcd34d]",
+  "Ready for Delivery": "text-[#15803d] dark:text-[#4ade80]",
+  "Return to Hub": "text-[#dc2626] dark:text-[#ff7b7b]",
+  "Return to Hub – Confirmed": "text-[#dc2626] dark:text-[#ff7b7b]",
+  "Return to Hub - Confirmed": "text-[#dc2626] dark:text-[#ff7b7b]",
+  "Return to Hub – Pending Confirmation": "text-[#dc2626] dark:text-[#ff7b7b]",
+  "Return to Hub - Pending Confirmation": "text-[#dc2626] dark:text-[#ff7b7b]",
+  Processing: "text-[#c84227] dark:text-[#ff8a65]",
+  Pending: "text-[#b45309] dark:text-[#fcd34d]",
+  Verified: "text-[#15803d] dark:text-[#4ade80]",
+  Flagged: "text-[#dc2626] dark:text-[#ff7b7b]",
+  "Delivery Hold": "text-[#b45309] dark:text-[#fcd34d]",
 };
 
 export function CodBadge({ className = "" }) {
@@ -53,12 +55,12 @@ export function CodBadge({ className = "" }) {
 export function StatusBadge({ status, icon }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
-        badgeTones[status] || "bg-gray-100 text-gray-600"
+      className={`inline-flex items-center gap-1.5 text-[12px] font-bold leading-snug ${
+        badgeTones[status] || "text-slate-600 dark:text-slate-300"
       }`}
     >
-      {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
-      {status}
+      {icon && <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />}
+      <span>{status}</span>
     </span>
   );
 }

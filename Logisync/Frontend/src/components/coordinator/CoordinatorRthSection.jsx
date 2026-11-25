@@ -57,7 +57,7 @@ export default function CoordinatorRthSection() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-[19px] font-bold text-[#1e293b] dark:text-white">
-              <Icon name="undo-2" className="mr-2 text-[#7c3aed]" />
+              <Icon name="undo-2" className="mr-2 text-[#dc2626] dark:text-[#ff7b7b]" />
               Return to Hub (RTH) Physical Verification
             </h2>
             {data.counts.pending > 0 && (
@@ -74,7 +74,7 @@ export default function CoordinatorRthSection() {
         <div className="flex items-center gap-2">
           <Link
             to="/verification?scan=1"
-            className={`${btnPrimary} !bg-[#7c3aed] hover:!bg-[#6d28d9]`}
+            className={btnPrimary}
             title="Open the Unified QR Scanner to verify returned parcels"
           >
             <Icon name="qr-code" className="mr-1.5" /> Scan Unified QR
@@ -224,7 +224,7 @@ export default function CoordinatorRthSection() {
                           onClick={() => setSelectedParcel(p)}
                           className={
                             tab === "pending"
-                              ? "rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6d28d9]"
+                              ? "rounded-lg bg-[#dc2626] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#b91c1c]"
                               : `${btnGhost} !px-3 !py-1 text-xs`
                           }
                         >
@@ -307,7 +307,7 @@ export default function CoordinatorRthSection() {
                       onClick={() => setSelectedParcel(p)}
                       className={
                         tab === "pending"
-                          ? "inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#7c3aed] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6d28d9]"
+                          ? "inline-flex shrink-0 items-center gap-1 rounded-lg bg-[#dc2626] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#b91c1c]"
                           : `${btnGhost} shrink-0 !px-3 !py-1.5 text-xs`
                       }
                     >

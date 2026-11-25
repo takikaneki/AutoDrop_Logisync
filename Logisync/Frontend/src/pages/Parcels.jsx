@@ -1019,8 +1019,8 @@ export default function Parcels() {
                 onClick={() => navigate(`/parcels/${encodeURIComponent(parcel.parcelId)}`)}
                 className="cursor-pointer rounded-xl border border-[#eee] bg-[#fcfcfd] p-4 transition active:scale-[0.99] dark:border-night-line dark:bg-night-head"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <Link
                         to={`/parcels/${encodeURIComponent(parcel.parcelId)}`}
@@ -1032,20 +1032,22 @@ export default function Parcels() {
                       {parcel.isCod && <CodBadge />}
                     </div>
                     {parcel.transactionNumber !== "—" && (
-                      <span className="block text-[11px] text-[#999]">Txn #{parcel.transactionNumber}</span>
+                      <span className="block truncate text-[11px] text-[#999]">Txn #{parcel.transactionNumber}</span>
                     )}
                   </div>
-                  <StatusBadge status={parcel.status} icon={statusIcons[parcel.status]} />
+                  <div className="shrink-0 max-w-[56%] text-right">
+                    <StatusBadge status={parcel.status} icon={statusIcons[parcel.status]} />
+                  </div>
                 </div>
 
                 {parcel.rescheduled && !parcel.returnToHub && parcel.scheduledFor && (
-                  <p className="mt-2 rounded-lg bg-[#fff8eb] px-2.5 py-1 text-[12px] font-semibold text-[#c98200]">
+                  <p className="mt-2 text-[12px] font-semibold text-[#b45309] dark:text-[#fcd34d]">
                     <Icon name="calendar-days" className="mr-1" />
                     Rescheduled · {formatDay(parcel.scheduledFor)}
                   </p>
                 )}
                 {parcel.returnToHub && (
-                  <p className="mt-2 rounded-lg bg-[#fff0f0] px-2.5 py-1 text-[12px] font-semibold text-[#d94747]">
+                  <p className="mt-2 text-[12px] font-semibold text-[#dc2626] dark:text-[#ff7b7b]">
                     <Icon name="undo-2" className="mr-1" />
                     Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                   </p>

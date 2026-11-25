@@ -1,12 +1,12 @@
 // Ang mga halaga sa kaliwa ay ang nakaimbak sa database (hindi natin binabago).
 // Ang "label" ay ang madaling basahin na bersyon para sa user.
-const gray = "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
-const amber = "bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300";
-const blue = "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300";
-const green = "bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300";
-const red = "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300";
-const orange = "bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300";
-const purple = "bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300";
+const gray = "text-slate-600 dark:text-slate-300";
+const amber = "text-[#b45309] dark:text-[#fcd34d]";
+const blue = "text-[#c84227] dark:text-[#ff8a65]";
+const green = "text-[#15803d] dark:text-[#4ade80]";
+const red = "text-[#dc2626] dark:text-[#ff7b7b]";
+const orange = "text-[#c84227] dark:text-[#ff8a65]";
+const purple = "text-[#dc2626] dark:text-[#ff7b7b]";
 
 const STATUS = {
   PENDING: { label: "Pending", cls: gray },
