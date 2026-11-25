@@ -34,6 +34,7 @@ export default {
         night: {
           bg: "#0b1120",
           panel: "#111827",
+          soft: "#172033",
           line: "#1f2937",
           head: "#1e293b",
         },
