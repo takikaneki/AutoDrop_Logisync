@@ -22,7 +22,7 @@ export const tableCard =
 export const tableWrap =
   "w-full overflow-x-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel";
 export const tableScroll =
-  "w-full overflow-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel h-[calc(100vh-420px)] min-h-[340px] max-h-[520px]";
+  "w-full overflow-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel h-[calc(100vh-355px)] min-h-[380px]";
 export const tableScrollCompact =
   "w-full overflow-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel h-[360px]";
 export const tableHead = "sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#d9482b]";

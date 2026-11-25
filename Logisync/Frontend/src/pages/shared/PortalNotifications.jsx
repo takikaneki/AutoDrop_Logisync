@@ -78,7 +78,7 @@ export default function PortalNotifications() {
         </button>
       </div>
 
-      <section className={`${panel} h-[calc(100vh-305px)] min-h-[360px] max-h-[560px] overflow-y-auto`}>
+      <section className={`${panel} h-[calc(100vh-215px)] min-h-[420px] overflow-y-auto`}>
         {loading ? (
           <NotificationListSkeleton count={6} />
         ) : offlineEmpty ? (
