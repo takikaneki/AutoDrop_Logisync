@@ -127,7 +127,7 @@ export function ContactUsContent({
 
   const dk = (cls) => (supportDark ? cls : "");
   const inputBase = `w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-brand focus:bg-white focus:ring-3 focus:ring-brand/15 placeholder:text-slate-400 ${dk(
-    "dark:border-slate-700/80 dark:bg-[#0f172a] dark:text-[#f1eeeb] dark:focus:border-brand dark:focus:bg-[#0f172a] dark:placeholder:text-slate-400"
+    "dark:border-night-line dark:bg-night-head dark:text-[#f1eeeb] dark:focus:border-brand dark:focus:bg-night-head dark:placeholder:text-slate-400"
   )}`;
 
   return (

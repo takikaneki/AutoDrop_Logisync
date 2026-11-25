@@ -30,13 +30,13 @@ export default {
           navy: "#19324f",
           muted: "#7c8da0",
         },
-        // Midnight Slate dark mode palette (harmonizes with Deep Slate #0f172a & Soft Orange)
+        // Warm Obsidian Dark Mode palette (subtle reddish-orange undertone harmonizing with #d9482b)
         night: {
-          bg: "#0b1120",
-          panel: "#111827",
-          soft: "#172033",
-          line: "#1f2937",
-          head: "#1e293b",
+          bg: "#140f0d",
+          panel: "#1c1613",
+          soft: "#231b18",
+          line: "#332823",
+          head: "#28201c",
         },
       },
       fontFamily: {

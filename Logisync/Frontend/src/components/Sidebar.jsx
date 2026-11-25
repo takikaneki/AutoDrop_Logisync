@@ -117,7 +117,7 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
       )}
 
       <aside
-        className={`relative shrink-0 bg-[#d9482b] text-white border-r border-[#bf3a20] shadow-lg transition-[width,transform] duration-200 dark:border-[#1e293b] dark:bg-[#0f172a] print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-[#d9482b] text-white border-r border-[#bf3a20] shadow-lg transition-[width,transform] duration-200 dark:border-night-line dark:bg-night-panel print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
         } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
           collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"

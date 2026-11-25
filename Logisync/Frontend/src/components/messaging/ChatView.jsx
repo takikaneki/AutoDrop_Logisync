@@ -61,7 +61,7 @@ function parseRefusalReport(messageText) {
 export default function ChatView({
   btnClass = "bg-brand hover:bg-brand-dark",
   activeClass = "bg-brand-soft dark:bg-night-head",
-  surface = "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800",
+  surface = "bg-white border-slate-200 dark:bg-night-panel dark:border-night-line",
   directMode = false,
 }) {
   const me = Number(getUser()?.user_id);

@@ -4,7 +4,7 @@ import { BentoKpiSkeleton } from "../Skeletons.jsx";
 
 const TONE_STYLES = {
   dark: {
-    card: "bg-[#0f172a] text-white border-[#334155] border-t-[4px] border-t-[#64748b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.5)] dark:bg-[#0b1120] dark:border-slate-800 dark:border-t-[#64748b]",
+    card: "bg-[#0f172a] text-white border-[#334155] border-t-[4px] border-t-[#64748b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.5)] dark:bg-night-panel dark:border-night-line dark:border-t-[#64748b]",
     arrow: "bg-white/10 text-white group-hover:bg-white/20",
     label: "text-slate-100",
     sub: "text-slate-400",

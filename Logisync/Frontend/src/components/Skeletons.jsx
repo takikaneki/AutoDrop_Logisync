@@ -269,7 +269,7 @@ export function ActivityListSkeleton({ count = 5, label = "Loading activity" }) 
 /**
  * Messaging / Chat skeleton: contact list + alternating chat bubbles (matches ChatView.jsx).
  */
-export function ChatSkeleton({ directMode = false, surface = "bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800" }) {
+export function ChatSkeleton({ directMode = false, surface = "bg-white border-slate-200 dark:bg-night-panel dark:border-night-line" }) {
   return (
     <SkeletonRegion
       label="Loading messages"

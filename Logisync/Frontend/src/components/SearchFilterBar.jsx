@@ -52,7 +52,7 @@ export function SearchInput({
 
   return (
     <div
-      className={`group relative flex items-center rounded-xl border border-slate-200/95 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all hover:border-slate-300 focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand/15 dark:border-slate-700/80 dark:bg-[#111c30] dark:hover:border-slate-600 dark:focus-within:border-brand dark:focus-within:ring-brand/20 ${
+      className={`group relative flex items-center rounded-xl border border-slate-200/95 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all hover:border-slate-300 focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand/15 dark:border-night-line dark:bg-night-head dark:hover:border-[#4b3b34] dark:focus-within:border-brand dark:focus-within:ring-brand/20 ${
         compact ? "h-9" : "h-[42px] min-w-[220px] flex-1 max-[640px]:min-w-full"
       } ${className}`}
     >
@@ -188,7 +188,7 @@ export function FilterSelect({
         className={`group flex h-[42px] w-full items-center justify-between gap-2 rounded-xl border px-3 text-left transition-all outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-brand/15 dark:focus-visible:ring-brand/20 ${
           open || active
             ? "border-brand/60 bg-[#fff7f3] text-[#0f172a] shadow-[0_1px_3px_rgba(238,77,45,0.1)] dark:border-brand/70 dark:bg-brand/15 dark:text-white"
-            : "border-slate-200/95 bg-white text-[#1e293b] shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 dark:border-slate-700/80 dark:bg-[#111c30] dark:text-slate-100 dark:hover:border-slate-600"
+            : "border-slate-200/95 bg-white text-[#1e293b] shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 dark:border-night-line dark:bg-night-head dark:text-slate-100 dark:hover:border-[#4b3b34]"
         }`}
       >
         <span className="flex min-w-0 items-center gap-2">
@@ -216,7 +216,7 @@ export function FilterSelect({
         <div
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute left-0 top-[calc(100%+6px)] z-[1300] min-w-full w-max max-w-[min(300px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.16)] animate-popup dark:border-slate-700/85 dark:bg-[#111c30] dark:shadow-[0_18px_46px_rgba(0,0,0,0.45)]"
+          className="absolute left-0 top-[calc(100%+6px)] z-[1300] min-w-full w-max max-w-[min(300px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.16)] animate-popup dark:border-night-line dark:bg-night-panel dark:shadow-[0_18px_46px_rgba(0,0,0,0.45)]"
         >
           <div className="max-h-64 overflow-y-auto space-y-0.5">
             {options.map((opt, idx) => {
@@ -377,7 +377,7 @@ export function DatePickerInput({
         className={`group flex h-[42px] w-full items-center justify-between gap-1.5 rounded-xl border px-3 transition-all ${
           open || hasValue
             ? "border-brand/60 bg-[#fff7f3] text-[#0f172a] shadow-[0_1px_3px_rgba(238,77,45,0.1)] dark:border-brand/70 dark:bg-brand/15 dark:text-white"
-            : "border-slate-200/95 bg-white text-[#1e293b] shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 dark:border-slate-700/80 dark:bg-[#111c30] dark:text-slate-100 dark:hover:border-slate-600"
+            : "border-slate-200/95 bg-white text-[#1e293b] shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 dark:border-night-line dark:bg-night-head dark:text-slate-100 dark:hover:border-[#4b3b34]"
         }`}
       >
         <button
@@ -429,7 +429,7 @@ export function DatePickerInput({
         <div
           role="dialog"
           aria-label={ariaLabel}
-          className={`absolute top-[calc(100%+6px)] z-[1400] w-[280px] max-w-[calc(100vw-28px)] overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-3.5 shadow-[0_18px_46px_rgba(15,23,42,0.18)] animate-popup dark:border-slate-700/85 dark:bg-[#111c30] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ${
+          className={`absolute top-[calc(100%+6px)] z-[1400] w-[280px] max-w-[calc(100vw-28px)] overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-3.5 shadow-[0_18px_46px_rgba(15,23,42,0.18)] animate-popup dark:border-night-line dark:bg-night-panel dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
