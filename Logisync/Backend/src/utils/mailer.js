@@ -139,42 +139,43 @@ async function sendOtpEmail({ to, name = "User", otp, purpose = "FORGOT_PASSWORD
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>LogiSync – Your OTP Verification Code</title>
     </head>
-    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
-      <table align="center" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
+    <body style="margin: 0; padding: 12px 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+      <table align="center" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 660px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
         <tr>
-          <td style="height: 6px; background: linear-gradient(to right, #f97316, #f59e0b, #ea580c);"></td>
+          <td style="height: 5px; background: linear-gradient(to right, #d9482b, #e36d53, #bf3a20);"></td>
         </tr>
         <tr>
-          <td style="padding: 32px 36px;">
-            <div style="margin-bottom: 8px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f97316; letter-spacing: -0.5px;">LogiSync</h1>
+          <td style="padding: 22px 20px;">
+            <div style="margin-bottom: 4px;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #d9482b; letter-spacing: -0.5px;">LogiSync</h1>
             </div>
-            <p style="margin: 0 0 20px 0; font-size: 13px; color: #64748b; font-weight: 600;">SPX Express Verification &amp; Delivery Coordination Platform</p>
-            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 24px;" />
+            <p style="margin: 0 0 14px 0; font-size: 12.5px; color: #64748b; font-weight: 600;">SPX Express Verification &amp; Delivery Coordination Platform</p>
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 16px;" />
 
-            <p style="font-size: 15px; margin: 0 0 12px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
-            <p style="font-size: 14px; margin: 0 0 24px 0; color: #475569; line-height: 1.6;">
+            <p style="font-size: 15px; margin: 0 0 8px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
+            <p style="font-size: 14px; margin: 0 0 16px 0; color: #475569; line-height: 1.55;">
               ${actionDesc}
             </p>
 
-            <div style="text-align: center; margin: 28px 0; padding: 24px; background: #fff7ed; border-radius: 16px; border: 1px dashed #fdba74;">
-              <span style="display: block; font-size: 12px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Verification Code</span>
-              <span style="display: inline-block; font-size: 36px; font-weight: 800; color: #ea580c; letter-spacing: 8px; font-family: 'Courier New', Courier, monospace;">${escapeHtml(otp)}</span>
-              <span style="display: block; font-size: 12px; color: #9a3412; margin-top: 8px; font-weight: 500;">Valid for 5 minutes</span>
+            <div style="text-align: center; margin: 18px 0; padding: 18px 16px; background: #fff7ed; border-radius: 12px; border: 1px dashed #fdba74;">
+              <span style="display: block; font-size: 11.5px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">Verification Code</span>
+              <span style="display: inline-block; font-size: 34px; font-weight: 800; color: #d9482b; letter-spacing: 8px; font-family: 'Courier New', Courier, monospace;">${escapeHtml(otp)}</span>
+              <span style="display: block; font-size: 12px; color: #9a3412; margin-top: 6px; font-weight: 500;">Valid for 5 minutes</span>
             </div>
 
-            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 12px 0;">
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 8px 0;">
               For security, this code can only be used once. If you did not initiate this request, you can safely disregard this email or notify your Hub Coordinator.
             </p>
-            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 16px 0 0 0;">
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 10px 0 0 0;">
               Never share this verification code with anyone. LogiSync staff will never ask for your code.
             </p>
           </td>
         </tr>
         <tr>
-          <td style="padding: 20px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
+          <td style="padding: 14px 20px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
             &copy; ${new Date().getFullYear()} LogiSync SPX Express. All rights reserved.
           </td>
         </tr>
@@ -208,38 +209,39 @@ async function sendPasswordResetEmail({ to, name = "User", resetLink }) {
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Reset Your LogiSync Password</title>
     </head>
-    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
-      <table align="center" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
+    <body style="margin: 0; padding: 12px 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+      <table align="center" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 660px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
         <tr>
-          <td style="height: 6px; background: linear-gradient(to right, #f97316, #f59e0b, #ea580c);"></td>
+          <td style="height: 5px; background: linear-gradient(to right, #d9482b, #e36d53, #bf3a20);"></td>
         </tr>
         <tr>
-          <td style="padding: 32px 36px;">
-            <h1 style="margin: 0 0 12px 0; font-size: 22px; font-weight: 800; color: #0f172a;">LogiSync</h1>
-            <p style="margin: 0 0 20px 0; font-size: 14px; color: #64748b; line-height: 1.5;">SPX Express Verification &amp; Delivery Coordination Platform</p>
-            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 24px;" />
-            <p style="font-size: 15px; margin: 0 0 16px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
-            <p style="font-size: 14px; margin: 0 0 24px 0; color: #475569; line-height: 1.6;">
+          <td style="padding: 22px 20px;">
+            <h1 style="margin: 0 0 4px 0; font-size: 22px; font-weight: 800; color: #d9482b;">LogiSync</h1>
+            <p style="margin: 0 0 14px 0; font-size: 12.5px; color: #64748b; font-weight: 600; line-height: 1.5;">SPX Express Verification &amp; Delivery Coordination Platform</p>
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 16px;" />
+            <p style="font-size: 15px; margin: 0 0 10px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
+            <p style="font-size: 14px; margin: 0 0 16px 0; color: #475569; line-height: 1.55;">
               We received a request to reset the password for your LogiSync account (<strong>${safeToHtml}</strong>). Click the button below to set a new password:
             </p>
-            <div style="text-align: center; margin: 32px 0;">
-              <a href="${safeLinkHtml}" style="display: inline-block; background-color: #f97316; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 12px; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);">
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${safeLinkHtml}" style="display: inline-block; background-color: #d9482b; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 10px; box-shadow: 0 4px 14px rgba(217, 72, 43, 0.35);">
                 Reset Password
               </a>
             </div>
-            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 12px 0;">
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 8px 0;">
               Or copy and paste this link into your browser:<br />
-              <a href="${safeLinkHtml}" style="color: #f97316; word-break: break-all;">${safeLinkHtml}</a>
+              <a href="${safeLinkHtml}" style="color: #d9482b; word-break: break-all;">${safeLinkHtml}</a>
             </p>
-            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 24px 0 0 0;">
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 14px 0 0 0;">
               This link is valid for <strong>1 hour</strong>. If you did not request a password reset, you can safely disregard this email. Your password will remain unchanged.
             </p>
           </td>
         </tr>
         <tr>
-          <td style="padding: 20px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
+          <td style="padding: 14px 20px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
             &copy; ${new Date().getFullYear()} LogiSync SPX Express. All rights reserved.
           </td>
         </tr>
@@ -307,45 +309,46 @@ async function sendAccountCredentialsEmail({
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${escapeHtml(subject)}</title>
     </head>
-    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
-      <table align="center" width="100%" style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
+    <body style="margin: 0; padding: 12px 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+      <table align="center" width="100%" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 660px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
         <tr>
-          <td style="height: 6px; background: linear-gradient(to right, #f97316, #f59e0b, #ea580c);"></td>
+          <td style="height: 5px; background: linear-gradient(to right, #d9482b, #e36d53, #bf3a20);"></td>
         </tr>
         <tr>
-          <td style="padding: 32px 36px;">
-            <div style="margin-bottom: 8px;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #f97316; letter-spacing: -0.5px;">LogiSync</h1>
+          <td style="padding: 22px 20px;">
+            <div style="margin-bottom: 4px;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #d9482b; letter-spacing: -0.5px;">LogiSync</h1>
             </div>
-            <p style="margin: 0 0 20px 0; font-size: 13px; color: #64748b; font-weight: 600;">SPX Express Verification &amp; Delivery Coordination Platform</p>
-            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 24px;" />
+            <p style="margin: 0 0 14px 0; font-size: 12.5px; color: #64748b; font-weight: 600;">SPX Express Verification &amp; Delivery Coordination Platform</p>
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 16px;" />
 
-            <p style="font-size: 15px; margin: 0 0 12px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
-            <p style="font-size: 14px; margin: 0 0 20px 0; color: #475569; line-height: 1.6;">
+            <p style="font-size: 15px; margin: 0 0 8px 0; color: #334155;">Hello <strong>${safeNameHtml}</strong>,</p>
+            <p style="font-size: 14px; margin: 0 0 16px 0; color: #475569; line-height: 1.55;">
               Your LogiSync <strong>${escapeHtml(roleLabel)}</strong> account has been created by the Hub Coordinator. Use the temporary credentials below to sign in and complete your mandatory first-time password verification.
             </p>
 
-            <div style="margin: 24px 0; padding: 20px 22px; background: #fff7ed; border-radius: 16px; border: 1px solid #fed7aa;">
-              <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1px;">Account Credentials</p>
-              <table width="100%" style="font-size: 13px; color: #334155; border-collapse: collapse;">
+            <div style="margin: 16px 0; padding: 16px 16px; background: #fff7ed; border-radius: 12px; border: 1px solid #fed7aa;">
+              <p style="margin: 0 0 10px 0; font-size: 11.5px; font-weight: 700; color: #c2410c; text-transform: uppercase; letter-spacing: 1px;">Account Credentials</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 13px; color: #334155; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 4px 0; color: #64748b; width: 145px;">Assigned Role:</td>
-                  <td style="padding: 4px 0; font-weight: 700;">${escapeHtml(roleLabel)}</td>
+                  <td style="padding: 5px 12px 5px 0; color: #64748b; white-space: nowrap; width: 1%; vertical-align: middle;">Assigned Role:</td>
+                  <td style="padding: 5px 0; font-weight: 700; vertical-align: middle;">${escapeHtml(roleLabel)}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; color: #64748b;">Registered Email:</td>
-                  <td style="padding: 4px 0; font-weight: 700; word-break: break-all;">${safeToHtml}</td>
+                  <td style="padding: 5px 12px 5px 0; color: #64748b; white-space: nowrap; width: 1%; vertical-align: middle;">Registered Email:</td>
+                  <td style="padding: 5px 0; font-weight: 700; word-break: break-word; vertical-align: middle;">${safeToHtml}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; color: #64748b;">Temporary Password:</td>
-                  <td style="padding: 4px 0;"><code style="display: inline-block; padding: 3px 8px; background: #ffffff; border: 1px dashed #fdba74; border-radius: 6px; font-size: 14px; font-weight: 800; color: #ea580c; font-family: 'Courier New', Courier, monospace;">${safePasswordHtml}</code></td>
+                  <td style="padding: 5px 12px 5px 0; color: #64748b; white-space: nowrap; width: 1%; vertical-align: middle;">Temporary Password:</td>
+                  <td style="padding: 5px 0; vertical-align: middle;"><code style="display: inline-block; padding: 3px 10px; background: #ffffff; border: 1px dashed #fdba74; border-radius: 6px; font-size: 14px; font-weight: 800; color: #d9482b; font-family: 'Courier New', Courier, monospace;">${safePasswordHtml}</code></td>
                 </tr>
               </table>
             </div>
 
-            <div style="margin: 20px 0; padding: 16px 18px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #475569; line-height: 1.6;">
+            <div style="margin: 16px 0; padding: 14px 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 13px; color: #475569; line-height: 1.55;">
               <strong style="display: block; margin-bottom: 6px; color: #0f172a;">Mandatory First-Time Login Steps:</strong>
               <ol style="margin: 0; padding-left: 18px;">
                 <li>Click the sign-in button below and enter your registered email and temporary password.</li>
@@ -354,23 +357,23 @@ async function sendAccountCredentialsEmail({
               </ol>
             </div>
 
-            <div style="text-align: center; margin: 28px 0;">
-              <a href="${safeLoginUrlHtml}" style="display: inline-block; background-color: #f97316; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 12px; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);">
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${safeLoginUrlHtml}" style="display: inline-block; background-color: #d9482b; color: #ffffff; font-size: 14px; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 10px; box-shadow: 0 4px 14px rgba(217, 72, 43, 0.35);">
                 Sign In to LogiSync
               </a>
             </div>
 
-            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 10px 0;">
+            <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 8px 0;">
               Or copy and paste this link into your browser:<br />
-              <a href="${safeLoginUrlHtml}" style="color: #f97316; word-break: break-all;">${safeLoginUrlHtml}</a>
+              <a href="${safeLoginUrlHtml}" style="color: #d9482b; word-break: break-all;">${safeLoginUrlHtml}</a>
             </p>
-            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 14px 0 0 0;">
+            <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 10px 0 0 0;">
               Keep your credentials private. Your temporary password cannot be reused once you complete first-time password setup.
             </p>
           </td>
         </tr>
         <tr>
-          <td style="padding: 20px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
+          <td style="padding: 14px 20px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
             &copy; ${new Date().getFullYear()} LogiSync SPX Express. All rights reserved.
           </td>
         </tr>
