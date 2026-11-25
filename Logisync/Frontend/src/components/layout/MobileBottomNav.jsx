@@ -40,19 +40,19 @@ function ModernFiveTabNav({ items, ariaLabel, isFeaturedActive, isProfileActive,
                 key={item.to}
                 to={item.to}
                 aria-label={item.label}
-                className="group relative flex flex-col items-center justify-end gap-1 pb-0.5 text-[10px] font-bold transition"
+                className="group relative flex h-full flex-col items-center justify-end gap-2 pb-0.5 text-[10px] font-bold transition"
               >
                 <span
-                  className={`-mt-6 flex h-[48px] w-[48px] items-center justify-center rounded-full shadow-[0_8px_20px_rgba(15,23,42,0.28)] ring-4 ring-white transition-transform active:scale-95 dark:ring-night-panel ${
+                  className={`-mt-7 flex h-[46px] w-[46px] items-center justify-center rounded-full shadow-[0_8px_20px_rgba(15,23,42,0.28)] ring-4 ring-white transition-transform active:scale-95 dark:ring-night-panel ${
                     active
                       ? "bg-brand text-white"
                       : "bg-[#0f172a] text-white group-hover:bg-[#1e293b] dark:bg-brand"
                   }`}
                 >
-                  <Icon name={item.icon} className="h-[22px] w-[22px]" strokeWidth={2.1} />
+                  <Icon name={item.icon} className="h-[21px] w-[21px]" strokeWidth={2.1} />
                 </span>
                 <span
-                  className={`whitespace-nowrap leading-none tracking-tight ${
+                  className={`relative z-10 whitespace-nowrap leading-none tracking-tight ${
                     active ? "text-brand" : "text-[#0f172a] dark:text-[#f1eeeb]"
                   }`}
                 >

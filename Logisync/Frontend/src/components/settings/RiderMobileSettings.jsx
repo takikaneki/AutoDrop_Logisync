@@ -1027,7 +1027,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
               </h2>
               <div className={`${cardCls} p-4`}>
                 <p className="mb-3 text-[12.5px] text-slate-500 dark:text-[#b8b0a8]">
-                  Adjust display font scale across the Rider portal.
+                  Adjust display font scale across the portal.
                 </p>
                 <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-night-head">
                   {TEXT_SIZES.map(([key, label]) => {
