@@ -368,230 +368,159 @@ export default function UnifiedSettings() {
     ];
   }, [roleKey, isLmRider]);
 
+  const idPrefix = roleKey === "seller" ? "SEL" : roleKey === "rider" ? "RID" : "COOR";
+  const badgeId =
+    roleKey === "seller" && profile.sellerCode
+      ? profile.sellerCode
+      : roleKey === "rider" && profile.riderCode
+        ? profile.riderCode
+        : `${idPrefix}-${String(profile.userId ?? 1).padStart(4, "0")}`;
+
+  const tabs = [
+    { key: "account-info", label: "Account & Security", icon: "shield-check", ref: accountRef, active: isAccountActive },
+    { key: "notifications", label: "Notifications", icon: "bell", ref: notificationsRef, active: activeNav === "notifications" },
+    { key: "appearance", label: "Appearance", icon: "palette", ref: appearanceRef, active: activeNav === "appearance" },
+    { key: "accessibility", label: "Accessibility", icon: "accessibility", ref: accessibilityRef, active: activeNav === "accessibility" },
+    { key: "privacy", label: "Privacy", icon: "lock", ref: privacyRef, active: activeNav === "privacy" },
+    { key: "about", label: "About", icon: "info", ref: aboutRef, active: activeNav === "about" },
+  ];
+
   return (
     <>
-      <div className="grid grid-cols-[270px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[920px]:grid-cols-1 min-[921px]:h-[calc(100vh-148px)] min-[921px]:min-h-[520px] min-[921px]:max-h-[720px]">
-        {/* LEFT SETTINGS SIDEBAR (Darker shaded pane like Discord) */}
-        <aside className="flex min-h-0 flex-col border-r border-brand-line bg-[#f1f5f9] p-4 dark:border-night-line dark:bg-[#1d1a17] max-[920px]:border-r-0 max-[920px]:border-b">
-          {/* User Header */}
-          <div className="flex shrink-0 items-center gap-3 pb-4 border-b border-brand-line dark:border-night-line">
-            <UserAvatar className="h-12 w-12 shrink-0 text-[18px]" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <strong className="truncate text-[15px] font-bold text-[#1e293b] dark:text-[#f1eeeb]">
-                  {profile.name}
-                </strong>
-                <span className="text-[12px] font-semibold text-[#64748b] dark:text-[#b8b0a8]">
-                  {formattedUserId}
-                </span>
+      <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm dark:border-night-line dark:bg-night-panel">
+        {/* TOP PROFILE HEADER (Unified My Profile + Settings look) */}
+        <div className="flex flex-wrap items-center justify-between gap-5 border-b border-slate-200/80 px-7 py-6 dark:border-night-line max-[640px]:px-4 max-[640px]:py-5">
+          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+            <div className="relative shrink-0">
+              <div className="rounded-full bg-white p-1 shadow-sm ring-2 ring-brand/25 dark:bg-night-panel">
+                <UserAvatar className="h-[72px] w-[72px] text-[26px]" />
               </div>
               <button
                 type="button"
-                onClick={openEditProfile}
-                className="mt-0.5 text-[12px] font-semibold text-brand hover:underline"
+                onClick={() => fileRef.current?.click()}
+                aria-label="Change profile photo"
+                title="Change profile photo"
+                className="absolute right-0 bottom-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#0f172a] text-white shadow-sm transition active:scale-95 hover:bg-brand dark:border-night-panel"
               >
-                Edit Profile
+                <Icon name="camera" className="text-[11px]" />
               </button>
+              <input ref={fileRef} type="file" accept="image/*" onChange={uploadAvatar} className="hidden" />
+            </div>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-[22px] font-extrabold tracking-tight text-[#0f172a] dark:text-white">
+                {profile.name}
+              </h1>
+              <p className="mt-0.5 text-[13px] font-semibold capitalize text-slate-500 dark:text-[#b8b0a8]">
+                {profile.role}
+                {profile.email ? ` · ${profile.email}` : ""}
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-0.5 text-[11px] font-bold tracking-wide text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
+                  <span>ID:</span>
+                  <span className="font-mono text-[#0f172a] dark:text-white">{badgeId}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-[#15803d] dark:bg-emerald-500/20 dark:text-emerald-300">
+                  <Icon name="circle-check" className="h-3 w-3" />
+                  <span>Verified</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Search Settings */}
-          <div className="my-3.5 shrink-0">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (editingProfile) {
+                  setEditingProfile(false);
+                } else {
+                  jumpTo("account-info", accountRef);
+                  openEditProfile();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-white px-4 py-2 text-[13px] font-semibold text-brand shadow-2xs transition active:scale-[0.99] hover:bg-brand hover:text-white dark:bg-night-head dark:hover:bg-brand dark:hover:text-white"
+            >
+              <Icon name="pencil" className="h-3.5 w-3.5" />
+              <span>{editingProfile ? "Cancel Edit" : "Edit Profile"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLogoutOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200/80 bg-[#fff4f2] px-3.5 py-2 text-[13px] font-semibold text-[#c23a3a] transition active:scale-[0.99] hover:bg-red-100/70 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50"
+            >
+              <Icon name="log-out" className="h-3.5 w-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </div>
+
+        {/* SINGLE HORIZONTAL ROW OF TABS + COMPACT SEARCH */}
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/70 px-6 py-2.5 dark:border-night-line dark:bg-night-head/50 max-[860px]:flex-col max-[860px]:items-stretch max-[640px]:px-4">
+          <nav
+            aria-label="Settings sections"
+            className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto"
+          >
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => jumpTo(tab.key, tab.ref)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-[12.5px] font-semibold transition ${
+                  tab.active && !isSearching
+                    ? "bg-brand text-white shadow-xs"
+                    : "text-slate-600 hover:bg-slate-200/70 hover:text-[#0f172a] dark:text-[#cbd5e1] dark:hover:bg-night-head dark:hover:text-white"
+                }`}
+              >
+                <Icon name={tab.icon} className="h-3.5 w-3.5" />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="w-[195px] shrink-0 max-[860px]:w-full">
             <SearchInput
               compact
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Settings..."
+              placeholder="Search settings..."
               ariaLabel="Search Settings"
             />
           </div>
+        </div>
 
-          {/* Navigation Groups */}
-          <nav className="flex-1 space-y-1 overflow-y-auto pr-1 text-[13.5px]" aria-label="Settings sections">
-            <button
-              type="button"
-              onClick={() => jumpTo("account-info", accountRef)}
-              className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                isAccountActive
-                  ? "bg-brand-soft/60 text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <span className="flex items-center gap-2.5">
-                <Icon name="shield-check" className="text-[13px]" />
-                <span>Account &amp; Security</span>
+        {/* SINGLE-COLUMN SETTINGS CONTENT */}
+        <section className="bg-white dark:bg-night-panel">
+          {isSearching && (
+            <div className="flex items-center justify-between border-b border-slate-200/80 px-7 py-2.5 text-[12.5px] dark:border-night-line max-[640px]:px-4">
+              <span className="font-semibold text-slate-600 dark:text-[#b8b0a8]">
+                Showing results for &ldquo;{search}&rdquo;
               </span>
-              <Icon name={isAccountActive ? "chevron-down" : "chevron-right"} className="h-3 w-3 opacity-70" />
-            </button>
-
-            {(isAccountActive || isSearching) && (
-              <div className="ml-3 space-y-0.5 border-l border-[#e2e8f0] pl-2.5 dark:border-night-line">
-                <button
-                  type="button"
-                  onClick={() => jumpTo("account-info", accountRef)}
-                  className={`relative flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
-                    activeNav === "account-info"
-                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                  }`}
-                >
-                  <span>Account Info</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPasswordOpen(true);
-                    jumpTo("password", passwordRef);
-                  }}
-                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
-                    activeNav === "password"
-                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                  }`}
-                >
-                  <span>Password &amp; Security</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => jumpTo("status", accountRef)}
-                  className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12.5px] transition ${
-                    activeNav === "status"
-                      ? "bg-brand-soft font-bold text-brand dark:bg-night-head"
-                      : "text-[#475569] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                  }`}
-                >
-                  <span>Account Status</span>
-                  <span className="rounded bg-brand-soft px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-brand">
-                    Verified
-                  </span>
-                </button>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => jumpTo("notifications", notificationsRef)}
-              className={`mt-1 flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "notifications"
-                  ? "bg-brand-soft text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <Icon name="bell" className="text-[13px]" />
-              <span>Notifications</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => jumpTo("appearance", appearanceRef)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "appearance"
-                  ? "bg-brand-soft text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <Icon name="palette" className="text-[13px]" />
-              <span>Appearance &amp; Display</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => jumpTo("accessibility", accessibilityRef)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                activeNav === "accessibility"
-                  ? "bg-brand-soft text-brand dark:bg-night-head"
-                  : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-              }`}
-            >
-              <Icon name="accessibility" className="text-[13px]" />
-              <span>Accessibility</span>
-            </button>
-
-            <div className="my-2 border-t border-brand-line/70 pt-2 dark:border-night-line">
-              {[
-                ["privacy", "Privacy Policy", "shield-check", privacyRef],
-                ["about", "About LOGISYNC", "info", aboutRef],
-              ].map(([navKey, label, icon, ref]) => (
-                <button
-                  key={navKey}
-                  type="button"
-                  onClick={() => jumpTo(navKey, ref)}
-                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-semibold transition ${
-                    activeNav === navKey
-                      ? "bg-brand-soft text-brand dark:bg-night-head"
-                      : "text-[#334155] hover:bg-brand-softer hover:text-brand dark:text-[#d1c9c2] dark:hover:bg-night-head"
-                  }`}
-                >
-                  <Icon name={icon} className="text-[13px]" />
-                  <span>{label}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-
-          {/* Log Out Footer */}
-          <div className="mt-4 shrink-0 border-t border-brand-line pt-3 dark:border-night-line">
-            <button
-              type="button"
-              onClick={() => setLogoutOpen(true)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-bold text-[#c23a3a] transition hover:bg-red-50 dark:text-[#f2a1a1] dark:hover:bg-red-950/30"
-            >
-              <Icon name="log-out" className="text-[13px]" />
-              <span>Log Out</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* RIGHT SETTINGS CONTENT PANEL (Internal scroll inside unified container) */}
-        <section className="flex min-h-0 flex-col overflow-hidden bg-white dark:bg-night-panel">
-          <div className="flex shrink-0 items-center justify-between border-b border-brand-line bg-white px-7 py-3.5 dark:border-night-line dark:bg-night-panel max-[600px]:px-4">
-            <h2 className="text-[16px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-              {activeTitle}
-            </h2>
-            {isSearching && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="text-[12px] font-semibold text-brand hover:underline"
+                className="font-semibold text-brand hover:underline"
               >
                 Clear search
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className="flex-1 overflow-y-auto p-7 max-[600px]:p-4">
+          <div className="p-7 max-[640px]:p-4">
           {/* 1. ACCOUNT INFO */}
           {showAccount && (
             <div ref={accountRef} className="scroll-mt-20">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-[20px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
-                  Account Info
+                <h2 className="text-[18px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
+                  Personal Information
                 </h2>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-[11.5px] font-bold text-brand capitalize">
-                  <Icon name="circle-check" className="text-[10px]" />
-                  {profile.role} · {formattedUserId}
+                <span className="text-[12px] font-semibold text-slate-500 dark:text-[#9c948c]">
+                  LogiSync × SPX Express · <span className="capitalize">{profile.role}</span> Account
                 </span>
               </div>
 
-              {/* Warm Orange Hub / Portal Notice */}
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-line bg-brand-soft/75 px-4 py-3 dark:border-night-line dark:bg-night-head">
-                <div className="flex items-center gap-2.5 text-[13px] font-semibold text-[#7c2d12] dark:text-[#ffb98a]">
-                  <Icon name="undo-2" className="text-brand" />
-                  <span>LogiSync × SPX Express · {profile.role} Portal Account</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => (editingProfile ? setEditingProfile(false) : openEditProfile())}
-                  className="rounded-lg border border-[#cbd5e1] bg-white px-3 py-1.5 text-[12px] font-bold text-[#1e293b] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
-                >
-                  {editingProfile ? "Cancel Edit" : "Edit Profile"}
-                </button>
-              </div>
-
               {editingProfile ? (
-                <form onSubmit={saveProfile} noValidate className="mb-6 rounded-xl border border-brand-line bg-brand-softer/60 p-5 dark:border-night-line dark:bg-night-head/50">
+                <form onSubmit={saveProfile} noValidate className="mb-6 rounded-xl border border-slate-200/80 bg-slate-50/70 p-5 dark:border-night-line dark:bg-night-head/50">
                   <div className="mb-5 flex flex-wrap items-center gap-4">
                     <UserAvatar className="h-16 w-16 text-[22px]" />
                     <div className="flex flex-wrap gap-2">
@@ -615,7 +544,6 @@ export default function UnifiedSettings() {
                         </button>
                       )}
                     </div>
-                    <input ref={fileRef} type="file" accept="image/*" onChange={uploadAvatar} className="hidden" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">

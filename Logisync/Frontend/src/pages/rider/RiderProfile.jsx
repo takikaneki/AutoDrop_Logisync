@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import UserAvatar from "../../components/Avatar.jsx";
 import ContactUsModal from "../../components/auth/ContactUsModal.jsx";
 import LogoutModal from "../../components/LogoutModal.jsx";
+import Topbar from "../../components/Topbar.jsx";
+import UnifiedSettings from "../../components/settings/UnifiedSettings.jsx";
 import { syncProfileFromServer, useProfile, useProfileSyncState } from "../../store/profile.js";
 import { useNetworkStatus } from "../../utils/network.js";
 import { CachedDataNotice, ProfileHeaderSkeleton } from "../../components/Skeletons.jsx";
@@ -86,7 +88,14 @@ export default function RiderProfile() {
 
   return (
     <>
-      <div className="relative mx-auto min-h-[calc(100dvh-124px)] w-full max-w-xl overflow-hidden bg-[#f7f8fb] px-4 pt-6 pb-8 dark:bg-night-bg min-[821px]:min-h-0 min-[821px]:max-w-5xl min-[821px]:rounded-2xl min-[821px]:border min-[821px]:border-slate-200/80 min-[821px]:bg-white min-[821px]:p-7 min-[821px]:dark:border-night-line min-[821px]:dark:bg-night-panel">
+      {/* Desktop Web View: Unified Profile & Settings layout */}
+      <div className="hidden min-[821px]:block">
+        <Topbar title="Profile & Settings" />
+        <UnifiedSettings />
+      </div>
+
+      {/* Mobile View (max-[820px]): Single-column Profile Hub */}
+      <div className="relative mx-auto min-h-[calc(100dvh-124px)] w-full max-w-xl overflow-hidden bg-[#f7f8fb] px-4 pt-6 pb-8 dark:bg-night-bg min-[821px]:hidden">
         {/* Soft decorative pastel corner accents */}
         <div
           aria-hidden="true"
@@ -142,8 +151,8 @@ export default function RiderProfile() {
         )}
 
         {/* Sectioned Rider Profile Menu */}
-        <nav aria-label="Rider profile menu" className="relative z-10 mt-6 grid grid-cols-1 gap-3 min-[821px]:grid-cols-2 min-[821px]:items-start min-[821px]:gap-5">
-          <div className="space-y-3 min-[821px]:space-y-4">
+        <nav aria-label="Rider profile menu" className="relative z-10 mt-6 space-y-3">
+          <div className="space-y-3">
             {/* ACCOUNT */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
             <SectionLabel>Account</SectionLabel>
