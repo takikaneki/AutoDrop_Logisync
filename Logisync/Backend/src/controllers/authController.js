@@ -383,7 +383,10 @@ async function login(req, res) {
     res.json({
       success: true,
       message: "Login successful.",
-      token: createToken(safeUser),
+      token: createToken({
+        ...safeUser,
+        session_version: Number(user.session_version || 1),
+      }),
       user: safeUser,
       redirectUrl: home,
     });
@@ -1968,6 +1971,7 @@ async function firstLoginChangePassword(req, res) {
     const client = await rawPool.connect();
     let safeUser = null;
     let home = "/dashboard";
+    let sessionVersion = 1;
 
     try {
       await client.query("BEGIN");
@@ -2168,6 +2172,7 @@ async function firstLoginChangePassword(req, res) {
           : {};
 
       home = actualRole === "seller" ? "/seller" : actualRole === "rider" ? "/rider" : "/dashboard";
+      sessionVersion = Number(user.session_version || 1);
 
       safeUser = {
         user_id: user.user_id,
@@ -2208,7 +2213,10 @@ async function firstLoginChangePassword(req, res) {
       /* non-fatal */
     }
 
-    const token = createToken(safeUser);
+    const token = createToken({
+      ...safeUser,
+      session_version: sessionVersion,
+    });
 
     return res.json({
       success: true,
