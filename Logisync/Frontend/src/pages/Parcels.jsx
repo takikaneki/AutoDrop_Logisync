@@ -138,7 +138,14 @@ function mapParcel(rawParcel, index) {
 const filterReportRows = (parcels, q) =>
   parcels.filter(
     (p) =>
-      (q.status === "All" || p.status === q.status) &&
+      (q.status === "All" ||
+        p.status === q.status ||
+        (q.status === "In Transit" && (p.status === "In Transit" || p.status === "Rescheduled")) ||
+        (q.status === "Failed / Return to Hub" &&
+          (p.status === "Failed Delivery" ||
+            p.status === "Return to Hub" ||
+            String(p.status || "").startsWith("Return to Hub") ||
+            p.returnToHub))) &&
       (q.seller === "All" || p.seller === q.seller) &&
       (q.rider === "All" || p.rider === q.rider) &&
       (!q.from || (p.iso && p.iso >= q.from)) &&
@@ -342,7 +349,12 @@ export default function Parcels() {
         result["In Transit"] += 1;
       } else if (parcel.status === "Delivered") {
         result.Delivered += 1;
-      } else if (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub") {
+      } else if (
+        parcel.status === "Failed Delivery" ||
+        parcel.status === "Return to Hub" ||
+        String(parcel.status || "").startsWith("Return to Hub") ||
+        parcel.returnToHub
+      ) {
         result["Failed / Return to Hub"] += 1;
       }
     });
@@ -357,8 +369,8 @@ export default function Parcels() {
       (parcel) =>
         (status === "All Status" ||
           parcel.status === status ||
-          (status === "Failed Delivery" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub")) ||
-          (status === "Failed / Return to Hub" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub")) ||
+          (status === "Failed Delivery" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub" || String(parcel.status || "").startsWith("Return to Hub") || parcel.returnToHub)) ||
+          (status === "Failed / Return to Hub" && (parcel.status === "Failed Delivery" || parcel.status === "Return to Hub" || String(parcel.status || "").startsWith("Return to Hub") || parcel.returnToHub)) ||
           (status === "In Transit" && (parcel.status === "In Transit" || parcel.status === "Rescheduled"))) &&
         (!query ||
           [
@@ -511,7 +523,7 @@ export default function Parcels() {
                   active={reportQuery.status !== "All"}
                   className="w-full"
                 >
-                  {["All", "In Transit", "Rescheduled", "Delivered", "Return to Hub", "Failed Delivery"].map((s) => (
+                  {["All", "In Transit", "Delivered", "Failed / Return to Hub"].map((s) => (
                     <option key={s}>{s}</option>
                   ))}
                 </FilterSelect>
@@ -869,11 +881,8 @@ export default function Parcels() {
           >
             <option>All Status</option>
             <option>In Transit</option>
-            <option>Rescheduled</option>
             <option>Delivered</option>
             <option>Failed / Return to Hub</option>
-            <option>Return to Hub</option>
-            <option>Failed Delivery</option>
           </FilterSelect>
         </SearchFilterBar>
 
@@ -956,7 +965,7 @@ export default function Parcels() {
                         </span>
                       )}
                       {parcel.returnToHub && (
-                        <span className="mt-1 block text-[11.5px] font-semibold text-[#7c3aed]">
+                        <span className="mt-1 block text-[11.5px] font-semibold text-[#d94747]">
                           {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                         </span>
                       )}
@@ -1035,7 +1044,7 @@ export default function Parcels() {
                   </p>
                 )}
                 {parcel.returnToHub && (
-                  <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
+                  <p className="mt-2 rounded-lg bg-[#fff0f0] px-2.5 py-1 text-[12px] font-semibold text-[#d94747]">
                     <Icon name="undo-2" className="mr-1" />
                     Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                   </p>

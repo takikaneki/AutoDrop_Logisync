@@ -1,9 +1,9 @@
 import { bucketOf } from "./stats.js";
 import { isoDay, weekStart } from "./report.js";
 
-// Mga bar sa graph: Delivered / Pending / Flagged (pareho ng summary cards sa Dashboard)
-export const SERIES = ["Delivered", "Pending", "Flagged"];
-const NAME = { DELIVERED: "Delivered", PENDING: "Pending", FLAGGED: "Flagged" };
+// Mga bar sa graph: Delivered / Pending / Failed (pareho ng summary cards sa Dashboard)
+export const SERIES = ["Delivered", "Pending", "Failed"];
+const NAME = { DELIVERED: "Delivered", PENDING: "Pending", FLAGGED: "Failed" };
 
 const addDays = (d, n) => {
   const x = new Date(d);
@@ -44,10 +44,10 @@ function buildBuckets(period, offset) {
 }
 
 // parcels = galing sa GET /api/parcels (totoong data). Gamit ang created_at.
-// Nagbabalik ng { rows: [{ label, full, Delivered, Pending, Flagged }], range, total }
+// Nagbabalik ng { rows: [{ label, full, Delivered, Pending, Failed }], range, total }
 export function buildParcelSeries(parcels, period, offset = 0) {
   const buckets = buildBuckets(period, offset);
-  const rows = buckets.map((b) => ({ label: b.label, full: b.full, Delivered: 0, Pending: 0, Flagged: 0 }));
+  const rows = buckets.map((b) => ({ label: b.label, full: b.full, Delivered: 0, Pending: 0, Failed: 0 }));
 
   parcels.forEach((p) => {
     const t = new Date(p.created_at);
@@ -62,13 +62,13 @@ export function buildParcelSeries(parcels, period, offset = 0) {
     period === "month"
       ? `${first.toLocaleDateString("en-US", { month: "short", year: "numeric" })} – ${last.toLocaleDateString("en-US", { month: "short", year: "numeric" })}`
       : `${short(first)} – ${short(last)}, ${last.getFullYear()}`;
-  const total = rows.reduce((n, r) => n + r.Delivered + r.Pending + r.Flagged, 0);
+  const total = rows.reduce((n, r) => n + r.Delivered + r.Pending + r.Failed, 0);
   return { rows, range, total };
 }
 
 // Bilang ng bawat status (para sa pie) — parehong bucket ng graph at ng summary cards
 export function statusTotals(parcels) {
-  const c = { Delivered: 0, Pending: 0, Flagged: 0 };
+  const c = { Delivered: 0, Pending: 0, Failed: 0 };
   parcels.forEach((p) => { c[NAME[bucketOf(p)]] += 1; });
   return SERIES.map((name) => ({ name, value: c[name] }));
 }

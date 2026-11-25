@@ -34,7 +34,7 @@ import Icon from "../components/Icon.jsx";
 import { DatePickerInput } from "../components/SearchFilterBar.jsx";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
-const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Flagged: "#d94747" };
+const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Failed: "#d94747" };
 const PERIODS = [["day", "By Day"], ["week", "By Week"], ["month", "By Month"]];
 const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", month: "Parcels per month" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
@@ -187,10 +187,10 @@ export default function Dashboard() {
 
   const miniBars = useMemo(() => {
     const pts = Array.isArray(series) ? series.slice(-6) : [];
-    if (pts.length > 0 && pts.some((d) => (d.Delivered || 0) + (d.Pending || 0) + (d.Flagged || 0) > 0)) {
+    if (pts.length > 0 && pts.some((d) => (d.Delivered || 0) + (d.Pending || 0) + (d.Failed || 0) > 0)) {
       return pts.map((d) => ({
         label: String(d.label || d.name || "").slice(0, 3),
-        value: (d.Delivered || 0) + (d.Pending || 0) + (d.Flagged || 0),
+        value: (d.Delivered || 0) + (d.Pending || 0) + (d.Failed || 0),
       }));
     }
     return [
@@ -442,7 +442,7 @@ export default function Dashboard() {
                 />
                 <Bar dataKey="Delivered" stackId="a" fill={COLORS.Delivered} maxBarSize={isMobile ? 28 : 48} />
                 <Bar dataKey="Pending" stackId="a" fill={COLORS.Pending} maxBarSize={isMobile ? 28 : 48} />
-                <Bar dataKey="Flagged" stackId="a" fill={COLORS.Flagged} radius={[5, 5, 0, 0]} maxBarSize={isMobile ? 28 : 48} />
+                <Bar dataKey="Failed" stackId="a" fill={COLORS.Failed} radius={[5, 5, 0, 0]} maxBarSize={isMobile ? 28 : 48} />
               </BarChart>
             </ResponsiveContainer>
           </div>
