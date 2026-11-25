@@ -21,6 +21,7 @@ import { statusInfo } from "../../utils/parcelStatus.js";
 import { bucketOf } from "../../utils/stats.js";
 import { getParcelAddress } from "../../store/customers.js";
 import Icon from "../../components/Icon.jsx";
+import Pagination from "../../components/Pagination.jsx";
 import { FilterSelect, SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
 
 const PAGE_SIZE = 10;
@@ -100,7 +101,7 @@ export default function ParcelRecords() {
   }, [parcels, search, status, sort, isBucket]);
 
   useEffect(() => setPage(1), [search, status, sort]);
-  const visible = rows;
+  const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const setStatus = (v) => {
     if (v === "ALL") params.delete("status");
@@ -485,7 +486,7 @@ export default function ParcelRecords() {
                     </p>
                   )}
                   {p.returnToHub && (
-                    <p className="mt-2 rounded-lg bg-[#f2ecff] px-2.5 py-1 text-[12px] font-semibold text-[#7c3aed]">
+                    <p className="mt-2 rounded-lg bg-[#fff0f0] px-2.5 py-1 text-[12px] font-semibold text-[#d94747]">
                       <Icon name="undo-2" className="mr-1" />
                       Return to Hub · {p.returnCoordinated ? "Return to Seller Coordinated" : "Reached 3-Day Reschedule Limit"}
                     </p>
@@ -552,6 +553,7 @@ export default function ParcelRecords() {
             })}
         </div>
 
+        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       <EditParcelModal

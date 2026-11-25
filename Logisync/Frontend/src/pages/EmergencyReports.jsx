@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Topbar from "../components/Topbar.jsx";
+import Pagination from "../components/Pagination.jsx";
 import { EmptyState, Modal, TableSkeleton } from "../components/ui.jsx";
 import {
   btnGhost,
@@ -190,6 +191,10 @@ export default function EmergencyReports() {
     [reports]
   );
 
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+  useEffect(() => setPage(1), [filterKey, roleFilter, search]);
+
   const filteredReports = useMemo(() => {
     const q = search.trim().toLowerCase();
     return reports.filter((r) => {
@@ -212,6 +217,8 @@ export default function EmergencyReports() {
         .some((v) => String(v).toLowerCase().includes(q));
     });
   }, [reports, filterKey, roleFilter, search]);
+
+  const pagedReports = filteredReports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const applyUpdate = async ({ statusOverride, noteOverride } = {}) => {
     if (!selectedReport || saving) return;
@@ -457,7 +464,7 @@ export default function EmergencyReports() {
               <TableSkeleton rows={6} cols={7} />
             ) : (
               <tbody>
-                {filteredReports.map((r) => {
+                {pagedReports.map((r) => {
                   const st = STATUS_META[r.status] || STATUS_META.NEW;
                   const isNew = r.status === "NEW";
                   return (
@@ -567,7 +574,7 @@ export default function EmergencyReports() {
               text="No emergency reports match your active filters."
             />
           ) : (
-            filteredReports.map((r) => {
+            pagedReports.map((r) => {
               const st = STATUS_META[r.status] || STATUS_META.NEW;
               const isNew = r.status === "NEW";
               return (
@@ -633,6 +640,8 @@ export default function EmergencyReports() {
             })
           )}
         </div>
+
+        <Pagination page={page} pageSize={PAGE_SIZE} total={filteredReports.length} onPage={setPage} />
       </section>
 
       {/* Emergency Report Review Modal */}

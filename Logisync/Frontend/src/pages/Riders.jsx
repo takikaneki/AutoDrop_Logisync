@@ -24,6 +24,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import Pagination from "../components/Pagination.jsx";
 import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const tone = {
@@ -48,7 +49,7 @@ function generateTestPassword() {
   return `${out}#${Math.floor(10 + Math.random() * 90)}`;
 }
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 
 export default function Riders() {
   const [rawRiders, setRawRiders] = useState([]);
@@ -309,7 +310,7 @@ export default function Riders() {
     );
   }, [riders, status, zone, agencyFilter, search]);
 
-  const pageRows = rows;
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const current = viewId != null ? riders.find((r) => r.userId === viewId) : null;
 
   return (
@@ -439,7 +440,7 @@ export default function Riders() {
             label="On Delivery"
             value={loading ? "…" : riders.filter((r) => r.status === "On Delivery").length}
             icon="truck"
-            tone="blue"
+            tone="orange"
           />
         </StatGrid>
       </div>
@@ -691,6 +692,8 @@ export default function Riders() {
             ))
           )}
         </div>
+
+        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       <Modal

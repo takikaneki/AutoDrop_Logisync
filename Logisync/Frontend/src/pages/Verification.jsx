@@ -31,9 +31,10 @@ import { formatDate, formatSize } from "../utils/format.js";
 import { statusInfo } from "../utils/parcelStatus.js";
 import { getParcelAddress } from "../store/customers.js";
 import Icon from "../components/Icon.jsx";
+import Pagination from "../components/Pagination.jsx";
 import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 const FILTERS = [
   "VIDEO_SUBMITTED",
   "ALL",
@@ -190,7 +191,7 @@ export default function Verification() {
   }, [parcels, filter, search]);
 
   useEffect(() => setPage(1), [filter, search]);
-  const visible = rows;
+  const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const releaseVideo = () => {
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -558,6 +559,8 @@ export default function Verification() {
         {!loading && !offlineEmpty && !error && rows.length === 0 && (
           <EmptyState icon="clipboard-check" title={parcels.length ? "No parcels match your filters" : "No parcels yet"} text={filter === "VIDEO_SUBMITTED" ? "Nothing is waiting for verification." : ""} />
         )}
+
+        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       {/* WORKSPACE */}

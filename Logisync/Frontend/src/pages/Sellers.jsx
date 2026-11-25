@@ -24,6 +24,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import Pagination from "../components/Pagination.jsx";
 import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const tone = {
@@ -32,7 +33,7 @@ const tone = {
 };
 
 const AVATAR_TONES = ["orange", "blue", "green", "purple"];
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 
 const EMPTY_FORM = {
   userId: null,
@@ -196,7 +197,7 @@ export default function Sellers() {
     );
   }, [sellers, status, search]);
 
-  const pageRows = rows;
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const current = viewId != null ? sellers.find((s) => s.userId === viewId) : null;
 
   const [formOpen, setFormOpen] = useState(false);
@@ -669,6 +670,8 @@ export default function Sellers() {
             ))
           )}
         </div>
+
+        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
 
       <Modal

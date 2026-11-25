@@ -19,6 +19,9 @@ import {
   OfflineState,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import Pagination from "../components/Pagination.jsx";
+
+const PAGE_SIZE = 10;
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#d9482b]",
@@ -52,6 +55,11 @@ export default function Notifications() {
   const { online } = useNetworkStatus();
   const navigate = useNavigate();
   const [tab, setTab] = useState("all");
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [tab]);
 
   useEffect(() => {
     syncCoordinatorNotificationsFromServer();
@@ -146,7 +154,7 @@ export default function Notifications() {
 
       {showCachedNotice && <CachedDataNotice updatedAt={syncState.lastSyncedAt} />}
 
-      <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
+      <section className={`${panel} h-[calc(100vh-305px)] min-h-[360px] max-h-[560px] overflow-y-auto`}>
         {loading ? (
           <NotificationListSkeleton count={6} />
         ) : offlineEmpty ? (
@@ -162,7 +170,7 @@ export default function Notifications() {
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
-          list.map((n) => {
+          list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((n) => {
             const isEmergency = n.kind === "emergency" || n.category === "emergency";
             return (
               <button
@@ -210,6 +218,7 @@ export default function Notifications() {
           })
         )}
       </section>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={list.length} onPage={setPage} />
     </>
   );
 }

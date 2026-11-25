@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import AnnouncementsPanel from "../../components/AnnouncementsPanel.jsx";
@@ -14,6 +14,9 @@ import {
   OfflineState,
 } from "../../components/Skeletons.jsx";
 import Icon from "../../components/Icon.jsx";
+import Pagination from "../../components/Pagination.jsx";
+
+const PAGE_SIZE = 10;
 
 const tones = {
   orange: "bg-[#fff0e7] text-[#d9482b]",
@@ -31,6 +34,8 @@ export default function PortalNotifications() {
   const { online } = useNetworkStatus();
   const { items, announcements, notifications, unread, loading, syncedOnce, lastSyncedAt, reload } = usePortalNotifications(role);
   const [tab, setTab] = useState("all");
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [tab]);
   const offlineEmpty = !online && items.length === 0 && !syncedOnce;
   const showCachedNotice = !online && items.length > 0;
 
@@ -73,7 +78,7 @@ export default function PortalNotifications() {
         </button>
       </div>
 
-      <section className={`${panel} h-[calc(100vh-260px)] min-h-[380px] overflow-y-auto`}>
+      <section className={`${panel} h-[calc(100vh-305px)] min-h-[360px] max-h-[560px] overflow-y-auto`}>
         {loading ? (
           <NotificationListSkeleton count={6} />
         ) : offlineEmpty ? (
@@ -89,7 +94,7 @@ export default function PortalNotifications() {
             <EmptyState icon="bell-off" title="No notifications here" />
           </div>
         ) : (
-          list.map((n) => {
+          list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((n) => {
             const isEmergency = n.kind === "emergency" || n.category === "emergency";
             return (
               <button
@@ -135,6 +140,7 @@ export default function PortalNotifications() {
           })
         )}
       </section>
+      <Pagination page={page} pageSize={PAGE_SIZE} total={list.length} onPage={setPage} />
     </>
   );
 }

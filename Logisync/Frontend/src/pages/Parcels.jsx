@@ -41,6 +41,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import Pagination from "../components/Pagination.jsx";
 import { DatePickerInput, FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const statusIcons = {
@@ -397,7 +398,7 @@ export default function Parcels() {
     });
   }, [parcels, search, status, sort]);
 
-  const pageRows = rows;
+  const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const reset = (setter) => (event) => {
     setter(event.target.value);
@@ -1075,6 +1076,7 @@ export default function Parcels() {
             ))}
         </div>
 
+        <Pagination page={page} pageSize={PAGE_SIZE} total={rows.length} onPage={setPage} />
       </section>
     </>
   );
