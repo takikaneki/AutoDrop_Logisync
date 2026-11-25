@@ -1164,6 +1164,296 @@ async function getSellerParcel(req, res) {
   }
 }
 
+// PATCH/PUT /api/parcels/seller/:parcelId — Edit parcel details BEFORE verification video is uploaded
+async function updateSellerParcel(req, res) {
+  let client;
+  try {
+    await ensureCustomerSchema();
+    const parcelId = String(req.params.parcelId || "").trim();
+    if (!parcelId) {
+      return res.status(400).json({ success: false, message: "Parcel ID is required." });
+    }
+
+    const {
+      receiver_name,
+      receiver_contact,
+      receiver_address = "",
+      receiver_house_number = "",
+      receiver_street = "",
+      receiver_barangay = "",
+      receiver_city = "",
+      receiver_province = "",
+      contents,
+      content_category = "",
+      other_category_description = "",
+      discrete_item = false,
+      discreet_reason = "",
+      is_cod = false,
+      payment_method = "NON_COD"
+    } = req.body || {};
+
+    if (!receiver_name?.trim() || !receiver_contact?.trim() || !contents?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver name, receiver contact, and contents are required."
+      });
+    }
+
+    const cleanCategory = String(content_category || "").trim();
+    if (!VALID_CONTENT_CATEGORIES.includes(cleanCategory)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a valid parcel content category."
+      });
+    }
+
+    const cleanOtherCategoryDescription =
+      cleanCategory === "Other" ? String(other_category_description || "").trim() : "";
+
+    if (cleanCategory === "Other" && (cleanOtherCategoryDescription.length < 3 || cleanOtherCategoryDescription.length > 255)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a description between 3 and 255 characters for the 'Other' content category."
+      });
+    }
+
+    const isDiscrete =
+      Boolean(discrete_item) && DISCREET_ELIGIBLE_CATEGORIES.has(cleanCategory);
+    const cleanDiscreetReason = isDiscrete ? String(discreet_reason || "").trim() : "";
+
+    if (isDiscrete && (cleanDiscreetReason.length < 10 || cleanDiscreetReason.length > 500)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a clear explanation (between 10 and 500 characters) of why discreet handling is needed."
+      });
+    }
+
+    const cleanReceiverName = String(receiver_name || "").trim().replace(/\s+/g, " ");
+    if (cleanReceiverName.length < 2 || cleanReceiverName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer / Receiver name must be between 2 and 100 characters."
+      });
+    }
+    if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'-]*[A-Za-zÀ-ÿ.]$/.test(cleanReceiverName) || isGibberishName(cleanReceiverName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid customer / receiver name (meaningless or random characters are not allowed)."
+      });
+    }
+
+    const cleanReceiverContact = String(receiver_contact || "")
+      .trim()
+      .replace(/^\+639/, "09");
+    if (!/^09\d{9}$/.test(cleanReceiverContact)) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver contact number must be a valid 11-digit mobile number starting with 09 (numbers only)."
+      });
+    }
+
+    const cleanHouseNumber = String(receiver_house_number || "").trim();
+    const cleanStreet = String(receiver_street || "").trim();
+    const cleanBarangay = String(receiver_barangay || "").trim();
+    const cleanCity = String(receiver_city || "").trim();
+    const cleanProvince = String(receiver_province || "").trim();
+
+    if (cleanHouseNumber.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: "House / unit number must be 150 characters or fewer."
+      });
+    }
+    if (!cleanStreet || cleanStreet.length < 3 || cleanStreet.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: "House/unit number and street name must be between 3 and 150 characters."
+      });
+    }
+    if (!cleanBarangay || cleanBarangay.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: "Barangay is required and must be 150 characters or fewer."
+      });
+    }
+    if (!cleanCity || cleanCity.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: "City or municipality is required and must be 150 characters or fewer."
+      });
+    }
+    if (!cleanProvince || cleanProvince.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: "Province is required and must be 150 characters or fewer."
+      });
+    }
+
+    let cleanReceiverAddress = String(receiver_address || "").trim();
+    if (!cleanReceiverAddress) {
+      cleanReceiverAddress = [cleanHouseNumber, cleanStreet, cleanBarangay, cleanCity, cleanProvince]
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    const cleanContents = String(contents || "").trim();
+    const rawQty = req.body?.quantity;
+    const parsedQty = rawQty === undefined || rawQty === null || rawQty === "" ? 1 : Number(rawQty);
+    if (!Number.isInteger(parsedQty) || parsedQty < 1 || parsedQty > 999) {
+      return res.status(400).json({
+        success: false,
+        message: "Quantity must be a whole number between 1 and 999."
+      });
+    }
+    const cleanQuantity = parsedQty;
+    if (cleanContents.length < 3 || cleanContents.length > 255) {
+      return res.status(400).json({
+        success: false,
+        message: "Parcel item description / contents must be between 3 and 255 characters."
+      });
+    }
+    if (!isMeaningfulDescription(cleanContents)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a meaningful parcel item description (meaningless or random characters like 'whejshsh' are not allowed)."
+      });
+    }
+
+    const isCod = Boolean(is_cod || String(payment_method || "").toUpperCase() === "COD");
+    const resolvedPaymentMethod = isCod ? "COD" : "NON_COD";
+    const discreetStatus = isDiscrete ? "PENDING_REVIEW" : "NOT_REQUESTED";
+
+    const riskAssessment = evaluateDeclarationRisk({
+      content_category: cleanCategory,
+      other_category_description: cleanOtherCategoryDescription,
+      contents: cleanContents,
+      discrete_item: isDiscrete,
+      discreet_reason: cleanDiscreetReason
+    });
+
+    client = await rawPool.connect();
+    await client.query("BEGIN");
+
+    const { rows: existingRows } = await client.query(
+      `SELECT parcel_id, seller_id, transaction_number, status, verification_status
+       FROM parcels
+       WHERE parcel_id = $1
+       FOR UPDATE`,
+      [parcelId]
+    );
+
+    if (!existingRows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: "Parcel not found." });
+    }
+
+    const existingParcel = existingRows[0];
+    if (Number(existingParcel.seller_id) !== Number(req.user.user_id)) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to edit this parcel."
+      });
+    }
+
+    const { rows: videoRows } = await client.query(
+      `SELECT video_id FROM video_proofs WHERE parcel_id = $1 LIMIT 1`,
+      [parcelId]
+    );
+
+    const hasUploadedVideo = videoRows.length > 0;
+    const isEditableStatus = String(existingParcel.status || "").toUpperCase() === "WAITING_FOR_VIDEO";
+
+    if (hasUploadedVideo || !isEditableStatus) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        success: false,
+        code: "PARCEL_LOCKED_AFTER_VIDEO_UPLOAD",
+        message: "Parcel details can no longer be edited after a verification video has been uploaded."
+      });
+    }
+
+    const { rows: updatedRows } = await client.query(
+      `UPDATE parcels
+       SET receiver_name = $1,
+           receiver_contact = $2,
+           receiver_address = $3,
+           receiver_house_number = $4,
+           receiver_street = $5,
+           receiver_barangay = $6,
+           receiver_city = $7,
+           receiver_province = $8,
+           contents = $9,
+           quantity = $10,
+           content_category = $11,
+           other_category_description = $12,
+           discrete_item = $13,
+           discreet_reason = $14,
+           discreet_status = $15,
+           declaration_flagged = $16,
+           declaration_flag_reason = $17,
+           is_cod = $18,
+           payment_method = $19,
+           updated_at = NOW()
+       WHERE parcel_id = $20 AND seller_id = $21
+       RETURNING *`,
+      [
+        cleanReceiverName,
+        cleanReceiverContact,
+        cleanReceiverAddress,
+        cleanHouseNumber,
+        cleanStreet,
+        cleanBarangay,
+        cleanCity,
+        cleanProvince,
+        cleanContents,
+        cleanQuantity,
+        cleanCategory,
+        cleanOtherCategoryDescription || null,
+        isDiscrete,
+        cleanDiscreetReason || null,
+        discreetStatus,
+        riskAssessment.flagged,
+        riskAssessment.flagReason || null,
+        isCod,
+        resolvedPaymentMethod,
+        parcelId,
+        req.user.user_id
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    const updatedParcel = { ...updatedRows[0], has_video_proof: false };
+
+    await logAudit(req.user, {
+      category: "Parcels",
+      action: "Updated parcel details before video upload",
+      target: parcelId,
+      detail: `Updated receiver (${cleanReceiverName}), contents (${cleanCategory}: ${cleanContents}), payment (${resolvedPaymentMethod})`,
+      sellerId: req.user.user_id
+    });
+
+    return res.json({
+      success: true,
+      message: "Parcel details updated successfully.",
+      parcel: updatedParcel
+    });
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {
+        /* ignore rollback failure */
+      }
+    }
+    console.error("updateSellerParcel error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update parcel details." });
+  } finally {
+    if (client) client.release();
+  }
+}
+
 async function getVideoUploadSignature(req, res) {
   try {
     const [parcelRows] = await pool.query(
@@ -1325,32 +1615,111 @@ async function uploadVideo(req, res) {
       mimeType = req.file.mimetype;
     }
 
-    // Save Cloudinary URL and public ID
-    const [result] = await pool.query(
-      `INSERT INTO video_proofs
-       (parcel_id, uploaded_by, file_name, file_path,
-        cloudinary_public_id, file_size, mime_type)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        parcel.parcel_id,
-        req.user.user_id,
-        fileName,
-        uploadedAsset.secure_url,
-        uploadedAsset.public_id,
-        fileSize,
-        mimeType
-      ]
-    );
-    videoRecordSaved = true;
+    // Persist video proof and parcel status transition atomically under the same
+    // parcel row lock used by updateSellerParcel() to prevent concurrent edit/upload races.
+    let client;
+    let insertedVideoId;
+    try {
+      client = await rawPool.connect();
+      await client.query("BEGIN");
 
-    await pool.query(
-      `UPDATE parcels
-       SET status = 'VIDEO_SUBMITTED',
-           verification_status = 'PENDING',
-           updated_at = NOW()
-       WHERE parcel_id = ?`,
-      [parcel.parcel_id]
-    );
+      const { rows: lockedRows } = await client.query(
+        `SELECT parcel_id, seller_id, status
+         FROM parcels
+         WHERE parcel_id = $1
+         FOR UPDATE`,
+        [parcel.parcel_id]
+      );
+
+      if (!lockedRows.length) {
+        await client.query("ROLLBACK");
+        if (uploadedAsset?.public_id && !isDirectCloudinary && cloudinary) {
+          try {
+            await cloudinary.uploader.destroy(uploadedAsset.public_id, { resource_type: "video" });
+          } catch (cleanupError) {
+            console.error("Cloudinary cleanup failed:", cleanupError);
+          }
+        }
+        return res.status(404).json({
+          success: false,
+          message: "Parcel not found."
+        });
+      }
+
+      const lockedParcel = lockedRows[0];
+      if (Number(lockedParcel.seller_id) !== Number(req.user.user_id)) {
+        await client.query("ROLLBACK");
+        if (uploadedAsset?.public_id && !isDirectCloudinary && cloudinary) {
+          try {
+            await cloudinary.uploader.destroy(uploadedAsset.public_id, { resource_type: "video" });
+          } catch (cleanupError) {
+            console.error("Cloudinary cleanup failed:", cleanupError);
+          }
+        }
+        return res.status(403).json({
+          success: false,
+          message: "You can only upload proof for your own parcels."
+        });
+      }
+
+      const lockedStatus = String(lockedParcel.status || "").toUpperCase();
+      if (lockedStatus !== "WAITING_FOR_VIDEO" && lockedStatus !== "REUPLOAD_REQUESTED") {
+        await client.query("ROLLBACK");
+        if (uploadedAsset?.public_id && !isDirectCloudinary && cloudinary) {
+          try {
+            await cloudinary.uploader.destroy(uploadedAsset.public_id, { resource_type: "video" });
+          } catch (cleanupError) {
+            console.error("Cloudinary cleanup failed:", cleanupError);
+          }
+        }
+        return res.status(409).json({
+          success: false,
+          message: "This parcel is not eligible for video submission."
+        });
+      }
+
+      const { rows: insertedVideoRows } = await client.query(
+        `INSERT INTO video_proofs
+         (parcel_id, uploaded_by, file_name, file_path,
+          cloudinary_public_id, file_size, mime_type)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING video_id`,
+        [
+          lockedParcel.parcel_id,
+          req.user.user_id,
+          fileName,
+          uploadedAsset.secure_url,
+          uploadedAsset.public_id,
+          fileSize,
+          mimeType
+        ]
+      );
+
+      insertedVideoId = insertedVideoRows[0]?.video_id;
+
+      await client.query(
+        `UPDATE parcels
+         SET status = 'VIDEO_SUBMITTED',
+             verification_status = 'PENDING',
+             updated_at = NOW()
+         WHERE parcel_id = $1`,
+        [lockedParcel.parcel_id]
+      );
+
+      await client.query("COMMIT");
+      videoRecordSaved = true;
+    } catch (txError) {
+      if (client) {
+        try {
+          await client.query("ROLLBACK");
+        } catch {
+          /* ignore rollback failure */
+        }
+      }
+      throw txError;
+    } finally {
+      if (client) client.release();
+    }
 
     try {
       await logAudit(req.user, {
@@ -1368,7 +1737,7 @@ async function uploadVideo(req, res) {
       success: true,
       message: "Video proof uploaded successfully.",
       video: {
-        video_id: result.insertId,
+        video_id: insertedVideoId,
         file_name: fileName,
         file_size: fileSize,
         mime_type: mimeType
@@ -2030,15 +2399,17 @@ async function listParcels(req, res) {
               COALESCE(NULLIF(BTRIM(p.receiver_barangay), ''), sc.receiver_barangay, '') AS receiver_barangay,
               COALESCE(NULLIF(BTRIM(p.receiver_city), ''), sc.receiver_city, '') AS receiver_city,
               COALESCE(NULLIF(BTRIM(p.receiver_province), ''), sc.receiver_province, '') AS receiver_province,
-              p.contents, p.content_category, p.other_category_description,
+              p.contents, p.quantity, p.content_category, p.other_category_description,
               p.discrete_item, p.discreet_reason, p.discreet_status,
               p.discreet_review_remarks, p.discreet_reviewed_at,
               p.declaration_flagged, p.declaration_flag_reason,
               p.status, p.verification_status,
+              EXISTS (SELECT 1 FROM video_proofs vp WHERE vp.parcel_id = p.parcel_id) AS has_video_proof,
               p.created_at, p.updated_at,
               p.rider_id, p.delivery_status, p.delivery_note, p.delivery_proof,
               p.scheduled_for, p.rescheduled, p.reschedule_count,
               p.return_to_hub, p.return_to_hub_at, p.return_coordinated, p.return_note,
+              p.rth_status, p.rth_confirmed_at,
               p.last_failure, p.delivery_attempts, p.scanned_at, p.delivered_at,
               p.is_cod, p.payment_method,
               p.delivery_hold, p.delivery_hold_reason, p.delivery_hold_until, p.delivery_hold_at,
@@ -4133,6 +4504,7 @@ module.exports = {
   createParcel,
   getParcelForRole,
   getSellerParcel,
+  updateSellerParcel,
   getVideoUploadSignature,
   uploadVideo,
   getCoordinatorParcel,

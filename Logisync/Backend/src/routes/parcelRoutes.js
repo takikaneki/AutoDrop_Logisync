@@ -14,6 +14,7 @@ const {
   createParcel,
   getParcelForRole,
   getSellerParcel,
+  updateSellerParcel,
   getVideoUploadSignature,
   uploadVideo,
   getCoordinatorParcel,
@@ -85,6 +86,18 @@ router.get("/seller/:parcelId",
   authenticateToken,
   authorizeRoles("seller"),
   getSellerParcel
+);
+
+router.patch("/seller/:parcelId",
+  authenticateToken,
+  authorizeRoles("seller"),
+  updateSellerParcel
+);
+
+router.put("/seller/:parcelId",
+  authenticateToken,
+  authorizeRoles("seller"),
+  updateSellerParcel
 );
 
 router.post("/seller/:parcelId/video-signature",

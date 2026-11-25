@@ -68,7 +68,7 @@ function useCountUpOnce(target, active, duration = 900) {
 // Combines design inspiration from:
 // 1. Airship Express — Initial truck/progress loading animation, top utility + nav bar, centered hero with inline pill & 4-step tracker
 // 2. Haulx PH — Editorial split image presentation, curved orange route-line motif, natural photo proportions
-// 3. AP Cargo — Bold orange showcase banner, service/feature organization, expandable FAQ accordion, and real SPX Express photo cards
+// 3. AP Cargo — Bold orange showcase banner, service/feature organization, and real SPX Express photo cards
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },

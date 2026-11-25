@@ -5,8 +5,10 @@ import StatusBadge from "../../components/StatusBadge.jsx";
 import { EmptyState, CodBadge, TableSkeleton } from "../../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../../components/portal.jsx";
 import ParcelReport from "../../components/seller/ParcelReport.jsx";
+import EditParcelModal from "../../components/seller/EditParcelModal.jsx";
 import { btnGhost, btnPrimary, inputCls, tableCard, tableHead, tableRow, tableScroll, td, th } from "../../components/styles.js";
 import { listParcels } from "../../services/parcelService.js";
+import { toast } from "../../store/toast.js";
 import { useNetworkResource } from "../../hooks/useNetworkResource.js";
 import {
   CachedDataNotice,
@@ -23,6 +25,9 @@ import { FilterSelect, SearchFilterBar, SearchInput } from "../../components/Sea
 
 const PAGE_SIZE = 10;
 const PENDING = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
+const canEditParcel = (p) =>
+  String(p?.status || "").toUpperCase() === "WAITING_FOR_VIDEO" &&
+  !Boolean(p?.has_video_proof);
 
 function shortParcelId(id) {
   const str = String(id || "").trim();
@@ -61,6 +66,7 @@ export default function ParcelRecords() {
   const [sort, setSort] = useState("newest");
   const [page, setPage] = useState(1);
   const [reportOpen, setReportOpen] = useState(params.get("report") === "1");
+  const [editingParcel, setEditingParcel] = useState(null);
   const status = params.get("status") || "ALL";
   const isBucket = status in BUCKETS;
 
@@ -388,9 +394,21 @@ export default function ParcelRecords() {
                     </td>
                     <td className={`${td} whitespace-nowrap`}>{formatDate(p.created_at)}</td>
                     <td className={`${td} whitespace-nowrap text-right`}>
-                      <Link to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
-                        {needsVideo ? "Upload video" : "View details"}
-                      </Link>
+                      <div className="inline-flex items-center justify-end gap-2.5">
+                        {canEditParcel(p) && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingParcel(p)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#e5e5e5] bg-white px-2.5 py-1 text-[12px] font-semibold text-[#333] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                          >
+                            <Icon name="pencil" className="text-[11px]" />
+                            Edit
+                          </button>
+                        )}
+                        <Link to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
+                          {needsVideo ? "Upload video" : "View details"}
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -505,17 +523,29 @@ export default function ParcelRecords() {
                       </p>
                     )}
                   </div>
-                  <div className="mt-3.5 flex items-center justify-between border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
+                  <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-[#eee] pt-3 text-[12px] dark:border-night-line">
                     <span className="text-[#999]">{formatDate(p.created_at)}</span>
-                    <Link
-                      to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
+                    <div className="flex items-center gap-2">
+                      {canEditParcel(p) && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingParcel(p)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-[#e5e5e5] bg-white px-2.5 py-1.5 text-[12px] font-bold text-[#333] transition hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#f1eeeb]"
+                        >
+                          <Icon name="pencil" className="text-[11px]" />
+                          Edit
+                        </button>
+                      )}
+                      <Link
+                        to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
                           needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
                         }`}
                       >
                         <Icon name={needsVideo ? "video" : "arrow-right"} />
                         {needsVideo ? "Upload video" : "View details"}
                       </Link>
+                    </div>
                   </div>
                 </article>
               );
@@ -523,6 +553,15 @@ export default function ParcelRecords() {
         </div>
 
       </section>
+
+      <EditParcelModal
+        parcel={editingParcel}
+        onClose={() => setEditingParcel(null)}
+        onSaved={() => {
+          toast.success("Parcel details updated successfully.");
+          load();
+        }}
+      />
     </>
   );
 }

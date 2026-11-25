@@ -38,12 +38,37 @@ const FILTERS = [
   "VIDEO_SUBMITTED",
   "ALL",
   "DISCREET_PENDING",
-  "FLAGGED_DECLARATION",
   "VERIFIED",
-  "REUPLOAD_REQUESTED",
-  "REJECTED",
+  "RETURN_TO_HUB",
   "WAITING_FOR_VIDEO",
 ];
+
+function isReturnToHubParcel(p) {
+  if (!p) return false;
+  const status = String(p.status || "").toUpperCase();
+  const deliveryStatus = String(p.delivery_status || "").toUpperCase();
+  if (status === "DELIVERED" || deliveryStatus === "DELIVERED" || Boolean(p.delivered_at)) {
+    return false;
+  }
+  if (
+    (status === "RESCHEDULED" || Boolean(p.rescheduled)) &&
+    status !== "RETURN_TO_HUB" &&
+    status !== "RTH_PENDING" &&
+    status !== "RTH_CONFIRMED"
+  ) {
+    return false;
+  }
+  const rthStatus = String(p.rth_status || "").toUpperCase();
+  return (
+    status === "RETURN_TO_HUB" ||
+    status === "RTH_PENDING" ||
+    status === "RTH_CONFIRMED" ||
+    rthStatus === "PENDING" ||
+    rthStatus === "PENDING_CONFIRMATION" ||
+    rthStatus === "CONFIRMED" ||
+    Boolean(p.return_to_hub || p.returnToHub)
+  );
+}
 
 function DiscreetStatusBadge({ discreteItem, discreetStatus }) {
   if (!discreteItem && (!discreetStatus || discreetStatus === "NOT_REQUESTED")) {
@@ -130,19 +155,12 @@ export default function Verification() {
   const discreetPendingCount = parcels.filter(
     (p) => Boolean(p.discrete_item) && (p.discreet_status || "PENDING_REVIEW") === "PENDING_REVIEW"
   ).length;
-  const flaggedCount = parcels.filter((p) => Boolean(p.declaration_flagged)).length;
-
-  const summary = [
-    { label: "Under verification", value: count("VIDEO_SUBMITTED"), icon: "clock", tone: "yellow" },
-    { label: "Discreet requests pending", value: discreetPendingCount, icon: "shield-check", tone: "yellow" },
-    { label: "Verified", value: count("VERIFIED"), icon: "circle-check", tone: "green" },
-    { label: "Flagged / Rejected", value: flaggedCount + count("REJECTED"), icon: "circle-x", tone: "red" },
-  ];
+  const returnToHubCount = parcels.filter(isReturnToHubParcel).length;
 
   const filterLabel = (f) => {
     if (f === "ALL") return "All statuses";
     if (f === "DISCREET_PENDING") return "Discreet Request Pending";
-    if (f === "FLAGGED_DECLARATION") return "Flagged Declarations";
+    if (f === "RETURN_TO_HUB") return "Return to Hub";
     return statusInfo(f).label;
   };
 
@@ -154,8 +172,8 @@ export default function Verification() {
           ? true
           : filter === "DISCREET_PENDING"
           ? Boolean(p.discrete_item) && (p.discreet_status || "PENDING_REVIEW") === "PENDING_REVIEW"
-          : filter === "FLAGGED_DECLARATION"
-          ? Boolean(p.declaration_flagged)
+          : filter === "RETURN_TO_HUB"
+          ? isReturnToHubParcel(p)
           : p.status === filter;
 
       if (!matchesFilter) return false;
@@ -378,15 +396,15 @@ export default function Verification() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter((prev) => (prev === "FLAGGED_DECLARATION" ? "ALL" : "FLAGGED_DECLARATION"))}
+          onClick={() => setFilter((prev) => (prev === "RETURN_TO_HUB" ? "ALL" : "RETURN_TO_HUB"))}
           className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "FLAGGED_DECLARATION" ? "ring-2 ring-brand/50 shadow-sm" : ""
+            filter === "RETURN_TO_HUB" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >
           <StatCard
-            label="Flagged / Rejected"
-            value={loading ? "…" : flaggedCount + count("REJECTED")}
-            icon="triangle-alert"
+            label="Return to Hub"
+            value={loading ? "…" : returnToHubCount}
+            icon="undo-2"
             tone="red"
           />
         </button>

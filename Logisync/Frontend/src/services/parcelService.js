@@ -208,6 +208,15 @@ export async function createParcel({
   return enrichParcel(created);
 }
 
+// PATCH /api/parcels/seller/:parcelId — Edit parcel details before video upload
+export async function updateSellerParcel(parcelId, payload) {
+  const data = await api(`/parcels/seller/${enc(parcelId)}`, {
+    method: "PATCH",
+    body: payload,
+  });
+  return data?.parcel ? enrichParcel(data.parcel) : null;
+}
+
 // GET /api/parcels  -> seller: sariling parcels lang | coordinator: lahat
 export async function listParcels() {
   const data = await api("/parcels");
