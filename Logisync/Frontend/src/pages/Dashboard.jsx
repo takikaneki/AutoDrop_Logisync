@@ -266,9 +266,9 @@ export default function Dashboard() {
               loading={loadingStats}
               pipeline={[
                 { label: "Needs Review", count: offlineEmpty ? "—" : v(countStatus("VIDEO_SUBMITTED")), icon: "video", tone: "yellow", to: "/verification?status=VIDEO_SUBMITTED" },
-                { label: "Verified", count: offlineEmpty ? "—" : v(countStatus("VERIFIED")), icon: "circle-check", tone: "green", to: "/verification?status=VERIFIED" },
-                { label: "Out / Delivered", count: offlineEmpty ? "—" : v(countStatus("OUT_FOR_DELIVERY") + countStatus("DELIVERED")), icon: "truck", tone: "blue", to: "/parcels" },
-                { label: "Failed / Return", count: offlineEmpty ? "—" : v(stats.flagged), icon: "triangle-alert", tone: "red", to: "/parcels" },
+                { label: "In Transit / Pending", count: offlineEmpty ? "—" : v(countStatus("OUT_FOR_DELIVERY") + countStatus("RESCHEDULED") + countStatus("WAITING_FOR_VIDEO") + countStatus("PENDING")), icon: "truck", tone: "orange", to: "/parcels?status=In%20Transit" },
+                { label: "Verified / Delivered", count: offlineEmpty ? "—" : v(countStatus("VERIFIED") + countStatus("DELIVERED")), icon: "circle-check", tone: "green", to: "/verification?status=VERIFIED" },
+                { label: "Failed / Return to Hub", count: offlineEmpty ? "—" : v(stats.flagged), icon: "triangle-alert", tone: "red", to: "/parcels?status=Failed%20%2F%20Return%20to%20Hub" },
               ]}
             />
           </div>

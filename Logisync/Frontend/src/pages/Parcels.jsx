@@ -419,7 +419,7 @@ export default function Parcels() {
     {
       label: "In Transit",
       icon: "truck",
-      tone: "blue",
+      tone: "orange",
     },
     {
       label: "Delivered",
@@ -738,10 +738,10 @@ export default function Parcels() {
             key: "In Transit",
             label: "In Transit",
             count: counts["In Transit"],
-            activeText: "text-[#3b82f6] dark:text-[#60a5fa]",
-            hoverText: "hover:text-[#3b82f6] dark:hover:text-[#60a5fa]",
-            activeBar: "bg-[#3b82f6]",
-            activeBadge: "bg-[#dbeafe] text-[#1d4ed8] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+            activeText: "text-[#ea580c] dark:text-[#fb923c]",
+            hoverText: "hover:text-[#ea580c] dark:hover:text-[#fb923c]",
+            activeBar: "bg-[#ea580c]",
+            activeBadge: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
           },
           {
             key: "Delivered",

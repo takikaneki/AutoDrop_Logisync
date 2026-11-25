@@ -37,7 +37,7 @@ function shortParcelId(id) {
 }
 
 const FILTERS = [
-  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "video", tone: "blue", match: (p) => PENDING.includes(p.status) },
+  { key: "NEEDS_VIDEO", label: "Needs Video", icon: "video", tone: "orange", match: (p) => PENDING.includes(p.status) },
   { key: "UNDER_VERIFICATION", label: "Under Verification", icon: "clock", tone: "yellow", match: (p) => p.status === "VIDEO_SUBMITTED" },
   { key: "VERIFIED", label: "Verified / In Delivery", icon: "circle-check", tone: "green", match: (p) => ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED", "DELIVERED"].includes(p.status) && !p.returnToHub && !p.rth_status },
   { key: "RETURN_TO_HUB", label: "Return to Hub / Failed", icon: "undo-2", tone: "red", match: (p) => ["RETURN_TO_HUB", "REJECTED", "DELIVERY_FAILED", "RTH_PENDING", "RTH_CONFIRMED"].includes(p.status) || Boolean(p.returnToHub || p.rth_status) },
@@ -166,9 +166,9 @@ export default function ParcelRecords() {
           {
             key: "NEEDS_VIDEO",
             label: "Needs Video",
-            activeText: "text-[#3b82f6] dark:text-[#60a5fa]",
-            activeBar: "bg-[#3b82f6]",
-            activeBadge: "bg-[#dbeafe] text-[#1d4ed8] dark:bg-blue-500/20 dark:text-[#60a5fa]",
+            activeText: "text-[#ea580c] dark:text-[#fb923c]",
+            activeBar: "bg-[#ea580c]",
+            activeBadge: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
             filter: FILTERS[0],
           },
           {

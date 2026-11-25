@@ -133,7 +133,7 @@ export default function SellerDashboard() {
               role="seller"
               loading={loading}
               pipeline={[
-                { label: "Needs Video", count: offlineEmpty ? "—" : v(needsVideoParcels.length), icon: "video", tone: "blue", to: "/seller/parcels?status=NEEDS_VIDEO" },
+                { label: "Needs Video", count: offlineEmpty ? "—" : v(needsVideoParcels.length), icon: "video", tone: "orange", to: "/seller/parcels?status=NEEDS_VIDEO" },
                 { label: "Under Review", count: offlineEmpty ? "—" : v(count("VIDEO_SUBMITTED")), icon: "clock", tone: "yellow", to: "/seller/parcels?status=UNDER_VERIFICATION" },
                 { label: "Verified", count: offlineEmpty ? "—" : v(count("VERIFIED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
                 { label: "Delivered", count: offlineEmpty ? "—" : v(count("DELIVERED")), icon: "package-check", tone: "green", to: "/seller/parcels" },
