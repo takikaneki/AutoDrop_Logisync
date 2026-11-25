@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^1.77.0",
     "qrcode.react": "^4.2.0",
