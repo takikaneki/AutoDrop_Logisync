@@ -69,5 +69,11 @@ router.patch(
   authorizeRoles("coordinator"),
   updateSellerAccount
 );
+router.put(
+  "/:id/profile",
+  authenticateToken,
+  authorizeRoles("coordinator"),
+  updateSellerAccount
+);
 
 module.exports = router;

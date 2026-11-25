@@ -27,7 +27,7 @@ function getSmtpConfig() {
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   const from =
     process.env.SMTP_FROM ||
-    (user ? `"LogiSync Support" <${user}>` : `"LogiSync Support" <no-reply@logisync.example>`);
+    (user ? `"LogiSync" <${user}>` : `"LogiSync" <no-reply@logisync.example>`);
 
   const isConfigured = Boolean(host && user && pass);
 

@@ -4,7 +4,7 @@ import Topbar from "../components/Topbar.jsx";
 import { EmptyState, Modal, StatusBadge, TableSkeleton, ConfirmDialog } from "../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, th } from "../components/styles.js";
-import { createUser, listUsers, updateSeller, updateUserVerification } from "../services/userService.js";
+import { createUser, listUsers, updateUserVerification } from "../services/userService.js";
 import { listParcels } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
@@ -32,24 +32,11 @@ const tone = {
   Inactive: "bg-[#fff0f0] text-[#d94747]",
 };
 
-const TYPE_LABEL = { FM: "First Mile (FM)", LM: "Last Mile (LM)" };
-const TYPE_DESC = {
-  FM: "Picks up parcels from Sellers (seller pickup activities).",
-  LM: "Delivers parcels to Buyers, including applicable return pickups and deliveries.",
-};
-const TYPE_TONE = {
-  FM: "bg-[#eaf2ff] text-[#2563eb]",
-  LM: "bg-[#fff0e7] text-[#e9651c]",
-};
-
 const EMPTY_FORM = {
-  userId: null,
-  riderCode: "",
   name: "",
   email: "",
   phone: "",
   agency: "",
-  rider_type: "",
   status: "Active",
   password: "",
 };
@@ -72,7 +59,6 @@ export default function Riders() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [zone, setZone] = useState("All");
-  const [typeFilter, setTypeFilter] = useState("All");
   const [agencyFilter, setAgencyFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [viewId, setViewId] = useState(null);
@@ -94,22 +80,6 @@ export default function Riders() {
     setFormOpen(true);
   };
 
-  const openEdit = (r) => {
-    setForm({
-      userId: r.userId,
-      riderCode: r.id,
-      name: r.raw?.name || "",
-      email: r.raw?.email || "",
-      phone: r.raw?.phone || "",
-      agency: r.agency === "Unassigned" ? "" : r.agency,
-      rider_type: r.riderType,
-      status: r.accountActive ? "Active" : "Inactive",
-      password: "",
-    });
-    setFormError("");
-    setFormOpen(true);
-  };
-
   const submitForm = async (e) => {
     e.preventDefault();
     const name = form.name.trim();
@@ -120,52 +90,36 @@ export default function Riders() {
     if (!name || !email || !phone || !agency) {
       return setFormError("Please fill in the rider name, email / login username, contact number and assigned agency.");
     }
-    if (!form.rider_type) return setFormError("Select a Rider Type: First Mile (FM) or Last Mile (LM).");
     if (!/^\S+@\S+\.\S+$/.test(email)) return setFormError("Please enter a valid email address / login username.");
     if (!/^09\d{9}$/.test(phone)) {
       return setFormError("Contact number must be an 11-digit mobile number starting with 09.");
     }
-    if (!form.userId && form.password.length < 8) {
-      return setFormError("Assign a test password of at least 8 characters.");
-    }
-    if (form.userId && form.password && form.password.length < 8) {
-      return setFormError("The new password must be at least 8 characters.");
+    if (form.password.length < 8) {
+      return setFormError("Assign a temporary password of at least 8 characters.");
     }
 
     setSaving(true);
     try {
-      if (form.userId) {
-        const payload = { name, email, phone, agency, rider_type: form.rider_type, status: form.status };
-        if (form.password) payload.password = form.password;
-        const updated = await updateSeller(form.userId, payload);
-        setRawRiders((prev) => prev.map((u) => (u.user_id === form.userId ? { ...u, ...updated } : u)));
-        logAction({ category: "Riders", action: "Updated rider", target: name, detail: `${form.rider_type} · ${agency}` });
-        toast(`${name} — rider account updated.`);
-        setFormOpen(false);
-      } else {
-        const user = await createUser({
-          role: "rider",
-          name,
-          email,
-          phone,
-          agency,
-          rider_type: form.rider_type,
-          password: form.password,
-          status: form.status,
-        });
-        setRawRiders((prev) => [user, ...prev]);
-        logAction({ category: "Riders", action: "Created rider", target: name, detail: user.rider_code || email });
-        setFormOpen(false);
-        setCreated({
-          riderCode: user.rider_code,
-          type: user.rider_type,
-          agency: user.agency,
-          email,
-          password: form.password,
-        });
-      }
+      const user = await createUser({
+        role: "rider",
+        name,
+        email,
+        phone,
+        agency,
+        password: form.password,
+        status: form.status,
+      });
+      setRawRiders((prev) => [user, ...prev]);
+      logAction({ category: "Riders", action: "Created rider", target: name, detail: user.rider_code || email });
+      setFormOpen(false);
+      setCreated({
+        riderCode: user.rider_code,
+        agency: user.agency,
+        email,
+        password: form.password,
+      });
     } catch (err) {
-      setFormError(err.message || "Failed to save rider account.");
+      setFormError(err.message || "Failed to create rider account.");
     } finally {
       setSaving(false);
     }
@@ -347,14 +301,13 @@ export default function Riders() {
       (r) =>
         (status === "All" || r.status === status) &&
         (zone === "All" || r.zone === zone) &&
-        (typeFilter === "All" || r.riderType === typeFilter) &&
         (agencyFilter === "All" || r.agency === agencyFilter) &&
         (!q ||
           [r.name, r.email, r.zone, r.id, r.phone, r.agency]
             .filter(Boolean)
             .some((v) => String(v).toLowerCase().includes(q)))
     );
-  }, [riders, status, zone, typeFilter, agencyFilter, search]);
+  }, [riders, status, zone, agencyFilter, search]);
 
   const pageRows = rows;
   const current = viewId != null ? riders.find((r) => r.userId === viewId) : null;
@@ -363,7 +316,7 @@ export default function Riders() {
     <>
       <Topbar
         title="Riders"
-        subtitle="Create, edit, activate and deactivate rider accounts. Track agency affiliation and FM / LM classification."
+        subtitle="Create, view, activate and deactivate rider accounts. Track agency affiliation."
         right={
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={loadData} className={btnGhost}>
@@ -640,13 +593,6 @@ export default function Riders() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => openEdit(r)}
-                        className="mr-3 text-[13px] font-semibold text-[#3b82f6] hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
                         disabled={updatingId === r.userId}
                         onClick={() => setConfirm({ rider: r, kind: r.accountActive ? "Deactivate" : "Activate" })}
                         className={`text-[13px] font-semibold hover:underline disabled:opacity-50 ${r.accountActive ? "text-[#d94747]" : "text-[#29945a]"}`}
@@ -730,13 +676,6 @@ export default function Riders() {
                       className="font-bold text-brand hover:underline"
                     >
                       View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(r)}
-                      className="font-semibold text-[#3b82f6] hover:underline"
-                    >
-                      Edit
                     </button>
                     <button
                       type="button"
@@ -825,10 +764,6 @@ export default function Riders() {
 
             <dl className="mb-5 space-y-2.5 text-[14px]">
               {[
-                [
-                  "Rider type",
-                  `${TYPE_LABEL[current.riderType]} — ${current.riderType === "FM" ? "seller pickups" : "buyer deliveries"}`,
-                ],
                 ["Agency", current.agency],
                 ["Email", current.email],
                 ["Phone", current.phone],
@@ -906,17 +841,17 @@ export default function Riders() {
               <Icon name="x" />
             </button>
             <h3 className="mb-1 pr-8 text-[18px] font-bold">
-              {form.userId ? "Edit Rider Account" : "Add Rider Account"}
+              Add Rider Account
             </h3>
             <p className="mb-4 text-[13px] text-[#999]">
-              Riders are recruited through Shopee agency partners. Prototype uses dummy rider and agency data; there is no rider self-registration.
+              Riders are recruited through Shopee agency partners. Credentials will be emailed for mandatory first-time password setup.
             </p>
 
             <div className="grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
               <div>
                 <label className="mb-1 block text-[13px] font-semibold">Rider ID</label>
                 <input
-                  value={form.userId ? form.riderCode : "Auto-generated (RID-0001…)"}
+                  value="Auto-generated (RID-0001…)"
                   readOnly
                   className={`${inputCls} cursor-not-allowed bg-[#f6f6f6] dark:bg-night-head`}
                 />
@@ -966,37 +901,9 @@ export default function Riders() {
               </div>
             </div>
 
-            <fieldset className="mt-4">
-              <legend className="mb-1.5 text-[13px] font-semibold">Rider Type *</legend>
-              <div className="grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
-                {["FM", "LM"].map((t) => (
-                  <label
-                    key={t}
-                    className={`cursor-pointer rounded-xl border p-3 text-[13px] transition ${
-                      form.rider_type === t
-                        ? "border-brand bg-brand-soft/60 dark:bg-night-line"
-                        : "border-[#e5e7eb] hover:border-brand/60 dark:border-night-line"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="rider_type"
-                        value={t}
-                        checked={form.rider_type === t}
-                        onChange={() => setField("rider_type", t)}
-                      />
-                      <strong>{TYPE_LABEL[t]}</strong>
-                    </span>
-                    <span className="mt-1 block text-[12px] text-[#888]">{TYPE_DESC[t]}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
             <div className="mt-4">
               <label className="mb-1 block text-[13px] font-semibold" htmlFor="rf-pass">
-                {form.userId ? "Reset Test Password (optional)" : "Assigned Test Password *"}
+                Assigned Temporary Password *
               </label>
               <div className="flex gap-2">
                 <input
@@ -1005,7 +912,7 @@ export default function Riders() {
                   value={form.password}
                   onChange={(e) => setField("password", e.target.value)}
                   className={`${inputCls} font-mono`}
-                  placeholder={form.userId ? "Leave blank to keep current password" : "At least 8 characters"}
+                  placeholder="At least 8 characters"
                   autoComplete="off"
                 />
                 <button type="button" onClick={() => setField("password", generateTestPassword())} className={`${btnGhost} whitespace-nowrap`}>
@@ -1026,7 +933,7 @@ export default function Riders() {
             <div className="mt-5 flex justify-end gap-2.5">
               <button type="button" onClick={() => setFormOpen(false)} disabled={saving} className={btnGhost}>Cancel</button>
               <button type="submit" disabled={saving} className={btnPrimary}>
-                {saving ? "Saving…" : form.userId ? "Save Changes" : "Create Rider"}
+                {saving ? "Saving…" : "Create Rider"}
               </button>
             </div>
           </form>
@@ -1045,10 +952,9 @@ export default function Riders() {
               <Icon name="circle-check" className="mr-2 text-[#29945a]" />
               Rider account created
             </h3>
-            <p className="mb-4 text-[13px] text-[#999]">Give these test login credentials to the rider. The password will not be shown again.</p>
+            <p className="mb-4 text-[13px] text-[#999]">Give these temporary login credentials to the rider. The password will not be shown again.</p>
             <dl className="space-y-2 rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-4 text-[13.5px] dark:border-night-line dark:bg-night-head">
               <div className="flex justify-between gap-3"><dt className="text-[#999]">Rider ID</dt><dd className="font-bold">{created.riderCode}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-[#999]">Type</dt><dd className="font-semibold">{TYPE_LABEL[created.type]}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-[#999]">Agency</dt><dd className="font-semibold">{created.agency}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-[#999]">Login</dt><dd className="break-all font-mono">{created.email}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-[#999]">Password</dt><dd className="font-mono font-bold">{created.password}</dd></div>

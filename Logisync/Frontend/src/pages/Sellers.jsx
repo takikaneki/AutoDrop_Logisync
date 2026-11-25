@@ -4,7 +4,7 @@ import Topbar from "../components/Topbar.jsx";
 import { Avatar, ConfirmDialog, EmptyState, Modal, StatusBadge, TableSkeleton } from "../components/ui.jsx";
 import { Notice, StatCard, StatGrid } from "../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, panel, stickyThead, tableScroll, td, th } from "../components/styles.js";
-import { createUser, listUsers, updateSeller, updateUserVerification } from "../services/userService.js";
+import { createUser, listUsers, updateUserVerification } from "../services/userService.js";
 import { listParcels } from "../services/parcelService.js";
 import { logAction } from "../store/audit.js";
 import { toast } from "../store/toast.js";
@@ -216,22 +216,6 @@ export default function Sellers() {
     setFormOpen(true);
   };
 
-  const openEdit = (s) => {
-    setForm({
-      userId: s.userId,
-      sellerCode: s.id,
-      name: s.raw?.name || "",
-      shop_name: s.raw?.shop_name || "",
-      email: s.raw?.email || "",
-      phone: s.raw?.phone || "",
-      pickup_address: s.raw?.pickup_address || "",
-      status: s.status,
-      password: "",
-    });
-    setFormError("");
-    setFormOpen(true);
-  };
-
   const submitForm = async (e) => {
     e.preventDefault();
     const name = form.name.trim();
@@ -247,41 +231,28 @@ export default function Sellers() {
     if (!/^09\d{9}$/.test(phone)) {
       return setFormError("Contact number must be an 11-digit mobile number starting with 09.");
     }
-    if (!form.userId && form.password.length < 8) {
-      return setFormError("Assign a test password of at least 8 characters.");
-    }
-    if (form.userId && form.password && form.password.length < 8) {
-      return setFormError("The new password must be at least 8 characters.");
+    if (form.password.length < 8) {
+      return setFormError("Assign a temporary password of at least 8 characters.");
     }
 
     setSaving(true);
     try {
-      if (form.userId) {
-        const payload = { name, shop_name: shop, email, phone, pickup_address: pickup, status: form.status };
-        if (form.password) payload.password = form.password;
-        const updated = await updateSeller(form.userId, payload);
-        setRawSellers((prev) => prev.map((u) => (u.user_id === form.userId ? { ...u, ...updated } : u)));
-        logAction({ category: "Sellers", action: "Updated seller", target: name, detail: email });
-        toast(`${name} — seller account updated.`);
-        setFormOpen(false);
-      } else {
-        const user = await createUser({
-          role: "seller",
-          name,
-          shop_name: shop,
-          email,
-          phone,
-          pickup_address: pickup,
-          password: form.password,
-          status: form.status,
-        });
-        setRawSellers((prev) => [user, ...prev]);
-        logAction({ category: "Sellers", action: "Created seller", target: name, detail: user.seller_code || email });
-        setFormOpen(false);
-        setCreated({ sellerCode: user.seller_code, shop, email, password: form.password });
-      }
+      const user = await createUser({
+        role: "seller",
+        name,
+        shop_name: shop,
+        email,
+        phone,
+        pickup_address: pickup,
+        password: form.password,
+        status: form.status,
+      });
+      setRawSellers((prev) => [user, ...prev]);
+      logAction({ category: "Sellers", action: "Created seller", target: name, detail: user.seller_code || email });
+      setFormOpen(false);
+      setCreated({ sellerCode: user.seller_code, shop, email, password: form.password });
     } catch (err) {
-      setFormError(err.message || "Failed to save seller account.");
+      setFormError(err.message || "Failed to create seller account.");
     } finally {
       setSaving(false);
     }
@@ -350,7 +321,7 @@ export default function Sellers() {
     <>
       <Topbar
         title="Sellers"
-        subtitle="Create, edit, activate and deactivate seller accounts."
+        subtitle="Create, view, activate and deactivate seller accounts."
         right={
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -594,13 +565,6 @@ export default function Sellers() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => openEdit(s)}
-                        className="mr-3 text-[13px] font-semibold text-[#3b82f6] hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
                         disabled={updatingId === s.userId}
                         onClick={() => setConfirm({ seller: s, kind: actionFor(s) })}
                         className={`text-[13px] font-semibold hover:underline disabled:opacity-50 ${
@@ -688,13 +652,6 @@ export default function Sellers() {
                       className="font-bold text-brand hover:underline"
                     >
                       View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(s)}
-                      className="font-semibold text-[#3b82f6] hover:underline"
-                    >
-                      Edit
                     </button>
                     <button
                       type="button"
@@ -839,17 +796,17 @@ export default function Sellers() {
               <Icon name="x" />
             </button>
             <h3 className="mb-1 pr-8 text-[18px] font-bold">
-              {form.userId ? "Edit Seller Account" : "Add Seller Account"}
+              Add Seller Account
             </h3>
             <p className="mb-4 text-[13px] text-[#999]">
-              Prototype account using developer-created test data. No real Shopee/SPX records or Gmail accounts are needed.
+              Credentials will be emailed to the seller for mandatory first-time password setup.
             </p>
 
             <div className="grid grid-cols-2 gap-3 max-[600px]:grid-cols-1">
               <div>
                 <label className="mb-1 block text-[13px] font-semibold">Seller ID</label>
                 <input
-                  value={form.userId ? form.sellerCode : "Auto-generated (SEL-0001…)"}
+                  value="Auto-generated (SEL-0001…)"
                   readOnly
                   className={`${inputCls} cursor-not-allowed bg-[#f6f6f6] dark:bg-night-head`}
                 />
@@ -906,7 +863,7 @@ export default function Sellers() {
 
             <div className="mt-3">
               <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-pass">
-                {form.userId ? "Reset Test Password (optional)" : "Assigned Test Password *"}
+                Assigned Temporary Password *
               </label>
               <div className="flex gap-2">
                 <input
@@ -915,7 +872,7 @@ export default function Sellers() {
                   value={form.password}
                   onChange={(e) => setField("password", e.target.value)}
                   className={`${inputCls} font-mono`}
-                  placeholder={form.userId ? "Leave blank to keep current password" : "At least 8 characters"}
+                  placeholder="At least 8 characters"
                   autoComplete="off"
                 />
                 <button type="button" onClick={() => setField("password", generateTestPassword())} className={`${btnGhost} whitespace-nowrap`}>
@@ -936,7 +893,7 @@ export default function Sellers() {
             <div className="mt-5 flex justify-end gap-2.5">
               <button type="button" onClick={() => setFormOpen(false)} disabled={saving} className={btnGhost}>Cancel</button>
               <button type="submit" disabled={saving} className={btnPrimary}>
-                {saving ? "Saving…" : form.userId ? "Save Changes" : "Create Seller"}
+                {saving ? "Saving…" : "Create Seller"}
               </button>
             </div>
           </form>

@@ -752,7 +752,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
               </button>
 
               {/* Forgot password */}
-              <div className="mt-4 text-center">
+              <div className="mt-4 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setForgotOpen(true)}

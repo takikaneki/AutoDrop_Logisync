@@ -391,176 +391,37 @@ async function resendCredentialsEmail(req, res) {
   }
 }
 
-// PATCH /api/users/:id/profile  (coordinator lang) -> i-edit ang seller account
+// PATCH /api/users/:id/profile (coordinator lang)
+// Data Privacy Act (RA 10173) & least-privilege enforcement:
+// Coordinators may create accounts and manage activation status, but must NEVER
+// edit personal information or change/reset passwords of existing Rider/Seller accounts.
 async function updateSellerAccount(req, res) {
   try {
-    await ensureUserColumns();
     const userId = Number(req.params.id);
-    if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid user ID." });
-    }
-    const [found] = await pool.query(
-      `SELECT user_id, name, email, role, verification_status, seller_code, rider_code,
-              is_deleted, deactivated_at, recovery_expires_at
-         FROM users
-        WHERE user_id = ?`,
-      [userId]
-    );
-    if (!found.length || !["seller", "rider"].includes(found[0].role)) {
-      return res.status(404).json({ success: false, message: "Account not found." });
-    }
-    const targetUser = found[0];
-    if (Boolean(targetUser.is_deleted)) {
-      return res.status(410).json({
-        success: false,
-        code: "ACCOUNT_DELETED",
-        message: "This account has been permanently removed and can no longer be edited.",
-      });
-    }
-    const targetRole = targetUser.role;
-    const prevVerification = String(targetUser.verification_status || "APPROVED").toUpperCase();
-
-    const { name, email, phone, shop_name, pickup_address, status, password, agency, rider_type, zone, vehicle, plate_number } = req.body || {};
-    const sets = [];
-    const vals = [];
-
-    if (targetRole === "rider") {
-      if (agency !== undefined) {
-        const a = String(agency).trim().slice(0, 150);
-        if (!a) return res.status(400).json({ success: false, message: "Assigned agency is required for riders." });
-        sets.push("agency = ?"); vals.push(a);
-      }
-      if (rider_type !== undefined) {
-        const t = normalizeRiderType(rider_type);
-        if (!t) return res.status(400).json({ success: false, message: "Rider type must be First Mile (FM) or Last Mile (LM)." });
-        sets.push("rider_type = ?"); vals.push(t);
-      }
-      if (zone !== undefined) { sets.push("zone = ?"); vals.push(String(zone).trim().slice(0, 100) || null); }
-      if (vehicle !== undefined) { sets.push("vehicle = ?"); vals.push(String(vehicle).trim().slice(0, 100) || null); }
-      if (plate_number !== undefined) { sets.push("plate_number = ?"); vals.push(String(plate_number).trim().slice(0, 50) || null); }
+    if (Number.isInteger(userId) && userId > 0) {
+      await logAudit(req.user, {
+        category: "Accounts",
+        action: "Blocked account modification attempt",
+        target: `User #${userId}`,
+        detail:
+          "Blocked Coordinator request to modify personal information or credentials of an existing account.",
+      }).catch(() => {});
     }
 
-    if (name !== undefined) {
-      if (typeof name !== "string" || !name.trim()) {
-        return res.status(400).json({ success: false, message: "Name is required." });
-      }
-      sets.push("name = ?"); vals.push(name.trim().slice(0, 100));
-    }
-    if (email !== undefined) {
-      const e = String(email).trim().toLowerCase();
-      if (!/^\S+@\S+\.\S+$/.test(e)) {
-        return res.status(400).json({ success: false, message: "Please enter a valid email address." });
-      }
-      const [dup] = await pool.query("SELECT user_id FROM users WHERE email = ? AND user_id <> ?", [e, userId]);
-      if (dup.length) return res.status(409).json({ success: false, message: "Email is already registered." });
-      sets.push("email = ?"); vals.push(e);
-    }
-    if (phone !== undefined) {
-      const p = cleanPhoneValue(phone);
-      if (p && !/^09\d{9}$/.test(p)) {
-        return res.status(400).json({ success: false, message: "Contact number must be a valid 11-digit mobile number starting with 09 (numbers only)." });
-      }
-      if (p) {
-        const [dup] = await pool.query("SELECT user_id FROM users WHERE role = ? AND phone = ? AND user_id <> ?", [targetRole, p, userId]);
-        if (dup.length) return res.status(409).json({ success: false, message: `A ${targetRole} with this contact number already exists.` });
-      }
-      sets.push("phone = ?"); vals.push(p);
-    }
-    if (targetRole === "seller" && shop_name !== undefined) {
-      const s = String(shop_name).trim().slice(0, 150);
-      if (s) {
-        const [dup] = await pool.query("SELECT user_id FROM users WHERE role = 'seller' AND LOWER(shop_name) = LOWER(?) AND user_id <> ?", [s, userId]);
-        if (dup.length) return res.status(409).json({ success: false, message: "A seller with this shop name already exists." });
-      }
-      sets.push("shop_name = ?"); vals.push(s || null);
-    }
-    if (targetRole === "seller" && pickup_address !== undefined) {
-      sets.push("pickup_address = ?"); vals.push(String(pickup_address).trim().slice(0, 300) || null);
-    }
-    let statusTransition = null;
-    if (status !== undefined) {
-      const nextVerif = statusToVerification(status);
-      if (nextVerif !== prevVerification) {
-        if (nextVerif === "APPROVED") {
-          const purgeCheck = await purgeExpiredDeactivatedAccounts({ userId }).catch(() => ({ removedCount: 0 }));
-          if (purgeCheck.removedCount > 0) {
-            return res.status(410).json({
-              success: false,
-              code: "RECOVERY_EXPIRED",
-              message: "This account's 7-day recovery period has expired and the account has been permanently removed.",
-            });
-          }
-          sets.push("verification_status = ?"); vals.push("APPROVED");
-          sets.push("deactivated_at = NULL");
-          sets.push("deactivated_by = NULL");
-          sets.push("recovery_expires_at = NULL");
-          sets.push("reactivated_at = NOW()");
-          sets.push("reactivated_by = ?"); vals.push(req.user.user_id);
-          statusTransition = "REACTIVATED";
-        } else {
-          sets.push("verification_status = ?"); vals.push("REJECTED");
-          sets.push("deactivated_at = NOW()");
-          sets.push("deactivated_by = ?"); vals.push(req.user.user_id);
-          sets.push(`recovery_expires_at = NOW() + INTERVAL '${RECOVERY_PERIOD_DAYS} days'`);
-          sets.push("reactivated_at = NULL");
-          sets.push("reactivated_by = NULL");
-          sets.push("session_version = COALESCE(session_version, 1) + 1");
-          statusTransition = "DEACTIVATED";
-        }
-      }
-    }
-    if (password) {
-      if (typeof password !== "string" || password.length < 8) {
-        return res.status(400).json({ success: false, message: "Password must be at least 8 characters." });
-      }
-      sets.push("password_hash = ?"); vals.push(await bcrypt.hash(password, 10));
-    }
-    if (!sets.length) {
-      return res.status(400).json({ success: false, message: "Nothing to update." });
-    }
-
-    vals.push(userId);
-    await pool.query(`UPDATE users SET ${sets.join(", ")}, updated_at = NOW() WHERE user_id = ? AND is_deleted = FALSE`, vals);
-
-    if (statusTransition === "DEACTIVATED") {
-      await pool.query("DELETE FROM email_otps WHERE user_id = ?", [userId]).catch(() => {});
-      await pool.query("DELETE FROM password_resets WHERE user_id = ?", [userId]).catch(() => {});
-    }
-
-    const [rows] = await pool.query(
-      `SELECT ${USER_FIELDS} FROM users u ${USER_JOINS} WHERE u.user_id = ?`,
-      [userId]
-    );
-    const updatedUser = rows[0];
-    const roleLabel = getRoleLabel(targetRole);
-    const accountCode = getAccountCode(updatedUser || targetUser);
-
-    await logAudit(req.user, {
-      category: "Accounts",
-      action:
-        statusTransition === "DEACTIVATED"
-          ? "Account deactivated"
-          : statusTransition === "REACTIVATED"
-            ? "Account reactivated"
-            : `Updated ${targetRole} account`,
-      target: `${roleLabel}: ${updatedUser?.name || targetUser.name} (${accountCode})`,
-      detail:
-        statusTransition === "DEACTIVATED"
-          ? `${roleLabel} account "${updatedUser?.name || targetUser.name}" (${accountCode}) deactivated by ${req.user.name}. 7-day recovery expires ${updatedUser?.recovery_expires_at ? new Date(updatedUser.recovery_expires_at).toISOString() : "in 7 days"}.`
-          : statusTransition === "REACTIVATED"
-            ? `${roleLabel} account "${updatedUser?.name || targetUser.name}" (${accountCode}) reactivated by ${req.user.name}.`
-            : `Fields: ${sets.map((x) => x.split(" ")[0]).join(", ")}`,
-      sellerId: targetRole === "seller" ? userId : null,
-      riderId: targetRole === "rider" ? userId : null,
+    return res.status(403).json({
+      success: false,
+      code: "ACCOUNT_MODIFICATION_FORBIDDEN",
+      message:
+        "Coordinators are not permitted to edit personal information or change passwords for existing Rider or Seller accounts. Account owners must manage their own credentials and profile details.",
     });
-
-    res.json({ success: true, message: `${roleLabel} account updated.`, user: updatedUser });
   } catch (error) {
-    console.error("updateSellerAccount error:", error);
-    if (error && error.code === "23505") {
-      return res.status(409).json({ success: false, message: "Duplicate value detected." });
-    }
-    res.status(500).json({ success: false, message: "Failed to update seller account." });
+    console.error("updateSellerAccount error:", error?.code || error?.message);
+    return res.status(403).json({
+      success: false,
+      code: "ACCOUNT_MODIFICATION_FORBIDDEN",
+      message:
+        "Coordinators are not permitted to edit personal information or change passwords for existing Rider or Seller accounts.",
+    });
   }
 }
 
