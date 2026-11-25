@@ -109,11 +109,11 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
                     <Icon name="user-round" className="h-4 w-4 text-[#888]" /> My Profile
                   </Link>
                   <Link
-                    to={toPath(role, "settings")}
+                    to={toPath(role, "contact")}
                     onClick={() => setMenuOpen(false)}
                     className={item}
                   >
-                    <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
+                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
                   </Link>
                   <button
                     onClick={() => {

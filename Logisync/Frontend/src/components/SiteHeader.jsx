@@ -119,8 +119,8 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                   <Link to="/profile" onClick={() => setMenuOpen(false)} className={item}>
                     <Icon name="user-round" className="h-4 w-4 text-[#888]" /> My Profile
                   </Link>
-                  <Link to="/settings" onClick={() => setMenuOpen(false)} className={item}>
-                    <Icon name="settings" className="h-4 w-4 text-[#888]" /> Settings
+                  <Link to="/contact" onClick={() => setMenuOpen(false)} className={item}>
+                    <Icon name="headset" className="h-4 w-4 text-[#888]" /> Contact Us
                   </Link>
                   <button
                     onClick={() => {
