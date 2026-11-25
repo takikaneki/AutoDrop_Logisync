@@ -129,7 +129,7 @@ export default function AuditTable({ note }) {
                       <td className={`${td} whitespace-nowrap`}>{new Date(l.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
                       <td className={td}>
                         {Number(l.actor_id) === me ? <strong>You</strong> : l.actor_name}{" "}
-                        <span className={`ml-1 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${ROLE_BADGE[l.actor_role] || ""}`}>{l.actor_role}</span>
+                        <span className={`ml-1.5 text-[11.5px] font-bold capitalize ${ROLE_BADGE[l.actor_role] || ""}`}>{l.actor_role}</span>
                       </td>
                       <td className={td}>
                         <span className="inline-flex items-center gap-2 font-semibold text-[#333] dark:text-[#f1eeeb]">

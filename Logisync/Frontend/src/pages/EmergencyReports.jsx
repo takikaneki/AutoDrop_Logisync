@@ -767,7 +767,6 @@ export default function EmergencyReports() {
                   >
                     <option value="NEW">New / Unreviewed</option>
                     <option value="ACKNOWLEDGED">Acknowledged</option>
-                    <option value="IN_PROGRESS">In Progress</option>
                     <option value="RESOLVED">Resolved</option>
                   </select>
                 </div>

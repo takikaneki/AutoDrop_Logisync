@@ -36,12 +36,10 @@ import { FilterSelect, SearchFilterBar, SearchInput } from "../components/Search
 
 const PAGE_SIZE = 10;
 const FILTERS = [
-  "VIDEO_SUBMITTED",
   "ALL",
-  "DISCREET_PENDING",
-  "VERIFIED",
+  "VIDEO_SUBMITTED",
+  "IN_TRANSIT",
   "RETURN_TO_HUB",
-  "WAITING_FOR_VIDEO",
 ];
 
 function isReturnToHubParcel(p) {
@@ -160,7 +158,8 @@ export default function Verification() {
 
   const filterLabel = (f) => {
     if (f === "ALL") return "All statuses";
-    if (f === "DISCREET_PENDING") return "Discreet Request Pending";
+    if (f === "VIDEO_SUBMITTED") return "Under verification";
+    if (f === "IN_TRANSIT") return "In Transit";
     if (f === "RETURN_TO_HUB") return "Return to Hub";
     return statusInfo(f).label;
   };
@@ -171,8 +170,8 @@ export default function Verification() {
       const matchesFilter =
         filter === "ALL"
           ? true
-          : filter === "DISCREET_PENDING"
-          ? Boolean(p.discrete_item) && (p.discreet_status || "PENDING_REVIEW") === "PENDING_REVIEW"
+          : filter === "IN_TRANSIT"
+          ? ["VERIFIED", "OUT_FOR_DELIVERY", "RESCHEDULED"].includes(p.status) && !isReturnToHubParcel(p)
           : filter === "RETURN_TO_HUB"
           ? isReturnToHubParcel(p)
           : p.status === filter;
@@ -352,7 +351,7 @@ export default function Verification() {
         </section>
       )}
 
-      <StatGrid>
+      <StatGrid cols={3}>
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "VIDEO_SUBMITTED" ? "ALL" : "VIDEO_SUBMITTED"))}
@@ -369,23 +368,9 @@ export default function Verification() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter((prev) => (prev === "DISCREET_PENDING" ? "ALL" : "DISCREET_PENDING"))}
+          onClick={() => setFilter((prev) => (prev === "IN_TRANSIT" ? "ALL" : "IN_TRANSIT"))}
           className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "DISCREET_PENDING" ? "ring-2 ring-brand/50 shadow-sm" : ""
-          }`}
-        >
-          <StatCard
-            label="Discreet requests pending"
-            value={loading ? "…" : discreetPendingCount}
-            icon="shield-check"
-            tone="blue"
-          />
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter((prev) => (prev === "VERIFIED" ? "ALL" : "VERIFIED"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "VERIFIED" ? "ring-2 ring-brand/50 shadow-sm" : ""
+            filter === "IN_TRANSIT" ? "ring-2 ring-brand/50 shadow-sm" : ""
           }`}
         >
           <StatCard

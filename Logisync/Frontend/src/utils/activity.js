@@ -11,7 +11,7 @@ export const CATEGORY_META = {
 export const metaOf = (category) => CATEGORY_META[category] || { icon: "circle", tone: "bg-[#f1f1f1] text-[#999]" };
 
 export const ROLE_BADGE = {
-  coordinator: "bg-[#fff0e7] text-[#e9651c]",
-  seller: "bg-[#edf4ff] text-[#4b78b5]",
-  rider: "bg-[#dcfce7] text-[#15803d]",
+  coordinator: "text-[#d9482b] dark:text-[#ff8a65] dark:drop-shadow-[0_0_8px_rgba(255,138,101,0.55)]",
+  seller: "text-[#c84227] dark:text-[#fb923c] dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.45)]",
+  rider: "text-[#15803d] dark:text-[#4ade80] dark:drop-shadow-[0_0_8px_rgba(74,222,128,0.45)]",
 };
