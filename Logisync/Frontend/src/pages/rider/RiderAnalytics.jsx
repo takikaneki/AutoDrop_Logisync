@@ -34,18 +34,15 @@ export default function RiderAnalytics() {
   const showCachedNotice = !online && hasLocalData;
 
   const stats = riderCounts(assigned, mine);
-  const deliveryRate = stats.total ? `${Math.round((stats.delivered / stats.total) * 100)}%` : "0%";
+  const deliveredPct = stats.total ? Math.round((stats.delivered / stats.total) * 100) : 0;
+  const remainingPct = stats.total ? 100 - deliveredPct : 0;
   const rescheduledCount = mine.filter(
     (d) => d.rescheduled && !d.returnToHub && d.stage !== "delivered"
   ).length;
 
-  const bars = [
-    { label: "Assign", value: assigned.length },
-    { label: "Route", value: stats.toDeliver },
-    { label: "Done", value: stats.delivered },
-    { label: "Fail", value: stats.failed },
-  ];
-  const maxBar = Math.max(1, ...bars.map((b) => Number(b.value) || 0));
+  const radius = 56;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (deliveredPct / 100) * circumference;
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -79,104 +76,122 @@ export default function RiderAnalytics() {
           <OfflineState title="Analytics unavailable offline" text="Reconnect to the internet to sync your delivery statistics." onRetry={() => syncRiderDeliveriesWithServer()} />
         ) : (
         <>
-        {/* Rider Delivery Rate Card (same live analytics card from desktop view) */}
+        {/* Delivery Rate Donut Card (matching Coordinator Analytics) */}
         <section
           aria-label="Delivery Rate"
-          className="relative overflow-hidden rounded-2xl border border-[#1e293b] bg-[#0f172a] p-5 text-white shadow-[0_14px_30px_-14px_rgba(15,23,42,0.55)]"
+          className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel"
         >
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(238,77,45,0.42),transparent_65%)]"
-            aria-hidden="true"
-          />
-
-          <div className="relative flex items-center justify-between gap-2">
-            <span className="text-[12.5px] font-bold uppercase tracking-wider text-slate-300">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-[16px] font-extrabold text-[#0f172a] dark:text-white">
               Delivery Rate
-            </span>
-            <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
+            </h2>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
               {showCachedNotice ? "Cached" : "Live"}
             </span>
           </div>
 
-          <div className="relative mt-2.5 flex flex-wrap items-baseline gap-2.5">
-            {loading ? (
-              <>
-                <SkeletonBlock darkSurface className="h-10 w-24 rounded-xl" />
-                <SkeletonBlock darkSurface className="h-4 w-28" />
-              </>
-            ) : (
-              <>
-                <strong className="text-[40px] font-extrabold leading-none tracking-tight">
-                  {deliveryRate}
-                </strong>
-                <span className="text-[13px] text-slate-400">
-                  {stats.delivered} of {stats.total} completed
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* 4-Bar Visual Breakdown matching Desktop Right Rail */}
           {loading ? (
-            <ChartCardSkeleton variant="bar" heightClass="h-[130px]" darkSurface />
+            <ChartCardSkeleton variant="donut" heightClass="h-[200px]" />
           ) : (
-          <div className="relative mt-6 flex h-[110px] items-end gap-3">
-            {bars.map((b) => {
-              const pct = Math.max(16, Math.round(((Number(b.value) || 0) / maxBar) * 100));
-              return (
-                <div key={b.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-200">{b.value}</span>
-                  <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-lg bg-white/10">
-                    <div
-                      className="w-full rounded-lg bg-gradient-to-t from-[#d9482b] to-[#fb923c] transition-all duration-500"
-                      style={{ height: `${pct}%` }}
-                      title={`${b.label}: ${b.value}`}
-                    />
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-300">{b.label}</span>
+            <div className="mt-5 flex flex-wrap items-center justify-around gap-5">
+              {/* Circular Donut Progress */}
+              <div className="relative flex h-[148px] w-[148px] shrink-0 items-center justify-center">
+                <svg viewBox="0 0 148 148" className="h-full w-full -rotate-90" aria-hidden="true">
+                  <circle
+                    cx="74"
+                    cy="74"
+                    r={radius}
+                    fill="none"
+                    strokeWidth="16"
+                    className="stroke-slate-200 dark:stroke-night-head"
+                  />
+                  <circle
+                    cx="74"
+                    cy="74"
+                    r={radius}
+                    fill="none"
+                    strokeWidth="16"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    className="stroke-brand transition-[stroke-dashoffset] duration-700 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <strong className="text-[30px] font-extrabold leading-none tracking-tight text-[#0f172a] dark:text-white">
+                    {`${deliveredPct}%`}
+                  </strong>
+                  <span className="mt-1 text-[11px] font-semibold text-slate-400">
+                    Delivered
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+
+              {/* Legend */}
+              <div className="min-w-[120px] space-y-3.5">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-brand" />
+                  <div>
+                    <span className="block text-[13px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
+                      Delivered
+                    </span>
+                    <strong className="block text-[16px] font-extrabold text-[#0f172a] dark:text-white">
+                      {`${deliveredPct}%`}
+                    </strong>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-slate-300 dark:bg-night-line" />
+                  <div>
+                    <span className="block text-[13px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
+                      Remaining
+                    </span>
+                    <strong className="block text-[16px] font-extrabold text-[#0f172a] dark:text-white">
+                      {`${remainingPct}%`}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </section>
 
-        {/* Detailed Delivery Breakdown */}
+        {/* Delivery Statistics Breakdown */}
         <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
-          <div className="border-b border-slate-100 px-4 py-3 dark:border-night-line">
-            <h2 className="text-[14px] font-extrabold text-[#0f172a] dark:text-white">
-              Delivery Summary
+          <div className="border-b border-slate-100 px-4 py-3.5 dark:border-night-line">
+            <h2 className="text-[15px] font-extrabold text-[#0f172a] dark:text-white">
+              Delivery Statistics
             </h2>
           </div>
-          <div className="divide-y divide-slate-100 px-4 text-[14px] dark:divide-night-line">
+          <div className="divide-y divide-slate-100 px-4 dark:divide-night-line">
             {[
-              { label: "Total Parcels", value: stats.total, icon: "package", tone: "text-[#0f172a] dark:text-white", to: "/rider/deliveries" },
-              { label: "To Be Delivered", value: stats.toDeliver, icon: "truck", tone: "text-[#3b82f6] dark:text-[#60a5fa]", to: "/rider/deliveries" },
-              { label: "Delivered", value: stats.delivered, icon: "package-check", tone: "text-emerald-600 dark:text-emerald-400", to: "/rider/deliveries?tab=delivered" },
-              { label: "Rescheduled", value: rescheduledCount, icon: "calendar-days", tone: "text-amber-600 dark:text-amber-400", to: "/rider/deliveries" },
-              { label: "Failed / Return to Hub", value: stats.failed, icon: "undo-2", tone: "text-red-600 dark:text-red-400", to: "/rider/deliveries?tab=failed" },
+              { label: "Total Parcels", value: stats.total, icon: "package", iconCls: "bg-brand-soft text-brand dark:bg-night-head", to: "/rider/deliveries" },
+              { label: "To Be Delivered", value: stats.toDeliver, icon: "truck", iconCls: "bg-orange-50 text-brand dark:bg-brand/15 dark:text-[#fb923c]", to: "/rider/deliveries" },
+              { label: "Delivered", value: stats.delivered, icon: "package-check", iconCls: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400", to: "/rider/deliveries?tab=delivered" },
+              { label: "Rescheduled", value: rescheduledCount, icon: "calendar-days", iconCls: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400", to: "/rider/deliveries" },
+              { label: "Failed / Return to Hub", value: stats.failed, icon: "undo-2", iconCls: "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400", to: "/rider/deliveries?tab=failed" },
             ].map((row) => (
               <Link
                 key={row.label}
                 to={row.to}
-                className="flex items-center justify-between gap-3 py-3.5 transition hover:opacity-80"
+                className="flex items-center gap-3.5 py-3.5 transition hover:opacity-80"
               >
-                <span className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-night-head dark:text-[#d1c9c2]">
-                    <Icon name={row.icon} className="text-[13px]" />
-                  </span>
-                  <span className="truncate font-semibold text-slate-700 dark:text-[#e2ddd8]">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${row.iconCls}`}>
+                  <Icon name={row.icon} className="text-[15px]" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] font-semibold text-slate-500 dark:text-[#b8b0a8]">
                     {row.label}
                   </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-2">
                   {loading ? (
-                    <SkeletonBlock className="h-5 w-10 rounded-md" />
+                    <SkeletonBlock className="mt-1 h-5 w-16" />
                   ) : (
-                    <strong className={`text-[15px] font-extrabold ${row.tone}`}>{row.value}</strong>
+                    <strong className="block text-[18px] font-extrabold text-[#0f172a] dark:text-white">
+                      {Number(row.value || 0).toLocaleString()}
+                    </strong>
                   )}
-                  <Icon name="chevron-right" className="text-[11px] text-slate-400" />
-                </span>
+                </div>
+                <Icon name="chevron-right" className="shrink-0 text-[11px] text-slate-400" />
               </Link>
             ))}
           </div>
