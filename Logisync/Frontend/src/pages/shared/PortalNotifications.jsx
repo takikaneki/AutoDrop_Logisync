@@ -62,7 +62,7 @@ export default function PortalNotifications() {
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white shadow-xs" : "border border-[#e5e8ee] bg-white text-[#64748b] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"}`}
+              className={`rounded-lg px-3.5 py-2 text-[13px] font-semibold transition ${tab === k ? "bg-brand text-white shadow-xs" : "border border-[#e5e8ee] bg-white text-[#64748b] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2]"}`}
             >
               {l}{k === "unread" && notifications.filter((n) => !n.read).length > 0 ? ` (${notifications.filter((n) => !n.read).length})` : ""}
             </button>

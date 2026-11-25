@@ -66,7 +66,7 @@ export function Modal({ open, onClose, children, z = "z-[1000]", className = "" 
       className={`fixed inset-0 ${z} flex items-center justify-center overflow-y-auto p-3 sm:p-5 bg-[rgba(25,50,79,.35)] backdrop-blur-[3px]`}
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className={`relative my-auto max-h-[90dvh] max-w-[calc(100vw-24px)] overflow-y-auto bg-white rounded-[20px] shadow-[0_18px_60px_rgba(25,50,79,.2)] max-[480px]:!p-4 ${className}`}>
+      <div className={`relative my-auto max-h-[90dvh] max-w-[calc(100vw-24px)] overflow-y-auto bg-white rounded-xl border border-slate-200/80 shadow-[0_18px_50px_rgba(15,23,42,.22)] dark:border-night-line max-[480px]:!p-4 ${className}`}>
         {children}
       </div>
     </div>
@@ -81,9 +81,9 @@ function EmptyFigure({ icon }) {
   return (
     <div
       aria-hidden="true"
-      className="mx-auto mb-3.5 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200/80 bg-slate-50 text-slate-400 dark:border-night-line dark:bg-night-head dark:text-slate-400"
+      className="mx-auto mb-3.5 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 text-slate-400 dark:border-night-line dark:bg-night-head dark:text-slate-400"
     >
-      <Icon name={name} className="h-7 w-7" strokeWidth={1.65} />
+      <Icon name={name} className="h-7 w-7" strokeWidth={2.1} />
     </div>
   );
 }
@@ -129,7 +129,7 @@ export function ConfirmDialog({ open, title, text, confirmLabel = "Confirm", dan
 
   return (
     <Modal open={open} onClose={() => !busy && onCancel?.()} z="z-[4000]" className="w-full max-w-[420px] p-7 text-center dark:bg-night-panel">
-      <div className={`w-[46px] h-[46px] mx-auto mb-3.5 rounded-full flex items-center justify-center text-[20px] ${danger ? "bg-[#fff0f0] text-[#d94747]" : "bg-[#fff0e5] text-brand"}`}>
+      <div className={`w-[46px] h-[46px] mx-auto mb-3.5 rounded-xl flex items-center justify-center text-[20px] ${danger ? "bg-[#fff0f0] text-[#dc2626] dark:bg-red-500/15 dark:text-red-400" : "bg-[#fff0e5] text-brand dark:bg-brand/15"}`}>
         <Icon name={danger ? "triangle-alert" : "circle-help"} className="h-5 w-5" />
       </div>
       <h3 className="text-[17px] font-bold mb-2">{title}</h3>

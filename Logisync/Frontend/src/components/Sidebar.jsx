@@ -222,7 +222,12 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   >
                     {({ isActive }) => (
                       <>
-                        <Icon name={l.icon} className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                        <Icon
+                          name={l.icon}
+                          filled={isActive}
+                          strokeWidth={isActive ? 2.4 : 2.15}
+                          className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                        />
                         <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
                         {count > 0 && (
                           <span
@@ -266,8 +271,17 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
                   aria-label={labelText}
                   {...tipProps(labelText)}
                 >
-                  <Icon name={l.icon} className="h-[18px] w-[18px]" />
-                  <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        name={l.icon}
+                        filled={isActive}
+                        strokeWidth={isActive ? 2.4 : 2.15}
+                        className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                      />
+                      <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{labelText}</span>
+                    </>
+                  )}
                 </NavLink>
               );
             })}
@@ -286,7 +300,12 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
           >
             {({ isActive }) => (
               <>
-                <Icon name="settings" className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                <Icon
+                  name="settings"
+                  filled={isActive}
+                  strokeWidth={isActive ? 2.4 : 2.15}
+                  className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>{t("Settings")}</span>
               </>
             )}

@@ -431,18 +431,18 @@ export default function WelcomeIntro({ onComplete }) {
             <button
               type="button"
               onClick={openContactModal}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-brand hover:text-brand"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-brand hover:text-brand"
             >
-              <Icon name="headset" className="text-[11px] text-brand" />
+              <Icon name="headset" className="text-[12px] text-brand" />
               <span>Contact Us</span>
             </button>
             <button
               type="button"
               onClick={handleGoToSignIn}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-brand active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand active:scale-[0.98]"
             >
               <span>Let&apos;s Get Started</span>
-              <Icon name="arrow-right" className="text-[10px]" />
+              <Icon name="arrow-right" className="text-[11px]" />
             </button>
           </div>
 
@@ -451,7 +451,7 @@ export default function WelcomeIntro({ onComplete }) {
             <button
               type="button"
               onClick={handleGoToSignIn}
-              className="rounded-full bg-brand px-3.5 py-2 text-xs font-bold text-white shadow-sm sm:hidden"
+              className="rounded-lg bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-sm sm:hidden"
             >
               Sign In
             </button>
@@ -624,7 +624,7 @@ export default function WelcomeIntro({ onComplete }) {
             <button
               type="button"
               onClick={handleGoToSignIn}
-              className="group inline-flex items-center justify-center gap-2.5 rounded-full bg-brand px-8 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-orange-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-xl hover:shadow-orange-500/35 active:scale-[0.98] sm:py-4 sm:text-base"
+              className="group inline-flex items-center justify-center gap-2.5 rounded-lg bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-xl hover:shadow-orange-500/30 active:scale-[0.98] sm:py-4 sm:text-base"
             >
               <span>Let&apos;s Get Started</span>
               <Icon name="arrow-right" className="text-xs transition-transform duration-300 group-hover:translate-x-1" />
@@ -632,7 +632,7 @@ export default function WelcomeIntro({ onComplete }) {
             <a
               href="#verification"
               onClick={(e) => scrollToSection(e, "#verification")}
-              className="inline-flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand hover:text-brand sm:py-4 sm:text-base"
+              className="inline-flex items-center justify-center gap-2.5 rounded-lg border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand hover:text-brand sm:py-4 sm:text-base"
             >
               <Icon name="map-pin" className="text-brand" />
               <span>How LogiSync Works</span>
@@ -700,7 +700,7 @@ export default function WelcomeIntro({ onComplete }) {
                 aboutPhotoShown ? "translate-x-0 scale-100 opacity-100" : "-translate-x-12 scale-[0.96] opacity-0"
               }`}
             >
-              <div className="relative overflow-hidden rounded-[24px] bg-slate-900 shadow-2xl sm:rounded-[28px]">
+              <div className="relative overflow-hidden rounded-xl bg-slate-900 shadow-xl">
                 <img
                   src="/images/spx-truck-road.jpg"
                   alt="SPX Express delivery truck on the road"
@@ -833,14 +833,14 @@ export default function WelcomeIntro({ onComplete }) {
 
             <div className="order-1 lg:order-2 lg:col-span-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="overflow-hidden rounded-[22px] shadow-lg sm:rounded-[24px]">
+                <div className="overflow-hidden rounded-xl shadow-md">
                   <img
                     src="/images/spx-sorting-center.jpg"
                     alt="SPX Express automated sorting center"
                     className="h-52 w-full object-cover sm:h-64"
                   />
                 </div>
-                <div className="overflow-hidden rounded-[22px] shadow-lg sm:translate-y-6 sm:rounded-[24px]">
+                <div className="overflow-hidden rounded-xl shadow-md sm:translate-y-6">
                   <img
                     src="/images/spx-riders-moto.jpg"
                     alt="SPX Express motorcycle riders coordinating deliveries"
@@ -1077,7 +1077,7 @@ export default function WelcomeIntro({ onComplete }) {
             <button
               type="button"
               onClick={handleGoToSignIn}
-              className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:bg-brand-dark"
+              className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-orange-500/20 transition hover:bg-brand-dark"
             >
               <span>Access Platform</span>
               <Icon name="arrow-right" />

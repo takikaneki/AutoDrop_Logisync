@@ -34,12 +34,12 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
       } ${active ? "ring-2 ring-brand/50 !border-brand shadow-sm" : ""}`}
     >
       <div
-        className={`flex h-[56px] w-[56px] max-[1280px]:h-[48px] max-[1280px]:w-[48px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-full text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}
+        className={`flex h-[52px] w-[52px] max-[1280px]:h-[46px] max-[1280px]:w-[46px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-xl text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}
       >
-        <Icon name={icon} />
+        <Icon name={icon} strokeWidth={2.2} />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[14.5px] max-[1280px]:text-[13.5px] max-[480px]:text-[12px] font-medium leading-tight text-[#56657d] dark:text-[#ddd7d2]">
+        <h3 className="mb-1.5 max-[600px]:mb-1 break-words text-[13.5px] max-[1280px]:text-[13px] max-[480px]:text-[12px] font-semibold leading-tight text-[#475569] dark:text-[#cbd5e1]">
           {label}
         </h3>
         {isPlaceholderValue ? (
@@ -47,7 +47,7 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
             <SkeletonBlock className="h-7 w-14 rounded-lg max-[600px]:h-6 max-[480px]:h-5 max-[480px]:w-11" />
           </div>
         ) : (
-          <h2 className="truncate text-[30px] max-[1280px]:text-[26px] max-[600px]:text-[22px] max-[480px]:text-[20px] font-bold leading-none text-[#27364f] dark:text-[#f1eeeb]">
+          <h2 className="truncate text-[28px] max-[1280px]:text-[25px] max-[600px]:text-[22px] max-[480px]:text-[20px] font-bold leading-none tracking-tight tabular-nums text-[#0f172a] dark:text-[#f8fafc]">
             {value}
           </h2>
         )}

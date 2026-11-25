@@ -26,7 +26,21 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Arial", "Helvetica", "sans-serif"],
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+      },
+      borderRadius: {
+        lg: "8px",
+        xl: "10px",
+        "2xl": "12px",
+        "3xl": "12px",
       },
       keyframes: {
         popup: {

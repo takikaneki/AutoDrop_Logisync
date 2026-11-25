@@ -92,7 +92,7 @@ export default function NotificationMenu({ role, btnClass }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[50px] z-[1500] w-[350px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[14px] border border-[#eee] bg-white shadow-[0_18px_50px_rgba(0,0,0,.15)] animate-popup dark:border-night-line dark:bg-night-panel max-[600px]:fixed max-[600px]:left-3 max-[600px]:right-3 max-[600px]:top-[62px] max-[600px]:w-auto max-[600px]:max-w-none">
+        <div className="absolute right-0 top-[50px] z-[1500] w-[350px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_18px_46px_rgba(15,23,42,.16)] animate-popup dark:border-night-line dark:bg-night-panel max-[600px]:fixed max-[600px]:left-3 max-[600px]:right-3 max-[600px]:top-[62px] max-[600px]:w-auto max-[600px]:max-w-none">
           <div className="flex items-center justify-between border-b border-[#f1f1f1] px-4 py-3 dark:border-night-line">
             <p className="text-[14px] font-bold">Notifications</p>
             {unread > 0 && (

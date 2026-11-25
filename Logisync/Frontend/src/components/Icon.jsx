@@ -300,11 +300,14 @@ const STORED_ALIASES = {
 const HAS_HEIGHT_RE = /(?:^|\s)(?:[a-z0-9\[\]_-]+:)?(?:h-|size-)/;
 const HAS_WIDTH_RE = /(?:^|\s)(?:[a-z0-9\[\]_-]+:)?(?:w-|size-)/;
 
+const SOLID_FILLED_ICONS = new Set(["star", "circle"]);
+
 export default function Icon({
   name,
   className = "",
   size,
-  strokeWidth = 1.85,
+  strokeWidth = 2.2,
+  filled = false,
   spin = false,
   ...rest
 }) {
@@ -335,12 +338,20 @@ export default function Icon({
     .filter(Boolean)
     .join(" ");
 
+  const resolvedStrokeWidth = filled ? Math.max(Number(strokeWidth) || 2.2, 2.35) : strokeWidth;
+  const fillProps = filled
+    ? SOLID_FILLED_ICONS.has(key)
+      ? { fill: "currentColor" }
+      : { fill: "currentColor", fillOpacity: 0.22 }
+    : {};
+
   return (
     <Component
       size={size}
-      strokeWidth={strokeWidth}
+      strokeWidth={resolvedStrokeWidth}
       aria-hidden={rest["aria-label"] ? undefined : "true"}
       className={classes}
+      {...fillProps}
       {...rest}
     />
   );

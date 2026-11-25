@@ -66,7 +66,7 @@ export default function AnnouncementModal({ open, onClose }) {
           className="fixed inset-0 z-[2500] flex items-center justify-center p-5 bg-[rgba(25,25,25,.55)]"
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
-          <div className="w-full max-w-[560px] max-h-[92vh] overflow-y-auto rounded-[17px] bg-white p-[22px] border-l-4 border-l-brand shadow-[0_20px_60px_rgba(0,0,0,.2)] animate-popup dark:bg-night-panel">
+          <div className="w-full max-w-[560px] max-h-[92vh] overflow-y-auto rounded-xl bg-white p-[22px] border-l-4 border-l-brand shadow-[0_20px_50px_rgba(15,23,42,.22)] animate-popup dark:bg-night-panel">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-[42px] h-[42px] rounded-[10px] bg-brand-soft text-brand flex items-center justify-center dark:bg-brand/15">
@@ -86,7 +86,7 @@ export default function AnnouncementModal({ open, onClose }) {
               </button>
             </div>
 
-            <div className="mt-[18px] p-[17px] rounded-[11px] bg-[#fffaf7] border border-[#ffe9dc] dark:bg-night-head dark:border-night-line">
+            <div className="mt-[18px] p-[17px] rounded-lg bg-[#fffaf7] border border-[#ffe9dc] dark:bg-night-head dark:border-night-line">
               <div className="mb-3.5">
                 <label className={labelCls}>Announcement Title</label>
                 <input

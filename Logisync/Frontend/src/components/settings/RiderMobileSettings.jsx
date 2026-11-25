@@ -474,7 +474,7 @@ export default function RiderMobileSettings({ role = "rider" }) {
                     type="button"
                     disabled={uploadingPhoto}
                     onClick={() => fileRef.current?.click()}
-                    className="rounded-full border border-brand bg-white px-4 py-2 text-[13px] font-bold text-brand shadow-2xs transition active:scale-95 hover:bg-brand hover:text-white disabled:opacity-60 dark:bg-night-head"
+                    className="rounded-lg border border-brand bg-white px-4 py-2 text-[13px] font-semibold text-brand shadow-2xs transition active:scale-95 hover:bg-brand hover:text-white disabled:opacity-60 dark:bg-night-head"
                   >
                     {uploadingPhoto ? "Uploading…" : "Change Photo"}
                   </button>

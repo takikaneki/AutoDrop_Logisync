@@ -94,7 +94,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-[50px] z-[1500] w-[230px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[14px] border border-[#eee] bg-white shadow-[0_18px_50px_rgba(0,0,0,.15)] animate-popup dark:bg-night-panel dark:border-night-line">
+                <div className="absolute right-0 top-[50px] z-[1500] w-[230px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-[0_18px_46px_rgba(15,23,42,.16)] animate-popup dark:bg-night-panel dark:border-night-line">
                   <div className="px-4 py-3 border-b border-[#f1f1f1] dark:border-night-line">
                     <strong className="block text-[14px] truncate">{profile.name}</strong>
                     <small className="block text-[12px] text-[#999] truncate">

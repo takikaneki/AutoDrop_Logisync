@@ -81,11 +81,16 @@ function ModernFiveTabNav({ items, ariaLabel, isFeaturedActive, isProfileActive,
                 return (
                   <>
                     <span
-                      className={`flex h-7 w-10 items-center justify-center rounded-full transition ${
+                      className={`flex h-7 w-10 items-center justify-center rounded-lg transition ${
                         active ? "bg-brand/12 text-brand" : ""
                       }`}
                     >
-                      <Icon name={item.icon} className="h-[19px] w-[19px]" strokeWidth={active ? 2.2 : 1.85} />
+                      <Icon
+                        name={item.icon}
+                        filled={active}
+                        className="h-[19px] w-[19px]"
+                        strokeWidth={active ? 2.4 : 2.1}
+                      />
                     </span>
                     <span className="max-w-full whitespace-nowrap px-0.5 leading-none tracking-tight">
                       {item.label}
@@ -110,6 +115,7 @@ export default function MobileBottomNav({ role = "coordinator" }) {
       pathname.startsWith("/rider/settings") ||
       pathname.startsWith("/rider/analytics") ||
       pathname.startsWith("/rider/complaints") ||
+      pathname.startsWith("/rider/report-emergency") ||
       pathname.startsWith("/rider/help") ||
       pathname.startsWith("/rider/activity");
 
@@ -130,6 +136,7 @@ export default function MobileBottomNav({ role = "coordinator" }) {
       pathname.startsWith("/seller/settings") ||
       pathname.startsWith("/seller/analytics") ||
       pathname.startsWith("/seller/complaints") ||
+      pathname.startsWith("/seller/report-emergency") ||
       pathname.startsWith("/seller/help") ||
       pathname.startsWith("/seller/activity");
 
@@ -150,6 +157,7 @@ export default function MobileBottomNav({ role = "coordinator" }) {
     pathname.startsWith("/analytics") ||
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/complaints") ||
+    pathname.startsWith("/emergency-reports") ||
     pathname.startsWith("/help") ||
     pathname.startsWith("/audit") ||
     pathname.startsWith("/riders") ||

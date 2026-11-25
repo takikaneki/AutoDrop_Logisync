@@ -1257,9 +1257,10 @@ export default function CreateParcel() {
                         <button
                           type="button"
                           onClick={() => setBarangaySuggestOpen(false)}
-                          className="text-slate-400 hover:text-brand transition"
+                          className="inline-flex items-center gap-1 text-slate-400 hover:text-brand transition"
                         >
-                          ✕ Close
+                          <Icon name="x" className="h-3.5 w-3.5" />
+                          <span>Close</span>
                         </button>
                       </div>
 

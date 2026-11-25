@@ -129,7 +129,12 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon name={l.icon} className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                      <Icon
+                        name={l.icon}
+                        filled={isActive}
+                        strokeWidth={isActive ? 2.4 : 2.15}
+                        className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                      />
                       <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
                       {l.soon && (
                         <span className={`rounded-full bg-[#f5f5f5] px-2 py-0.5 text-[10px] font-bold uppercase text-[#aaa] dark:bg-night-head ${collapsed ? "min-[821px]:hidden" : ""}`}>Soon</span>
@@ -162,8 +167,17 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
                 aria-label={l.label}
                 {...tipProps(l.label)}
               >
-                <Icon name={TOP_ICONS[l.path] || "info"} className="h-[18px] w-[18px]" />
-                <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      name={TOP_ICONS[l.path] || "info"}
+                      filled={isActive}
+                      strokeWidth={isActive ? 2.4 : 2.15}
+                      className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                    />
+                    <span className={`flex-1 ${collapsed ? "min-[821px]:hidden" : ""}`}>{l.label}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </div>
@@ -180,7 +194,12 @@ export default function PortalSidebar({ role, collapsed, mobileOpen, onClose, on
           >
             {({ isActive }) => (
               <>
-                <Icon name="settings" className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`} />
+                <Icon
+                  name="settings"
+                  filled={isActive}
+                  strokeWidth={isActive ? 2.4 : 2.15}
+                  className={`h-[18px] w-[18px] ${isActive ? "text-[#ee4d2d] dark:text-white" : ""}`}
+                />
                 <span className={collapsed ? "min-[821px]:hidden" : ""}>Settings</span>
               </>
             )}

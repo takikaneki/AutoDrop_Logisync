@@ -119,7 +119,7 @@ export default function Notifications() {
               <button
                 key={k}
                 onClick={() => setTab(k)}
-                className={`px-4 py-2 rounded-full text-[13px] font-semibold transition ${
+                className={`px-3.5 py-2 rounded-lg text-[13px] font-semibold transition ${
                   active
                     ? isEmergencyTab
                       ? "bg-[#dc2626] text-white shadow-xs"

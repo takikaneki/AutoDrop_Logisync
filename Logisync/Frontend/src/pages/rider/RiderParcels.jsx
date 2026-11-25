@@ -408,7 +408,7 @@ export default function RiderParcels() {
             <button
               key={k}
               onClick={() => pick(k)}
-              className={`rounded-full px-4 py-2 text-[13px] font-semibold transition max-[800px]:flex max-[800px]:w-full max-[800px]:items-center max-[800px]:justify-between max-[800px]:rounded-xl max-[800px]:px-4 max-[800px]:py-3 max-[800px]:text-[14px] ${
+              className={`rounded-lg px-3.5 py-2 text-[13px] font-semibold transition max-[800px]:flex max-[800px]:w-full max-[800px]:items-center max-[800px]:justify-between max-[800px]:rounded-lg max-[800px]:px-4 max-[800px]:py-3 max-[800px]:text-[14px] ${
                 active
                   ? "bg-brand text-white max-[800px]:font-bold"
                   : "border border-[#eee] bg-white text-[#777] hover:text-brand max-[800px]:border-transparent max-[800px]:bg-[#fafafa] dark:border-night-line dark:bg-night-panel dark:text-[#d1c9c2] dark:max-[800px]:bg-night-head"

@@ -138,7 +138,7 @@ export default function CoordinatorProfile() {
           <button
             type="button"
             onClick={() => navigate("/settings?section=account")}
-            className="mt-3.5 inline-flex shrink-0 items-center gap-2 rounded-full border border-brand/35 bg-white px-5 py-2 text-[13px] font-bold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand min-[821px]:mt-0"
+            className="mt-3.5 inline-flex shrink-0 items-center gap-2 rounded-lg border border-brand/40 bg-white px-4 py-2 text-[13px] font-semibold text-brand shadow-xs transition active:scale-95 hover:bg-brand hover:text-white dark:bg-night-panel dark:hover:bg-brand min-[821px]:mt-0"
           >
             <Icon name="pencil" className="text-[12px]" />
             <span>Edit Profile</span>
