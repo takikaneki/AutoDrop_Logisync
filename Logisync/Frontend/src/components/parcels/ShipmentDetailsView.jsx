@@ -10,6 +10,7 @@ import UnifiedQrModal from "../qr/UnifiedQrModal.jsx";
 import StatusBadge from "../StatusBadge.jsx";
 import Icon from "../Icon.jsx";
 import { ActivityListSkeleton, SkeletonBlock } from "../Skeletons.jsx";
+import deliveryJourneyImg from "../../assets/delivery-journey.jpg";
 
 function shortParcelId(id) {
   const str = String(id || "").trim();
@@ -234,134 +235,32 @@ function resolveDeliveryBanner(parcel) {
 function DeliveryJourneyIllustration({ compact = false }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-[#f0e5d8] bg-gradient-to-b from-[#fdf8f2] to-[#f8efe3] ${
-        compact ? "p-3" : "p-3"
-      } dark:border-night-line dark:from-night-head dark:to-night-panel`}
-      aria-label="Decorative delivery journey illustration from SPX Hub to Customer"
+      className="relative overflow-hidden rounded-xl border border-[#efe4d6] bg-[#faf4ec] shadow-xs dark:border-night-line dark:bg-night-head"
+      aria-label="Delivery journey illustration from SPX Hub to Customer"
     >
-      <svg
-        viewBox={compact ? "0 0 320 115" : "0 0 260 210"}
-        className={`w-full select-none ${compact ? "h-auto" : "max-h-[150px] h-auto"}`}
-        role="img"
-        aria-hidden="true"
-      >
-        {compact ? (
-          <>
-            {/* Compact horizontal curve for mobile */}
-            <path
-              d="M 58 64 C 110 20, 145 100, 200 58 C 228 38, 245 55, 265 62"
-              fill="none"
-              stroke="#c98353"
-              strokeWidth="2.2"
-              strokeDasharray="4 4"
-              strokeLinecap="round"
-            />
-            {/* SPX Hub */}
-            <g transform="translate(14, 24)">
-              <text x="26" y="-6" textAnchor="middle" fill="#475569" fontSize="10" fontWeight="700">
-                SPX Hub
-              </text>
-              <polygon points="2,20 26,4 50,20" fill="#ea580c" />
-              <rect x="6" y="20" width="40" height="28" rx="2" fill="#fff" stroke="#cbd5e1" strokeWidth="1.5" />
-              <rect x="14" y="28" width="24" height="20" fill="#334155" />
-              <rect x="17" y="36" width="8" height="12" fill="#d97736" />
-              <rect x="27" y="38" width="7" height="10" fill="#e2955a" />
-            </g>
-            {/* Delivery Rider */}
-            <g transform="translate(132, 42)">
-              <rect x="2" y="12" width="13" height="11" rx="2" fill="#ea580c" />
-              <circle cx="22" cy="8" r="5.5" fill="#ea580c" />
-              <path d="M16 14 Q22 13 25 22 L15 24 Z" fill="#9a3412" />
-              <path d="M6 24 L32 24 L28 31 L10 31 Z" fill="#ea580c" />
-              <circle cx="10" cy="32" r="5.5" fill="#1e293b" />
-              <circle cx="10" cy="32" r="2.2" fill="#fff" />
-              <circle cx="29" cy="32" r="5.5" fill="#1e293b" />
-              <circle cx="29" cy="32" r="2.2" fill="#fff" />
-            </g>
-            {/* Customer House */}
-            <g transform="translate(254, 26)">
-              <circle cx="24" cy="0" r="6" fill="#ea580c" />
-              <circle cx="24" cy="0" r="2.2" fill="#fff" />
-              <polygon points="4,22 24,7 44,22" fill="#9a5832" />
-              <rect x="9" y="22" width="30" height="24" rx="2" fill="#fef3c7" stroke="#d6b88c" strokeWidth="1.4" />
-              <rect x="20" y="31" width="8" height="15" fill="#9a5832" />
-              <text x="24" y="58" textAnchor="middle" fill="#475569" fontSize="10" fontWeight="700">
-                Customer
-              </text>
-            </g>
-          </>
-        ) : (
-          <>
-            {/* Soft decorative background hills */}
-            <ellipse cx="75" cy="68" rx="62" ry="12" fill="#f2e2ce" opacity="0.65" />
-            <ellipse cx="195" cy="146" rx="52" ry="11" fill="#f2e2ce" opacity="0.65" />
-            <ellipse cx="95" cy="192" rx="58" ry="10" fill="#f2e2ce" opacity="0.65" />
-
-            {/* Curved dotted delivery path: Hub -> Rider -> Customer House */}
-            <path
-              d="M 105 64 C 175 64, 185 112, 125 128 C 65 144, 72 184, 156 172"
-              fill="none"
-              stroke="#b87343"
-              strokeWidth="2.2"
-              strokeDasharray="4 4"
-              strokeLinecap="round"
-            />
-            <circle cx="105" cy="64" r="3.5" fill="#ea580c" />
-            <circle cx="158" cy="172" r="3.5" fill="#ea580c" />
-
-            {/* SPX Hub */}
-            <g transform="translate(28, 12)">
-              <text x="38" y="11" textAnchor="middle" fill="#334155" fontSize="11.5" fontWeight="800">
-                SPX Hub
-              </text>
-              <polygon points="4,28 38,15 72,28" fill="#ea580c" />
-              <rect x="9" y="28" width="58" height="34" rx="3" fill="#ffffff" stroke="#cbd5e1" strokeWidth="1.5" />
-              <rect x="20" y="37" width="36" height="25" fill="#334155" />
-              <rect x="24" y="47" width="11" height="15" rx="1" fill="#d97736" />
-              <rect x="37" y="50" width="10" height="12" rx="1" fill="#e59866" />
-              <rect x="52" y="48" width="12" height="14" rx="1.5" fill="#d97736" />
-            </g>
-
-            {/* Delivery Rider with Motorcycle */}
-            <g transform="translate(82, 96)">
-              {/* Parcel box on back */}
-              <rect x="3" y="16" width="16" height="14" rx="2" fill="#ea580c" stroke="#fff" strokeWidth="1" />
-              {/* Rider helmet & torso */}
-              <circle cx="29" cy="11" r="7" fill="#ea580c" />
-              <path d="M21 19 Q28 18 33 30 L20 31 Z" fill="#9a3412" />
-              {/* Scooter body */}
-              <path d="M8 31 L42 31 L37 40 L12 40 Z" fill="#ea580c" />
-              <path d="M35 20 L41 31" stroke="#334155" strokeWidth="2.5" strokeLinecap="round" />
-              {/* Wheels */}
-              <circle cx="14" cy="41" r="7" fill="#1e293b" />
-              <circle cx="14" cy="41" r="3" fill="#f8fafc" />
-              <circle cx="37" cy="41" r="7" fill="#1e293b" />
-              <circle cx="37" cy="41" r="3" fill="#f8fafc" />
-              <text x="26" y="58" textAnchor="middle" fill="#475569" fontSize="10.5" fontWeight="700">
-                Rider
-              </text>
-            </g>
-
-            {/* Customer House */}
-            <g transform="translate(162, 118)">
-              {/* Location Pin above roof */}
-              <path
-                d="M34 2 C28 2 24 6.5 24 12 C24 19 34 27 34 27 C34 27 44 19 44 12 C44 6.5 40 2 34 2 Z"
-                fill="#ea580c"
-              />
-              <circle cx="34" cy="11.5" r="3.5" fill="#fff" />
-              {/* Roof & House */}
-              <polygon points="6,44 34,24 62,44" fill="#8c4f2b" />
-              <rect x="13" y="44" width="42" height="30" rx="2.5" fill="#fbf2e3" stroke="#d5be9e" strokeWidth="1.5" />
-              <rect x="22" y="53" width="10" height="21" fill="#8c4f2b" />
-              <rect x="37" y="52" width="10" height="10" rx="1" fill="#bae6fd" stroke="#64748b" strokeWidth="1" />
-              <text x="34" y="88" textAnchor="middle" fill="#334155" fontSize="11" fontWeight="700">
-                Customer
-              </text>
-            </g>
-          </>
-        )}
-      </svg>
+      <div className="relative w-full overflow-hidden">
+        <img
+          src={deliveryJourneyImg}
+          alt="SPX Hub to Rider to Customer delivery route"
+          className={`block w-full object-cover select-none ${
+            compact ? "aspect-[16/9]" : "aspect-[4/3]"
+          } dark:brightness-95`}
+          loading="lazy"
+          draggable={false}
+        />
+        {/* Clean stage pill badges */}
+        <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-md border border-[#e7dac8]/90 bg-white/90 px-2 py-0.5 text-[10.5px] font-bold text-[#1e293b] shadow-2xs backdrop-blur-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ea580c]" />
+          SPX Hub
+        </span>
+        <span className="pointer-events-none absolute left-1/2 top-[63%] -translate-x-1/2 inline-flex items-center gap-1 rounded-md border border-[#fed7aa]/90 bg-white/92 px-2 py-0.5 text-[10.5px] font-bold text-[#c2410c] shadow-2xs backdrop-blur-xs">
+          Rider
+        </span>
+        <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md border border-[#e7dac8]/90 bg-white/90 px-2 py-0.5 text-[10.5px] font-bold text-[#1e293b] shadow-2xs backdrop-blur-xs">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#16a34a]" />
+          Customer
+        </span>
+      </div>
     </div>
   );
 }
