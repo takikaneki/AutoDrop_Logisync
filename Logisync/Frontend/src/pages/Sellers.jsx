@@ -675,7 +675,7 @@ export default function Sellers() {
         open={!!current}
         onClose={() => setViewId(null)}
         z="z-[3500]"
-        className="w-full max-w-[540px] p-7 dark:bg-night-panel"
+        className="max-h-[90dvh] w-full max-w-[460px] overflow-y-auto p-5 sm:p-6 dark:bg-night-panel"
       >
         {current && (
           <>
@@ -683,28 +683,30 @@ export default function Sellers() {
               type="button"
               onClick={() => setViewId(null)}
               aria-label="Close"
-              className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] transition hover:bg-[#e9edf2] dark:bg-night-line"
             >
               <Icon name="x" />
             </button>
-            <div className="mb-5 flex items-center gap-4">
-              <Avatar initials={current.initials} tone={current.tone} className="h-14 w-14 text-[18px]" />
-              <div>
-                <h3 className="text-[18px] font-bold">{current.name}</h3>
-                <p className="text-[13px] text-[#999]">
-                  {current.id} · {current.email} · joined {current.joined}
-                </p>
-                {(current.shop || current.phone || current.pickup) && (
-                  <p className="mt-1 text-[12.5px] text-[#777] dark:text-[#d1c9c2]">
-                    {current.shop}
-                    {current.phone ? ` · ${current.phone}` : ""}
-                    {current.pickup ? ` · Pickup: ${current.pickup}` : ""}
-                  </p>
-                )}
+
+            <div className="mb-3.5 flex items-center gap-3 pr-8">
+              <Avatar initials={current.initials} tone={current.tone} className="h-12 w-12 shrink-0 text-[16px]" />
+              <div className="min-w-0">
+                <h3 className="truncate text-[17px] font-bold leading-snug">{current.name}</h3>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                  <span className="text-[12px] text-[#888]">{current.id}</span>
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                      tone[current.status] || tone.Active
+                    }`}
+                  >
+                    {current.status}
+                  </span>
+                </div>
               </div>
             </div>
+
             {current.status === "Inactive" && (
-              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[12.5px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+              <div className="mb-3.5 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-[12px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
                 <strong className="block font-bold">Account Inactive — 7-Day Recovery Window</strong>
                 {current.deactivatedAt && (
                   <span className="mt-0.5 block">
@@ -719,31 +721,49 @@ export default function Sellers() {
                 )}
               </div>
             )}
-            <div className="mb-5 grid grid-cols-3 gap-3 max-[520px]:grid-cols-1">
-              <div className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] text-[#999]">Total parcels</small>
-                <strong className="text-[20px]">{current.counts.total}</strong>
-              </div>
-              <div className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] text-[#999]">Verified</small>
-                <strong className="text-[20px]">{current.counts.verified}</strong>
-              </div>
-              <div className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head">
-                <small className="block text-[12px] text-[#999]">Delivered</small>
-                <strong className="text-[20px]">{current.counts.delivered}</strong>
-              </div>
+
+            <div className="mb-3.5 grid grid-cols-3 gap-2">
+              {[
+                ["Total parcels", current.counts.total],
+                ["Verified", current.counts.verified],
+                ["Delivered", current.counts.delivered],
+              ].map(([l, v]) => (
+                <div
+                  key={l}
+                  className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] px-3 py-2.5 dark:border-night-line dark:bg-night-head"
+                >
+                  <small className="block text-[11px] text-[#888]">{l}</small>
+                  <strong className="text-[18px] leading-tight">{v}</strong>
+                </div>
+              ))}
             </div>
-            <h4 className="mb-2 text-[14px] font-bold">Parcel history</h4>
+
+            <dl className="mb-3.5 space-y-1.5 rounded-xl border border-[#f1f3f7] bg-[#fcfcfd] px-3.5 py-2.5 text-[13px] dark:border-night-line dark:bg-night-head/60">
+              {[
+                ["Shop", current.shop || "—"],
+                ["Email", current.email || "—"],
+                ["Phone", current.phone || "—"],
+                ["Pickup", current.pickup || "—"],
+                ["Joined", current.joined || "—"],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-baseline justify-between gap-3 py-0.5">
+                  <dt className="shrink-0 text-[#888]">{k}</dt>
+                  <dd className="min-w-0 break-words text-right font-semibold text-[#27364f] dark:text-[#f1eeeb]">{v}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <h4 className="mb-1.5 text-[13px] font-bold">Parcel history</h4>
             {current.counts.recent.length === 0 ? (
-              <p className="mb-5 text-[13px] text-[#999]">No parcels registered by this seller yet.</p>
+              <p className="mb-4 text-[12.5px] text-[#999]">No parcels registered by this seller yet.</p>
             ) : (
-              <ul className="mb-5 divide-y divide-[#f1f1f1] dark:divide-night-line">
+              <ul className="mb-4 max-h-40 divide-y divide-[#f1f1f1] overflow-y-auto pr-1 dark:divide-night-line">
                 {current.counts.recent.map((p) => (
                   <li
                     key={p.parcel_id}
-                    className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+                    className="flex items-center justify-between gap-2.5 py-2 text-[12.5px]"
                   >
-                    <span className="truncate">
+                    <span className="min-w-0 truncate">
                       <Link
                         to={`/parcels/${encodeURIComponent(p.parcel_id)}`}
                         onClick={() => setViewId(null)}
@@ -767,7 +787,7 @@ export default function Sellers() {
               </ul>
             )}
 
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#f1f3f7] pt-3 dark:border-night-line">
               <Link
                 to={`/messages?contact=${encodeURIComponent(current.name)}`}
                 className={btnPrimary}

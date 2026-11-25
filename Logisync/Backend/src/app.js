@@ -13,6 +13,7 @@ const complaintRoutes = require("./routes/complaintRoutes");
 const emergencyRoutes = require("./routes/emergencyRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 const { purgeExpiredDeactivatedAccounts } = require("./utils/accountLifecycle");
 
 const app = express();
@@ -57,6 +58,7 @@ app.use(["/api/complaints", "/complaints"], complaintRoutes);
 app.use(["/api/emergency-reports", "/emergency-reports"], emergencyRoutes);
 app.use(["/api/notifications", "/notifications"], notificationRoutes);
 app.use(["/api/announcements", "/announcements"], announcementRoutes);
+app.use(["/api/contact", "/contact"], contactRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

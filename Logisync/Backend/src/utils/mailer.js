@@ -51,7 +51,7 @@ function getOtpHmacSecret() {
 /**
  * Sends an email via Nodemailer (Gmail SMTP port 587 with STARTTLS).
  */
-async function sendMail({ to, subject, text, html }) {
+async function sendMail({ to, subject, text, html, replyTo }) {
   const config = getSmtpConfig();
 
   if (!config.isConfigured) {
@@ -76,6 +76,7 @@ async function sendMail({ to, subject, text, html }) {
   await transporter.sendMail({
     from: config.from,
     to,
+    ...(replyTo ? { replyTo } : {}),
     subject,
     text,
     html,
@@ -386,6 +387,100 @@ async function sendAccountCredentialsEmail({
   }
 }
 
+/**
+ * Sends a Contact Us inquiry email to the official LogiSync support inbox.
+ * Sets replyTo to the visitor's email so the team can reply directly.
+ * Never logs message contents or credentials.
+ */
+async function sendContactUsEmail({ name, email, subject = "", message }) {
+  const destination = (process.env.CONTACT_EMAIL || "logisync.autodrop@gmail.com").trim();
+  const cleanName = String(name || "").replace(/[\r\n]/g, " ").trim();
+  const cleanEmail = String(email || "").replace(/[\r\n]/g, "").trim().toLowerCase();
+  const cleanSubject = String(subject || "").replace(/[\r\n]/g, " ").trim() || "General Inquiry";
+  const cleanMessage = String(message || "").trim();
+
+  const mailSubject = `LogiSync Contact Us – ${cleanSubject}`;
+  const safeNameHtml = escapeHtml(cleanName);
+  const safeEmailHtml = escapeHtml(cleanEmail);
+  const safeSubjectHtml = escapeHtml(cleanSubject);
+  const safeMessageHtml = escapeHtml(cleanMessage).replace(/\r?\n/g, "<br />");
+
+  const text = [
+    `New Contact Us Message — LogiSync`,
+    ``,
+    `From: ${cleanName}`,
+    `Email: ${cleanEmail}`,
+    `Subject: ${cleanSubject}`,
+    ``,
+    `Message:`,
+    cleanMessage,
+    ``,
+    `— Sent via LogiSync Contact Us Form`,
+  ].join("\n");
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${escapeHtml(mailSubject)}</title>
+    </head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #1e293b;">
+      <table align="center" width="100%" style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);">
+        <tr>
+          <td style="height: 6px; background: linear-gradient(to right, #f97316, #f59e0b, #ea580c);"></td>
+        </tr>
+        <tr>
+          <td style="padding: 28px 32px;">
+            <h1 style="margin: 0 0 4px 0; font-size: 22px; font-weight: 800; color: #f97316;">LogiSync</h1>
+            <p style="margin: 0 0 18px 0; font-size: 13px; color: #64748b; font-weight: 600;">New Contact Us Message</p>
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-bottom: 20px;" />
+
+            <table width="100%" style="font-size: 13px; color: #334155; border-collapse: collapse; margin-bottom: 20px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px;">
+              <tr>
+                <td style="padding: 10px 14px 4px 14px; color: #64748b; width: 95px;">Sender:</td>
+                <td style="padding: 10px 14px 4px 0; font-weight: 700;">${safeNameHtml}</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 14px; color: #64748b;">Reply-To:</td>
+                <td style="padding: 4px 14px 4px 0; font-weight: 700;"><a href="mailto:${safeEmailHtml}" style="color: #ea580c; text-decoration: none;">${safeEmailHtml}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 14px 10px 14px; color: #64748b;">Subject:</td>
+                <td style="padding: 4px 14px 10px 0; font-weight: 700;">${safeSubjectHtml}</td>
+              </tr>
+            </table>
+
+            <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b;">Message</p>
+            <div style="padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; color: #1e293b; line-height: 1.65; word-break: break-word;">
+              ${safeMessageHtml}
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 16px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center;">
+            &copy; ${new Date().getFullYear()} LogiSync SPX Express. Reply directly to respond to ${safeNameHtml}.
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  try {
+    return await sendMail({
+      to: destination,
+      replyTo: cleanEmail,
+      subject: mailSubject,
+      text,
+      html,
+    });
+  } catch (err) {
+    console.error("[LogiSync Mailer] Contact Us email delivery failed:", err.code || "SMTP_ERROR");
+    return { sent: false, error: "Failed to send message right now. Please try again later." };
+  }
+}
+
 module.exports = {
   escapeHtml,
   getSmtpConfig,
@@ -397,4 +492,5 @@ module.exports = {
   sendOtpEmail,
   sendPasswordResetEmail,
   sendAccountCredentialsEmail,
+  sendContactUsEmail,
 };

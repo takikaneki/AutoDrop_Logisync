@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { api } from "../../api.js";
 import { SPX_LOGO_DATA_URL } from "../../data/spxLogo.js";
 import Icon from "../Icon.jsx";
 
@@ -6,16 +7,16 @@ export const CONTACT_DETAILS = [
   {
     icon: "mail",
     label: "Email Address",
-    value: "support@logisync.example",
+    value: "logisync.autodrop@gmail.com",
     sub: "Official system & coordinator support",
-    href: "mailto:support@logisync.example",
+    href: "mailto:logisync.autodrop@gmail.com",
   },
   {
     icon: "phone",
     label: "Contact Number",
-    value: "(02) 8123 4567",
-    sub: "Direct landline for hub inquiries",
-    href: "tel:+63281234567",
+    value: "09240461086",
+    sub: "Direct contact number for hub inquiries",
+    href: "tel:09240461086",
   },
   {
     icon: "map-pin",
@@ -54,7 +55,10 @@ export function ContactUsContent({
     message: "",
   });
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
   const [copied, setCopied] = useState("");
 
   useEffect(() => {
@@ -68,6 +72,7 @@ export function ContactUsContent({
   const setField = (k) => (e) => {
     setForm((prev) => ({ ...prev, [k]: e.target.value }));
     if (errors[k]) setErrors((prev) => ({ ...prev, [k]: "" }));
+    if (submitError) setSubmitError("");
   };
 
   const handleCopy = (text, label) => {
@@ -76,16 +81,48 @@ export function ContactUsContent({
     setTimeout(() => setCopied(""), 2000);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (sending) return;
+
+    const cleanName = form.name.trim();
+    const cleanEmail = form.email.trim();
+    const cleanSubject = form.subject.trim();
+    const cleanMessage = form.message.trim();
+
     const nextErrors = {};
-    if (!form.name.trim()) nextErrors.name = "Please enter your name.";
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) nextErrors.email = "Please enter a valid email.";
-    if (!form.message.trim()) nextErrors.message = "Please write a message.";
+    if (!cleanName || cleanName.length < 2) nextErrors.name = "Please enter your name (at least 2 characters).";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) nextErrors.email = "Please enter a valid email address.";
+    if (!cleanMessage || cleanMessage.length < 5) nextErrors.message = "Please write a message (at least 5 characters).";
     setErrors(nextErrors);
+    setSubmitError("");
     if (Object.keys(nextErrors).length > 0) return;
-    setSent(true);
-    onSent?.(form);
+
+    setSending(true);
+    try {
+      await api("/contact", {
+        method: "POST",
+        body: {
+          name: cleanName,
+          email: cleanEmail,
+          subject: cleanSubject,
+          message: cleanMessage,
+        },
+      });
+      setSentEmail(cleanEmail);
+      setSent(true);
+      setForm({
+        name: resolvedName,
+        email: initialEmail || "",
+        subject: "",
+        message: "",
+      });
+      onSent?.({ name: cleanName, email: cleanEmail, subject: cleanSubject, message: cleanMessage });
+    } catch (err) {
+      setSubmitError(err.message || "Unable to send your message right now. Please try again.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const dk = (cls) => (supportDark ? cls : "");
@@ -230,7 +267,7 @@ export function ContactUsContent({
               <h3 className={`text-lg font-extrabold text-slate-900 ${dk("dark:text-white")}`}>Message Sent!</h3>
               <p className={`mt-1 max-w-xs text-xs leading-relaxed text-slate-500 ${dk("dark:text-[#a8a099]")}`}>
                 Thank you for reaching out. Our coordination team will reply to{" "}
-                <strong className={`text-slate-700 ${dk("dark:text-[#f1eeeb]")}`}>{form.email}</strong> shortly.
+                <strong className={`text-slate-700 ${dk("dark:text-[#f1eeeb]")}`}>{sentEmail || form.email}</strong> shortly.
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2.5">
                 <button
@@ -262,6 +299,16 @@ export function ContactUsContent({
               <p className={`mt-0.5 mb-4 text-xs text-slate-500 ${dk("dark:text-[#a8a099]")}`}>
                 Have a question about parcel verification, rider dispatch, or account access? Drop us a note below.
               </p>
+
+              {submitError && (
+                <div
+                  role="alert"
+                  className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+                >
+                  <Icon name="circle-alert" className="mt-0.5 shrink-0 text-sm" />
+                  <span>{submitError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                 <div>
@@ -350,10 +397,14 @@ export function ContactUsContent({
                 )}
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:bg-brand-dark"
+                  disabled={sending}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <Icon name="send" className="text-[11px]" />
-                  <span>Send Message</span>
+                  <Icon
+                    name={sending ? "loader-2" : "send"}
+                    className={sending ? "animate-spin text-xs" : "text-[11px]"}
+                  />
+                  <span>{sending ? "Sending..." : "Send Message"}</span>
                 </button>
               </div>
             </form>

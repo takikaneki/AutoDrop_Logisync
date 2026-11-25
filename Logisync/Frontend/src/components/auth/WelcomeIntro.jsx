@@ -76,7 +76,6 @@ const NAV_LINKS = [
   { label: "Services", href: "#services" },
   { label: "How It Works", href: "#verification" },
   { label: "Features", href: "#features" },
-  { label: "FAQs", href: "#faq" },
 ];
 
 const HERO_STEPS = [
@@ -182,45 +181,6 @@ const VERIFICATION_STEPS = [
   },
 ];
 
-const FAQ_ITEMS = [
-  {
-    category: "Verification",
-    question: "How does the LogiSync parcel verification process work?",
-    answer:
-      "When a Seller registers a parcel, they upload a clear packing video (MP4, WebM, MOV, AVI, or MPEG up to 50 MB) and parcel details. The Hub Coordinator scans the parcel's QR code at the hub, reviews the video evidence alongside the physical package, and marks it as Verified, Flagged, or Return to Seller before any rider can dispatch it.",
-  },
-  {
-    category: "Delivery",
-    question: "What happens if a rider cannot deliver a parcel on the scheduled date?",
-    answer:
-      "LogiSync enforces a smart 3-day rescheduling policy. If a delivery attempt fails or passes its scheduled date without completion, the system automatically assigns the next available delivery day (up to 3 reschedules) and notifies the rider. If the parcel remains undelivered after the 3-day limit, its status automatically changes to 'Return to Hub' and alerts the coordinator.",
-  },
-  {
-    category: "Verification",
-    question: "How does automatic customer information filling help sellers?",
-    answer:
-      "When a Seller types a customer name in Create Parcel that has been registered previously, LogiSync automatically retrieves and fills in the customer's saved delivery address and contact number. Sellers can still review and edit the details before submitting.",
-  },
-  {
-    category: "Delivery",
-    question: "When can a rider accept and deliver a parcel?",
-    answer:
-      "Riders use the Scan QR Code tool on their mobile or web dashboard to scan the parcel's waybill. A parcel can only be taken out for delivery once the Coordinator has approved and marked it as 'Cleared for delivery (Verified)'.",
-  },
-  {
-    category: "Accounts",
-    question: "How do I get a Seller or Rider account on LogiSync?",
-    answer:
-      "For security and chain-of-custody accountability, Seller and Rider accounts are created and managed by the Hub Coordinator rather than through public sign-ups. Click 'Contact Us' in the navigation bar to request account access from the coordinator.",
-  },
-  {
-    category: "Accounts",
-    question: "How do I generate and export parcel reports?",
-    answer:
-      "Reports are integrated directly into the Parcel Records page across Coordinator, Seller, and Rider dashboards. Click the 'Generate Report' button in the upper-right corner of Parcel Records to view summary analytics, filter records, and export as CSV or print/save as PDF.",
-  },
-];
-
 // Airship Express–inspired Loading Screen (0% -> 100%, animated delivery truck on dashed line, "READY FOR DELIVERY")
 function AirshipLoader({ progress, exiting }) {
   return (
@@ -310,8 +270,6 @@ export default function WelcomeIntro({ onComplete }) {
   const [leavingToSignIn, setLeavingToSignIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
-  const [faqCategory, setFaqCategory] = useState("All");
   const [demoTracking, setDemoTracking] = useState("TXN-2026-SPX-00184");
   const [demoTracked, setDemoTracked] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
@@ -384,9 +342,6 @@ export default function WelcomeIntro({ onComplete }) {
     setContactModalOpen(true);
   };
 
-  const filteredFaqs =
-    faqCategory === "All" ? FAQ_ITEMS : FAQ_ITEMS.filter((item) => item.category === faqCategory);
-
   return (
     <div
       className={`min-h-[100dvh] w-full overflow-x-clip bg-white text-slate-900 transition-opacity duration-300 ${
@@ -404,22 +359,20 @@ export default function WelcomeIntro({ onComplete }) {
       >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-            <button
-              type="button"
-              onClick={openContactModal}
+            <a
+              href="tel:09240461086"
               className="inline-flex items-center gap-1.5 transition hover:text-white"
             >
               <Icon name="phone" className="text-[10px] text-brand" />
-              <span>(02) 8123 4567</span>
-            </button>
-            <button
-              type="button"
-              onClick={openContactModal}
+              <span>09240461086</span>
+            </a>
+            <a
+              href="mailto:logisync.autodrop@gmail.com"
               className="inline-flex items-center gap-1.5 transition hover:text-white"
             >
               <Icon name="mail" className="text-[10px] text-brand" />
-              <span className="truncate">support@logisync.example</span>
-            </button>
+              <span className="truncate">logisync.autodrop@gmail.com</span>
+            </a>
           </div>
           <div className="hidden items-center gap-4 sm:flex">
             <span className="inline-flex items-center gap-1.5 text-slate-200">
@@ -1148,124 +1101,7 @@ export default function WelcomeIntro({ onComplete }) {
         </div>
       </section>
 
-      {/* 8. DEDICATED FAQ SECTION (Expandable Accordion) */}
-      <section id="faq" className="bg-white py-14 sm:py-24">
-        <div className="mx-auto max-w-4xl px-4 sm:px-8">
-          <div className="text-center">
-            <span className="inline-block rounded-full bg-orange-50 px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-brand">
-              Support &amp; Help Center
-            </span>
-            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">
-              Frequently Asked Questions
-            </h2>
-            <p className="mx-auto mt-2.5 max-w-xl text-sm text-slate-500 sm:text-base">
-              Everything you need to know about LogiSync parcel verification, QR waybill scanning, and delivery
-              coordination.
-            </p>
-
-            {/* Category Filter Pills */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              {["All", "Verification", "Delivery", "Accounts"].map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setFaqCategory(cat);
-                    setOpenFaqIndex(0);
-                  }}
-                  className={`rounded-full px-4 py-2 text-xs font-extrabold transition ${
-                    faqCategory === cat
-                      ? "bg-brand text-white shadow-sm shadow-orange-500/25"
-                      : "border border-slate-200 bg-slate-50 text-slate-600 hover:border-brand/40 hover:text-brand"
-                  }`}
-                >
-                  {cat === "All" ? "All Questions" : cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Expandable Accordion List */}
-          <div className="mt-8 space-y-3.5 sm:mt-10">
-            {filteredFaqs.map((item, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div
-                  key={item.question}
-                  className={`overflow-hidden rounded-2xl border transition ${
-                    isOpen
-                      ? "border-brand/40 bg-orange-50/20 shadow-sm"
-                      : "border-slate-200/80 bg-[#f8fafc] hover:border-slate-300"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
-                    aria-expanded={isOpen}
-                    className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
-                  >
-                    <div className="flex items-start gap-3 sm:items-center">
-                      <span
-                        className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-black sm:mt-0 ${
-                          isOpen ? "bg-brand text-white" : "bg-slate-200/80 text-slate-600"
-                        }`}
-                      >
-                        {String(idx + 1).padStart(2, "0")}
-                      </span>
-                      <span className="text-sm font-extrabold text-slate-900 sm:text-base">{item.question}</span>
-                    </div>
-                    <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-transform duration-200 ${
-                        isOpen
-                          ? "rotate-180 border-brand bg-brand text-white"
-                          : "border-slate-200 bg-white text-slate-500"
-                      }`}
-                    >
-                      <Icon name="chevron-down" className="text-xs" />
-                    </span>
-                  </button>
-                  <div
-                    className={`grid transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                      isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                    }`}
-                  >
-                    <div className="overflow-hidden">
-                      <div className="border-t border-slate-200/60 px-5 pt-3.5 pb-5 text-sm leading-relaxed text-slate-600 sm:px-6 sm:pl-15">
-                        {item.answer}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Still Have Questions Prompt -> Opens Contact Us Modal */}
-          <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-3xl border border-slate-200/80 bg-[#f8fafc] p-6 text-center sm:flex-row sm:text-left">
-            <div className="flex flex-col items-center gap-3 sm:flex-row">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-xl text-brand">
-                <Icon name="message-circle" />
-              </span>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-900">Still have questions?</h3>
-                <p className="text-xs text-slate-500 sm:text-sm">
-                  Can&apos;t find the answer you&apos;re looking for? Reach out to our coordination team directly.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={openContactModal}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-xs font-extrabold text-white transition hover:bg-brand sm:w-auto"
-            >
-              <Icon name="headset" />
-              <span>Contact Support</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. FOOTER SECTION */}
+      {/* 8. FOOTER SECTION */}
       <footer className="hidden bg-slate-950 text-white lg:block">
         {/* Top CTA Banner inside Footer */}
         <div className="border-b border-white/10">
@@ -1355,11 +1191,15 @@ export default function WelcomeIntro({ onComplete }) {
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Icon name="phone" className="text-brand" />
-                  <span>(02) 8123 4567</span>
+                  <a href="tel:09240461086" className="transition hover:text-white">
+                    09240461086
+                  </a>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Icon name="mail" className="text-brand" />
-                  <span className="break-all">support@logisync.example</span>
+                  <a href="mailto:logisync.autodrop@gmail.com" className="break-all transition hover:text-white">
+                    logisync.autodrop@gmail.com
+                  </a>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Icon name="clock" className="text-brand" />

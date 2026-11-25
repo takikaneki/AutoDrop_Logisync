@@ -61,11 +61,15 @@ export default function Footer() {
             <ul className="space-y-1.5 text-[13px] text-[#888] max-[800px]:flex max-[800px]:flex-wrap max-[800px]:items-center max-[800px]:gap-x-5 max-[800px]:gap-y-1.5 max-[800px]:space-y-0 max-[800px]:text-[12px]">
               <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
                 <Icon name="mail" className="h-4 w-4 text-brand" />
-                <span>support@logisync.example</span>
+                <a href="mailto:logisync.autodrop@gmail.com" className="hover:text-brand">
+                  logisync.autodrop@gmail.com
+                </a>
               </li>
               <li className="flex items-center gap-1.5 max-[800px]:inline-flex">
                 <Icon name="phone" className="h-4 w-4 text-brand" />
-                <span>(02) 8123 4567</span>
+                <a href="tel:09240461086" className="hover:text-brand">
+                  09240461086
+                </a>
               </li>
             </ul>
           </div>

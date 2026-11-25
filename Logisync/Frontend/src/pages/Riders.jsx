@@ -697,7 +697,7 @@ export default function Riders() {
         open={!!current}
         onClose={() => setViewId(null)}
         z="z-[3500]"
-        className="w-full max-w-[520px] p-7 dark:bg-night-panel"
+        className="max-h-[90dvh] w-full max-w-[460px] overflow-y-auto p-5 sm:p-6 dark:bg-night-panel"
       >
         {current && (
           <>
@@ -705,20 +705,21 @@ export default function Riders() {
               type="button"
               onClick={() => setViewId(null)}
               aria-label="Close"
-              className="absolute right-4 top-4 h-8 w-8 rounded-full bg-[#f4f6f8] text-[#7c8da0] dark:bg-night-line"
+              className="absolute right-3.5 top-3.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f4f6f8] text-[#7c8da0] transition hover:bg-[#e9edf2] dark:bg-night-line"
             >
               <Icon name="x" />
             </button>
-            <div className="mb-5 flex items-center gap-4">
-              <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-brand-soft text-[22px] text-brand">
+
+            <div className="mb-3.5 flex items-center gap-3 pr-8">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[20px] text-brand">
                 <Icon name="bike" />
               </span>
-              <div>
-                <h3 className="text-[18px] font-bold">{current.name}</h3>
-                <div className="mt-1 flex items-center gap-2">
+              <div className="min-w-0">
+                <h3 className="truncate text-[17px] font-bold leading-snug">{current.name}</h3>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <span className="text-[12px] text-[#888]">{current.id}</span>
                   <span
-                    className={`inline-block rounded-full px-3 py-0.5 text-[12px] font-semibold ${
+                    className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                       tone[current.status] || tone.Active
                     }`}
                   >
@@ -729,7 +730,7 @@ export default function Riders() {
             </div>
 
             {!current.accountActive && (
-              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-[12.5px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
+              <div className="mb-3.5 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-[12px] text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200">
                 <strong className="block font-bold">Account Inactive — 7-Day Recovery Window</strong>
                 {current.raw?.deactivated_at && (
                   <span className="mt-0.5 block">
@@ -745,7 +746,7 @@ export default function Riders() {
               </div>
             )}
 
-            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 max-[380px]:grid-cols-1">
+            <div className="mb-3.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 ["Assigned", current.stats.total],
                 ["In transit", current.stats.transit],
@@ -754,15 +755,15 @@ export default function Riders() {
               ].map(([l, v]) => (
                 <div
                   key={l}
-                  className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] p-3.5 dark:border-night-line dark:bg-night-head"
+                  className="rounded-xl border border-[#ffe9dc] bg-[#fffaf7] px-3 py-2.5 dark:border-night-line dark:bg-night-head"
                 >
-                  <small className="block text-[12px] text-[#999]">{l}</small>
-                  <strong className="text-[20px]">{v}</strong>
+                  <small className="block text-[11px] text-[#888]">{l}</small>
+                  <strong className="text-[18px] leading-tight">{v}</strong>
                 </div>
               ))}
             </div>
 
-            <dl className="mb-5 space-y-2.5 text-[14px]">
+            <dl className="mb-3.5 space-y-1.5 rounded-xl border border-[#f1f3f7] bg-[#fcfcfd] px-3.5 py-2.5 text-[13px] dark:border-night-line dark:bg-night-head/60">
               {[
                 ["Agency", current.agency],
                 ["Email", current.email],
@@ -771,24 +772,24 @@ export default function Riders() {
                 ["Vehicle", current.plate ? `${current.vehicle} · ${current.plate}` : current.vehicle],
                 ["Joined", current.joined],
               ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-4">
-                  <dt className="text-[#999]">{k}</dt>
-                  <dd className="break-all text-right font-semibold">{v}</dd>
+                <div key={k} className="flex items-baseline justify-between gap-3 py-0.5">
+                  <dt className="shrink-0 text-[#888]">{k}</dt>
+                  <dd className="min-w-0 break-words text-right font-semibold text-[#27364f] dark:text-[#f1eeeb]">{v}</dd>
                 </div>
               ))}
             </dl>
 
-            <h4 className="mb-2 text-[14px] font-bold">Assigned parcels</h4>
+            <h4 className="mb-1.5 text-[13px] font-bold">Assigned parcels</h4>
             {current.stats.recent.length === 0 ? (
-              <p className="mb-5 text-[13px] text-[#999]">No parcels assigned to this rider yet.</p>
+              <p className="mb-4 text-[12.5px] text-[#999]">No parcels assigned to this rider yet.</p>
             ) : (
-              <ul className="mb-5 divide-y divide-[#f1f1f1] dark:divide-night-line">
+              <ul className="mb-4 max-h-40 divide-y divide-[#f1f1f1] overflow-y-auto pr-1 dark:divide-night-line">
                 {current.stats.recent.map((p) => (
                   <li
                     key={p.parcel_id}
-                    className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+                    className="flex items-center justify-between gap-2.5 py-2 text-[12.5px]"
                   >
-                    <span className="truncate">
+                    <span className="min-w-0 truncate">
                       <Link
                         to={`/parcels/${encodeURIComponent(p.parcel_id)}`}
                         onClick={() => setViewId(null)}
@@ -812,7 +813,7 @@ export default function Riders() {
               </ul>
             )}
 
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#f1f3f7] pt-3 dark:border-night-line">
               <Link
                 to={`/messages?contact=${encodeURIComponent(current.name)}`}
                 className={btnPrimary}
