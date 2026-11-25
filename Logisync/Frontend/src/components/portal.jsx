@@ -90,7 +90,7 @@ export function PanelTitle({ icon, children, action }) {
 }
 
 export const PanelLink = ({ to, children }) => (
-  <Link to={to} className="whitespace-nowrap text-sm text-orange-500 hover:underline">
+  <Link to={to} className="whitespace-nowrap text-sm font-bold text-orange-500 hover:underline">
     {children} →
   </Link>
 );

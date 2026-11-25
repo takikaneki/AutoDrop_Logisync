@@ -496,7 +496,7 @@ export default function Dashboard() {
         <div className={`${panel} overflow-hidden`}>
           <div className="mb-5 max-[600px]:mb-3.5 flex items-center justify-between gap-3">
             <h2 className="text-[19px] max-[600px]:text-[17px] font-bold"><Icon name="package" className="mr-2 text-orange-500" />Recent Parcels</h2>
-            <Link to="/parcels" className="whitespace-nowrap text-sm text-orange-500 hover:underline">View All →</Link>
+            <Link to="/parcels" className="whitespace-nowrap text-sm font-bold text-orange-500 hover:underline">View All →</Link>
           </div>
           {offlineEmpty ? (
             <OfflineState compact title="Recent parcels unavailable offline" text="Reconnect to load recent hub parcels." onRetry={reloadParcels} />
