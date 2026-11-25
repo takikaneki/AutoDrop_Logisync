@@ -15,7 +15,7 @@ export function SearchFilterBar({
 }) {
   return (
     <div
-      className={`mb-5 flex flex-wrap items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-slate-50/85 p-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] dark:border-slate-700/70 dark:bg-[#0b1322]/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}
+      className={`mb-5 flex flex-wrap items-center gap-2.5 rounded-2xl border border-slate-200/90 bg-slate-50/85 p-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] dark:border-night-line dark:bg-night-panel/90 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${className}`}
     >
       {children}
       {hasActiveFilters && typeof onReset === "function" && (

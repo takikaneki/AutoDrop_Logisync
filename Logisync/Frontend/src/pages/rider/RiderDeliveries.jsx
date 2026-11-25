@@ -42,8 +42,9 @@ import { latestFor, reportFailure, useFailedDeliveries, withdrawFailure } from "
 import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
 import { SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
+import Pagination from "../../components/Pagination.jsx";
 
-const STEP = 15; // ilang card ang idinadagdag ng "Show more"
+const PAGE_SIZE = 10;
 
 const COPY = {
   [STAGE.TO_DELIVER]: {
@@ -319,7 +320,7 @@ export default function RiderDeliveries() {
   const isInitialSyncLoading = online && syncState.syncing && all.length === 0;
   const isOfflineEmpty = !online && all.length === 0 && !syncState.syncedOnce;
   const showCachedNotice = !online && all.length > 0;
-  const [limit, setLimit] = useState(STEP);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [byArea, setByArea] = useState(false);
   const [action, setAction] = useState(null); // { type: "delivered" | "failed", d }
@@ -419,11 +420,11 @@ export default function RiderDeliveries() {
     });
   }, [mine, search, stage]);
 
-  const shown = list.slice(0, limit);
+  const shown = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const switchTab = (next) => {
     setSearch("");
-    setLimit(STEP);
+    setPage(1);
     setParams(next === STAGE.TO_DELIVER ? {} : { tab: next }, { replace: true });
   };
 
@@ -962,16 +963,6 @@ export default function RiderDeliveries() {
     <>
       <Topbar title="Deliveries" subtitle={copy.subtitle}>
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => {
-              setIncidentError("");
-              setIncidentOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 py-2 text-[13px] font-bold text-[#b45309] transition hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
-          >
-            <Icon name="triangle-alert" /> Report Incident
-          </button>
           {stage !== STAGE.TO_DELIVER ? (
             <Link to="/rider/parcels?report=1" className={btnGhost}>
               <Icon name="file-text" /> Generate Report
@@ -998,7 +989,7 @@ export default function RiderDeliveries() {
           <button
             type="button"
             onClick={() => switchTab(STAGE.FAILED)}
-            className="rounded-full bg-[#f2ecff] px-3.5 py-1.5 text-[13px] font-bold text-[#7c3aed] transition hover:bg-[#e5d8ff]"
+            className="rounded-full bg-[#fff0f0] px-3.5 py-1.5 text-[13px] font-bold text-[#d94747] transition hover:bg-[#fee2e2] dark:bg-red-500/20 dark:text-red-300"
           >
             <Icon name="undo-2" className="mr-1.5" />
             {returnToHubCount} Return to Hub (removed from pending) →
@@ -1011,14 +1002,14 @@ export default function RiderDeliveries() {
         onReset={() => {
           setSearch("");
           setByArea(false);
-          setLimit(STEP);
+          setPage(1);
         }}
       >
         <SearchInput
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setLimit(STEP);
+            setPage(1);
           }}
           placeholder="Search receiver, address, transaction no."
           ariaLabel="Search deliveries"
@@ -1026,28 +1017,21 @@ export default function RiderDeliveries() {
         {stage === STAGE.TO_DELIVER && (
           <button
             type="button"
-            onClick={() => setByArea((v) => !v)}
+            onClick={() => {
+              setByArea((v) => !v);
+              setPage(1);
+            }}
             aria-pressed={byArea}
             className={`inline-flex h-[42px] shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-bold transition max-[640px]:flex-1 ${
               byArea
                 ? "bg-brand text-white shadow-xs hover:bg-brand-dark"
-                : "border border-slate-200/95 bg-white text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-brand hover:text-brand dark:border-slate-700/80 dark:bg-[#111c30] dark:text-slate-200 dark:hover:border-brand dark:hover:text-brand"
+                : "border border-slate-200/95 bg-white text-slate-700 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-brand hover:text-brand dark:border-night-line dark:bg-night-head dark:text-slate-200 dark:hover:border-brand dark:hover:text-brand"
             }`}
           >
             <Icon name="map-pin" className="h-4 w-4" />
             <span>Group by area</span>
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            setIncidentError("");
-            setIncidentOpen(true);
-          }}
-          className="ml-auto inline-flex h-[42px] min-[821px]:hidden items-center gap-1.5 rounded-xl border border-[#f59e0b] bg-[#fffbeb] px-3.5 text-[13px] font-bold text-[#b45309] transition active:scale-95 hover:bg-[#fef3c7] dark:border-[#b45309] dark:bg-[#2e2316] dark:text-[#fcd34d]"
-        >
-          <Icon name="triangle-alert" /> Report Incident
-        </button>
       </SearchFilterBar>
 
       <section className={stage === STAGE.TO_DELIVER && list.length === 0 && !isInitialSyncLoading ? `${panel} p-6` : ""}>
@@ -1062,12 +1046,8 @@ export default function RiderDeliveries() {
         ) : (
           body
         )}
-        {!isInitialSyncLoading && !isOfflineEmpty && list.length > shown.length && (
-          <div className="mt-6 text-center">
-            <button onClick={() => setLimit((n) => n + STEP)} className={`${btnGhost} !px-8`}>
-              Show more ({list.length - shown.length} left)
-            </button>
-          </div>
+        {!isInitialSyncLoading && !isOfflineEmpty && (
+          <Pagination page={page} pageSize={PAGE_SIZE} total={list.length} onPage={setPage} />
         )}
       </section>
 
