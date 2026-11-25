@@ -37,7 +37,7 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               aria-label="Toggle sidebar"
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
-              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line ${
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#d9482b] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line ${
                 collapsed ? "flex" : "flex min-[821px]:hidden"
               } ${isModernMobile ? "max-[820px]:hidden" : ""}`}
             >
@@ -53,8 +53,8 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               <span className={`h-4 w-[1.5px] shrink-0 bg-slate-200 dark:bg-slate-700 ${isModernMobile ? "" : "max-[380px]:hidden"}`} aria-hidden="true" />
               <span className={`truncate text-[15px] sm:text-[16px] font-black tracking-tight dark:text-white ${
                 isModernMobile
-                  ? "text-[#0f172a] min-[821px]:text-[#ee4d2d]"
-                  : "text-[#ee4d2d] max-[380px]:hidden"
+                  ? "text-[#0f172a] min-[821px]:text-[#d9482b]"
+                  : "text-[#d9482b] max-[380px]:hidden"
               }`}>
                 LogiSync
               </span>

@@ -166,8 +166,8 @@ export default function ParcelRecords() {
           {
             key: "NEEDS_VIDEO",
             label: "Needs Video",
-            activeText: "text-[#ea580c] dark:text-[#fb923c]",
-            activeBar: "bg-[#ea580c]",
+            activeText: "text-[#c84227] dark:text-[#fb923c]",
+            activeBar: "bg-[#c84227]",
             activeBadge: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
             filter: FILTERS[0],
           },
@@ -431,7 +431,7 @@ export default function ParcelRecords() {
 
           <Link
             to="/seller/create"
-            className="group flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#fdba74] bg-[#fffaf5] p-5 text-center transition hover:border-[#ee4d2d] hover:bg-[#fff3e8] dark:border-[#9a3412]/70 dark:bg-night-head/60 dark:hover:border-[#ee4d2d] max-[1080px]:hidden"
+            className="group flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#fdba74] bg-[#fffaf5] p-5 text-center transition hover:border-[#d9482b] hover:bg-[#fff3e8] dark:border-[#9a3412]/70 dark:bg-night-head/60 dark:hover:border-[#d9482b] max-[1080px]:hidden"
           >
             <span className="mb-3.5 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-white text-brand shadow-xs transition group-hover:scale-105 dark:bg-night-panel">
               <Icon name="package-open" className="text-[24px]" />
@@ -439,7 +439,7 @@ export default function ParcelRecords() {
             <p className="mb-4 text-[12.5px] leading-relaxed text-[#64748b] dark:text-[#d1c9c2]">
               Ready to ship a new order? Register your parcel to get started.
             </p>
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#ee4d2d] px-4 py-2 text-[13px] font-bold text-white shadow-xs transition group-hover:bg-[#d94122]">
+            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#d9482b] px-4 py-2 text-[13px] font-bold text-white shadow-xs transition group-hover:bg-[#bf3a20]">
               <Icon name="plus" className="text-[11px]" /> Create Parcel
             </span>
           </Link>

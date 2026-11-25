@@ -34,7 +34,7 @@ import Icon from "../components/Icon.jsx";
 import { DatePickerInput } from "../components/SearchFilterBar.jsx";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
-const COLORS = { Delivered: "#16a34a", Pending: "#f97316", Failed: "#d94747" };
+const COLORS = { Delivered: "#16a34a", Pending: "#d9482b", Failed: "#d94747" };
 const PERIODS = [["day", "By Day"], ["week", "By Week"], ["month", "By Month"]];
 const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", month: "Parcels per month" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
@@ -303,7 +303,7 @@ export default function Dashboard() {
             <h2 className="text-[18px] font-bold text-[#c2410c] dark:text-[#fb923c] flex items-center gap-2">
               <Icon name="triangle-alert" /> Active Rider Incidents & Delivery Holds
             </h2>
-            <span className="rounded-full bg-[#ea580c] px-3 py-1 text-xs font-bold text-white">
+            <span className="rounded-full bg-[#c84227] px-3 py-1 text-xs font-bold text-white">
               {incidents.filter((i) => i.status === "REPORTED" || i.status === "CONFIRMED").length} active
             </span>
           </div>
@@ -340,7 +340,7 @@ export default function Dashboard() {
                         <button
                           type="button"
                           onClick={() => handleConfirmIncident(inc.incident_id)}
-                          className="rounded-lg bg-[#ea580c] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#c2410c]"
+                          className="rounded-lg bg-[#c84227] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#c2410c]"
                         >
                           <Icon name="circle-pause" className="mr-1" /> Confirm Hold
                         </button>
@@ -504,7 +504,7 @@ export default function Dashboard() {
           <>
           <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
             <table className="w-full min-w-[580px] border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#0f172a] dark:bg-[#ee4d2d]">
+              <thead className="sticky top-0 z-10 bg-[#0f172a] dark:bg-[#d9482b]">
                 <tr className="text-left text-xs uppercase tracking-wider text-white/90">
                   {["Tracking ID", "Seller", "Status", "Verification", "Date"].map((h) => (
                     <th key={h} className="px-4 py-3.5 font-normal">{h}</th>

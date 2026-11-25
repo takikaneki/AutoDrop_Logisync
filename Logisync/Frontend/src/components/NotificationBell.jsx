@@ -16,7 +16,7 @@ import { NotificationListSkeleton } from "./Skeletons.jsx";
 import Icon from "./Icon.jsx";
 
 const tones = {
-  orange: "bg-[#fff0e7] text-[#ff6818]",
+  orange: "bg-[#fff0e7] text-[#d9482b]",
   purple: "bg-[#f2ecff] text-[#8258c7]",
   blue: "bg-[#eaf3ff] text-[#4285c5]",
   green: "bg-[#eaf8ef] text-[#29945a]",

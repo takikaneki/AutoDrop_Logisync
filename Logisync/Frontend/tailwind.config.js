@@ -6,11 +6,24 @@ export default {
     extend: {
       colors: {
         brand: {
-          DEFAULT: "#ee4d2d",
-          dark: "#d73211",
-          soft: "#fff0e7",
-          softer: "#fff8f3",
-          line: "#ffe8d9",
+          DEFAULT: "#d9482b",
+          dark: "#bf3a20",
+          soft: "#fdeee9",
+          softer: "#fdf6f3",
+          line: "#f7d8ce",
+        },
+        orange: {
+          50: "#fdf6f3",
+          100: "#fdeee9",
+          200: "#f7d8ce",
+          300: "#ebb29f",
+          400: "#e36d53",
+          500: "#d9482b",
+          600: "#bf3a20",
+          700: "#9f2f1a",
+          800: "#822717",
+          900: "#6b2316",
+          950: "#3a1009",
         },
         ink: {
           DEFAULT: "#292929",

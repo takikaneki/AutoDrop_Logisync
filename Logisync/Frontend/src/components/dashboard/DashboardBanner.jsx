@@ -133,7 +133,7 @@ export default function DashboardBanner({ role, highlights = [] }) {
 
         {/* Image + live highlights */}
         <div className="min-w-0 space-y-3">
-          <div className="relative h-[150px] overflow-hidden rounded-2xl bg-gradient-to-br from-[#ff7a4d] to-[#ee4d2d] shadow-sm max-[900px]:h-[130px]">
+          <div className="relative h-[150px] overflow-hidden rounded-2xl bg-gradient-to-br from-[#ff7a4d] to-[#d9482b] shadow-sm max-[900px]:h-[130px]">
             {imgOk && (
               <img
                 src={c.image}

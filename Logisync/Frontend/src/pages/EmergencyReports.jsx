@@ -281,9 +281,9 @@ export default function EmergencyReports() {
             key: "ACKNOWLEDGED",
             label: "Acknowledged",
             count: counts.ACKNOWLEDGED,
-            textCls: "text-[#ea580c] dark:text-[#fb923c]",
+            textCls: "text-[#c84227] dark:text-[#fb923c]",
             badgeCls: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
-            barCls: "bg-[#ea580c]",
+            barCls: "bg-[#c84227]",
           },
           {
             key: "RESOLVED",
@@ -338,7 +338,7 @@ export default function EmergencyReports() {
             label: "Acknowledged",
             count: counts.ACKNOWLEDGED,
             badgeCls: STATUS_META.ACKNOWLEDGED.cls,
-            borderCls: "!border-[#fed7aa] !border-t-[3px] !border-t-[#ea580c] dark:!border-[#9a3412]/70 dark:!border-t-[#ea580c]",
+            borderCls: "!border-[#fed7aa] !border-t-[3px] !border-t-[#c84227] dark:!border-[#9a3412]/70 dark:!border-t-[#c84227]",
           },
           {
             key: "RESOLVED",
@@ -737,7 +737,7 @@ export default function EmergencyReports() {
                           coordNote.trim() || "Emergency report received and acknowledged by Coordinator.",
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#ea580c] px-3.5 py-1.5 text-[12.5px] font-bold text-white shadow-xs transition hover:bg-[#c2410c] disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#c84227] px-3.5 py-1.5 text-[12.5px] font-bold text-white shadow-xs transition hover:bg-[#c2410c] disabled:opacity-60"
                   >
                     <Icon name="check-check" className="h-3.5 w-3.5" />
                     <span>Acknowledge Receipt</span>

@@ -738,9 +738,9 @@ export default function Parcels() {
             key: "In Transit",
             label: "In Transit",
             count: counts["In Transit"],
-            activeText: "text-[#ea580c] dark:text-[#fb923c]",
-            hoverText: "hover:text-[#ea580c] dark:hover:text-[#fb923c]",
-            activeBar: "bg-[#ea580c]",
+            activeText: "text-[#c84227] dark:text-[#fb923c]",
+            hoverText: "hover:text-[#c84227] dark:hover:text-[#fb923c]",
+            activeBar: "bg-[#c84227]",
             activeBadge: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
           },
           {
@@ -889,7 +889,7 @@ export default function Parcels() {
         {/* Desktop & Tablet Table View */}
         <div className={`hidden min-[701px]:block ${tableScroll} !border-[#e5e8ee] dark:!border-night-line`}>
           <table className="w-full min-w-[820px] border-collapse">
-            <thead className="sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#ee4d2d]">
+            <thead className="sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#d9482b]">
               <tr>
                 <SortTh k="id">Tracking ID</SortTh>
                 <SortTh k="seller">Seller</SortTh>

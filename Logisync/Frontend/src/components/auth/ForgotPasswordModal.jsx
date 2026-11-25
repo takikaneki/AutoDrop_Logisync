@@ -242,7 +242,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
         onClick={(e) => e.stopPropagation()}
       >
         {/* Brand strip */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[#f97316] via-amber-500 to-[#ea580c]" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#d9482b] via-amber-500 to-[#c84227]" />
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md sm:px-7 sm:py-5">

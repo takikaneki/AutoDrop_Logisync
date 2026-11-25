@@ -215,7 +215,7 @@ function LogisticsGraphicBackground() {
         </div>
 
         <div className="ml-6 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#f97316]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#d9482b]">
             <Icon name="qr-code" className="text-base" />
           </span>
           <div>
@@ -247,7 +247,7 @@ function LogisticsGraphicBackground() {
 
       <div className="hidden xl:flex absolute bottom-[18%] right-[6%] flex-col gap-4">
         <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#f97316]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-[#d9482b]">
             <Icon name="shield-check" className="text-base" />
           </span>
           <div>
@@ -548,9 +548,9 @@ export default function Login({ portalRole: propPortalRole } = {}) {
             <button
               type="button"
               onClick={() => setContactOpen(true)}
-              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#f97316] sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
+              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#d9482b] sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
             >
-              <Icon name="headset" className="text-[11px] text-[#f97316] sm:text-xs" />
+              <Icon name="headset" className="text-[11px] text-[#d9482b] sm:text-xs" />
               <span>Contact Us</span>
             </button>
             <button
@@ -569,7 +569,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
       <main className="relative z-10 mx-auto my-auto flex w-full max-w-[560px] flex-1 items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
         <div className="w-full animate-popup overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
           {/* Top orange brand accent strip */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#f97316] via-amber-500 to-[#ea580c]" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-[#d9482b] via-amber-500 to-[#c84227]" />
 
           <div className="px-5 py-6 sm:px-10 sm:py-8">
             {/* Logo + title */}

@@ -222,7 +222,7 @@ function AirshipLoader({ progress, exiting }) {
             {/* Clean Geometric Truck SVG (Dark Charcoal body + LogiSync Orange roof bar) */}
             <svg width="128" height="60" viewBox="0 0 128 60" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="6" y="8" width="74" height="36" rx="3" fill="#18181B" />
-              <rect x="6" y="8" width="74" height="7" rx="2" fill="#ee4d2d" />
+              <rect x="6" y="8" width="74" height="7" rx="2" fill="#d9482b" />
               <path d="M82 18H105L120 31V44H82V18Z" fill="#18181B" />
               <path d="M87 22H103L113 31H87V22Z" fill="#3F3F46" />
               <circle cx="30" cy="45" r="10" fill="#FFFFFF" stroke="#18181B" strokeWidth="3" />
@@ -662,7 +662,7 @@ export default function WelcomeIntro({ onComplete }) {
                         aria-hidden="true"
                       >
                         <div
-                          className={`h-full origin-left bg-[#ee4d2d] transition-transform duration-700 ease-out ${
+                          className={`h-full origin-left bg-[#d9482b] transition-transform duration-700 ease-out ${
                             heroStepReveal > idx ? "scale-x-100" : "scale-x-0"
                           }`}
                         />
@@ -856,7 +856,7 @@ export default function WelcomeIntro({ onComplete }) {
       {/* 5. BOLD SHOPEE ORANGE SHOWCASE & SERVICES SECTION */}
       <section
         id="services"
-        className="relative overflow-hidden bg-[#ee4d2d] py-14 text-white sm:py-20"
+        className="relative overflow-hidden bg-[#d9482b] py-14 text-white sm:py-20"
       >
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-8">
           <h2 className="text-3xl font-black leading-tight tracking-tight text-white sm:text-5xl">
@@ -871,21 +871,21 @@ export default function WelcomeIntro({ onComplete }) {
           {/* 3 Checkmark Highlights */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs font-bold text-white sm:mt-6 sm:gap-8 sm:text-sm">
             <span className="inline-flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#d9482b]">
                 <Icon name="check" />
               </span>
               Hassle-free seller booking
             </span>
             <span className="hidden h-4 w-px bg-white/30 sm:inline-block" />
             <span className="inline-flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#d9482b]">
                 <Icon name="check" />
               </span>
               Video &amp; QR verification
             </span>
             <span className="hidden h-4 w-px bg-white/30 sm:inline-block" />
             <span className="inline-flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#ee4d2d]">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#d9482b]">
                 <Icon name="check" />
               </span>
               Real-time rider coordination
@@ -917,7 +917,7 @@ export default function WelcomeIntro({ onComplete }) {
               <button
                 type="button"
                 onClick={() => setDemoTracked(true)}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#ee4d2d] px-6 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#d73211]"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#d9482b] px-6 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#bf3a20]"
               >
                 <span>Track Shipment</span>
                 <Icon name="package-open" />
@@ -1013,7 +1013,7 @@ export default function WelcomeIntro({ onComplete }) {
               aria-hidden="true"
             >
               <div
-                className={`h-full origin-left bg-[#ee4d2d] transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`h-full origin-left bg-[#d9482b] transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   workflowGridShown ? "scale-x-100" : "scale-x-0"
                 }`}
               />

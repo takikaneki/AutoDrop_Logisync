@@ -33,7 +33,7 @@ export default function DashboardRightRail({
           </h2>
           <Link
             to={seeAllTo}
-            className={`text-[12.5px] font-semibold hover:underline ${isSlate ? "text-[#fb923c]" : "text-[#ee4d2d]"}`}
+            className={`text-[12.5px] font-semibold hover:underline ${isSlate ? "text-[#fb923c]" : "text-[#d9482b]"}`}
           >
             See all →
           </Link>
@@ -63,7 +63,7 @@ export default function DashboardRightRail({
                           ? "bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400"
                           : item.tone === "warn"
                           ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                          : "bg-[#fff0e5] text-[#ee4d2d] dark:bg-brand/20 dark:text-[#ffb98a]"
+                          : "bg-[#fff0e5] text-[#d9482b] dark:bg-brand/20 dark:text-[#ffb98a]"
                       }`}
                     >
                       <Icon name={item.icon || "package"} />
@@ -97,7 +97,7 @@ export default function DashboardRightRail({
         }${
           isSlate
             ? "bg-[#0f172a] border border-[#1e293b] shadow-[0_14px_30px_-14px_rgba(15,23,42,0.55)]"
-            : "bg-[#ee4d2d] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.5)]"
+            : "bg-[#d9482b] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.5)]"
         }`}
       >
         <div className="relative flex items-center justify-between gap-2">
@@ -126,7 +126,7 @@ export default function DashboardRightRail({
                 <div key={b.label} className="flex flex-1 flex-col items-center gap-1.5 h-full justify-end">
                   <div className={`relative flex w-full flex-1 items-end overflow-hidden rounded-lg ${isSlate ? "bg-white/10" : "bg-white/20"}`}>
                     <div
-                      className={`w-full rounded-lg transition-all duration-500 ${isSlate ? "bg-gradient-to-t from-[#ee4d2d] to-[#fb923c]" : "bg-white/90"}`}
+                      className={`w-full rounded-lg transition-all duration-500 ${isSlate ? "bg-gradient-to-t from-[#d9482b] to-[#fb923c]" : "bg-white/90"}`}
                       style={{ height: `${pct}%` }}
                       title={`${b.label}: ${b.value}`}
                     />

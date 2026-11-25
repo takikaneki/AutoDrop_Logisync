@@ -25,8 +25,8 @@ export const tableScroll =
   "w-full overflow-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel h-[calc(100vh-330px)] min-h-[380px]";
 export const tableScrollCompact =
   "w-full overflow-auto rounded-[10px] border border-[#e2e8f0] bg-white dark:border-night-line dark:bg-night-panel h-[360px]";
-export const tableHead = "sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#ee4d2d]";
-export const stickyThead = "sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#ee4d2d]";
+export const tableHead = "sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#d9482b]";
+export const stickyThead = "sticky top-0 z-10 bg-[#0f172a] text-white dark:bg-[#d9482b]";
 export const tableRow =
   "text-[#475569] odd:bg-white even:bg-brand-softer hover:bg-brand-soft/65 transition-colors dark:text-[#d1c9c2] dark:odd:bg-night-panel dark:even:bg-night-head/40 dark:hover:bg-night-head";
 export const muted = "text-[#64748b] dark:text-[#94a3b8]";

@@ -43,7 +43,7 @@ const PIPELINE_TONES = {
   green: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
   red: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
   gray: "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]",
-  orange: "bg-[#fff0e5] text-[#ee4d2d] dark:bg-brand/20",
+  orange: "bg-[#fff0e5] text-[#d9482b] dark:bg-brand/20",
 };
 
 export default function PortalHeroBanner({ role = "coordinator", pipeline = [], loading = false }) {
@@ -71,7 +71,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
           <div className="mt-5 flex flex-wrap items-center gap-2.5 max-[600px]:grid max-[600px]:grid-cols-2 max-[600px]:items-stretch">
             <Link
               to={cfg.primary.to}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#ee4d2d] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-bold text-white shadow-[0_8px_18px_-8px_rgba(238,77,45,0.65)] transition hover:bg-[#d94122]"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#d9482b] px-4 py-2.5 text-[13.5px] max-[600px]:px-2.5 max-[600px]:text-[12.5px] font-bold text-white shadow-[0_8px_18px_-8px_rgba(238,77,45,0.65)] transition hover:bg-[#bf3a20]"
             >
               <Icon name={cfg.primary.icon} className="shrink-0" />
               <span>{cfg.primary.label}</span>
@@ -128,7 +128,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
                   )}
                 </div>
               </div>
-              <Icon name="chevron-right" className="text-[10px] text-[#cbd5e1] transition group-hover:translate-x-0.5 group-hover:text-[#ee4d2d]" />
+              <Icon name="chevron-right" className="text-[10px] text-[#cbd5e1] transition group-hover:translate-x-0.5 group-hover:text-[#d9482b]" />
             </Link>
           ))}
         </div>

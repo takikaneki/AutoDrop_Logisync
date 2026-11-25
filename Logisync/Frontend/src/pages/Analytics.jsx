@@ -5,7 +5,7 @@ import { inputCls, panel } from "../components/styles.js";
 import { useParcels, useRiders } from "../store/records.js";
 import Icon from "../components/Icon.jsx";
 
-const COLORS = { Delivered: "#16a34a", "In Transit": "#f97316", "Failed Delivery": "#d94747" };
+const COLORS = { Delivered: "#16a34a", "In Transit": "#d9482b", "Failed Delivery": "#d94747" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
 
 export default function Analytics() {
@@ -120,7 +120,7 @@ export default function Analytics() {
                 <XAxis type="number" tickLine={false} tick={tick} />
                 <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} tick={tick} width={60} />
                 <Tooltip cursor={{ fill: "rgba(249,115,22,.08)" }} />
-                <Bar dataKey="Delivered" fill="#f97316" radius={[0, 6, 6, 0]} maxBarSize={20} />
+                <Bar dataKey="Delivered" fill="#d9482b" radius={[0, 6, 6, 0]} maxBarSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>

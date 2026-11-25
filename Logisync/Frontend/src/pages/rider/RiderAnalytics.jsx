@@ -128,7 +128,7 @@ export default function RiderAnalytics() {
                   <span className="text-[11px] font-bold text-slate-200">{b.value}</span>
                   <div className="relative flex w-full flex-1 items-end overflow-hidden rounded-lg bg-white/10">
                     <div
-                      className="w-full rounded-lg bg-gradient-to-t from-[#ee4d2d] to-[#fb923c] transition-all duration-500"
+                      className="w-full rounded-lg bg-gradient-to-t from-[#d9482b] to-[#fb923c] transition-all duration-500"
                       style={{ height: `${pct}%` }}
                       title={`${b.label}: ${b.value}`}
                     />

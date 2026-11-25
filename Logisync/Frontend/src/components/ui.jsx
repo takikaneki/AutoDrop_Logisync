@@ -4,7 +4,7 @@ import Icon from "./Icon.jsx";
 // Maliliit na reusable UI pieces: Avatar, StatusBadge, Modal
 
 const avatarTones = {
-  orange: "bg-[#fff0e7] text-[#ff6818]",
+  orange: "bg-[#fff0e7] text-[#d9482b]",
   purple: "bg-[#f2ecff] text-[#8258c7]",
   blue: "bg-[#eaf3ff] text-[#4285c5]",
   green: "bg-[#eaf8ef] text-[#29945a]",
@@ -42,7 +42,7 @@ const badgeTones = {
 export function CodBadge({ className = "" }) {
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#fff0e5] text-[#ea580c] border border-[#ffcca8] tracking-wide ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-[#fff0e5] text-[#c84227] border border-[#ffcca8] tracking-wide ${className}`}
       title="Cash on Delivery"
     >
       COD

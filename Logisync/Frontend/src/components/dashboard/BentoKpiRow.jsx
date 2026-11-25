@@ -46,7 +46,7 @@ const TONE_STYLES = {
     badge: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
   },
   orange: {
-    card: "bg-[#ee4d2d] text-white border-[#d73211] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.45)] dark:bg-[#c2410c] dark:border-[#9a3412]",
+    card: "bg-[#d9482b] text-white border-[#bf3a20] shadow-[0_14px_30px_-12px_rgba(238,77,45,0.45)] dark:bg-[#c2410c] dark:border-[#9a3412]",
     arrow: "bg-white/20 text-white group-hover:bg-white/30",
     label: "text-white",
     sub: "text-orange-100",

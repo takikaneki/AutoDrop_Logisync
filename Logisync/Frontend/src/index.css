@@ -303,7 +303,7 @@ body.dark {
 /* Accessibility: Enhanced Focus Indicators */
 .enhanced-focus :is(a, button, input, select, textarea, [tabindex], [role="switch"], [role="radio"]):focus-visible,
 .enhanced-focus :is(a, button, input, select, textarea):focus {
-  outline: 3px solid #ea580c !important;
+  outline: 3px solid #c84227 !important;
   outline-offset: 2px !important;
   box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.28) !important;
 }

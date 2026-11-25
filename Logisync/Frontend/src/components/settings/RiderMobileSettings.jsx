@@ -1212,8 +1212,8 @@ export default function RiderMobileSettings({ role = "rider" }) {
               {/* Bottom orange & navy wave accent */}
               <div className="pointer-events-none -mx-6 -mb-6 mt-6 leading-none" aria-hidden="true">
                 <svg viewBox="0 0 390 64" preserveAspectRatio="none" className="block h-14 w-full">
-                  <path d="M0,18 C120,56 260,8 390,32 L390,64 L0,64 Z" fill="#ff6818" opacity="0.22" />
-                  <path d="M0,28 C115,62 275,24 390,10 L390,64 L0,64 Z" fill="#ee4d2d" />
+                  <path d="M0,18 C120,56 260,8 390,32 L390,64 L0,64 Z" fill="#d9482b" opacity="0.22" />
+                  <path d="M0,28 C115,62 275,24 390,10 L390,64 L0,64 Z" fill="#d9482b" />
                   <path d="M270,64 C315,44 355,34 390,26 L390,64 Z" fill="#0f172a" />
                 </svg>
               </div>

@@ -62,12 +62,12 @@ export default function TermsModal({
         className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white text-slate-900 shadow-[0_24px_80px_rgba(15,23,42,0.35)] animate-popup"
       >
         {/* Top Accent Strip */}
-        <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#f97316] via-amber-500 to-[#ea580c]" />
+        <div className="h-1.5 w-full shrink-0 bg-gradient-to-r from-[#d9482b] via-amber-500 to-[#c84227]" />
 
         {/* Modal Header */}
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 pt-5 pb-4 sm:px-7">
           <div className="flex items-center gap-3.5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-[#f97316] border border-orange-200/70">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-[#d9482b] border border-orange-200/70">
               <Icon
                 name={isTerms ? "file-text" : "shield-check"}
                 className="h-5 w-5"
@@ -95,7 +95,7 @@ export default function TermsModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-orange-50 hover:text-[#f97316]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-orange-50 hover:text-[#d9482b]"
           >
             <Icon name="x" className="text-base" />
           </button>
@@ -108,8 +108,8 @@ export default function TermsModal({
             onClick={() => setActiveTab("terms")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition sm:text-sm ${
               isTerms
-                ? "bg-[#f97316] text-white shadow-sm shadow-orange-500/25"
-                : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#f97316]"
+                ? "bg-[#d9482b] text-white shadow-sm shadow-orange-500/25"
+                : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#d9482b]"
             }`}
           >
             <Icon name="file-text" className="text-xs" />
@@ -120,8 +120,8 @@ export default function TermsModal({
             onClick={() => setActiveTab("privacy")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition sm:text-sm ${
               !isTerms
-                ? "bg-[#f97316] text-white shadow-sm shadow-orange-500/25"
-                : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#f97316]"
+                ? "bg-[#d9482b] text-white shadow-sm shadow-orange-500/25"
+                : "bg-white text-slate-600 border border-slate-200/80 hover:border-orange-200 hover:text-[#d9482b]"
             }`}
           >
             <Icon name="shield-check" className="text-xs" />
@@ -139,7 +139,7 @@ export default function TermsModal({
           {/* Applicable Philippine Republic Acts Reference Box */}
           <div className="mb-6 rounded-2xl border border-orange-200/80 bg-gradient-to-br from-orange-50/70 via-white to-amber-50/40 p-4 sm:p-5">
             <div className="mb-3 flex items-center gap-2">
-              <Icon name="scale" className="text-[#ea580c]" />
+              <Icon name="scale" className="text-[#c84227]" />
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 sm:text-sm">
                 Applicable Philippine Legal Framework
               </h3>
@@ -151,11 +151,11 @@ export default function TermsModal({
                   className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#f97316]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-[#d9482b]">
                       <Icon name={act.icon} className="text-xs" />
                     </span>
                     <div>
-                      <p className="text-xs font-extrabold text-[#ea580c]">{act.code}</p>
+                      <p className="text-xs font-extrabold text-[#c84227]">{act.code}</p>
                       <p className="text-[11px] font-bold text-slate-800 leading-tight">
                         {act.title}
                       </p>
@@ -203,7 +203,7 @@ export default function TermsModal({
                       const hasLead = colonIdx > 0 && colonIdx < 45;
                       return (
                         <li key={idx} className="flex items-start gap-2.5">
-                          <Icon name="circle-check" className="mt-1 shrink-0 text-[11px] text-[#f97316]" />
+                          <Icon name="circle-check" className="mt-1 shrink-0 text-[11px] text-[#d9482b]" />
                           <span>
                             {hasLead ? (
                               <>
@@ -242,7 +242,7 @@ export default function TermsModal({
             <button
               type="button"
               onClick={() => setActiveTab(isTerms ? "privacy" : "terms")}
-              className="font-bold text-[#f97316] underline underline-offset-2 hover:text-[#ea580c]"
+              className="font-bold text-[#d9482b] underline underline-offset-2 hover:text-[#c84227]"
             >
               Read {isTerms ? "Privacy Policy" : "Terms and Conditions"} →
             </button>
@@ -267,7 +267,7 @@ export default function TermsModal({
               <button
                 type="button"
                 onClick={onAgree}
-                className="w-full rounded-xl bg-gradient-to-r from-[#f97316] to-[#ea580c] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:from-[#ea580c] hover:to-[#c2410c] sm:w-auto sm:text-sm"
+                className="w-full rounded-xl bg-gradient-to-r from-[#d9482b] to-[#c84227] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition hover:from-[#c84227] hover:to-[#c2410c] sm:w-auto sm:text-sm"
               >
                 <Icon name="check" className="mr-1.5" />
                 {alreadyAccepted ? "Accepted" : "Accept & Continue"}

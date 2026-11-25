@@ -191,8 +191,8 @@ function resolveDeliveryBanner(parcel) {
     return {
       status: "Return to Hub – Pending Confirmation",
       timestamp: formatDate(parcel?.rth_requested_at || parcel?.updated_at),
-      bg: "bg-[#fff7ed] border-[#fed7aa] text-[#9a3412] dark:bg-[#7c2d12]/30 dark:border-[#ea580c]/40 dark:text-[#fed7aa]",
-      iconBg: "bg-[#ea580c] text-white",
+      bg: "bg-[#fff7ed] border-[#fed7aa] text-[#9a3412] dark:bg-[#7c2d12]/30 dark:border-[#c84227]/40 dark:text-[#fed7aa]",
+      iconBg: "bg-[#c84227] text-white",
       icon: "history",
     };
   }
@@ -250,7 +250,7 @@ function DeliveryJourneyIllustration({ compact = false }) {
         />
         {/* Clean stage pill badges */}
         <span className="pointer-events-none absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-md border border-[#e7dac8]/90 bg-white/90 px-2 py-0.5 text-[10.5px] font-bold text-[#1e293b] shadow-2xs backdrop-blur-xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#ea580c]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#c84227]" />
           SPX Hub
         </span>
         <span className="pointer-events-none absolute left-1/2 top-[63%] -translate-x-1/2 inline-flex items-center gap-1 rounded-md border border-[#fed7aa]/90 bg-white/92 px-2 py-0.5 text-[10.5px] font-bold text-[#c2410c] shadow-2xs backdrop-blur-xs">

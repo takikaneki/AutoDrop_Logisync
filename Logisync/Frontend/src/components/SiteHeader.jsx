@@ -47,7 +47,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
               aria-label="Toggle sidebar"
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
-              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#ee4d2d] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line max-[820px]:hidden ${
+              className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#d9482b] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line max-[820px]:hidden ${
                 collapsed ? "flex" : "hidden"
               }`}
             >
@@ -61,7 +61,7 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
                 className="h-5 sm:h-6 w-auto shrink-0 object-contain"
               />
               <span className="h-4 w-[1.5px] shrink-0 bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
-              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-[#0f172a] min-[821px]:text-[#ee4d2d] dark:text-white">
+              <span className="truncate text-[15px] sm:text-[16px] font-black tracking-tight text-[#0f172a] min-[821px]:text-[#d9482b] dark:text-white">
                 LogiSync
               </span>
             </Link>

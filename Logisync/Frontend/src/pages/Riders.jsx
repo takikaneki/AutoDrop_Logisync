@@ -356,9 +356,9 @@ export default function Riders() {
             key: "On Delivery",
             label: "On Delivery",
             count: riders.filter((r) => r.status === "On Delivery").length,
-            textCls: "text-[#ea580c] dark:text-[#fb923c]",
+            textCls: "text-[#c84227] dark:text-[#fb923c]",
             badgeCls: "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]",
-            barCls: "bg-[#ea580c]",
+            barCls: "bg-[#c84227]",
           },
         ].map((tab) => {
           const active = status === tab.key;
