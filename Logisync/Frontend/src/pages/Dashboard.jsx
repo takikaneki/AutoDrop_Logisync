@@ -450,7 +450,33 @@ export default function Dashboard() {
         </div>
 
         <div className={panel}>
-          <h3 className="mb-5 max-[600px]:mb-2 text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
+          <div className="mb-4 max-[600px]:mb-2 flex flex-wrap items-start justify-between gap-3">
+            <h3 className="text-[17px] max-[600px]:text-[15.5px] font-bold">Status breakdown</h3>
+            {!loadingStats && !offlineEmpty && (
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[12px]">
+                {(() => {
+                  const totalPie = pie.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+                  return pie.map((item) => {
+                    const val = Number(item.value) || 0;
+                    const pct = totalPie ? Math.round((val / totalPie) * 100) : 0;
+                    return (
+                      <span
+                        key={item.name}
+                        className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-[#475569] dark:text-[#d1c9c2]"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: COLORS[item.name] }}
+                        />
+                        <span className="font-bold text-[#0f172a] dark:text-white">{val}</span>
+                        <span className="text-[#94a3b8]">({pct}%)</span>
+                      </span>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </div>
           {loadingStats ? (
             <ChartCardSkeleton variant="donut" heightClass="h-[380px] max-[820px]:h-[275px]" />
           ) : offlineEmpty ? (
@@ -468,6 +494,7 @@ export default function Dashboard() {
                   innerRadius={isMobile ? 50 : 70}
                   outerRadius={isMobile ? 80 : 112}
                   paddingAngle={2}
+                  stroke="none"
                 >
                   {pie.map((s) => <Cell key={s.name} fill={COLORS[s.name]} />)}
                 </Pie>
