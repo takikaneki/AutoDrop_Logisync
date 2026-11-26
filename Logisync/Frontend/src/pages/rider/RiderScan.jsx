@@ -197,8 +197,12 @@ export default function RiderScan() {
       setActionError("Please select a failure reason.");
       return;
     }
-    if (isImmediateRth && !proof) {
-      setActionError("Please upload or capture a proof photo before submitting Return to Hub.");
+    if (!proof) {
+      setActionError("Please upload or capture a proof photo as evidence before submitting.");
+      return;
+    }
+    if (!actionNotes.trim()) {
+      setActionError("Please enter notes explaining the failed delivery attempt.");
       return;
     }
 
@@ -246,6 +250,7 @@ export default function RiderScan() {
           reason: failedReason,
           scheduledFor: nextScheduledDay,
           notes: actionNotes.trim(),
+          proof,
         }).catch(() => null);
 
         if (res?.return_to_hub || res?.status === "RETURN_TO_HUB") {
@@ -674,52 +679,67 @@ export default function RiderScan() {
         )}
 
         {isImmediateRth && (
-          <div className="mt-3 space-y-3">
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-[12.5px] text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
-              <strong className="block font-bold">
-                <Icon name="undo-2" className="mr-1.5" />
-                Automatic Return to Hub (RTH)
-              </strong>
-              <p className="mt-1">
-                Selecting <strong>{failedReason}</strong> will immediately mark this parcel as{" "}
-                <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
-              <label className={labelCls} htmlFor="scanRthProof">
-                Upload Proof Photo (Required)
-              </label>
-              <input
-                id="scanRthProof"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={pickProofPhoto}
-                className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
-              />
-              {proofBusy && <p className="mt-2 text-xs text-[#888]">Processing photo…</p>}
-              {proof && (
-                <img
-                  src={proof}
-                  alt="RTH proof preview"
-                  className="mt-3 max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
-                />
-              )}
-            </div>
+          <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-[12.5px] text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
+            <strong className="block font-bold">
+              <Icon name="undo-2" className="mr-1.5" />
+              Automatic Return to Hub (RTH)
+            </strong>
+            <p className="mt-1">
+              Selecting <strong>{failedReason}</strong> will immediately mark this parcel as{" "}
+              <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
+            </p>
           </div>
         )}
 
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
+          <label className={labelCls} htmlFor="scanRthProof">
+            Upload Proof / Evidence Photo <span className="text-[#dc2626]">*</span>{" "}
+            <span className="font-normal text-[#64748b] dark:text-[#b8b0a8]">(Required)</span>
+          </label>
+          <input
+            id="scanRthProof"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={pickProofPhoto}
+            className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
+          />
+          {proofBusy && <p className="mt-2 text-xs text-[#888]">Processing photo…</p>}
+          {proof && (
+            <div className="mt-3 space-y-2">
+              <img
+                src={proof}
+                alt="Failed delivery evidence preview"
+                className="max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setProof("")}
+                  className="text-[12px] font-semibold text-[#dc2626] hover:underline dark:text-[#ff7b7b]"
+                >
+                  Remove photo
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="mt-3">
           <label className={labelCls} htmlFor="scanFailNote">
-            Additional Notes (Optional)
+            Notes <span className="text-[#dc2626]">*</span>{" "}
+            <span className="font-normal text-[#64748b] dark:text-[#b8b0a8]">(Required)</span>
           </label>
           <textarea
             id="scanFailNote"
             rows={2}
+            required
             value={actionNotes}
-            onChange={(e) => setActionNotes(e.target.value)}
-            placeholder="Add details about the delivery attempt..."
+            onChange={(e) => {
+              setActionNotes(e.target.value);
+              if (actionError) setActionError("");
+            }}
+            placeholder="Explain what happened during the delivery attempt (required)…"
             className={textareaCls}
           />
         </div>

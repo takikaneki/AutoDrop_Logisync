@@ -456,10 +456,13 @@ export default function RiderDeliveries() {
       toast(`${d.transaction_number} marked as delivered.`);
     } else {
       if (!reason) return setError("Please choose why the delivery failed.");
-      const immediateRth = isImmediateRthReason(reason);
-      if (immediateRth && !proof) {
-        return setError("Please upload or capture a proof photo before submitting Return to Hub.");
+      if (!proof) {
+        return setError("Please upload or capture a proof photo as evidence before submitting.");
       }
+      if (!note.trim()) {
+        return setError("Please enter notes explaining the failed delivery attempt.");
+      }
+      const immediateRth = isImmediateRthReason(reason);
       const result = markFailed(d.parcel_id, { reason, note: note.trim(), proof });
       reportFailure(d, { reason, note: note.trim(), proof, result });
       if (result?.outcome === "recipient_refused" || result?.outcome === "return_to_hub" || immediateRth) {
@@ -469,6 +472,7 @@ export default function RiderDeliveries() {
           reason,
           scheduledFor: result?.scheduledFor,
           notes: note.trim(),
+          proof,
         }).catch(() => {});
       }
       if (result?.outcome === "recipient_refused" || immediateRth) {
@@ -1132,61 +1136,80 @@ export default function RiderDeliveries() {
                 )}
 
                 {isImmediateRthReason(reason) && (
-                  <div className="mt-3 space-y-3">
-                    <div className="rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
-                      <strong className="block font-bold">
-                        <Icon name="undo-2" className="mr-1.5" />
-                        Automatic Return to Hub (RTH)
-                      </strong>
-                      <p className="mt-1">
-                        Selecting <strong>{reason}</strong> will automatically mark this parcel as{" "}
-                        <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
-                      <label className={labelCls} htmlFor="rthProofPhoto">
-                        Upload Proof Photo (Required)
-                      </label>
-                      <input
-                        id="rthProofPhoto"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={pickPhoto}
-                        className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
-                      />
-                      {busy && <p className="mt-2 text-[12px] text-[#888]">Processing proof photo…</p>}
-                      {proof && (
-                        <div className="mt-3">
-                          <img
-                            src={proof}
-                            alt="Return to Hub proof preview"
-                            className="max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
-                          />
-                        </div>
-                      )}
-                    </div>
+                  <div className="mt-3 rounded-xl border border-[#f87171] bg-[#fef2f2] p-3 text-[12.5px] text-[#b91c1c] dark:border-[#991b1b] dark:bg-[#2e1818] dark:text-[#fca5a5]">
+                    <strong className="block font-bold">
+                      <Icon name="undo-2" className="mr-1.5" />
+                      Automatic Return to Hub (RTH)
+                    </strong>
+                    <p className="mt-1">
+                      Selecting <strong>{reason}</strong> will automatically mark this parcel as{" "}
+                      <strong>Return to Hub</strong> and notify the Coordinator for physical arrival confirmation.
+                    </p>
                   </div>
                 )}
+
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-night-line dark:bg-night-head/60">
+                  <label className={labelCls} htmlFor="failedProofPhoto">
+                    Upload Proof / Evidence Photo <span className="text-[#dc2626]">*</span>{" "}
+                    <span className="font-normal text-[#64748b] dark:text-[#b8b0a8]">(Required)</span>
+                  </label>
+                  <input
+                    id="failedProofPhoto"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={pickPhoto}
+                    className="block w-full text-[13px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3.5 file:py-2 file:text-[12.5px] file:font-bold file:text-white hover:file:bg-brand-dark"
+                  />
+                  {busy && <p className="mt-2 text-[12px] text-[#888]">Processing proof photo…</p>}
+                  {proof && (
+                    <div className="mt-3 space-y-2">
+                      <img
+                        src={proof}
+                        alt="Failed delivery evidence preview"
+                        className="max-h-[200px] w-full rounded-xl border border-[#eee] bg-white object-contain dark:border-night-line"
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setProof("")}
+                          className="text-[12px] font-semibold text-[#dc2626] hover:underline dark:text-[#ff7b7b]"
+                        >
+                          Remove photo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
             <div className="mt-4">
               <label className={labelCls} htmlFor="note">
-                Notes {action.type === "failed" && reason === "Other" ? "(required)" : "(optional)"}
+                {action.type === "failed" ? (
+                  <>
+                    Notes <span className="text-[#dc2626]">*</span>{" "}
+                    <span className="font-normal text-[#64748b] dark:text-[#b8b0a8]">(Required)</span>
+                  </>
+                ) : (
+                  "Notes (optional)"
+                )}
               </label>
               <textarea
                 id="note"
                 rows={2}
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                required={action.type === "failed"}
+                onChange={(e) => {
+                  setNote(e.target.value);
+                  if (error) setError("");
+                }}
                 maxLength={300}
                 className={textareaCls}
                 placeholder={
                   action.type === "delivered"
                     ? "e.g. Received by the recipient's sister"
-                    : "Add details about the delivery attempt if needed"
+                    : "Explain what happened during the delivery attempt (required)…"
                 }
               />
             </div>
