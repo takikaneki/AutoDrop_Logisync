@@ -190,7 +190,7 @@ export default function ParcelRecords() {
           },
           {
             key: "RETURN_TO_HUB",
-            label: "Return/Failed",
+            label: "Return / Failed",
             activeText: "text-[#dc2626] dark:text-[#f87171]",
             activeBar: "bg-[#dc2626]",
             activeBadge: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
@@ -206,11 +206,11 @@ export default function ParcelRecords() {
               role="tab"
               aria-selected={active}
               onClick={() => toggle(tab.key)}
-              className={`relative flex items-center justify-center gap-1 px-1 py-3.5 text-[11px] max-[360px]:text-[10px] leading-tight transition ${tab.activeText} ${
+              className={`relative flex items-center justify-center gap-1 px-1 py-2.5 text-[11px] max-[360px]:text-[10px] leading-[1.15] transition ${tab.activeText} ${
                 active ? "font-extrabold" : "font-bold opacity-85 hover:opacity-100"
               }`}
             >
-              <span className="truncate">{tab.label}</span>
+              <span className="whitespace-normal break-words text-center">{tab.label}</span>
               <span
                 className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${tab.activeBadge}`}
               >
