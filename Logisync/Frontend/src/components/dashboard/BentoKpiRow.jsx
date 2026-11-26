@@ -18,11 +18,11 @@ const TONE_STYLES = {
     badge: "bg-[#f3f5f9] text-[#52627a] dark:bg-night-head dark:text-[#d1c9c2]",
   },
   yellow: {
-    card: "bg-white text-[#1e293b] border-[#fde047] border-t-[4px] border-t-[#facc15] shadow-sm dark:bg-night-panel dark:border-yellow-500/40 dark:border-t-[#facc15] dark:text-[#f1eeeb]",
-    arrow: "bg-[#fef9c3] text-[#a16207] group-hover:bg-[#fef08a] dark:bg-yellow-500/20 dark:text-[#facc15]",
-    label: "text-[#27364f] dark:text-[#f1eeeb]",
-    sub: "text-[#64748b] dark:text-[#b8b0a8]",
-    badge: "bg-[#fef9c3] text-[#a16207] dark:bg-yellow-500/20 dark:text-[#facc15]",
+    card: "bg-[#eab308] text-white border-[#ca8a04] shadow-[0_14px_30px_-12px_rgba(234,179,8,0.45)] dark:bg-[#ca8a04] dark:border-[#a16207]",
+    arrow: "bg-white/20 text-white group-hover:bg-white/30",
+    label: "text-white",
+    sub: "text-yellow-50",
+    badge: "bg-white/20 text-white",
   },
   blue: {
     card: "bg-white text-[#1e293b] border-[#bfdbfe] border-t-[4px] border-t-[#3b82f6] shadow-sm dark:bg-night-panel dark:border-blue-500/40 dark:border-t-[#3b82f6] dark:text-[#f1eeeb]",

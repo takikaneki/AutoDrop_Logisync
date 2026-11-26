@@ -5,7 +5,7 @@ import { inputCls, panel } from "../components/styles.js";
 import { useParcels, useRiders } from "../store/records.js";
 import Icon from "../components/Icon.jsx";
 
-const COLORS = { Delivered: "#16a34a", "In Transit": "#eab308", "Failed Delivery": "#d94747" };
+const COLORS = { Delivered: "#16a34a", "In Transit": "#d9482b", "Failed Delivery": "#d94747" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
 
 export default function Analytics() {
