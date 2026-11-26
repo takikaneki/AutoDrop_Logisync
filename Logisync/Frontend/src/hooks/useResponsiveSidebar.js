@@ -40,20 +40,27 @@ export default function useResponsiveSidebar() {
   }, []);
 
   useEffect(() => {
-    if (!mobileOpen) return undefined;
+    const isOverlayOpen = mobileOpen || (!collapsed && getViewportTier() === "medium");
+    if (!isOverlayOpen) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e) => {
-      if (e.key === "Escape") setMobileOpen(false);
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        if (getViewportTier() === "medium") setCollapsed(true);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, collapsed]);
 
-  const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const closeMobile = useCallback(() => {
+    setMobileOpen(false);
+    if (getViewportTier() === "medium") setCollapsed(true);
+  }, []);
   const closeDesktop = useCallback(() => setCollapsed(true), []);
 
   const toggleSidebar = useCallback(() => {

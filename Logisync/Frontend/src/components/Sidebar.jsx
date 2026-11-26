@@ -115,12 +115,21 @@ export default function Sidebar({ collapsed, mobileOpen = false, onClose, onClos
           aria-hidden="true"
         />
       )}
+      {!collapsed && (
+        <div
+          className="fixed inset-0 z-[65] hidden bg-black/35 backdrop-blur-[1px] transition-opacity min-[821px]:max-[1199px]:block"
+          onClick={onCloseDesktop}
+          aria-hidden="true"
+        />
+      )}
 
       <aside
-        className={`relative shrink-0 bg-[#d9482b] text-white border-r border-[#bf3a20] shadow-lg transition-[width,transform] duration-200 dark:border-night-line dark:bg-night-panel print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[280px] max-[820px]:max-w-[85vw] max-[820px]:shadow-2xl ${
+        className={`relative shrink-0 bg-[#d9482b] text-white border-r border-[#bf3a20] shadow-lg transition-[width,transform] duration-200 dark:border-night-line dark:bg-night-panel print:hidden max-[820px]:fixed max-[820px]:inset-y-0 max-[820px]:left-0 max-[820px]:z-[70] max-[820px]:h-[100dvh] max-[820px]:w-[272px] max-[820px]:max-w-[84vw] max-[820px]:shadow-2xl ${
           mobileOpen ? "max-[820px]:translate-x-0" : "max-[820px]:-translate-x-full"
-        } min-[821px]:sticky min-[821px]:top-0 min-[821px]:z-40 min-[821px]:h-screen min-[821px]:translate-x-0 ${
-          collapsed ? "min-[821px]:w-0 min-[821px]:overflow-hidden min-[821px]:border-r-0" : "min-[821px]:w-[250px]"
+        } min-[821px]:max-[1199px]:fixed min-[821px]:max-[1199px]:inset-y-0 min-[821px]:max-[1199px]:left-0 min-[821px]:max-[1199px]:z-[70] min-[821px]:max-[1199px]:h-[100dvh] min-[821px]:max-[1199px]:w-[248px] min-[821px]:max-[1199px]:shadow-2xl ${
+          collapsed ? "min-[821px]:max-[1199px]:-translate-x-full" : "min-[821px]:max-[1199px]:translate-x-0"
+        } min-[1200px]:sticky min-[1200px]:top-0 min-[1200px]:z-40 min-[1200px]:h-screen min-[1200px]:translate-x-0 ${
+          collapsed ? "min-[1200px]:w-0 min-[1200px]:overflow-hidden min-[1200px]:border-r-0" : "min-[1200px]:w-[238px] xl:w-[250px]"
         }`}
       >
         <div className={`logisync-sidebar-scroll flex h-full flex-col overflow-y-auto overflow-x-hidden py-4 ${collapsed ? "min-[821px]:px-2.5 max-[820px]:px-4" : "px-4"}`}>

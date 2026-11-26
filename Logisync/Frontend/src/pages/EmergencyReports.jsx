@@ -557,7 +557,7 @@ export default function EmergencyReports() {
         </div>
 
         {/* Mobile Card View */}
-        <div className="min-h-[320px] space-y-3.5 overflow-y-auto pr-1 min-[768px]:hidden">
+        <div className="space-y-3.5 min-[768px]:hidden">
           {loading ? (
             <ParcelCardListSkeleton count={4} label="Loading emergency reports" />
           ) : offlineEmpty ? (

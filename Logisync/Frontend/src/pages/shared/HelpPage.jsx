@@ -35,7 +35,7 @@ export default function HelpPage() {
       <Topbar title="FAQs" subtitle="Quick answers and guides for common questions." />
       <div
         id="faq"
-        className="grid w-full min-h-[calc(100vh-148px)] grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+        className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
       >
         <section className={`${panel} flex w-full flex-col p-5 sm:p-6`}>
           <div className="mb-3 border-b border-[#edf0f4] pb-3.5 dark:border-night-line">

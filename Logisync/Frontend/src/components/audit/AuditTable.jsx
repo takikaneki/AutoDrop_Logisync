@@ -153,7 +153,7 @@ export default function AuditTable({ note }) {
           </div>
 
           {/* Mobile Card List */}
-          <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
+          <div className="min-[701px]:hidden space-y-3">
             {loading ? (
               <ParcelCardListSkeleton count={4} label="Loading activity log" />
             ) : offlineEmpty ? (

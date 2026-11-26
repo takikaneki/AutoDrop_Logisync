@@ -163,7 +163,7 @@ export default function SellerDashboard() {
       </section>
 
       {/* RECENT PARCELS (Desktop only; mobile Home shows Banner -> Cards -> Action Needed) */}
-      <section className={`hidden min-[821px]:block ${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
+      <section className={`hidden min-[821px]:block ${panel} overflow-hidden p-6 max-[600px]:p-4`}>
         <PanelTitle icon="package" action={<PanelLink to="/seller/parcels">View All</PanelLink>}>Recent Parcels</PanelTitle>
 
         {loading ? (

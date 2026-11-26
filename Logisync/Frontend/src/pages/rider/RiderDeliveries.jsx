@@ -881,11 +881,11 @@ export default function RiderDeliveries() {
           <GroupTitle count={items.length}>
             <Icon name="map-pin" className="text-brand" /> {area}
           </GroupTitle>
-          <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{items.map(deliverCard)}</div>
+          <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">{items.map(deliverCard)}</div>
         </div>
       ));
     } else {
-      body = <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{shown.map(deliverCard)}</div>;
+      body = <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">{shown.map(deliverCard)}</div>;
     }
   } else if (stage === STAGE.DELIVERED) {
     const days = new Map();
@@ -899,7 +899,7 @@ export default function RiderDeliveries() {
         <GroupTitle count={list.filter((d) => getManilaDateKey(getDeliveryTimestamp(d)) === k).length}>
           {formatDeliveryDayLabel(g.ts)}
         </GroupTitle>
-        <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{g.items.map(deliveredCard)}</div>
+        <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">{g.items.map(deliveredCard)}</div>
       </div>
     ));
   } else {
@@ -915,7 +915,7 @@ export default function RiderDeliveries() {
             >
               <Icon name="undo-2" /> Return to Hub
             </GroupTitle>
-            <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{rthItems.map(failedCard)}</div>
+            <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">{rthItems.map(failedCard)}</div>
           </div>
         )}
         {otherFailed.length > 0 && (
@@ -923,7 +923,7 @@ export default function RiderDeliveries() {
             <GroupTitle count={otherFailed.length} tone="text-[#d94747]">
               <Icon name="circle-alert" /> Failed Attempts
             </GroupTitle>
-            <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{otherFailed.map(failedCard)}</div>
+            <div className="grid grid-cols-2 gap-3.5 max-[760px]:grid-cols-1">{otherFailed.map(failedCard)}</div>
           </div>
         )}
       </>

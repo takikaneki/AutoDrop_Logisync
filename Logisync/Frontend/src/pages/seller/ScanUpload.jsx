@@ -147,11 +147,11 @@ export default function ScanUpload() {
         subtitle="Scan the QR code on the parcel (or type its transaction number), then view shipment details or upload your video proof."
       />
 
-      <section className={`${panel} p-[30px] max-[600px]:p-5`}>
+      <section className={`${panel} p-6 sm:p-7 max-[600px]:p-4`}>
         <ScanPanel onValue={lookup} busy={looking} />
         {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
         {lookupError && (
-          <div className="mx-auto mt-4 max-w-[360px]">
+          <div className="mx-auto mt-4 max-w-[520px]">
             <Notice tone="error" icon="circle-alert" role="alert">
               {lookupError}{" "}
               {/not found/i.test(lookupError) && (

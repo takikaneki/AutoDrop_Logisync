@@ -335,9 +335,9 @@ export default function RiderScan() {
       </Topbar>
 
       {!parcel && (
-        <section className={`${panel} mb-6 p-[30px] max-[600px]:p-5`}>
+        <section className={`${panel} mb-6 p-6 sm:p-7 max-[600px]:p-4`}>
           {expect && (
-            <div className="mx-auto mb-5 max-w-[360px]">
+            <div className="mx-auto mb-5 max-w-[520px]">
               <Notice tone="info" icon="qr-code">
                 Scanning for assigned parcel <strong>{expect}</strong>.{" "}
                 <button onClick={reset} className="font-bold underline">
@@ -349,7 +349,7 @@ export default function RiderScan() {
           <ScanPanel onValue={lookup} busy={looking} autoStart={autoStart} />
           {looking && <p className="mt-4 text-center text-[14px] text-[#999]">Looking up parcel…</p>}
           {error && (
-            <div className="mx-auto mt-4 max-w-[360px]">
+            <div className="mx-auto mt-4 max-w-[520px]">
               <Notice tone="error" icon="circle-alert" role="alert">
                 {error}
               </Notice>
@@ -359,7 +359,7 @@ export default function RiderScan() {
       )}
 
       {parcel && (
-        <section className={`${panel} mb-6 space-y-6 p-[30px] max-[600px]:p-5`}>
+        <section className={`${panel} mb-6 space-y-6 p-6 sm:p-7 max-[600px]:p-4`}>
           {/* Header & Badges */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>

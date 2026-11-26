@@ -33,7 +33,7 @@ export default function ParcelCreated({ parcel, onReset }) {
     : "No (Standard Handling)";
 
   return (
-    <section className={`${panel} max-w-4xl space-y-6 p-[30px] max-[600px]:p-5`}>
+    <section className={`${panel} mx-auto max-w-4xl space-y-6 p-6 sm:p-7 max-[600px]:p-4`}>
       <Notice tone="success" icon="circle-check" role="status">
         <strong>Parcel registered successfully.</strong> Next step: upload the packing video proof so the Coordinator can verify your parcel and declaration.
       </Notice>

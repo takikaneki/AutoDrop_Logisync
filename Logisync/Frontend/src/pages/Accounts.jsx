@@ -169,7 +169,7 @@ export default function Accounts() {
     <>
       <Topbar title="Accounts" subtitle="Create Seller, Rider, and Coordinator accounts. Only the Coordinator can do this." />
 
-      <div className="grid grid-cols-[400px_1fr] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[1100px]:grid-cols-1">
+      <div className="grid grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)] items-stretch overflow-hidden rounded-2xl border-[1.5px] border-brand/45 border-t-[3px] border-t-brand bg-white shadow-xs dark:border-brand/35 dark:border-t-brand dark:bg-night-panel max-[1100px]:grid-cols-1">
         <section className="border-r border-brand-line bg-[#f8fafc]/70 p-6 dark:border-night-line dark:bg-[#1d1a17]/60 max-[1100px]:border-r-0 max-[1100px]:border-b">
           <h2 className="mb-1 text-[17px] font-bold">
             <Icon name="user-plus" className="mr-2 text-orange-500" />
@@ -330,7 +330,7 @@ export default function Accounts() {
             )}
 
             {form.role === "rider" && (
-              <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="mb-4 grid grid-cols-2 gap-3 max-[420px]:grid-cols-1">
                 <div>
                   <label htmlFor="acc-zone" className={labelCls}>
                     Zone
@@ -465,7 +465,7 @@ export default function Accounts() {
           )}
           {!loadError && (
             <>
-              <div className="hidden min-[701px]:block h-[calc(100vh-310px)] min-h-[400px] overflow-auto rounded-[10px] border border-[#eee] dark:border-night-line">
+              <div className="hidden min-[701px]:block max-h-[min(680px,calc(100dvh-280px))] min-h-[260px] overflow-auto rounded-[10px] border border-[#eee] dark:border-night-line">
                 <table className="w-full min-w-[520px] border-collapse">
                   <thead className={stickyThead}>
                     <tr>

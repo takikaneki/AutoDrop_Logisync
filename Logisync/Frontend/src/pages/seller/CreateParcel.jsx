@@ -908,7 +908,7 @@ export default function CreateParcel() {
 
             {/* Centered 360x360 Cube QR Scanner & Manual Transaction Number Lookup (Matching ScanPanel Format) */}
             <div className="border-b border-[#f1f1f1] pb-6 dark:border-night-line">
-              <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-5">
+              <div className="mx-auto flex w-full max-w-[520px] max-[600px]:max-w-full flex-col items-center gap-5">
                 <div className="w-full">
                   <QrScanner
                     onScan={onScan}

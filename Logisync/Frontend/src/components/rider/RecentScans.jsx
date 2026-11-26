@@ -21,13 +21,13 @@ export default function RecentScans({ scans, limit = 5, action }) {
   const rows = scans.slice(0, limit);
 
   return (
-    <section className={`${panel} overflow-hidden p-[30px] max-[600px]:p-4`}>
+    <section className={`${panel} overflow-hidden p-6 max-[600px]:p-4`}>
       <PanelTitle icon="history" action={action}>Recent Scans</PanelTitle>
       {rows.length === 0 ? (
         <EmptyState icon="qr-code" title="No scans yet" text="Parcels you scan will show up here, then move to To Be Delivered." />
       ) : (
         <>
-          {/* Mobile Cards View (max-[820px] ONLY) */}
+          {/* Mobile Cards View (max-[820px]) */}
           <div className="space-y-3 min-[821px]:hidden">
             {rows.map((s) => {
               const stage = stageOf(s);
@@ -95,9 +95,9 @@ export default function RecentScans({ scans, limit = 5, action }) {
             })}
           </div>
 
-          {/* Desktop Table View (min-[821px] — 100% unchanged) */}
+          {/* Tablet / Desktop Site / Laptop Table View (min-[821px]) */}
           <div className={`hidden min-[821px]:block ${tableScrollCompact}`}>
-            <table className="w-full min-w-[720px] border-collapse">
+            <table className="w-full min-w-[660px] border-collapse">
               <thead className={stickyThead}>
                 <tr>{["Transaction no.", "Receiver", "Seller", "Verification", "Delivery", "Scanned", ""].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
               </thead>
@@ -107,19 +107,19 @@ export default function RecentScans({ scans, limit = 5, action }) {
                   const badge = stageBadge[stage];
                   return (
                     <tr key={s.parcel_id} className="text-[#666] hover:bg-[#fffaf7] dark:text-[#d1c9c2] dark:hover:bg-night-head">
-                      <td className={`${td} whitespace-nowrap font-bold text-[#333] dark:text-[#f1eeeb]`}>{s.transaction_number}</td>
-                      <td className={td}>{s.receiver || "—"}</td>
-                      <td className={td}>{s.seller || "—"}</td>
-                      <td className={td}><StatusBadge status={s.status} /></td>
-                      <td className={td}>
+                      <td className={`${td} whitespace-nowrap font-mono font-bold text-[#333] dark:text-[#f1eeeb]`}>{s.transaction_number}</td>
+                      <td className={`${td} max-w-[160px] truncate`}>{s.receiver || "—"}</td>
+                      <td className={`${td} max-w-[150px] truncate`}>{s.seller || "—"}</td>
+                      <td className={`${td} whitespace-nowrap`}><StatusBadge status={s.status} /></td>
+                      <td className={`${td} whitespace-nowrap`}>
                         {badge ? (
-                          <span className={`inline-flex whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${badge[1]}`}>{badge[0]}</span>
+                          <span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${badge[1]}`}>{badge[0]}</span>
                         ) : (
                           <span className="text-[12px] text-[#aaa]">Not cleared</span>
                         )}
                       </td>
                       <td className={`${td} whitespace-nowrap`}>{formatDate(s.at)}</td>
-                      <td className={`${td} text-right`}>
+                      <td className={`${td} whitespace-nowrap text-right`}>
                         <Link to={`/rider/scan?txn=${encodeURIComponent(s.transaction_number)}`} className="font-semibold text-brand hover:underline">Check again</Link>
                       </td>
                     </tr>

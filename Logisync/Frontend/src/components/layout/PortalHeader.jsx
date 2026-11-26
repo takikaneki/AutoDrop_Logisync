@@ -38,12 +38,12 @@ export default function PortalHeader({ role, collapsed = false, mobileOpen = fal
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
               className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#d9482b] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line ${
-                collapsed ? "flex" : "flex min-[821px]:hidden"
+                collapsed ? "flex" : "flex min-[1200px]:hidden"
               } ${isModernMobile ? "max-[820px]:hidden" : ""}`}
             >
               <Icon name="menu" className="text-[18px]" />
             </button>
-            <Link to={toPath(role, "")} className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[821px]:hidden"}`}>
+            <Link to={toPath(role, "")} className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[1200px]:hidden"}`}>
               <img
                 src={SPX_LOGO_DATA_URL}
                 alt="SPX Express"

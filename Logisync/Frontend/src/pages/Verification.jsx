@@ -341,10 +341,10 @@ export default function Verification() {
       </Topbar>
 
       {scanOpen && (
-        <section className={`${panel} mb-6 p-[30px] max-[600px]:p-5`}>
+        <section className={`${panel} mb-6 p-6 sm:p-7 max-[600px]:p-4`}>
           <ScanPanel onValue={onScanValue} busy={looking} btnClass="bg-brand hover:bg-brand-dark" />
           {lookupError && (
-            <p role="alert" className="mx-auto mt-4 max-w-[360px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
+            <p role="alert" className="mx-auto mt-4 max-w-[520px] rounded-lg bg-[#fff1f1] px-4 py-3 text-center text-sm text-[#d94a4a]">
               {lookupError}
             </p>
           )}
@@ -493,7 +493,7 @@ export default function Verification() {
         </div>
 
         {/* Mobile Cards */}
-        <div className="min-[701px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3 pr-1">
+        <div className="min-[701px]:hidden space-y-3">
           {loading && <ParcelCardListSkeleton count={4} label="Loading verification queue" />}
           {!loading && offlineEmpty && (
             <OfflineState compact title="Verification queue unavailable offline" text="Reconnect to review parcels waiting for verification." onRetry={load} />

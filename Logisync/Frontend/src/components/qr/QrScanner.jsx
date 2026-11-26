@@ -86,15 +86,15 @@ export default function QrScanner({
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[360px]">
+    <div className="mx-auto w-full max-w-[440px] max-[600px]:max-w-[360px]">
       <div
-        className="relative mx-auto aspect-square w-full max-w-[360px] overflow-hidden rounded-2xl border border-slate-800/40 bg-gradient-to-b from-[#25211e] to-[#1c1917] shadow-inner"
+        className="relative mx-auto aspect-square w-full max-w-[440px] max-h-[420px] max-[600px]:max-w-[360px] max-[600px]:max-h-[340px] overflow-hidden rounded-2xl border border-slate-800/40 bg-gradient-to-b from-[#25211e] to-[#1c1917] shadow-inner"
       >
         <div id={regionId} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
 
         {/* Subtle QR Viewfinder Corner Brackets */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
-          <div className="relative h-[210px] w-[210px] max-h-[75%] max-w-[75%]">
+          <div className="relative h-[230px] w-[230px] max-h-[72%] max-w-[72%]">
             <span className="absolute top-0 left-0 h-6 w-6 rounded-tl-lg border-t-[3px] border-l-[3px] border-brand/80" />
             <span className="absolute top-0 right-0 h-6 w-6 rounded-tr-lg border-t-[3px] border-r-[3px] border-brand/80" />
             <span className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-lg border-b-[3px] border-l-[3px] border-brand/80" />
@@ -108,10 +108,10 @@ export default function QrScanner({
               <Icon name="qr-code" className="text-3xl" />
             </span>
             <div>
-              <p className="text-[13.5px] font-semibold text-white/90">
+              <p className="text-[14px] font-semibold text-white/90">
                 {starting ? "Starting camera…" : "Camera is off"}
               </p>
-              <p className="mt-0.5 text-[12px] text-slate-400">
+              <p className="mt-0.5 text-[12.5px] text-slate-400">
                 Press <strong className="font-semibold text-slate-200">{startLabel}</strong> below to scan the parcel QR code.
               </p>
             </div>
@@ -122,25 +122,25 @@ export default function QrScanner({
       {error && (
         <p
           role="alert"
-          className="mx-auto mt-3 max-w-[360px] rounded-lg bg-[#fff0f0] px-3.5 py-2 text-center text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]"
+          className="mx-auto mt-3 max-w-[440px] rounded-lg bg-[#fff0f0] px-3.5 py-2 text-center text-[13px] text-[#c23a3a] dark:bg-[#d94747]/15 dark:text-[#f2a1a1]"
         >
           {error}
         </p>
       )}
 
-      <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2.5">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
         {!running ? (
           <button
             type="button"
             onClick={start}
             disabled={starting}
-            className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[13.5px] font-bold text-white shadow-xs transition disabled:opacity-60 ${btnClass}`}
+            className={`inline-flex min-w-[210px] max-[420px]:w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-[14px] font-bold text-white shadow-xs transition disabled:opacity-60 ${btnClass}`}
           >
             <Icon name="camera" />
             <span>{starting ? "Starting…" : startLabel}</span>
           </button>
         ) : (
-          <button type="button" onClick={stop} className={btnGhost}>
+          <button type="button" onClick={stop} className={`${btnGhost} min-w-[180px] max-[420px]:w-full`}>
             <Icon name="square" className="mr-1.5" />
             Stop camera
           </button>
@@ -148,7 +148,7 @@ export default function QrScanner({
       </div>
 
       {showHint && (
-        <p className="mt-2.5 text-center text-[12px] text-[#999]">
+        <p className="mt-2.5 text-center text-[12.5px] text-[#888] dark:text-[#b8b0a8]">
           Point the camera at the QR code on the parcel and keep it inside the frame.
         </p>
       )}

@@ -454,7 +454,7 @@ export default function Complaints() {
         </div>
 
         {/* Mobile View: Dedicated Individual Cards */}
-        <div className="min-[768px]:hidden max-h-[calc(100vh-330px)] min-h-[320px] overflow-y-auto space-y-3.5 pr-1">
+        <div className="min-[768px]:hidden space-y-3.5">
           {loading ? (
             <ParcelCardListSkeleton count={4} label="Loading complaints" />
           ) : offlineEmpty ? (

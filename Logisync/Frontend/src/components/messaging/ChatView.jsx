@@ -287,7 +287,7 @@ export default function ChatView({
   return (
     <div className="min-w-0">
       {!online && hasLoadedData && <CachedDataNotice updatedAt={cachedAt} />}
-      <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[205px_minmax(0,1fr)] lg:grid-cols-[235px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]"} ${surface}`}>
+      <div className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[clamp(460px,calc(100dvh-160px),780px)] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${directMode ? "" : "md:grid-cols-[210px_minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]"} ${surface}`}>
       {/* LISTAHAN NG USAPAN */}
       {!directMode && (
         <aside className={`min-w-0 w-full max-w-full min-h-0 flex-col overflow-hidden border-slate-200 dark:border-slate-700 md:border-r ${active ? "hidden md:flex" : "flex"}`}>

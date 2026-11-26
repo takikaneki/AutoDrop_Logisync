@@ -96,10 +96,10 @@ function EmptyFigure({ icon }) {
 
 export function EmptyState({ icon = "package-open", title = "Nothing here yet", text = "" }) {
   return (
-    <div className="flex min-h-[420px] max-[600px]:min-h-[300px] flex-col items-center justify-center px-4 py-14 text-center text-[#999]">
+    <div className="flex min-h-[220px] max-[600px]:min-h-[180px] flex-col items-center justify-center px-4 py-10 max-[600px]:py-8 text-center text-[#999]">
       <EmptyFigure icon={icon} />
       <strong className="block text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">{title}</strong>
-      {text && <p className="text-[13px] mt-1 text-[#64748b] dark:text-[#b8b0a8]">{text}</p>}
+      {text && <p className="text-[13px] mt-1 max-w-[420px] text-[#64748b] dark:text-[#b8b0a8]">{text}</p>}
     </div>
   );
 }

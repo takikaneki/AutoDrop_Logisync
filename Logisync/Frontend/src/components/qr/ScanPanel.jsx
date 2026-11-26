@@ -35,8 +35,8 @@ export default function ScanPanel({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-5">
-      {/* 1. Centered 360x360 Cube QR Camera Scanner */}
+    <div className="mx-auto flex w-full max-w-[520px] flex-col items-center gap-5 max-[600px]:max-w-full">
+      {/* 1. Centered Responsive QR Camera Scanner */}
       <div className="w-full">
         <QrScanner
           btnClass={btnClass}
@@ -54,19 +54,19 @@ export default function ScanPanel({
         <div className="flex-grow border-t border-brand-line dark:border-night-line" />
       </div>
 
-      {/* 3. Manual Transaction Number Input Below (Exact 360px Width) */}
+      {/* 3. Manual Transaction Number Input Below */}
       <div className="w-full">
         <div className="mb-2.5 text-center">
-          <p className="text-[14.5px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+          <p className="text-[15px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
             Can&apos;t scan? Type it instead
           </p>
-          <p className="mt-0.5 text-[12px] text-[#888] dark:text-[#b8b0a8]">
+          <p className="mt-0.5 text-[12.5px] text-[#888] dark:text-[#b8b0a8]">
             Format: PH + 10 digits + 1 uppercase letter, or PH + 12 digits.
           </p>
         </div>
 
         <form
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 max-[380px]:flex-col max-[380px]:items-stretch"
           onSubmit={(e) => {
             e.preventDefault();
             submit(manual);
@@ -83,13 +83,13 @@ export default function ScanPanel({
               maxLength={14}
               placeholder={placeholder || "PH1234567890A / PH123456789012"}
               aria-label={label}
-              className={`${inputCls} pl-7 font-mono`}
+              className={`${inputCls} !h-[44px] pl-7 font-mono text-[14px]`}
             />
           </div>
           <button
             type="submit"
             disabled={busy}
-            className={`h-[42px] shrink-0 rounded-lg px-4 text-[13px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
+            className={`h-[44px] shrink-0 rounded-lg px-5 text-[13.5px] font-bold text-white transition disabled:opacity-60 ${btnClass}`}
           >
             {busy ? "Looking…" : "Look up"}
           </button>

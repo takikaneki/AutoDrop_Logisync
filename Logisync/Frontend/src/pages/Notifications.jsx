@@ -154,7 +154,7 @@ export default function Notifications() {
 
       {showCachedNotice && <CachedDataNotice updatedAt={syncState.lastSyncedAt} />}
 
-      <section className={`${panel} h-[calc(100vh-215px)] min-h-[420px] overflow-y-auto`}>
+      <section className={`${panel} max-h-[min(700px,calc(100dvh-220px))] min-h-[260px] overflow-y-auto`}>
         {loading ? (
           <NotificationListSkeleton count={6} />
         ) : offlineEmpty ? (

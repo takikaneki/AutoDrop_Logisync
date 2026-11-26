@@ -24,7 +24,7 @@ export default function DashboardRightRail({
   const isSlate = variant === "slate";
 
   return (
-    <aside className="flex flex-col gap-4">
+    <aside className="flex flex-col gap-4 min-[821px]:max-[1150px]:grid min-[821px]:max-[1150px]:grid-cols-2 min-[821px]:max-[1150px]:items-stretch">
       {/* Top Right: Tasks / Action Queue Card */}
       <div className={`flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#e5e8ee] bg-white shadow-sm dark:border-night-line dark:bg-night-panel ${isSlate ? "" : "p-5"}`}>
         <div className={isSlate ? "flex items-center justify-between gap-2 bg-[#0f172a] px-5 py-3.5" : "mb-3.5 flex items-center justify-between gap-2"}>

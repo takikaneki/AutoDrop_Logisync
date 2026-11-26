@@ -48,12 +48,12 @@ export default function SiteHeader({ collapsed = false, mobileOpen = false, onTo
               aria-expanded={typeof window !== "undefined" && window.innerWidth <= 820 ? mobileOpen : !collapsed}
               title="Toggle sidebar"
               className={`h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-transparent text-[#d9482b] hover:bg-orange-50 transition dark:text-[#fb923c] dark:hover:bg-night-line max-[820px]:hidden ${
-                collapsed ? "flex" : "hidden"
+                collapsed ? "flex" : "hidden min-[821px]:max-[1199px]:flex"
               }`}
             >
               <Icon name="menu" className="text-[18px]" />
             </button>
-            <Link to="/dashboard" className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[821px]:hidden"}`}>
+            <Link to="/dashboard" className={`min-w-0 items-center gap-2 sm:gap-2.5 ${collapsed ? "flex" : "flex min-[1200px]:hidden"}`}>
               <img
                 src={SPX_LOGO_DATA_URL}
                 alt="SPX Express"

@@ -91,7 +91,7 @@ export default function UnifiedQrModal({ parcel, open, onClose }) {
         <strong>Permanent QR:</strong> Used for Rider Delivery, Rider Return to Hub, and Coordinator Physical Verification. Does not change with status updates.
       </div>
 
-      <div className="mt-5 flex items-center justify-end gap-2.5">
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
         <button type="button" onClick={handleCopy} className={btnGhost}>
           <Icon name={copied ? "check" : "copy"} />
           {copied ? "Copied" : "Copy Code"}

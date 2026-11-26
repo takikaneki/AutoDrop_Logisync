@@ -52,7 +52,7 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[#e5e8ee] bg-white shadow-sm dark:border-night-line dark:bg-night-panel">
-      <div className="grid grid-cols-[1.35fr_0.95fr] max-[900px]:grid-cols-1">
+      <div className="grid grid-cols-[1.35fr_0.95fr] max-[760px]:grid-cols-1">
         {/* Left: Brand Bridge + Greeting + Primary Actions */}
         <div className="flex flex-col justify-between p-6 max-[600px]:p-4">
           <div>
@@ -87,14 +87,14 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
         </div>
 
         {/* Right: Real SPX Express Photography */}
-        <div className="relative min-h-[190px] max-[900px]:min-h-[140px] overflow-hidden bg-slate-900">
+        <div className="relative min-h-[190px] max-[760px]:min-h-[140px] overflow-hidden bg-slate-900">
           <img
             src={cfg.image}
             alt={cfg.imageAlt}
             className="h-full w-full object-cover object-center"
           />
           {/* Smooth gradient fade matching WelcomeIntro.jsx */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-white/25 to-transparent max-[900px]:bg-gradient-to-t max-[900px]:from-slate-950/70 max-[900px]:via-transparent dark:from-night-panel dark:via-night-panel/30" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white via-white/25 to-transparent max-[760px]:bg-gradient-to-t max-[760px]:from-slate-950/70 max-[760px]:via-transparent dark:from-night-panel dark:via-night-panel/30" />
           <div className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-slate-950/75 px-3 py-1 text-[11.5px] font-semibold text-white backdrop-blur-sm">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
             {cfg.liveText}
@@ -104,12 +104,12 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
 
       {/* Bottom 4-Step LogiSync Pipeline Strip */}
       {pipeline.length > 0 && (
-        <div className="grid grid-cols-4 border-t border-[#edf0f4] bg-[#fafbfc] dark:border-night-line dark:bg-night-head/70 max-[600px]:grid-cols-2">
+        <div className="grid grid-cols-4 border-t border-[#edf0f4] bg-[#fafbfc] dark:border-night-line dark:bg-night-head/70 max-[760px]:grid-cols-2">
           {pipeline.map((step, idx) => (
             <Link
               key={step.label}
               to={step.to || "#"}
-              className="group flex items-center justify-between gap-2 border-r border-[#edf0f4] px-4 py-3 transition last:border-r-0 hover:bg-[#fffaf7] dark:border-night-line dark:hover:bg-night-panel max-[600px]:border-b max-[600px]:even:border-r-0"
+              className="group flex items-center justify-between gap-2 border-r border-[#edf0f4] px-3.5 py-3 transition last:border-r-0 hover:bg-[#fffaf7] dark:border-night-line dark:hover:bg-night-panel max-[760px]:border-b max-[760px]:even:border-r-0"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold ${PIPELINE_TONES[step.tone || "orange"]}`}>

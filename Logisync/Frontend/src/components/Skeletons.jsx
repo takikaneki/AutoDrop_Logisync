@@ -32,7 +32,7 @@ export function SkeletonRegion({ label = "Loading content", className = "", chil
  */
 export function BentoKpiSkeleton({ count = 3 }) {
   return (
-    <SkeletonRegion label="Loading dashboard metrics" className="grid grid-cols-3 gap-4 max-[960px]:grid-cols-1 max-[600px]:gap-3">
+    <SkeletonRegion label="Loading dashboard metrics" className="grid grid-cols-3 gap-4 max-[680px]:grid-cols-1 max-[600px]:gap-3">
       {Array.from({ length: count }).map((_, idx) => (
         <div
           key={idx}
@@ -273,7 +273,7 @@ export function ChatSkeleton({ directMode = false, surface = "bg-white border-sl
   return (
     <SkeletonRegion
       label="Loading messages"
-      className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[calc(100vh-170px)] min-h-[520px] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${
+      className={`grid w-full min-w-0 max-w-full grid-cols-1 h-[clamp(460px,calc(100dvh-160px),780px)] max-[820px]:h-[calc(100dvh-160px)] max-[820px]:min-h-[420px] overflow-hidden rounded-2xl border ${
         directMode ? "" : "md:grid-cols-[300px_1fr]"
       } ${surface}`}
     >

@@ -59,7 +59,7 @@ export default function BentoKpiRow({ cards = [], loading = false }) {
     return <BentoKpiSkeleton count={cards.length || 3} />;
   }
   return (
-    <div className="grid grid-cols-3 gap-4 max-[960px]:grid-cols-1 max-[600px]:gap-3">
+    <div className="grid grid-cols-3 gap-4 max-[680px]:grid-cols-1 max-[600px]:gap-3">
       {cards.map((c) => {
         const s = TONE_STYLES[c.tone || "light"];
         return (

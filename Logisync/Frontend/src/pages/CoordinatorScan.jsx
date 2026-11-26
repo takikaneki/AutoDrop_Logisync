@@ -50,7 +50,7 @@ export default function CoordinatorScan() {
         subtitle="Scan a parcel QR code or enter its transaction number to verify packing proof or confirm Return to Hub arrival."
       />
 
-      <section className={`${panel} p-[30px] max-[600px]:p-5`}>
+      <section className={`${panel} p-6 sm:p-7 max-[600px]:p-4`}>
         <ScanPanel
           onValue={handleLookup}
           busy={looking}

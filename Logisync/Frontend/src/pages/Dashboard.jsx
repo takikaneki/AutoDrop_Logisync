@@ -372,7 +372,7 @@ export default function Dashboard() {
       {/* 2. ANALYTICS */}
       <h2 className="mb-4 max-[600px]:mb-3 text-[19px] max-[600px]:text-[17px] font-bold"><Icon name="trending-up" className="mr-2 text-orange-500" />Analytics</h2>
 
-      <section className="mb-6 max-[600px]:mb-4 grid grid-cols-[2.2fr_1fr] items-stretch gap-6 max-[600px]:gap-4 max-[1200px]:grid-cols-1">
+      <section className="mb-6 max-[600px]:mb-4 grid grid-cols-[1.9fr_1fr] items-stretch gap-5 max-[600px]:gap-4 max-[1023px]:grid-cols-1">
         <div className={panel}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-[17px] max-[600px]:text-[15.5px] font-bold">{TITLES[period]}</h3>
@@ -529,7 +529,7 @@ export default function Dashboard() {
             <OfflineState compact title="Recent parcels unavailable offline" text="Reconnect to load recent hub parcels." onRetry={reloadParcels} />
           ) : (
           <>
-          <div className="hidden min-[701px]:block h-[340px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
+          <div className="hidden min-[701px]:block max-h-[360px] overflow-auto rounded-[10px] border border-[#e5e8ee] dark:border-night-line">
             <table className="w-full min-w-[580px] border-collapse">
               <thead className="sticky top-0 z-10 bg-[#0f172a] dark:bg-[#d9482b]">
                 <tr className="text-left text-xs uppercase tracking-wider text-white/90">
