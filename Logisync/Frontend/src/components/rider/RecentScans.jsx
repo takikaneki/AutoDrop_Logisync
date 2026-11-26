@@ -8,7 +8,7 @@ import { STAGE, useMyDeliveries } from "../../store/riderDeliveries.js";
 import Icon from "../Icon.jsx";
 
 const stageBadge = {
-  [STAGE.TO_DELIVER]: ["To be delivered", "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"],
+  [STAGE.TO_DELIVER]: ["To be delivered", "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]"],
   [STAGE.DELIVERED]: ["Delivered", "bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300"],
   [STAGE.FAILED]: ["Failed", "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300"],
 };

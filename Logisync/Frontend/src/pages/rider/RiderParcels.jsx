@@ -17,7 +17,7 @@ const reportHistoryStore = createStore([], "pt-rider-reports");
 
 const BADGE = {
   waiting: ["Waiting to be scanned", "bg-[#fff4d8] text-[#c98200]"],
-  [STAGE.TO_DELIVER]: ["To be delivered", "bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300"],
+  [STAGE.TO_DELIVER]: ["To be delivered", "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]"],
   rescheduled: ["Rescheduled", "bg-[#fff4d8] text-[#c98200]"],
   [STAGE.DELIVERED]: ["Delivered", "bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300"],
   [STAGE.RETURN_TO_HUB]: ["Return to Hub", "bg-[#f2ecff] text-[#7c3aed]"],
