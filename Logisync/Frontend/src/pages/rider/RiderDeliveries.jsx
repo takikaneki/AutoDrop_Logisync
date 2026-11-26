@@ -223,7 +223,7 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
   );
 }
 
-// History ng mga nakaraang delivery attempts, rescheduled dates, at failure reasons
+// Compact history ng delivery attempts
 function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = false }) {
   const [open, setOpen] = useState(false);
   if (!Array.isArray(attempts) || attempts.length === 0) return null;
@@ -235,22 +235,20 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-bold text-[#445268] dark:text-[#e5e0db]">
           <Icon name="history" className="mr-1.5 text-brand" />
-          Delivery Attempts & Reschedule History ({attempts.length})
+          Attempts ({attempts.length})
         </span>
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          className={`text-[11.5px] font-bold ${
             returnToHub
-              ? "bg-[#f2ecff] text-[#7c3aed]"
-              : "bg-[#fff4d8] text-[#c98200]"
+              ? "text-[#dc2626] dark:text-[#ff7b7b]"
+              : "text-[#b45309] dark:text-[#fcd34d]"
           }`}
         >
-          {returnToHub
-            ? `2-Attempt Limit Reached · Marked as Return to Hub`
-            : `Attempt ${rescheduleCount || 1} of ${MAX_RESCHEDULES}`}
+          {returnToHub ? "Return to Hub" : `Attempt ${rescheduleCount || 1}/${MAX_RESCHEDULES}`}
         </span>
       </div>
 
-      <ol className="mt-2.5 space-y-2 border-l-2 border-[#e5e8ee] pl-3 dark:border-night-line">
+      <ol className="mt-2 space-y-2 border-l-2 border-[#e5e8ee] pl-3 dark:border-night-line">
         {shownAttempts.map((att, idx) => {
           const isRth = att.outcome === "return_to_hub";
           const isDelivered = att.outcome === "delivered";
@@ -258,27 +256,25 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
             <li key={att.id || idx} className="relative">
               <div className="flex flex-wrap items-center justify-between gap-1">
                 <span className="font-bold text-[#27364f] dark:text-[#f1eeeb]">
-                  Attempt #{att.attempt || idx + 1} · {formatDay(att.scheduledDate)}
+                  #{att.attempt || idx + 1} · {formatDay(att.scheduledDate)}
                 </span>
                 {isRth ? (
-                  <span className="rounded bg-[#f2ecff] px-1.5 py-0.5 text-[11px] font-bold text-[#7c3aed]">
-                    Marked Return to Hub
+                  <span className="text-[11px] font-bold text-[#dc2626] dark:text-[#ff7b7b]">
+                    Return to Hub
                   </span>
                 ) : isDelivered ? (
-                  <span className="rounded bg-[#eaf8ef] px-1.5 py-0.5 text-[11px] font-bold text-[#29945a]">
+                  <span className="text-[11px] font-bold text-[#15803d] dark:text-[#4ade80]">
                     Delivered
                   </span>
                 ) : att.rescheduledTo ? (
-                  <span className="rounded bg-[#fff4d8] px-1.5 py-0.5 text-[11px] font-bold text-[#c98200]">
-                    Rescheduled → {formatDay(att.rescheduledTo)} (Day {att.rescheduleDay || 1}/{MAX_RESCHEDULES})
+                  <span className="text-[11px] font-bold text-[#b45309] dark:text-[#fcd34d]">
+                    Resched → {formatDay(att.rescheduledTo)}
                   </span>
                 ) : null}
               </div>
-              <p className="mt-0.5 text-[#d94747] font-medium">
-                Reason: {att.reason || "Undelivered on scheduled date"}
-                {att.auto ? " (Auto-rescheduled)" : ""}
+              <p className="mt-0.5 text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                {att.reason || "Undelivered"}
               </p>
-              {att.note && <p className="mt-0.5 text-[11.5px] text-[#888]">{att.note}</p>}
             </li>
           );
         })}
@@ -290,7 +286,7 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
           onClick={() => setOpen((v) => !v)}
           className="mt-2 text-[12px] font-semibold text-brand hover:underline"
         >
-          {open ? "Show fewer attempts" : `View all ${attempts.length} attempts`}
+          {open ? "Show less" : `View all (${attempts.length})`}
         </button>
       )}
     </div>
@@ -739,7 +735,7 @@ export default function RiderDeliveries() {
           onCopyAddress={copyAddress}
           badge={
             isReturnToHub ? (
-              <span className="shrink-0 rounded-full bg-[#f2ecff] px-3 py-1 text-[12px] font-bold text-[#7c3aed]">
+              <span className="shrink-0 text-[12px] font-bold text-[#dc2626] dark:text-[#ff7b7b]">
                 <Icon name="undo-2" className="mr-1.5" />
                 Return to Hub
               </span>
@@ -787,35 +783,24 @@ export default function RiderDeliveries() {
           </>
         ) : (
           <div>
-            <div
-              className={`mt-3 rounded-xl px-4 py-3 ${
-                isReturnToHub
-                  ? "border border-[#d8b4fe] bg-[#f8f5ff] dark:border-[#5b21b6] dark:bg-[#241b35]"
-                  : "bg-[#fff1f1] dark:bg-[#3a2626]"
-              }`}
-            >
-              <strong
-                className={`block text-[14.5px] ${
-                  isReturnToHub ? "text-[#6d28d9] dark:text-[#c4b5fd]" : "text-[#d94747]"
-                }`}
-              >
-                {isReturnToHub
-                  ? `Marked as Return to Hub`
-                  : cleanText(d.reason || d.lastFailure) || "Delivery attempt failed"}
-              </strong>
-              <span className="mt-1 block text-[13px] text-[#666] dark:text-[#d1c9c2]">
-                Return / failure reason:{" "}
-                <strong>{cleanText(d.lastFailure || d.reason) || "Missed scheduled delivery date"}</strong>
-              </span>
-              {d.returnCoordinated ? (
-                <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#eaf8ef] px-2.5 py-0.5 text-[12px] font-bold text-[#29945a]">
-                  <Icon name="circle-check" /> Coordinator confirmed return at Hub
-                </span>
-              ) : isReturnToHub ? (
-                <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[#fff4d8] px-2.5 py-0.5 text-[12px] font-bold text-[#c98200]">
-                  <Icon name="bell" /> Coordinator notified · Return parcel to the hub
-                </span>
-              ) : null}
+            <div className="mt-3 rounded-xl border border-red-200/80 bg-[#fff5f5] px-3.5 py-2.5 dark:border-red-900/50 dark:bg-red-950/25">
+              <div className="flex items-center justify-between gap-2">
+                <strong className="text-[13.5px] text-[#dc2626] dark:text-[#ff7b7b]">
+                  {isReturnToHub ? "Return to Hub" : "Failed Delivery"}
+                </strong>
+                {d.returnCoordinated ? (
+                  <span className="text-[11.5px] font-bold text-[#15803d] dark:text-[#4ade80]">
+                    <Icon name="circle-check" className="mr-1" />Confirmed at Hub
+                  </span>
+                ) : isReturnToHub ? (
+                  <span className="text-[11.5px] font-bold text-[#b45309] dark:text-[#fcd34d]">
+                    Return to hub
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1 text-[12.5px] text-[#475569] dark:text-[#d1c9c2]">
+                {cleanText(d.lastFailure || d.reason) || "Missed delivery"}
+              </p>
             </div>
 
             {d.proof && (
@@ -835,14 +820,6 @@ export default function RiderDeliveries() {
               rescheduleCount={d.rescheduleCount || MAX_RESCHEDULES}
               returnToHub={isReturnToHub}
             />
-
-            {isReturnToHub && (
-              <div className="mt-3">
-                <span className="text-[12px] font-semibold text-[#888]">
-                  <Icon name="lock" className="mr-1" /> Maximum {MAX_RESCHEDULES}-attempt limit reached (cannot reschedule again)
-                </span>
-              </div>
-            )}
 
             {canRetry && (
               <div className="mt-4 border-t border-[#f0f2f6] pt-4 dark:border-night-line">
@@ -875,7 +852,7 @@ export default function RiderDeliveries() {
       [`${mine.length} rescheduled (max ${MAX_RESCHEDULES} attempts)`, "text-[#c98200] bg-[#fff4d8]"],
     ],
     [STAGE.FAILED]: [
-      [`${mine.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length} Return to Hub`, "text-[#7c3aed] bg-[#f2ecff]"],
+      [`${mine.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length} Return to Hub`, "text-[#dc2626] bg-[#fff0f0] dark:bg-red-500/15 dark:text-[#ff7b7b]"],
       ...(mine.some((d) => !d.returnToHub && d.stage === STAGE.FAILED)
         ? [[`${mine.filter((d) => !d.returnToHub && d.stage === STAGE.FAILED).length} failed`, "text-[#d94747] bg-[#fff1f1]"]]
         : []),
@@ -934,9 +911,9 @@ export default function RiderDeliveries() {
           <div>
             <GroupTitle
               count={list.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length}
-              tone="text-[#7c3aed]"
+              tone="text-[#dc2626] dark:text-[#ff7b7b]"
             >
-              <Icon name="undo-2" /> Return to Hub (2-Attempt Limit Reached)
+              <Icon name="undo-2" /> Return to Hub
             </GroupTitle>
             <div className="grid grid-cols-2 gap-4 max-[1100px]:grid-cols-1">{rthItems.map(failedCard)}</div>
           </div>
@@ -1099,13 +1076,13 @@ export default function RiderDeliveries() {
             ) : (
               <div>
                 {modalWillReturnToHub && (
-                  <div className="mb-4 rounded-xl border border-[#d8b4fe] bg-[#f8f5ff] p-3 text-[13px] text-[#6d28d9] dark:border-[#5b21b6] dark:bg-[#241b35] dark:text-[#c4b5fd]">
+                  <div className="mb-4 rounded-xl border border-red-200 bg-[#fff5f5] p-3 text-[13px] text-[#dc2626] dark:border-red-900/60 dark:bg-red-950/30 dark:text-[#ff7b7b]">
                     <strong className="block font-bold">
                       <Icon name="undo-2" className="mr-1.5" />
-                      2-Attempt Limit Reached ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} Attempts)
+                      Return to Hub ({MAX_RESCHEDULES}/{MAX_RESCHEDULES} attempts)
                     </strong>
-                    <p className="mt-1">
-                      This parcel has completed all 2 next-day delivery attempts and will be marked as Return to Hub.
+                    <p className="mt-1 text-[12.5px]">
+                      Max attempts reached — this parcel will be marked Return to Hub.
                     </p>
                   </div>
                 )}
