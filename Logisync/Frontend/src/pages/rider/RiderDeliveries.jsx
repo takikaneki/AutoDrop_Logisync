@@ -956,20 +956,22 @@ export default function RiderDeliveries() {
 
       <DeliveryTabs value={stage} onChange={switchTab} />
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
-        {strip.map(([label, cls]) => (
-          <span key={label} className={`rounded-full px-3.5 py-1.5 text-[13px] font-bold ${cls}`}>
-            {label}
-          </span>
-        ))}
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {strip.map(([label, cls]) => (
+            <span key={label} className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold ${cls}`}>
+              {label}
+            </span>
+          ))}
+        </div>
         {stage === STAGE.TO_DELIVER && returnToHubCount > 0 && (
           <button
             type="button"
             onClick={() => switchTab(STAGE.FAILED)}
-            className="rounded-full bg-[#fff0f0] px-3.5 py-1.5 text-[13px] font-bold text-[#d94747] transition hover:bg-[#fee2e2] dark:bg-red-500/20 dark:text-red-300"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-full bg-[#fff0f0] px-3 py-1 text-[12px] font-bold text-[#d94747] transition hover:bg-[#fee2e2] dark:bg-red-500/20 dark:text-red-300"
           >
-            <Icon name="undo-2" className="mr-1.5" />
-            {returnToHubCount} Return to Hub (removed from pending) →
+            <Icon name="undo-2" className="mr-1" />
+            {returnToHubCount} Return to Hub →
           </button>
         )}
       </div>
