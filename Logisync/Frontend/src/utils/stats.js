@@ -1,4 +1,4 @@
-import { STAGE } from "../store/riderDeliveries.js";
+import { STAGE, isRescheduledActive, isReturnToHubDelivery, isToDeliverTabItem } from "../store/riderDeliveries.js";
 
 // Apat na bilang na pareho ang kahulugan sa Coordinator, Seller at Rider. Bawat parcel ay napupunta
 // sa ISA lang sa tatlo, kaya Total = Flagged + Pending + Delivered.
@@ -40,16 +40,19 @@ export function riderStats(scans, deliveries) {
   return out;
 }
 
-// Rider dashboard: galing sa parehong data na ginagamit ng mga listahan (Assigned + To Be Delivered / Delivered / Failed & Return to Hub)
+// Rider dashboard: galing sa parehong data na ginagamit ng mga listahan (Assigned + To Be Delivered / Rescheduled / Delivered / Failed & Return to Hub)
 export function riderCounts(assigned, deliveries) {
-  const toDeliver = deliveries.filter((d) => d.stage === STAGE.TO_DELIVER && !d.returnToHub).length;
+  const toDeliver = deliveries.filter((d) => isToDeliverTabItem(d)).length;
+  const rescheduled = deliveries.filter((d) => isRescheduledActive(d)).length;
   const delivered = deliveries.filter((d) => d.stage === STAGE.DELIVERED).length;
-  const returnToHub = deliveries.filter((d) => d.stage === STAGE.RETURN_TO_HUB || d.returnToHub).length;
-  const failed = deliveries.filter((d) => d.stage === STAGE.FAILED || d.stage === STAGE.RETURN_TO_HUB || d.returnToHub).length;
+  const returnToHub = deliveries.filter((d) => isReturnToHubDelivery(d)).length;
+  const failed = deliveries.filter((d) => d.stage === STAGE.FAILED || isReturnToHubDelivery(d)).length;
+  const activeRouteTotal = deliveries.filter((d) => d.stage === STAGE.TO_DELIVER && !isReturnToHubDelivery(d)).length;
   return {
-    total: assigned.length + toDeliver + delivered + failed,
+    total: assigned.length + activeRouteTotal + delivered + failed,
     waiting: assigned.length,
     toDeliver,
+    rescheduled,
     delivered,
     failed,
     returnToHub,

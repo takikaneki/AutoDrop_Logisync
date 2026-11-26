@@ -1,4 +1,4 @@
-import { STAGE, useMyDeliveries } from "../../store/riderDeliveries.js";
+import { STAGE, filterDeliveriesByStage, useMyDeliveries } from "../../store/riderDeliveries.js";
 
 const TABS = [
   {
@@ -44,16 +44,7 @@ const TABS = [
 ];
 
 function countForStage(list, stage) {
-  if (stage === STAGE.TO_DELIVER) {
-    return list.filter((d) => d.stage === STAGE.TO_DELIVER && !d.rescheduled && !d.returnToHub).length;
-  }
-  if (stage === STAGE.RESCHEDULED) {
-    return list.filter((d) => d.stage === STAGE.TO_DELIVER && Boolean(d.rescheduled) && !d.returnToHub).length;
-  }
-  if (stage === STAGE.FAILED) {
-    return list.filter((d) => d.stage === STAGE.FAILED || d.stage === STAGE.RETURN_TO_HUB || d.returnToHub).length;
-  }
-  return list.filter((d) => d.stage === stage).length;
+  return filterDeliveriesByStage(list, stage).length;
 }
 
 // 4-Tab Filter Bar ng Deliveries page:

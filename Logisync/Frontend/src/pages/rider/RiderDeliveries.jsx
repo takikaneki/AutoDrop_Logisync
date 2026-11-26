@@ -2,19 +2,20 @@ import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Topbar from "../../components/Topbar.jsx";
 import DeliveryTabs from "../../components/rider/DeliveryTabs.jsx";
+import FailureReasonSelect from "../../components/rider/FailureReasonSelect.jsx";
 import { EmptyState, Modal, CodBadge } from "../../components/ui.jsx";
 import { Notice } from "../../components/portal.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls, panel, textareaCls } from "../../components/styles.js";
 import { reportIncident, riderRescheduleParcel, riderRequestRth } from "../../services/parcelService.js";
 import {
-  FAIL_REASONS,
-  IMMEDIATE_RTH_REASONS,
   MAX_RESCHEDULES,
-  RESCHEDULE_REASONS,
   STAGE,
   addDaysIso,
+  applyServerFailureResult,
+  filterDeliveriesByStage,
+  getAttemptOrdinalLabel,
   isImmediateRthReason,
-  isRecipientRefusal,
+  isPriorityReattempt,
   markDelivered,
   markFailed,
   reattempt,
@@ -244,7 +245,7 @@ function AttemptHistory({ attempts = [], rescheduleCount = 0, returnToHub = fals
               : "text-[#b45309] dark:text-[#fcd34d]"
           }`}
         >
-          {returnToHub ? "Return to Hub" : `Attempt ${rescheduleCount || 1}/${MAX_RESCHEDULES}`}
+          {returnToHub ? "Return to Hub" : `Attempt ${Math.min(rescheduleCount || 1, MAX_RESCHEDULES)}/${MAX_RESCHEDULES}`}
         </span>
       </div>
 
@@ -382,19 +383,10 @@ export default function RiderDeliveries() {
     }
   };
 
-  // Tinitiyak na hiwalay ang To Be Delivered, Rescheduled (3rd tab), at Failed/Return to Hub (4th tab)
-  const mine = useMemo(() => {
-    if (stage === STAGE.TO_DELIVER) {
-      return all.filter((d) => d.stage === STAGE.TO_DELIVER && !d.rescheduled && !d.returnToHub);
-    }
-    if (stage === STAGE.RESCHEDULED) {
-      return all.filter((d) => d.stage === STAGE.TO_DELIVER && Boolean(d.rescheduled) && !d.returnToHub);
-    }
-    if (stage === STAGE.FAILED) {
-      return all.filter((d) => d.stage === STAGE.FAILED || d.stage === STAGE.RETURN_TO_HUB || d.returnToHub);
-    }
-    return all.filter((d) => d.stage === stage);
-  }, [all, stage]);
+  // Date-based stage filtering:
+  // - Future rescheduled parcels stay strictly in Rescheduled (never jump to To Deliver on click/sync)
+  // - Due rescheduled parcels (scheduledFor <= today) surface at the TOP of To Deliver with a Priority Attempt tag
+  const mine = useMemo(() => filterDeliveriesByStage(all, stage), [all, stage]);
 
   const returnToHubCount = useMemo(
     () => all.filter((d) => d.returnToHub || d.stage === STAGE.RETURN_TO_HUB).length,
@@ -411,8 +403,17 @@ export default function RiderDeliveries() {
         )
       : mine;
     return [...found].sort((a, b) => {
-      if (stage === STAGE.TO_DELIVER && !!a.rescheduled !== !!b.rescheduled) return a.rescheduled ? -1 : 1;
-      return (b.doneAt || b.returnToHubAt || b.scannedAt || 0) - (a.doneAt || a.returnToHubAt || a.scannedAt || 0);
+      if (stage === STAGE.TO_DELIVER) {
+        const aPrio = isPriorityReattempt(a) ? Number(a.rescheduleCount || 1) : 0;
+        const bPrio = isPriorityReattempt(b) ? Number(b.rescheduleCount || 1) : 0;
+        if (aPrio !== bPrio) return bPrio - aPrio; // 3rd (Final) Attempt -> 2nd Attempt -> 1st Attempt
+      }
+      if (stage === STAGE.RESCHEDULED) {
+        const aDate = String(a.scheduledFor || "9999-99-99").slice(0, 10);
+        const bDate = String(b.scheduledFor || "9999-99-99").slice(0, 10);
+        if (aDate !== bDate) return aDate.localeCompare(bDate);
+      }
+      return (b.doneAt || b.returnToHubAt || b.lastRescheduledAt || b.scannedAt || 0) - (a.doneAt || a.returnToHubAt || a.lastRescheduledAt || a.scannedAt || 0);
     });
   }, [mine, search, stage]);
 
@@ -448,51 +449,96 @@ export default function RiderDeliveries() {
     }
   };
 
-  const confirm = () => {
+  const confirm = async () => {
+    if (busy) return;
     const { type, d } = action;
     if (type === "delivered") {
       if (!proof) return setError("Please add a photo as proof of delivery.");
       markDelivered(d.parcel_id, { proof, note: note.trim() });
       toast(`${d.transaction_number} marked as delivered.`);
-    } else {
-      if (!reason) return setError("Please choose why the delivery failed.");
-      if (!proof) {
-        return setError("Please upload or capture a proof photo as evidence before submitting.");
-      }
-      if (!note.trim()) {
-        return setError("Please enter notes explaining the failed delivery attempt.");
-      }
+      close();
+      return;
+    }
+
+    if (!reason) return setError("Please choose why the delivery failed.");
+    if (!proof) {
+      return setError("Please upload or capture a proof photo as evidence before submitting.");
+    }
+    if (!note.trim()) {
+      return setError("Please enter notes explaining the failed delivery attempt.");
+    }
+
+    setBusy(true);
+    setError("");
+    try {
       const immediateRth = isImmediateRthReason(reason);
-      const result = markFailed(d.parcel_id, { reason, note: note.trim(), proof });
-      reportFailure(d, { reason, note: note.trim(), proof, result });
+      const trimmedNote = note.trim();
+      const result = markFailed(d.parcel_id, {
+        reason,
+        note: trimmedNote,
+        proof,
+        customDate: modalNextDate,
+        skipRemoteSync: true,
+      });
+      reportFailure(d, { reason, note: trimmedNote, proof, result });
+
+      const targetId = d.parcel_id || d.transaction_number;
+      let serverRes = null;
       if (result?.outcome === "recipient_refused" || result?.outcome === "return_to_hub" || immediateRth) {
-        riderRequestRth(d.parcel_id, { reason, notes: note.trim(), proof }).catch(() => {});
-      } else {
-        riderRescheduleParcel(d.parcel_id, {
+        serverRes = await riderRequestRth(targetId, {
           reason,
-          scheduledFor: result?.scheduledFor,
-          notes: note.trim(),
+          notes: trimmedNote,
           proof,
-        }).catch(() => {});
+        }).catch(() => null);
+      } else {
+        serverRes = await riderRescheduleParcel(targetId, {
+          reason,
+          scheduledFor: result?.scheduledFor || modalNextDate,
+          notes: trimmedNote,
+          proof,
+        }).catch(() => null);
       }
+
+      if (serverRes) {
+        applyServerFailureResult(d.parcel_id, serverRes);
+      }
+
+      const finalIsRth = Boolean(
+        serverRes?.return_to_hub ||
+          serverRes?.status === "RETURN_TO_HUB" ||
+          result?.outcome === "recipient_refused" ||
+          result?.outcome === "return_to_hub" ||
+          immediateRth
+      );
+      const finalDate = serverRes?.scheduled_for || result?.scheduledFor || modalNextDate;
+      const finalCount = Math.max(
+        Number(serverRes?.reschedule_count || 0),
+        Number(serverRes?.next_day_attempt_count || 0),
+        Number(result?.rescheduleCount || 1)
+      );
+
       if (result?.outcome === "recipient_refused" || immediateRth) {
         toast(
           `${d.transaction_number} marked as Return to Hub (${reason}). Coordinator has been notified.`,
           "error"
         );
-      } else if (result?.outcome === "return_to_hub") {
+      } else if (finalIsRth) {
         toast(
           `${d.transaction_number} reached the ${MAX_RESCHEDULES}-attempt reschedule limit and was marked as Return to Hub. Coordinator notified.`,
           "error"
         );
       } else {
         toast(
-          `${d.transaction_number} rescheduled for ${formatDay(result?.scheduledFor)} (Attempt ${result?.rescheduleCount}/${MAX_RESCHEDULES}).`,
+          `${d.transaction_number} rescheduled for ${formatDay(finalDate)} (${getAttemptOrdinalLabel(finalCount)}).`,
           "info"
         );
       }
+
+      syncRiderDeliveriesWithServer().catch(() => {});
+      close();
+    } finally {
+      setBusy(false);
     }
-    close();
   };
 
   const tryAgain = (d) => {
@@ -509,9 +555,11 @@ export default function RiderDeliveries() {
   const deliverCard = (d) => {
     const cardKey = d.parcel_id || d.transaction_number;
     const expanded = Boolean(expandedCards[cardKey]);
-    const reschedCount = Number(d.rescheduleCount || 0);
-    const isResched = Boolean(d.rescheduled && reschedCount > 0);
-    const remainingDays = Math.max(0, MAX_RESCHEDULES - reschedCount);
+    const reschedCount = Math.min(MAX_RESCHEDULES, Math.max(0, Number(d.rescheduleCount || 0)));
+    const isResched = isPriorityReattempt(d);
+    const attemptLabel = getAttemptOrdinalLabel(reschedCount);
+    const isPriorityInToDeliver = isResched && stage === STAGE.TO_DELIVER;
+    const isFinalAttempt = reschedCount >= MAX_RESCHEDULES;
 
     const actionButtons = (
       <div className="grid grid-cols-2 gap-2">
@@ -535,7 +583,34 @@ export default function RiderDeliveries() {
       null;
 
     return (
-      <article key={cardKey} className={card}>
+      <article
+        key={cardKey}
+        className={`${card} ${
+          isPriorityInToDeliver
+            ? isFinalAttempt
+              ? "border-l-4 border-l-[#dc2626] ring-1 ring-red-200/70 dark:ring-red-900/40"
+              : "border-l-4 border-l-brand ring-1 ring-orange-200/70 dark:ring-orange-900/40"
+            : ""
+        }`}
+      >
+        {isPriorityInToDeliver && (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
+                isFinalAttempt
+                  ? "bg-red-100 text-[#dc2626] dark:bg-red-950/60 dark:text-[#ff7b7b]"
+                  : "bg-[#ffedd5] text-[#c2410c] dark:bg-orange-500/20 dark:text-[#fb923c]"
+              }`}
+            >
+              <Icon name="star" className="text-[11px]" />
+              {attemptLabel} to Deliver · Priority
+            </span>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              Resched {reschedCount}/{MAX_RESCHEDULES}
+            </span>
+          </div>
+        )}
+
         <CardHead
           d={d}
           expanded={expanded}
@@ -544,9 +619,15 @@ export default function RiderDeliveries() {
           onCopyAddress={copyAddress}
           badge={
             isResched ? (
-              <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  isFinalAttempt
+                    ? "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#ff7b7b]"
+                    : "bg-brand-soft text-brand"
+                }`}
+              >
                 <Icon name="calendar-days" className="mr-1" />
-                Attempt {reschedCount}/{MAX_RESCHEDULES} · {formatDay(d.scheduledFor)}
+                {attemptLabel} · {formatDay(d.scheduledFor)}
               </span>
             ) : (
               <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2 py-0.5 text-[11px] font-bold text-[#29945a]">
@@ -561,7 +642,7 @@ export default function RiderDeliveries() {
             <div className="flex items-start gap-1.5">
               <Icon name="calendar-days" className="mt-0.5 shrink-0" />
               <span>
-                Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
+                Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong> ({attemptLabel})
                 {latestReason ? ` due to ${latestReason}` : ""}.
               </span>
             </div>
@@ -596,22 +677,6 @@ export default function RiderDeliveries() {
           </>
         ) : (
           <div className="mt-2.5">
-            {isResched && (() => {
-              const latestReason =
-                cleanText(d.lastFailure) ||
-                cleanText(d.attempts?.[d.attempts.length - 1]?.reason) ||
-                "";
-              return (
-                <div className="mb-2 flex items-start gap-1.5 rounded-lg bg-[#fff8eb] px-2.5 py-2 text-[11.5px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
-                  <Icon name="calendar-days" className="mt-0.5 shrink-0" />
-                  <span>
-                    Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
-                    {latestReason ? ` due to ${latestReason}` : ""}.
-                  </span>
-                </div>
-              );
-            })()}
-
             {!isResched && cleanText(d.lastFailure) && (
               <p className="mb-2 text-[12px] font-semibold text-[#d94747]">
                 <Icon name="undo-2" className="mr-1.5" />
@@ -1094,39 +1159,23 @@ export default function RiderDeliveries() {
                 )}
 
                 <label className={labelCls} htmlFor="reason">
-                  Failure Reason
+                  Failure Reason <span className="text-[#dc2626]">*</span>
                 </label>
-                <select
+                <FailureReasonSelect
                   id="reason"
                   value={reason}
-                  onChange={(e) => {
-                    setReason(e.target.value);
+                  disabled={busy}
+                  onChange={(val) => {
+                    setReason(val);
                     setError("");
                   }}
-                  className={inputCls}
-                >
-                  <option value="">Select a reason…</option>
-                  <optgroup label="Automatic Next-Day Reschedule (Max 2 Attempts)">
-                    {RESCHEDULE_REASONS.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Immediate Return to Hub (RTH - Proof Required)">
-                    {IMMEDIATE_RTH_REASONS.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                />
 
                 {reason && !isImmediateRthReason(reason) && !modalWillReturnToHub && (
                   <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
                     <strong className="block font-bold">
                       <Icon name="calendar-days" className="mr-1.5" />
-                      Automatic Reschedule (Attempt {modalReschedCount + 1} of {MAX_RESCHEDULES})
+                      Automatic Reschedule ({getAttemptOrdinalLabel(modalReschedCount + 1)} · {modalReschedCount + 1}/{MAX_RESCHEDULES})
                     </strong>
                     <p className="mt-1">
                       This parcel will automatically be rescheduled for delivery on{" "}

@@ -5,8 +5,9 @@ import ScanPanel from "../../components/qr/ScanPanel.jsx";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import { CodBadge, Modal } from "../../components/ui.jsx";
 import RecentScans from "../../components/rider/RecentScans.jsx";
+import FailureReasonSelect from "../../components/rider/FailureReasonSelect.jsx";
 import { DetailList, Notice } from "../../components/portal.jsx";
-import { btnGhost, btnPrimary, inputCls, labelCls, panel, textareaCls } from "../../components/styles.js";
+import { btnGhost, btnPrimary, labelCls, panel, textareaCls } from "../../components/styles.js";
 import {
   scanUnifiedQr,
   findParcel,
@@ -15,11 +16,11 @@ import {
 } from "../../services/parcelService.js";
 import { logScan, useRiderScans } from "../../store/riderScans.js";
 import {
-  IMMEDIATE_RTH_REASONS,
   MAX_RESCHEDULES,
-  RESCHEDULE_REASONS,
   addToDeliver,
+  applyServerFailureResult,
   findAssigned,
+  getAttemptOrdinalLabel,
   isImmediateRthReason,
   markDelivered,
   markFailed,
@@ -215,6 +216,7 @@ export default function RiderScan() {
         note: actionNotes.trim(),
         proof,
         customDate: nextScheduledDay,
+        skipRemoteSync: true,
       });
       reportFailure(parcel, {
         reason: failedReason,
@@ -224,11 +226,12 @@ export default function RiderScan() {
       });
 
       if (isImmediateRth || willAutoRthByLimit || localRes?.outcome === "return_to_hub" || localRes?.outcome === "recipient_refused") {
-        await riderRequestRth(pid, {
+        const rthRes = await riderRequestRth(pid, {
           reason: failedReason,
           notes: actionNotes.trim(),
           proof,
-        }).catch(() => {});
+        }).catch(() => null);
+        if (rthRes) applyServerFailureResult(pid, rthRes);
 
         toast(
           `${parcel.transaction_number} marked as Return to Hub (${failedReason}). Coordinator notified for hub confirmation.`,
@@ -252,6 +255,7 @@ export default function RiderScan() {
           notes: actionNotes.trim(),
           proof,
         }).catch(() => null);
+        if (res) applyServerFailureResult(pid, res);
 
         if (res?.return_to_hub || res?.status === "RETURN_TO_HUB") {
           toast(
@@ -268,10 +272,13 @@ export default function RiderScan() {
             updated_at: new Date().toISOString(),
           }));
         } else {
-          const nextAttemptNum = Math.min(MAX_RESCHEDULES, currentReschedCount + 1);
+          const nextAttemptNum = Math.min(
+            MAX_RESCHEDULES,
+            Math.max(Number(res?.reschedule_count || 0), Number(res?.next_day_attempt_count || 0), currentReschedCount + 1)
+          );
           const resolvedDate = res?.scheduled_for || localRes?.scheduledFor || nextScheduledDay;
           toast(
-            `${parcel.transaction_number} rescheduled for ${formatDay(resolvedDate)} (Attempt ${nextAttemptNum} of ${MAX_RESCHEDULES}).`,
+            `${parcel.transaction_number} rescheduled for ${formatDay(resolvedDate)} (${getAttemptOrdinalLabel(nextAttemptNum)}).`,
             "info"
           );
           setParcel((prev) => ({
@@ -636,40 +643,24 @@ export default function RiderScan() {
 
         <div>
           <label className={labelCls} htmlFor="scanFailedReason">
-            Failure Reason (Required)
+            Failure Reason <span className="text-[#dc2626]">*</span>
           </label>
-          <select
+          <FailureReasonSelect
             id="scanFailedReason"
             value={failedReason}
-            onChange={(e) => {
-              setFailedReason(e.target.value);
+            disabled={actionBusy}
+            onChange={(val) => {
+              setFailedReason(val);
               setActionError("");
             }}
-            className={inputCls}
-          >
-            <option value="">Select a reason…</option>
-            <optgroup label="Automatic Next-Day Reschedule (Max 2 Attempts)">
-              {RESCHEDULE_REASONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Immediate Return to Hub (RTH - Proof Required)">
-              {IMMEDIATE_RTH_REASONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </optgroup>
-          </select>
+          />
         </div>
 
         {failedReason && !isImmediateRth && !willAutoRthByLimit && (
           <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12.5px] text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
             <strong className="block font-bold">
               <Icon name="calendar-days" className="mr-1.5" />
-              Automatic Reschedule (Attempt {currentReschedCount + 1} of {MAX_RESCHEDULES})
+              Automatic Reschedule ({getAttemptOrdinalLabel(currentReschedCount + 1)} · {currentReschedCount + 1}/{MAX_RESCHEDULES})
             </strong>
             <p className="mt-1">
               Next Delivery Date: <strong>{formatDay(nextScheduledDay)}</strong>. The parcel will move to the{" "}

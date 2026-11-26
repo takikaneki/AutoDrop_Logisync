@@ -52,9 +52,7 @@ export default function RiderDashboard() {
     { label: "Fail", value: stats.failed },
   ];
 
-  const rescheduledCount = mine.filter(
-    (d) => d.rescheduled && !d.returnToHub && d.stage !== "delivered"
-  ).length;
+  const rescheduledCount = stats.rescheduled;
 
   const kpiCards = [
     {
@@ -89,7 +87,7 @@ export default function RiderDashboard() {
   const pipelineSteps = [
     { label: "To Deliver", count: stats.toDeliver, icon: "truck", tone: "orange", to: "/rider/deliveries" },
     { label: "Delivered", count: stats.delivered, icon: "package-check", tone: "green", to: "/rider/deliveries?tab=delivered" },
-    { label: "Rescheduled", count: rescheduledCount, icon: "calendar-days", tone: "yellow", to: "/rider/deliveries" },
+    { label: "Rescheduled", count: rescheduledCount, icon: "calendar-days", tone: "yellow", to: "/rider/deliveries?tab=rescheduled" },
     { label: "Failed", count: stats.failed, icon: "triangle-alert", tone: "red", to: "/rider/deliveries?tab=failed" },
   ];
 
