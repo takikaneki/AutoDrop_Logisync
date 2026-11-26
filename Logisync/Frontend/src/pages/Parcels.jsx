@@ -1030,7 +1030,7 @@ export default function Parcels() {
                       <span className="block truncate text-[11px] text-[#999]">Txn #{parcel.transactionNumber}</span>
                     )}
                   </div>
-                  <div className="shrink-0 max-w-[56%] text-right">
+                  <div className="shrink-0 text-right">
                     <StatusBadge status={parcel.status} icon={statusIcons[parcel.status]} />
                   </div>
                 </div>
