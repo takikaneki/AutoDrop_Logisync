@@ -55,19 +55,21 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
 
   if (!open) return null;
 
-  // Step 1: Submit email to request OTP
+  // Step 1: Submit email to request OTP (strictly locked to the email set on Sign In)
+  const lockedEmail = String(defaultEmail || "").trim();
+
   const handleRequestOtp = async (e) => {
     if (e) e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = lockedEmail.toLowerCase();
     setError("");
 
     if (!cleanEmail) {
-      setError("Please enter your registered email address.");
+      setError("Please enter your registered email address on the Sign In screen first.");
       return;
     }
 
     if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
-      setError("Please enter a valid email address.");
+      setError("Please enter a valid email address on the Sign In screen first.");
       return;
     }
 
@@ -77,6 +79,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
         method: "POST",
         body: { email: cleanEmail, purpose: "FORGOT_PASSWORD" },
       });
+      setEmail(cleanEmail);
       setCooldown(res.cooldownSeconds || 60);
       setRemainingAttempts(null);
       setStep("OTP");
@@ -96,12 +99,14 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
   // Resend OTP
   const handleResendOtp = async () => {
     if (cooldown > 0 || loading) return;
+    const cleanEmail = lockedEmail.toLowerCase();
+    if (!cleanEmail) return;
     setError("");
     setLoading(true);
     try {
       const res = await api("/auth/otp/resend", {
         method: "POST",
-        body: { email: email.trim().toLowerCase(), purpose: "FORGOT_PASSWORD" },
+        body: { email: cleanEmail, purpose: "FORGOT_PASSWORD" },
       });
       setCooldown(res.cooldownSeconds || 60);
       setOtp(["", "", "", "", "", ""]);
@@ -292,7 +297,7 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
                   className="mx-auto mb-2.5 h-8 w-auto object-contain"
                 />
                 <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
-                  Enter your registered email address. We will send you a 6-digit OTP code to verify your identity.
+                  We will send a 6-digit OTP code to your registered email address below to verify your identity.
                 </p>
               </div>
 
@@ -303,29 +308,26 @@ export default function ForgotPasswordModal({ open, onClose, defaultEmail = "" }
                 >
                   Registered Email Address
                 </label>
-                <div className={inputWrap}>
+                <div className={`${inputWrap} cursor-not-allowed bg-slate-100/90 focus-within:border-slate-200 focus-within:ring-0`}>
                   <Icon name="mail" className="shrink-0 text-base text-slate-400" />
                   <input
                     id="forgot-password-email"
                     type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (error) setError("");
-                    }}
-                    placeholder="example@gmail.com"
-                    className="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
+                    value={lockedEmail}
+                    readOnly
+                    aria-readonly="true"
+                    tabIndex={-1}
+                    placeholder="No email set on Sign In"
+                    className="min-w-0 flex-1 cursor-not-allowed select-none bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
                   />
+                  <Icon name="lock" className="shrink-0 text-xs text-slate-400" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-2.5">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !lockedEmail}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-extrabold text-white shadow-lg shadow-orange-500/20 transition hover:bg-brand-dark disabled:opacity-60"
                 >
                   {loading ? (

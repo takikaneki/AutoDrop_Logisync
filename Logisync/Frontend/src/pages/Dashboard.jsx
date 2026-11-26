@@ -34,7 +34,7 @@ import Icon from "../components/Icon.jsx";
 import { DatePickerInput } from "../components/SearchFilterBar.jsx";
 
 const panel = "bg-white border border-[#e5e8ee] rounded-2xl p-[30px] min-w-0 dark:bg-night-panel dark:border-night-line max-[600px]:p-4";
-const COLORS = { Delivered: "#16a34a", Pending: "#d9482b", Failed: "#d94747" };
+const COLORS = { Delivered: "#16a34a", Pending: "#eab308", Failed: "#d94747" };
 const PERIODS = [["day", "By Day"], ["week", "By Week"], ["month", "By Month"]];
 const TITLES = { day: "Parcels per day (Mon–Sun)", week: "Parcels per week", month: "Parcels per month" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };

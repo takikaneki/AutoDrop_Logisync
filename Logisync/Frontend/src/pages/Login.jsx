@@ -757,7 +757,15 @@ export default function Login({ portalRole: propPortalRole } = {}) {
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setForgotOpen(true)}
+                  onClick={() => {
+                    const trimmed = email.trim();
+                    if (!trimmed || !/^\S+@\S+\.\S+$/.test(trimmed)) {
+                      setError("Please enter your registered email address first before resetting your password.");
+                      return;
+                    }
+                    setError("");
+                    setForgotOpen(true);
+                  }}
                   className="text-xs font-bold text-brand transition-colors hover:text-brand-dark"
                 >
                   Forgot password?

@@ -7,12 +7,12 @@ import { ParcelCardListSkeleton, SkeletonBlock } from "./Skeletons.jsx";
 // Kapareho ng itsura ng mga card at panel ng Coordinator.
 
 const tones = {
-  orange: "bg-[#fff0e5] text-orange-500",
-  yellow: "bg-[#fef9c3] text-[#ca8a04] dark:bg-yellow-500/20 dark:text-[#facc15]",
-  green: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
-  red: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
-  blue: "bg-[#dbeafe] text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#60a5fa]",
-  gray: "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]",
+  orange: "text-orange-500",
+  yellow: "text-[#eab308] dark:text-[#facc15]",
+  green: "text-[#16a34a] dark:text-[#4ade80]",
+  red: "text-[#dc2626] dark:text-[#f87171]",
+  blue: "text-[#3b82f6] dark:text-[#60a5fa]",
+  gray: "text-[#64748b] dark:text-[#94a3b8]",
 };
 
 const cardBorders = {
@@ -35,7 +35,7 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
       } ${active ? "ring-2 ring-brand/50 !border-brand shadow-sm" : ""}`}
     >
       <div
-        className={`flex h-[52px] w-[52px] max-[1280px]:h-[46px] max-[1280px]:w-[46px] max-[480px]:h-[38px] max-[480px]:w-[38px] shrink-0 items-center justify-center rounded-xl text-[22px] max-[1280px]:text-[19px] max-[480px]:text-[16px] ${tones[tone]}`}
+        className={`flex shrink-0 items-center justify-center text-[26px] max-[1280px]:text-[22px] max-[480px]:text-[20px] ${tones[tone]}`}
       >
         <Icon name={icon} strokeWidth={2.2} />
       </div>

@@ -38,12 +38,12 @@ const ROLE_CONFIG = {
 };
 
 const PIPELINE_TONES = {
-  blue: "bg-[#dbeafe] text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#60a5fa]",
-  yellow: "bg-[#fef9c3] text-[#ca8a04] dark:bg-yellow-500/20 dark:text-[#facc15]",
-  green: "bg-[#dcfce7] text-[#16a34a] dark:bg-green-500/20 dark:text-[#4ade80]",
-  red: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
-  gray: "bg-[#f1f5f9] text-[#64748b] dark:bg-slate-500/20 dark:text-[#94a3b8]",
-  orange: "bg-[#fff0e5] text-[#d9482b] dark:bg-brand/20",
+  blue: "text-[#3b82f6] dark:text-[#60a5fa]",
+  yellow: "text-[#eab308] dark:text-[#facc15]",
+  green: "text-[#16a34a] dark:text-[#4ade80]",
+  red: "text-[#dc2626] dark:text-[#f87171]",
+  gray: "text-[#64748b] dark:text-[#94a3b8]",
+  orange: "text-[#d9482b] dark:text-[#fb923c]",
 };
 
 export default function PortalHeroBanner({ role = "coordinator", pipeline = [], loading = false }) {
@@ -112,8 +112,8 @@ export default function PortalHeroBanner({ role = "coordinator", pipeline = [], 
               className="group flex items-center justify-between gap-2 border-r border-[#edf0f4] px-3.5 py-3 transition last:border-r-0 hover:bg-[#fffaf7] dark:border-night-line dark:hover:bg-night-panel max-[760px]:border-b max-[760px]:even:border-r-0"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold ${PIPELINE_TONES[step.tone || "orange"]}`}>
-                  <Icon name={step.icon} />
+                <span className={`flex shrink-0 items-center justify-center text-[18px] ${PIPELINE_TONES[step.tone || "orange"]}`}>
+                  <Icon name={step.icon} strokeWidth={2.2} />
                 </span>
                 <div className="min-w-0">
                   <span className="block truncate text-[11px] font-medium text-[#64748b] dark:text-[#b8b0a8]">
