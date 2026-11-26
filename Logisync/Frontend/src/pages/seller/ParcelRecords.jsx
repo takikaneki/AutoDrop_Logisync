@@ -406,7 +406,7 @@ export default function ParcelRecords() {
                             Edit
                           </button>
                         )}
-                        <Link to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`} className="font-semibold text-brand hover:underline">
+                        <Link to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}${needsVideo ? "?upload=1" : ""}`} className="font-semibold text-brand hover:underline">
                           {needsVideo ? "Upload video" : "View details"}
                         </Link>
                       </div>
@@ -532,7 +532,7 @@ export default function ParcelRecords() {
                         </button>
                       )}
                       <Link
-                        to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}`}
+                        to={`/seller/parcels/${encodeURIComponent(p.transaction_number || p.parcel_id)}${needsVideo ? "?upload=1" : ""}`}
                         className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-bold ${
                           needsVideo ? "bg-brand text-white" : "bg-brand-soft text-brand dark:bg-night-panel"
                         }`}

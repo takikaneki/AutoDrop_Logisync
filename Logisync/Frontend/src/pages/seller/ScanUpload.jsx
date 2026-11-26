@@ -13,13 +13,21 @@ import { toast } from "../../store/toast.js";
 import { logPortalScan, usePortalScans } from "../../store/portalScans.js";
 
 const MAX_MB = 50;
-const ALLOWED = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg"];
+const ALLOWED = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/mpeg", "video/3gpp", "video/x-matroska"];
 const UPLOADABLE = ["WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED"];
+const isAllowedVideo = (f) =>
+  Boolean(
+    f &&
+      (ALLOWED.includes(f.type) ||
+        String(f.type || "").startsWith("video/") ||
+        /\.(mp4|webm|mov|avi|mpeg|mpg|m4v|3gp|mkv)$/i.test(f.name || ""))
+  );
 
 export default function ScanUpload() {
   const { id: routeId = "" } = useParams();
   const [params] = useSearchParams();
   const initialQuery = routeId || params.get("txn") || "";
+  const openUploadTab = params.get("upload") === "1";
 
   const scans = usePortalScans("seller");
   const [data, setData] = useState(null);
@@ -34,6 +42,8 @@ export default function ScanUpload() {
   const [uploadError, setUploadError] = useState("");
   const [success, setSuccess] = useState("");
   const inputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const abortRef = useRef(null);
 
   const lookup = async (value) => {
     setLooking(true);
@@ -57,13 +67,16 @@ export default function ScanUpload() {
   }, [routeId, params]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => previewUrl && URL.revokeObjectURL(previewUrl), [previewUrl]);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const clearFile = () => {
     setFile(null);
     setPreviewUrl("");
     setFileError("");
+    setUploadError("");
     setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   const onPick = (e) => {
@@ -73,10 +86,11 @@ export default function ScanUpload() {
       return;
     }
     setFileError("");
+    setUploadError("");
     setProgress(0);
-    if (!ALLOWED.includes(f.type)) {
+    if (!isAllowedVideo(f)) {
       clearFile();
-      setFileError("Unsupported file. Use MP4, WebM, MOV, AVI or MPEG.");
+      setFileError("Unsupported file. Use a recorded video or MP4, WebM, MOV, AVI, or MPEG.");
       return;
     }
     if (f.size > MAX_MB * 1024 * 1024) {
@@ -88,21 +102,36 @@ export default function ScanUpload() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
+  const onCancelUpload = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  };
+
   const onUpload = async () => {
     if (!file || !data) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setUploading(true);
     setUploadError("");
     setProgress(0);
     try {
-      await uploadVideo(data.parcel.parcel_id, file, setProgress);
+      await uploadVideo(data.parcel.parcel_id, file, setProgress, { signal: controller.signal });
       clearFile();
       setData(await getSellerParcel(data.parcel.parcel_id));
       const msg = "Video uploaded. Your parcel is now waiting for coordinator verification.";
       setSuccess(msg);
       toast(msg);
     } catch (err) {
-      setUploadError(err.message);
+      if (err?.name === "AbortError") {
+        setProgress(0);
+        toast("Video upload cancelled.", "info");
+      } else {
+        setUploadError(err.message);
+      }
     } finally {
+      if (abortRef.current === controller) abortRef.current = null;
       setUploading(false);
     }
   };
@@ -118,6 +147,7 @@ export default function ScanUpload() {
         verificationRecords={data?.verification_records || []}
         backTo="/seller/parcels"
         backLabel="Back to Parcel Records"
+        initialTab={openUploadTab && canUpload ? "documents" : "shipment"}
         canUpload={canUpload}
         uploadProps={{
           file,
@@ -128,8 +158,10 @@ export default function ScanUpload() {
           uploadError,
           success,
           inputRef,
+          cameraInputRef,
           onPick,
           onUpload,
+          onCancelUpload,
           onClear: clearFile,
         }}
       />

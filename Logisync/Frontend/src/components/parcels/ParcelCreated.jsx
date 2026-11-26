@@ -78,7 +78,7 @@ export default function ParcelCreated({ parcel, onReset }) {
       </p>
 
       <div className="flex flex-wrap gap-3">
-        <Link to={`/seller/scan?txn=${encodeURIComponent(parcel.transaction_number)}`} className={btnPrimary}>
+        <Link to={`/seller/scan?txn=${encodeURIComponent(parcel.transaction_number)}&upload=1`} className={btnPrimary}>
           <Icon name="video" /> Upload video now
         </Link>
         <button type="button" onClick={copyId} className={btnGhost}>

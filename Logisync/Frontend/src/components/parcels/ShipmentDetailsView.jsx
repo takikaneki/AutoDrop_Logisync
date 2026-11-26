@@ -394,12 +394,17 @@ export default function ShipmentDetailsView({
   backTo = "/seller/parcels",
   backLabel = "Back to Parcel Records",
   onBack = null,
+  initialTab = "shipment",
   canUpload = false,
   uploadProps = null,
   coordinatorSlot = null,
 }) {
-  const [activeTab, setActiveTab] = useState("shipment");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [rightCollapsed, setRightCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
   const [copied, setCopied] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [historyList, setHistoryList] = useState([]);
@@ -969,64 +974,151 @@ export default function ShipmentDetailsView({
                   {/* Preserve Seller video upload workflow when parcel is waiting for video or reupload */}
                   {canUpload && uploadProps && (
                     <div className="mt-4 border-t border-[#edf0f4] pt-4 dark:border-night-line">
-                      <p className="mb-2 text-[12.5px] font-bold text-[#1e293b] dark:text-white">
+                      <p className="mb-2.5 text-[13px] font-bold text-[#1e293b] dark:text-white">
                         {parcel?.status === "REUPLOAD_REQUESTED" ? "Upload New Packing Video" : "Upload Packing Video"}
                       </p>
+
+                      {/* Hidden native inputs: Direct Camera Recording & File Picker */}
+                      <input
+                        ref={uploadProps.cameraInputRef}
+                        type="file"
+                        accept="video/*"
+                        capture="environment"
+                        onChange={uploadProps.onPick}
+                        disabled={uploadProps.uploading}
+                        aria-label="Record packing video with camera"
+                        className="hidden"
+                      />
                       <input
                         ref={uploadProps.inputRef}
                         type="file"
-                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/mpeg"
+                        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo,video/mpeg,video/*"
                         onChange={uploadProps.onPick}
                         disabled={uploadProps.uploading}
-                        aria-label="Choose video"
-                        className="block w-full text-[12.5px] file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-[12px] file:font-bold file:text-white hover:file:bg-brand-dark"
+                        aria-label="Choose video file"
+                        className="hidden"
                       />
+
+                      <div className="grid grid-cols-2 gap-2 max-[380px]:grid-cols-1">
+                        <button
+                          type="button"
+                          onClick={() => uploadProps.cameraInputRef?.current?.click()}
+                          disabled={uploadProps.uploading}
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand px-3 py-2.5 text-[12.5px] font-bold text-white shadow-xs transition hover:bg-brand-dark disabled:opacity-50"
+                        >
+                          <Icon name="video" className="h-4 w-4 shrink-0" />
+                          <span>Record with Camera</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => uploadProps.inputRef?.current?.click()}
+                          disabled={uploadProps.uploading}
+                          className={`${btnGhost} !rounded-xl !px-3 !py-2.5 !text-[12.5px]`}
+                        >
+                          <Icon name="upload" className="h-4 w-4 shrink-0" />
+                          <span>Choose Video</span>
+                        </button>
+                      </div>
+
                       {uploadProps.fileError && (
-                        <p role="alert" className="mt-1.5 text-[12px] text-[#d94747]">
+                        <p role="alert" className="mt-2 text-[12px] font-medium text-[#d94747]">
                           {uploadProps.fileError}
                         </p>
                       )}
+
                       {uploadProps.file && (
-                        <div className="mt-1.5 flex items-center justify-between text-[12px] text-[#64748b]">
-                          <p>
-                            <strong>{uploadProps.file.name}</strong> · {formatSize(uploadProps.file.size)}
-                          </p>
-                          {uploadProps.onClear && !uploadProps.uploading && (
-                            <button
-                              type="button"
-                              onClick={uploadProps.onClear}
-                              className="text-[11px] font-semibold text-[#d94747] hover:underline"
-                            >
-                              Remove
-                            </button>
+                        <div className="mt-3 rounded-xl border border-[#e5e8ee] bg-[#fafbfc] p-3 dark:border-night-line dark:bg-night-head/60">
+                          {uploadProps.previewUrl && (
+                            <video
+                              key={uploadProps.previewUrl}
+                              src={uploadProps.previewUrl}
+                              controls
+                              playsInline
+                              className="mb-2.5 max-h-[240px] w-full rounded-lg bg-black object-contain"
+                            />
                           )}
+                          <div className="flex items-center justify-between gap-2 text-[12px] text-[#64748b] dark:text-[#b8b0a8]">
+                            <p className="min-w-0 truncate">
+                              <strong className="text-[#1e293b] dark:text-white">{uploadProps.file.name}</strong> ·{" "}
+                              {formatSize(uploadProps.file.size)}
+                            </p>
+                            {uploadProps.onClear && !uploadProps.uploading && (
+                              <button
+                                type="button"
+                                onClick={uploadProps.onClear}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[11.5px] font-bold text-[#dc2626] transition hover:bg-red-50 dark:text-[#ff7b7b] dark:hover:bg-red-950/30"
+                              >
+                                <Icon name="x" className="h-3.5 w-3.5" />
+                                <span>Remove</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
+
                       {uploadProps.uploading && (
-                        <div className="mt-2">
-                          <div className="h-1.5 overflow-hidden rounded-full bg-[#eee] dark:bg-night-line">
+                        <div className="mt-3">
+                          <div className="h-2 overflow-hidden rounded-full bg-[#eee] dark:bg-night-line">
                             <div
                               className="h-full bg-brand transition-all"
                               style={{ width: `${uploadProps.progress}%` }}
                             />
                           </div>
-                          <p className="mt-1 text-[11px] text-[#888]">Uploading… {uploadProps.progress}%</p>
+                          <div className="mt-1.5 flex items-center justify-between gap-2 text-[11.5px] text-[#64748b] dark:text-[#b8b0a8]">
+                            <span>Uploading… {uploadProps.progress}%</span>
+                            {uploadProps.onCancelUpload && (
+                              <button
+                                type="button"
+                                onClick={uploadProps.onCancelUpload}
+                                className="inline-flex items-center gap-1 font-bold text-[#dc2626] hover:underline dark:text-[#ff7b7b]"
+                              >
+                                <Icon name="x" className="h-3.5 w-3.5" />
+                                <span>Cancel Upload</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
+
                       {uploadProps.uploadError && (
-                        <p role="alert" className="mt-1.5 text-[12px] text-[#d94747]">
+                        <p role="alert" className="mt-2 text-[12px] font-medium text-[#d94747]">
                           {uploadProps.uploadError}
                         </p>
                       )}
-                      <button
-                        type="button"
-                        onClick={uploadProps.onUpload}
-                        disabled={!uploadProps.file || uploadProps.uploading}
-                        className={`${btnPrimary} mt-3 w-full justify-center py-2 text-[13px]`}
-                      >
-                        <Icon name="upload" />{" "}
-                        {uploadProps.uploading ? "Uploading…" : "Submit Video"}
-                      </button>
+
+                      {uploadProps.file && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {uploadProps.uploading ? (
+                            <button
+                              type="button"
+                              onClick={uploadProps.onCancelUpload}
+                              className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#dc2626]/40 bg-[#fef2f2] px-4 py-2 text-[13px] font-bold text-[#dc2626] transition hover:bg-[#fee2e2] dark:border-red-800/60 dark:bg-red-950/35 dark:text-[#ff7b7b]"
+                            >
+                              <Icon name="x" className="h-4 w-4" />
+                              <span>Cancel Upload</span>
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={uploadProps.onClear}
+                                className={`${btnGhost} !rounded-xl !py-2 !text-[13px]`}
+                              >
+                                <Icon name="x" className="h-4 w-4" />
+                                <span>Cancel</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={uploadProps.onUpload}
+                                className={`${btnPrimary} !rounded-xl !py-2 !text-[13px]`}
+                              >
+                                <Icon name="upload" className="h-4 w-4" />
+                                <span>Submit Video</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </section>

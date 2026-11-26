@@ -272,13 +272,21 @@ export const getCoordinatorParcel = async (parcelId) => {
 
 // Direct-to-Cloudinary signed upload (bypasses Vercel's 4.5 MB serverless body limit for up to 50 MB videos),
 // with automatic fallback to multipart upload if direct signing is unavailable.
-export async function uploadVideo(parcelId, file, onProgress) {
+export async function uploadVideo(parcelId, file, onProgress, { signal } = {}) {
+  const makeAbortError = () => {
+    const err = new Error("Video upload cancelled.");
+    err.name = "AbortError";
+    return err;
+  };
+  if (signal?.aborted) throw makeAbortError();
+
   let sig = null;
   try {
     sig = await api(`/parcels/seller/${enc(parcelId)}/video-signature`, { method: "POST" });
   } catch {
     sig = null;
   }
+  if (signal?.aborted) throw makeAbortError();
 
   if (sig?.cloudName && sig?.apiKey && sig?.signature && sig?.timestamp) {
     const cloudForm = new FormData();
@@ -290,13 +298,27 @@ export async function uploadVideo(parcelId, file, onProgress) {
     if (sig.publicId) cloudForm.append("public_id", sig.publicId);
 
     const cloudRes = await new Promise((resolve, reject) => {
+      if (signal?.aborted) return reject(makeAbortError());
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `https://api.cloudinary.com/v1_1/${encodeURIComponent(sig.cloudName)}/video/upload`);
+
+      const onAbortSignal = () => xhr.abort();
+      const cleanup = () => signal?.removeEventListener?.("abort", onAbortSignal);
+      signal?.addEventListener?.("abort", onAbortSignal, { once: true });
+
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) onProgress?.(Math.min(95, Math.round((e.loaded / e.total) * 95)));
       };
-      xhr.onerror = () => reject(new Error("Network error while uploading video to cloud storage. Please check your internet connection."));
+      xhr.onabort = () => {
+        cleanup();
+        reject(makeAbortError());
+      };
+      xhr.onerror = () => {
+        cleanup();
+        reject(new Error("Network error while uploading video to cloud storage. Please check your internet connection."));
+      };
       xhr.onload = () => {
+        cleanup();
         let data = null;
         try {
           data = JSON.parse(xhr.responseText);
@@ -311,6 +333,7 @@ export async function uploadVideo(parcelId, file, onProgress) {
       xhr.send(cloudForm);
     });
 
+    if (signal?.aborted) throw makeAbortError();
     onProgress?.(100);
     return api(`/parcels/seller/${enc(parcelId)}/video`, {
       method: "POST",
@@ -326,7 +349,7 @@ export async function uploadVideo(parcelId, file, onProgress) {
 
   const form = new FormData();
   form.append("video", file);
-  return apiUpload(`/parcels/seller/${enc(parcelId)}/video`, form, onProgress);
+  return apiUpload(`/parcels/seller/${enc(parcelId)}/video`, form, onProgress, { signal });
 }
 
 // Coordinator: action = "verify" | "reject" | "request-reupload"

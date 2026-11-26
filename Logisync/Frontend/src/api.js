@@ -188,18 +188,37 @@ export async function api(path, { method = "GET", body, headers } = {}) {
 }
 // Upload ng file (multipart/form-data) na may progress. Hindi kaya ng fetch ang upload progress,
 // kaya XMLHttpRequest ang gamit dito. HUWAG lagyan ng Content-Type: ang browser ang gagawa nito (may boundary).
-export function apiUpload(path, formData, onProgress) {
+export function apiUpload(path, formData, onProgress, { signal } = {}) {
   const token = getToken();
   return new Promise((resolve, reject) => {
+    const makeAbortError = () => {
+      const err = new Error("Video upload cancelled.");
+      err.name = "AbortError";
+      return err;
+    };
+    if (signal?.aborted) return reject(makeAbortError());
+
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE_URL}${path}`);
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
 
+    const onAbortSignal = () => xhr.abort();
+    const cleanup = () => signal?.removeEventListener?.("abort", onAbortSignal);
+    signal?.addEventListener?.("abort", onAbortSignal, { once: true });
+
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
     };
-    xhr.onerror = () => reject(new Error(SERVER_DOWN));
+    xhr.onabort = () => {
+      cleanup();
+      reject(makeAbortError());
+    };
+    xhr.onerror = () => {
+      cleanup();
+      reject(new Error(SERVER_DOWN));
+    };
     xhr.onload = () => {
+      cleanup();
       let data = null;
       try {
         data = JSON.parse(xhr.responseText);
