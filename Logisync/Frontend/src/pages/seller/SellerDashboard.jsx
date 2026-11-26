@@ -108,7 +108,7 @@ export default function SellerDashboard() {
                   {
                     label: "Needs Video",
                     value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
-                    tone: "blue",
+                    tone: "yellow",
                     to: "/seller/parcels?status=NEEDS_VIDEO",
                     badge: "Action Required",
                     icon: "video",

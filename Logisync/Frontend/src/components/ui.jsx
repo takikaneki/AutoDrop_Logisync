@@ -55,12 +55,12 @@ export function CodBadge({ className = "" }) {
 export function StatusBadge({ status, icon }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-[12px] font-bold leading-snug ${
+      className={`inline-flex items-center justify-end gap-1.5 text-[12px] font-bold leading-snug ${
         badgeTones[status] || "text-slate-600 dark:text-slate-300"
       }`}
     >
       {icon && <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />}
-      <span>{status}</span>
+      <span className="whitespace-nowrap">{status}</span>
     </span>
   );
 }

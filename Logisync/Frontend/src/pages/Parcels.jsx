@@ -965,11 +965,6 @@ export default function Parcels() {
                           Day {parcel.rescheduleCount || 1}/3 · {formatDay(parcel.scheduledFor)}
                         </span>
                       )}
-                      {parcel.returnToHub && (
-                        <span className="mt-1 block text-[11.5px] font-semibold text-[#d94747]">
-                          {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
-                        </span>
-                      )}
                     </td>
 
                     <td className={`${td} text-center`}>
@@ -1044,12 +1039,6 @@ export default function Parcels() {
                   <p className="mt-2 text-[12px] font-semibold text-[#b45309] dark:text-[#fcd34d]">
                     <Icon name="calendar-days" className="mr-1" />
                     Rescheduled · {formatDay(parcel.scheduledFor)}
-                  </p>
-                )}
-                {parcel.returnToHub && (
-                  <p className="mt-2 text-[12px] font-semibold text-[#dc2626] dark:text-[#ff7b7b]">
-                    <Icon name="undo-2" className="mr-1" />
-                    Return to Hub · {parcel.returnCoordinated ? "Return Coordinated" : "Attempt Limit Reached"}
                   </p>
                 )}
 

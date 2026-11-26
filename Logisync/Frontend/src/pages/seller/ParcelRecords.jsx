@@ -485,12 +485,6 @@ export default function ParcelRecords() {
                       Rescheduled (Day {p.rescheduleCount || 1}/3) · {formatDay(p.scheduledFor)}
                     </p>
                   )}
-                  {p.returnToHub && (
-                    <p className="mt-2 rounded-lg bg-[#fff0f0] px-2.5 py-1 text-[12px] font-semibold text-[#d94747]">
-                      <Icon name="undo-2" className="mr-1" />
-                      Return to Hub · {p.returnCoordinated ? "Return to Seller Coordinated" : "Reached 3-Day Reschedule Limit"}
-                    </p>
-                  )}
                   <div className="mt-3 space-y-1.5 text-[13px] text-[#555] dark:text-[#d1c9c2]">
                     <p className="flex items-center gap-2">
                       <Icon name="user-round" className="h-4 w-4 text-[#999]" />

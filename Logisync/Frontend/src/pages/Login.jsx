@@ -521,11 +521,11 @@ export default function Login({ portalRole: propPortalRole } = {}) {
 
       {/* Top Navigation Header matching the Welcome Page */}
       <header className="relative z-10 w-full border-b border-slate-200/70 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setShowIntro(true)}
-            className="flex shrink-0 items-center gap-2 text-left group sm:gap-3"
+            className="flex min-w-0 shrink-0 items-center gap-2 text-left group sm:gap-3"
           >
             <img
               src={SPX_LOGO_DATA_URL}
@@ -535,7 +535,7 @@ export default function Login({ portalRole: propPortalRole } = {}) {
             />
             <span className="h-4 w-px shrink-0 bg-slate-200 sm:h-6" aria-hidden="true" />
             <div className="shrink-0 leading-none">
-              <span className="block whitespace-nowrap text-[15px] font-extrabold tracking-tight text-slate-900 sm:text-lg">
+              <span className="block whitespace-nowrap text-[14.5px] font-extrabold tracking-tight text-slate-900 sm:text-lg">
                 LogiSync
               </span>
               <span className="hidden text-[9px] font-bold uppercase tracking-widest text-brand sm:block">
@@ -544,22 +544,24 @@ export default function Login({ portalRole: propPortalRole } = {}) {
             </div>
           </button>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setContactOpen(true)}
-              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#d9482b] sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11.5px] font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#d9482b] sm:px-3.5 sm:text-xs"
             >
               <Icon name="headset" className="text-[11px] text-[#d9482b] sm:text-xs" />
-              <span>Contact Us</span>
+              <span className="sm:hidden">Contact</span>
+              <span className="hidden sm:inline">Contact Us</span>
             </button>
             <button
               type="button"
               onClick={() => setShowIntro(true)}
-              className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-200 sm:gap-1.5 sm:px-3.5 sm:py-1.5 sm:text-xs"
+              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-[11.5px] font-bold text-slate-700 transition hover:bg-slate-200 sm:px-3.5 sm:text-xs"
             >
               <Icon name="arrow-left" className="text-[10px]" />
-              <span>Back to Website</span>
+              <span className="sm:hidden">Back</span>
+              <span className="hidden sm:inline">Back to Website</span>
             </button>
           </div>
         </div>
