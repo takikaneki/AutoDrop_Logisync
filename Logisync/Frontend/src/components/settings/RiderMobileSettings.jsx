@@ -38,7 +38,7 @@ const TEXT_SIZES = [
 
 const SECTION_TITLES = {
   "": "Settings",
-  account: "Account Settings",
+  account: "Account & Security",
   notifications: "Notifications",
   appearance: "Appearance & Display",
   accessibility: "Accessibility",

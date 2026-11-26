@@ -158,9 +158,9 @@ export default function CoordinatorProfile() {
         {/* Sectioned Coordinator Profile Menu */}
         <nav aria-label="Coordinator profile menu" className="relative z-10 mt-6 space-y-3">
           <div className="space-y-3">
-            {/* ACCOUNT */}
+            {/* ACCOUNT & SECURITY */}
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.04)] dark:border-night-line dark:bg-night-panel">
-            <SectionLabel>Account</SectionLabel>
+            <SectionLabel>Account &amp; Security</SectionLabel>
             <div className="divide-y divide-slate-100 dark:divide-night-line">
               <MenuRow
                 icon="user-round"

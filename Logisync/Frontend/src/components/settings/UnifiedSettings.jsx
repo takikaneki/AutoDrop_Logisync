@@ -201,10 +201,10 @@ export default function UnifiedSettings() {
 
   const showAccount = isSearching
     ? "account info username email phone profile status verified".includes(q)
-    : activeNav === "account-info" || activeNav === "status";
+    : activeNav === "account-info" || activeNav === "password" || activeNav === "status";
   const showSecurity = isSearching
     ? "password security change password".includes(q)
-    : activeNav === "password";
+    : activeNav === "account-info" || activeNav === "password" || activeNav === "status";
   const showNotifications = isSearching
     ? "notifications channels in-app popup browser push permission sound volume preview parcel verification messages complaints announcements".includes(
         q
@@ -428,7 +428,16 @@ export default function UnifiedSettings() {
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2.5 max-[640px]:w-full">
+            <div className="w-[215px] shrink-0 max-[640px]:min-w-0 max-[640px]:flex-1">
+              <SearchInput
+                compact
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search settings..."
+                ariaLabel="Search Settings"
+              />
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -439,24 +448,16 @@ export default function UnifiedSettings() {
                   openEditProfile();
                 }
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-white px-4 py-2 text-[13px] font-semibold text-brand shadow-2xs transition active:scale-[0.99] hover:bg-brand hover:text-white dark:bg-night-head dark:hover:bg-brand dark:hover:text-white"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-brand/40 bg-white px-4 text-[13px] font-semibold text-brand shadow-2xs transition active:scale-[0.99] hover:bg-brand hover:text-white dark:bg-night-head dark:hover:bg-brand dark:hover:text-white"
             >
               <Icon name="pencil" className="h-3.5 w-3.5" />
               <span>{editingProfile ? "Cancel Edit" : "Edit Profile"}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setLogoutOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200/80 bg-[#fff4f2] px-3.5 py-2 text-[13px] font-semibold text-[#c23a3a] transition active:scale-[0.99] hover:bg-red-100/70 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50"
-            >
-              <Icon name="log-out" className="h-3.5 w-3.5" />
-              <span>Log Out</span>
-            </button>
           </div>
         </div>
 
-        {/* SINGLE HORIZONTAL ROW OF TABS + COMPACT SEARCH */}
-        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/70 px-6 py-2.5 dark:border-night-line dark:bg-night-head/50 max-[860px]:flex-col max-[860px]:items-stretch max-[640px]:px-4">
+        {/* SINGLE HORIZONTAL ROW OF TABS */}
+        <div className="flex items-center border-b border-slate-200/80 bg-slate-50/70 px-6 py-2.5 dark:border-night-line dark:bg-night-head/50 max-[640px]:px-4">
           <nav
             aria-label="Settings sections"
             className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-x-auto"
@@ -477,16 +478,6 @@ export default function UnifiedSettings() {
               </button>
             ))}
           </nav>
-
-          <div className="w-[195px] shrink-0 max-[860px]:w-full">
-            <SearchInput
-              compact
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search settings..."
-              ariaLabel="Search Settings"
-            />
-          </div>
         </div>
 
         {/* SINGLE-COLUMN SETTINGS CONTENT */}
@@ -637,9 +628,9 @@ export default function UnifiedSettings() {
             </div>
           )}
 
-          {/* 2. PASSWORD & SECURITY (No Multi-Factor / Google Auth) */}
+          {/* 2. PASSWORD & SECURITY (Shown inside Account & Security) */}
           {showSecurity && (
-            <div ref={passwordRef} className={`${isSearching ? "mt-6 border-t border-brand-line pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
+            <div ref={passwordRef} className={`${showAccount ? "mt-6 border-t border-[#edf0f4] pt-6 dark:border-night-line" : ""} scroll-mt-4`}>
               <h3 className="mb-3 text-[16.5px] font-extrabold text-[#1e293b] dark:text-[#f1eeeb]">
                 Password &amp; Security
               </h3>
@@ -665,6 +656,20 @@ export default function UnifiedSettings() {
                   <ChangePasswordForm desktopSplit />
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Log Out footer — ONLY shown under Account & Security */}
+          {isAccountActive && !isSearching && (
+            <div className="mt-7 flex justify-end border-t border-[#edf0f4] pt-5 dark:border-night-line">
+              <button
+                type="button"
+                onClick={() => setLogoutOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200/80 bg-[#fff4f2] px-4 py-2 text-[13px] font-semibold text-[#c23a3a] transition active:scale-[0.99] hover:bg-red-100/70 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/50"
+              >
+                <Icon name="log-out" className="h-3.5 w-3.5" />
+                <span>Log Out</span>
+              </button>
             </div>
           )}
 
