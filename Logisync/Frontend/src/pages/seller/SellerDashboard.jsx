@@ -108,7 +108,7 @@ export default function SellerDashboard() {
                   {
                     label: "Needs Video",
                     value: v(count("WAITING_FOR_VIDEO", "REUPLOAD_REQUESTED")),
-                    tone: "yellow",
+                    tone: "orange",
                     to: "/seller/parcels?status=NEEDS_VIDEO",
                     badge: "Action Required",
                     icon: "video",
@@ -135,8 +135,8 @@ export default function SellerDashboard() {
               pipeline={[
                 { label: "Needs Video", count: offlineEmpty ? "—" : v(needsVideoParcels.length), icon: "video", tone: "orange", to: "/seller/parcels?status=NEEDS_VIDEO" },
                 { label: "Under Review", count: offlineEmpty ? "—" : v(count("VIDEO_SUBMITTED")), icon: "clock", tone: "yellow", to: "/seller/parcels?status=UNDER_VERIFICATION" },
-                { label: "Verified", count: offlineEmpty ? "—" : v(count("VERIFIED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
-                { label: "Delivered", count: offlineEmpty ? "—" : v(count("DELIVERED")), icon: "package-check", tone: "green", to: "/seller/parcels" },
+                { label: "Verified / Delivered", count: offlineEmpty ? "—" : v(count("VERIFIED") + count("DELIVERED")), icon: "circle-check", tone: "green", to: "/seller/parcels?status=VERIFIED" },
+                { label: "Failed / Return to Hub", count: offlineEmpty ? "—" : v(returnToHubParcels.length), icon: "triangle-alert", tone: "red", to: "/seller/parcels?status=RETURN_TO_HUB" },
               ]}
             />
           </div>
