@@ -223,10 +223,9 @@ export default function Sellers() {
     const shop = form.shop_name.trim();
     const email = form.email.trim().toLowerCase();
     const phone = form.phone.trim();
-    const pickup = form.pickup_address.trim();
 
-    if (!name || !shop || !email || !phone || !pickup) {
-      return setFormError("Please fill in the seller name, shop name, email, contact number and pickup address.");
+    if (!name || !shop || !email || !phone) {
+      return setFormError("Please fill in the seller name, shop name, email and contact number.");
     }
     if (!/^\S+@\S+\.\S+$/.test(email)) return setFormError("Please enter a valid email address.");
     if (!/^09\d{9}$/.test(phone)) {
@@ -244,7 +243,7 @@ export default function Sellers() {
         shop_name: shop,
         email,
         phone,
-        pickup_address: pickup,
+        pickup_address: null,
         password: form.password,
         status: form.status,
       });
@@ -869,19 +868,6 @@ export default function Sellers() {
                   placeholder="09XXXXXXXXX"
                 />
               </div>
-            </div>
-
-            <div className="mt-3">
-              <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-pickup">Pickup Address *</label>
-              <textarea
-                id="sf-pickup"
-                rows={2}
-                value={form.pickup_address}
-                onChange={(e) => setField("pickup_address", e.target.value)}
-                maxLength={300}
-                className={`${inputCls} resize-none`}
-                placeholder="House/Unit, Street, Barangay, Trece Martires City, Cavite"
-              />
             </div>
 
             <div className="mt-3">
