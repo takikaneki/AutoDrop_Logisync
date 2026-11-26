@@ -1064,9 +1064,9 @@ export default function CreateParcel() {
                 </div>
               )}
 
-              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.receiver_name ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.receiver_name || "Enter an existing customer name to auto-fill their saved address and contact number."}
-              </p>
+              {errors.receiver_name && (
+                <p className="mt-1 text-[12px] text-[#d94747]">{errors.receiver_name}</p>
+              )}
 
               {matchedCustomer && (
                 <div className="mt-2 rounded-xl border border-[#cbead8] bg-[#f3fbf6] px-3.5 py-2.5 text-[12.5px] text-[#1f7f4a] dark:border-[#29945a]/30 dark:bg-[#29945a]/10 dark:text-[#8fd6ae]">
@@ -1118,9 +1118,9 @@ export default function CreateParcel() {
                 aria-invalid={!!errors.receiver_contact}
                 className={`${inputCls} ${errors.receiver_contact ? "!border-[#d94747]" : isContactAutoFilled ? "border-brand/40 bg-[#fffaf7] dark:bg-night-head" : ""}`}
               />
-              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.receiver_contact ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.receiver_contact || "Enter an 11-digit mobile number starting with 09 (numbers only)."}
-              </p>
+              {errors.receiver_contact && (
+                <p className="mt-1 text-[12px] text-[#d94747]">{errors.receiver_contact}</p>
+              )}
             </div>
             </div>
 
@@ -1153,11 +1153,8 @@ export default function CreateParcel() {
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_province" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      1. Province <Icon name="lock" className="text-[10px] text-slate-400 ml-1" title="Fixed service hub province" />
+                      Province
                     </label>
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide dark:bg-night-head dark:text-slate-400">
-                      Pre-filled &bull; Read-only
-                    </span>
                   </div>
                   <div className="relative">
                     <input
@@ -1173,20 +1170,14 @@ export default function CreateParcel() {
                       <Icon name="lock" className="text-xs" />
                     </div>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Automatically set to Cavite (service hub coverage area).
-                  </p>
                 </div>
 
                 {/* 2. Municipality / City (Pre-filled / Read-only) */}
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_city" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      2. Municipality / City <Icon name="lock" className="text-[10px] text-slate-400 ml-1" title="Fixed service hub municipality" />
+                      Municipality / City
                     </label>
-                    <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide dark:bg-night-head dark:text-slate-400">
-                      Pre-filled &bull; Read-only
-                    </span>
                   </div>
                   <div className="relative">
                     <input
@@ -1202,9 +1193,6 @@ export default function CreateParcel() {
                       <Icon name="lock" className="text-xs" />
                     </div>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400">
-                    Automatically set to Trece Martires City (service hub coverage area).
-                  </p>
                 </div>
                 </div>
 
@@ -1214,11 +1202,8 @@ export default function CreateParcel() {
                 <div ref={barangayWrapRef} className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_barangay" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      3. Barangay <span className="text-brand">*</span>
+                      Barangay <span className="text-brand">*</span>
                     </label>
-                    <span className="text-[10.5px] font-bold text-brand uppercase tracking-wide">
-                      Required &bull; Trece Martires City
-                    </span>
                   </div>
                   <div className="relative">
                     <input
@@ -1309,20 +1294,17 @@ export default function CreateParcel() {
                     </div>
                   )}
 
-                  <p className={`mt-1 text-[11px] ${errors.receiver_barangay ? "text-[#d94747]" : "text-slate-400"}`}>
-                    {errors.receiver_barangay || "Type the first letter (e.g. 'S', 'H') or select from the 13 official barangays of Trece Martires City."}
-                  </p>
+                  {errors.receiver_barangay && (
+                    <p className="mt-1 text-[11.5px] text-[#d94747]">{errors.receiver_barangay}</p>
+                  )}
                 </div>
 
                 {/* 4. House / Unit Number and Street Name (Combined input field) */}
                 <div className="relative">
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor="receiver_street" className="text-[12px] font-semibold text-[#666] dark:text-[#d1c9c2]">
-                      4. House / Unit Number and Street Name <span className="text-brand">*</span>
+                      House / Unit No. &amp; Street <span className="text-brand">*</span>
                     </label>
-                    <span className="text-[10.5px] font-bold text-brand uppercase tracking-wide">
-                      Required
-                    </span>
                   </div>
                   <input
                     id="receiver_street"
@@ -1335,9 +1317,9 @@ export default function CreateParcel() {
                     aria-invalid={!!errors.receiver_street}
                     className={`${inputCls} ${errors.receiver_street ? "!border-[#d94747]" : ""}`}
                   />
-                  <p className={`mt-1 text-[11px] ${errors.receiver_street ? "text-[#d94747]" : "text-slate-400"}`}>
-                    {errors.receiver_street || "Enter the complete house or unit number, building, subdivision, and street name."}
-                  </p>
+                  {errors.receiver_street && (
+                    <p className="mt-1 text-[11.5px] text-[#d94747]">{errors.receiver_street}</p>
+                  )}
                 </div>
                 </div>
               </div>
@@ -1351,18 +1333,18 @@ export default function CreateParcel() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Complete Delivery Address Preview
+                        Address Preview
                       </span>
                       {fullAddressPreview && (
                         <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                          <Icon name="circle-check" className="mr-1" /> Formatted for Waybill & Rider Dispatch
+                          <Icon name="circle-check" className="mr-1" /> Ready
                         </span>
                       )}
                     </div>
                     <p className="mt-1 text-[13px] font-semibold text-slate-800 dark:text-slate-100 break-words leading-snug">
                       {fullAddressPreview || (
                         <span className="italic font-normal text-slate-400">
-                          Enter house/unit & street and select a barangay to preview the complete Trece Martires delivery address.
+                          Select barangay and enter street to preview address.
                         </span>
                       )}
                     </p>
@@ -1413,9 +1395,11 @@ export default function CreateParcel() {
                   />
                 </div>
               </div>
-              <p className={`mt-1 min-h-[16px] text-[12px] ${errors.contents || errors.quantity ? "text-[#d94747]" : "text-[#999]"}`}>
-                {errors.contents || errors.quantity || "Provide an accurate description and quantity of the physical item(s)."}
-              </p>
+              {(errors.contents || errors.quantity) && (
+                <p className="mt-1 text-[12px] text-[#d94747]">
+                  {errors.contents || errors.quantity}
+                </p>
+              )}
             </div>
 
             {/* 6. Parcel Content Category Declaration */}
@@ -1516,9 +1500,9 @@ export default function CreateParcel() {
                   </div>
                 )}
 
-                <p className={`mt-1 min-h-[16px] text-[12px] ${errors.content_category ? "text-[#d94747]" : "text-[#999]"}`}>
-                  {errors.content_category || "Accurate category declaration is required."}
-                </p>
+                {errors.content_category && (
+                  <p className="mt-1 text-[12px] text-[#d94747]">{errors.content_category}</p>
+                )}
               </div>
 
               {values.content_category === "Other" && (
@@ -1554,8 +1538,8 @@ export default function CreateParcel() {
                   </span>
                   <small className="text-[12px] text-[#777] dark:text-[#b8b0a8]">
                     {canRequestDiscreet
-                      ? "Discreet handling masks sensitive item descriptions on rider delivery views after Coordinator approval."
-                      : "Available for Clothing and Accessories or Personal / Intimate Products categories."}
+                      ? "Masks item details on rider views once approved."
+                      : "Available for Clothing or Personal Products only."}
                   </small>
                 </div>
               </div>
