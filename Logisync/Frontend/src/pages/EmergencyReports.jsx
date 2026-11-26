@@ -771,16 +771,19 @@ export default function EmergencyReports() {
                   <label className={labelCls} htmlFor="emr-status-select">
                     Update Status
                   </label>
-                  <select
+                  <FilterSelect
                     id="emr-status-select"
                     value={nextStatus}
                     onChange={(e) => setNextStatus(e.target.value)}
-                    className={inputCls}
+                    icon="sliders-horizontal"
+                    fullWidth
+                    inline
+                    ariaLabel="Update Status"
                   >
                     <option value="NEW">New / Unreviewed</option>
                     <option value="ACKNOWLEDGED">Acknowledged</option>
                     <option value="RESOLVED">Resolved</option>
-                  </select>
+                  </FilterSelect>
                 </div>
 
                 <div>

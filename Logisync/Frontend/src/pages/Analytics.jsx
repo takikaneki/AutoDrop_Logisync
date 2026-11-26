@@ -4,6 +4,7 @@ import Topbar from "../components/Topbar.jsx";
 import { inputCls, panel } from "../components/styles.js";
 import { useParcels, useRiders } from "../store/records.js";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect } from "../components/SearchFilterBar.jsx";
 
 const COLORS = { Delivered: "#16a34a", "In Transit": "#d9482b", "Failed Delivery": "#d94747" };
 const tick = { fontSize: 13, fill: "#8a8a8a" };
@@ -72,11 +73,18 @@ export default function Analytics() {
         <div className={`${panel} p-6 min-w-0`}>
           <div className="flex items-center justify-between gap-3 mb-5">
             <h2 className="text-[17px] font-bold">Parcels per day</h2>
-            <select value={days} onChange={(e) => setDays(e.target.value)} className={`${inputCls} !w-[150px]`} aria-label="Date range">
+            <FilterSelect
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              icon="calendar-days"
+              align="right"
+              className="w-[165px]"
+              ariaLabel="Date range"
+            >
               <option value="7">Last 7 days</option>
               <option value="14">Last 14 days</option>
               <option value="27">Last 27 days</option>
-            </select>
+            </FilterSelect>
           </div>
           <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">

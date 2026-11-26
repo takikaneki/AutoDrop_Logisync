@@ -23,6 +23,7 @@ import useBase from "../../hooks/useBase.js";
 import { getUser } from "../../api.js";
 import { createEmergencyReport, fetchEmergencyReports } from "../../services/emergencyService.js";
 import { compressImage } from "../../utils/image.js";
+import { FilterSelect } from "../../components/SearchFilterBar.jsx";
 import {
   isOnline,
   readViewCache,
@@ -329,12 +330,13 @@ export default function ReportEmergency() {
               <label className={labelCls} htmlFor="emr-category">
                 Emergency Category <span className="text-[#dc2626]">*</span>
               </label>
-              <select
+              <FilterSelect
                 id="emr-category"
                 value={form.category}
                 onChange={setField("category")}
-                className={inputCls}
-                required
+                icon="triangle-alert"
+                fullWidth
+                ariaLabel="Emergency Category"
               >
                 <option value="">Select emergency category…</option>
                 {cfg.categories.map((cat) => (
@@ -342,7 +344,7 @@ export default function ReportEmergency() {
                     {cat}
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
             </div>
             <div>
               <label className={labelCls} htmlFor="emr-subject">

@@ -21,7 +21,7 @@ import {
   validateMobileNumber,
 } from "../utils/phone.js";
 import Icon from "../components/Icon.jsx";
-import { SearchInput } from "../components/SearchFilterBar.jsx";
+import { FilterSelect, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const ROLES = [
   ["seller", "Seller", "Registers parcels and uploads video proof."],
@@ -228,13 +228,13 @@ export default function Accounts() {
               <label htmlFor="acc-role" className={labelCls}>
                 Role
               </label>
-              <select id="acc-role" value={form.role} onChange={set("role")} className={inputCls}>
+              <FilterSelect id="acc-role" value={form.role} onChange={set("role")} icon="user-cog" fullWidth ariaLabel="Role">
                 {ROLES.map(([v, l]) => (
                   <option key={v} value={v}>
                     {l}
                   </option>
                 ))}
-              </select>
+              </FilterSelect>
               <p className="mt-1 text-[12px] text-[#999]">{ROLES.find(([v]) => v === form.role)[2]}</p>
             </div>
 
@@ -335,25 +335,25 @@ export default function Accounts() {
                   <label htmlFor="acc-zone" className={labelCls}>
                     Zone
                   </label>
-                  <select id="acc-zone" value={form.zone} onChange={set("zone")} className={inputCls}>
+                  <FilterSelect id="acc-zone" value={form.zone} onChange={set("zone")} icon="map-pin" fullWidth ariaLabel="Zone">
                     {["General", "North", "South", "East", "West", "Central"].map((z) => (
                       <option key={z} value={z}>
                         {z}
                       </option>
                     ))}
-                  </select>
+                  </FilterSelect>
                 </div>
                 <div>
                   <label htmlFor="acc-vehicle" className={labelCls}>
                     Vehicle
                   </label>
-                  <select id="acc-vehicle" value={form.vehicle} onChange={set("vehicle")} className={inputCls}>
+                  <FilterSelect id="acc-vehicle" value={form.vehicle} onChange={set("vehicle")} icon="bike" fullWidth ariaLabel="Vehicle">
                     {["Motorcycle", "Tricycle", "Delivery Van", "L300 Truck"].map((v) => (
                       <option key={v} value={v}>
                         {v}
                       </option>
                     ))}
-                  </select>
+                  </FilterSelect>
                 </div>
               </div>
             )}

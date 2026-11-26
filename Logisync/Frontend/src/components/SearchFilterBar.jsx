@@ -127,6 +127,10 @@ export function FilterSelect({
   ariaLabel = "Filter",
   icon = "sliders-horizontal",
   active = false,
+  disabled = false,
+  align = "left",
+  inline = false,
+  fullWidth = false,
   className = "",
   children,
 }) {
@@ -163,9 +167,11 @@ export function FilterSelect({
       }
     };
     document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown, { passive: true });
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
       document.removeEventListener("keydown", onKey);
     };
   }, [open, options, selectedIdx, highlightIdx, onChange]);
@@ -177,30 +183,37 @@ export function FilterSelect({
   };
 
   return (
-    <div ref={wrapRef} className={`relative shrink-0 max-[640px]:w-full ${className}`}>
+    <div ref={wrapRef} className={`relative shrink-0 ${fullWidth ? "w-full" : "max-[640px]:w-full"} ${className}`}>
       <button
         id={id}
         type="button"
+        disabled={disabled}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className={`group flex h-[42px] w-full items-center justify-between gap-2 rounded-xl border px-3 text-left transition-all outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-brand/15 dark:focus-visible:ring-brand/20 ${
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`group flex h-[42px] w-full items-center justify-between gap-2 rounded-xl border px-3 text-left transition-all outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-brand/20 ${
           open || active
             ? "border-brand/60 bg-[#fff7f3] text-[#0f172a] shadow-[0_1px_3px_rgba(238,77,45,0.1)] dark:border-brand/70 dark:bg-brand/15 dark:text-white"
             : "border-slate-200/95 bg-white text-[#1e293b] shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-slate-300 dark:border-night-line dark:bg-night-head dark:text-slate-100 dark:hover:border-[#4b3b34]"
         }`}
       >
         <span className="flex min-w-0 items-center gap-2">
-          <Icon
-            name={icon}
-            className={`h-3.5 w-3.5 shrink-0 transition-colors ${
-              open || active
-                ? "text-brand"
-                : "text-slate-400 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200"
+          {icon && (
+            <Icon
+              name={icon}
+              className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+                open || active
+                  ? "text-brand"
+                  : "text-slate-400 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200"
+              }`}
+            />
+          )}
+          <span
+            className={`truncate text-[13px] ${
+              selectedOption?.value === "" ? "font-medium text-slate-400 dark:text-slate-400" : "font-semibold"
             }`}
-          />
-          <span className="truncate text-[13px] font-semibold">
+          >
             {selectedOption ? selectedOption.label : "Select..."}
           </span>
         </span>
@@ -216,7 +229,13 @@ export function FilterSelect({
         <div
           role="listbox"
           aria-label={ariaLabel}
-          className="absolute left-0 top-[calc(100%+6px)] z-[1300] min-w-full w-max max-w-[min(300px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.16)] animate-popup dark:border-night-line dark:bg-night-panel dark:shadow-[0_18px_46px_rgba(0,0,0,0.45)]"
+          className={
+            inline
+              ? "mt-1.5 w-full overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.12)] animate-popup dark:border-night-line dark:bg-night-panel dark:shadow-[0_14px_34px_rgba(0,0,0,0.45)]"
+              : `absolute ${align === "right" ? "right-0" : "left-0"} top-[calc(100%+6px)] z-[1300] min-w-full ${
+                  fullWidth ? "w-full" : "w-max max-w-[min(300px,calc(100vw-32px))]"
+                } overflow-hidden rounded-2xl border border-slate-200/95 bg-white p-1.5 shadow-[0_16px_40px_rgba(15,23,42,0.16)] animate-popup dark:border-night-line dark:bg-night-panel dark:shadow-[0_18px_46px_rgba(0,0,0,0.45)]`
+          }
         >
           <div className="max-h-64 overflow-y-auto space-y-0.5">
             {options.map((opt, idx) => {

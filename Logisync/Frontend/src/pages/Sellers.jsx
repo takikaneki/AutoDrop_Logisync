@@ -868,15 +868,18 @@ export default function Sellers() {
               </div>
               <div>
                 <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-status">Account Status</label>
-                <select
+                <FilterSelect
                   id="sf-status"
                   value={form.status}
                   onChange={(e) => setField("status", e.target.value)}
-                  className={inputCls}
+                  icon="shield-check"
+                  fullWidth
+                  inline
+                  ariaLabel="Account Status"
                 >
-                  <option>Active</option>
-                  <option>Inactive</option>
-                </select>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </FilterSelect>
               </div>
               <div>
                 <label className="mb-1 block text-[13px] font-semibold" htmlFor="sf-name">Seller / Contact Person Name *</label>

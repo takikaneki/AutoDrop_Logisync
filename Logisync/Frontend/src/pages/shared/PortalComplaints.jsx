@@ -16,6 +16,7 @@ import { addComplaint, useComplaints } from "../../store/records.js";
 import { addNotification } from "../../store/notifications.js";
 import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
+import { FilterSelect } from "../../components/SearchFilterBar.jsx";
 
 const statusTone = {
   Open: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
@@ -214,16 +215,16 @@ export default function PortalComplaints() {
           <div className="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
             <div>
               <label className={labelCls} htmlFor="c-type">Type</label>
-              <select id="c-type" value={form.type} onChange={set("type")} className={inputCls}>
-                {cfg.types.map((t) => <option key={t}>{t}</option>)}
-              </select>
+              <FilterSelect id="c-type" value={form.type} onChange={set("type")} icon="flag" fullWidth ariaLabel="Type">
+                {cfg.types.map((t) => <option key={t} value={t}>{t}</option>)}
+              </FilterSelect>
             </div>
             <div>
               <label className={labelCls} htmlFor="c-cat">Category</label>
-              <select id="c-cat" value={form.category} onChange={set("category")} className={inputCls}>
+              <FilterSelect id="c-cat" value={form.category} onChange={set("category")} icon="tag" fullWidth ariaLabel="Category">
                 <option value="">Select…</option>
-                {categories.map((c) => <option key={c}>{c}</option>)}
-              </select>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </FilterSelect>
             </div>
           </div>
           <div className="grid grid-cols-[2fr_1fr] gap-4 max-[700px]:grid-cols-1">

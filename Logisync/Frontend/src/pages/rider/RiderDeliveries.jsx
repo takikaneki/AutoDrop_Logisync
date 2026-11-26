@@ -42,7 +42,7 @@ import {
 import { latestFor, reportFailure, useFailedDeliveries, withdrawFailure } from "../../store/failedDeliveries.js";
 import { toast } from "../../store/toast.js";
 import Icon from "../../components/Icon.jsx";
-import { SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../../components/SearchFilterBar.jsx";
 import Pagination from "../../components/Pagination.jsx";
 
 const PAGE_SIZE = 10;
@@ -1335,11 +1335,14 @@ export default function RiderDeliveries() {
         </p>
 
         <label className={labelCls} htmlFor="incident-type">Incident Type</label>
-        <select
+        <FilterSelect
           id="incident-type"
           value={incidentType}
           onChange={(e) => setIncidentType(e.target.value)}
-          className={inputCls}
+          icon="triangle-alert"
+          fullWidth
+          inline
+          ariaLabel="Incident Type"
         >
           <option value="Vehicle Breakdown">Vehicle Breakdown</option>
           <option value="Accident / Road Incident">Accident / Road Incident</option>
@@ -1347,7 +1350,7 @@ export default function RiderDeliveries() {
           <option value="Severe Weather / Flooding">Severe Weather / Flooding</option>
           <option value="Personal Emergency">Personal Emergency</option>
           <option value="Other">Other Emergency</option>
-        </select>
+        </FilterSelect>
 
         <div className="mt-4">
           <label className={labelCls} htmlFor="incident-desc">Details / Description</label>

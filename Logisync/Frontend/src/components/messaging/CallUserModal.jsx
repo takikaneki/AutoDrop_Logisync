@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Icon from "../Icon.jsx";
+import { FilterSelect } from "../SearchFilterBar.jsx";
 
 export default function CallUserModal({
   active,
@@ -75,21 +76,24 @@ export default function CallUserModal({
             <label htmlFor="coordinator-select" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
               Select Coordinator
             </label>
-            <select
+            <FilterSelect
               id="coordinator-select"
-              value={active?.user_id || ""}
+              value={String(active?.user_id || "")}
               onChange={(e) => {
                 const found = coordinators.find((c) => String(c.user_id) === e.target.value);
                 if (found) onSelectCoordinator(found);
               }}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-brand dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              icon="user"
+              fullWidth
+              inline
+              ariaLabel="Select Coordinator"
             >
               {coordinators.map((c) => (
-                <option key={c.user_id} value={c.user_id}>
+                <option key={c.user_id} value={String(c.user_id)}>
                   {c.name} {c.phone ? `(${c.phone})` : "(No phone)"}
                 </option>
               ))}
-            </select>
+            </FilterSelect>
           </div>
         )}
 

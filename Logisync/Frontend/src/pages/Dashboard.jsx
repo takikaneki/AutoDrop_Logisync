@@ -17,6 +17,7 @@ import {
   SkeletonBlock,
 } from "../components/Skeletons.jsx";
 import { btnGhost, btnPrimary, inputCls } from "../components/styles.js";
+import { FilterSelect } from "../components/SearchFilterBar.jsx";
 import {
   listParcels,
   fetchIncidents,
@@ -377,9 +378,16 @@ export default function Dashboard() {
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-[17px] max-[600px]:text-[15.5px] font-bold">{TITLES[period]}</h3>
             <div className="flex items-center gap-2">
-              <select value={period} onChange={(e) => changePeriod(e.target.value)} className={`${inputCls} !w-[130px]`} aria-label="Time period">
+              <FilterSelect
+                value={period}
+                onChange={(e) => changePeriod(e.target.value)}
+                icon="calendar-days"
+                align="right"
+                className="w-[145px]"
+                ariaLabel="Time period"
+              >
                 {PERIODS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-              </select>
+              </FilterSelect>
             </div>
           </div>
           <div className="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#8a8a8a]">

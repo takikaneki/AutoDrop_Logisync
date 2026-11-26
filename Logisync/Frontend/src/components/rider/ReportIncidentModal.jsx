@@ -5,6 +5,7 @@ import { btnGhost, btnPrimary, inputCls, labelCls, textareaCls } from "../styles
 import { reportIncident } from "../../services/parcelService.js";
 import { toast } from "../../store/toast.js";
 import Icon from "../Icon.jsx";
+import { FilterSelect } from "../SearchFilterBar.jsx";
 
 export default function ReportIncidentModal({ open, onClose }) {
   const [incidentType, setIncidentType] = useState("Vehicle Breakdown");
@@ -60,11 +61,14 @@ export default function ReportIncidentModal({ open, onClose }) {
       </p>
 
       <label className={labelCls} htmlFor="incident-type">Incident Type</label>
-      <select
+      <FilterSelect
         id="incident-type"
         value={incidentType}
         onChange={(e) => setIncidentType(e.target.value)}
-        className={inputCls}
+        icon="triangle-alert"
+        fullWidth
+        inline
+        ariaLabel="Incident Type"
       >
         <option value="Vehicle Breakdown">Vehicle Breakdown</option>
         <option value="Accident / Road Incident">Accident / Road Incident</option>
@@ -72,7 +76,7 @@ export default function ReportIncidentModal({ open, onClose }) {
         <option value="Severe Weather / Flooding">Severe Weather / Flooding</option>
         <option value="Personal Emergency">Personal Emergency</option>
         <option value="Other">Other Emergency</option>
-      </select>
+      </FilterSelect>
 
       <div className="mt-4">
         <label className={labelCls} htmlFor="incident-desc">Details / Description</label>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Icon from "../Icon.jsx";
+import { FilterSelect } from "../SearchFilterBar.jsx";
 import { btnGhost, btnPrimary, inputCls, labelCls } from "../styles.js";
 import {
   CONTENT_CATEGORIES,
@@ -320,11 +321,13 @@ export default function EditParcelModal({ parcel, onClose, onSaved }) {
             <div className="grid grid-cols-2 gap-3 max-[560px]:grid-cols-1">
               <div>
                 <label className={labelCls}>Content Category *</label>
-                <select
-                  className={inputCls}
+                <FilterSelect
                   value={form.content_category}
                   onChange={(e) => setField("content_category", e.target.value)}
-                  required
+                  icon="tag"
+                  fullWidth
+                  inline
+                  ariaLabel="Content Category"
                 >
                   <option value="">Select category…</option>
                   {CONTENT_CATEGORIES.map((c) => (
@@ -332,7 +335,7 @@ export default function EditParcelModal({ parcel, onClose, onSaved }) {
                       {c.label}
                     </option>
                   ))}
-                </select>
+                </FilterSelect>
                 {errors.content_category && (
                   <p className="mt-1 text-[11.5px] text-[#d94a4a]">{errors.content_category}</p>
                 )}
@@ -352,14 +355,17 @@ export default function EditParcelModal({ parcel, onClose, onSaved }) {
                 </div>
                 <div>
                   <label className={labelCls}>Payment *</label>
-                  <select
-                    className={inputCls}
+                  <FilterSelect
                     value={form.payment_method}
                     onChange={(e) => setField("payment_method", e.target.value)}
+                    icon={null}
+                    fullWidth
+                    inline
+                    ariaLabel="Payment"
                   >
                     <option value="NON_COD">Non-COD</option>
                     <option value="COD">COD</option>
-                  </select>
+                  </FilterSelect>
                 </div>
               </div>
             </div>

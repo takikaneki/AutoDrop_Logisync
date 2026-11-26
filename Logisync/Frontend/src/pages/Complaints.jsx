@@ -23,6 +23,7 @@ import {
   ParcelCardListSkeleton,
 } from "../components/Skeletons.jsx";
 import Icon from "../components/Icon.jsx";
+import { FilterSelect, SearchFilterBar, SearchInput } from "../components/SearchFilterBar.jsx";
 
 const statusTone = {
   Open: "bg-[#fee2e2] text-[#dc2626] dark:bg-red-500/20 dark:text-[#f87171]",
@@ -334,46 +335,59 @@ export default function Complaints() {
 
       <section className={`${panel} p-6 max-[600px]:p-4`}>
         {/* Filters */}
-        <div className="grid grid-cols-[1fr_170px_170px] gap-3 mb-5 max-[800px]:grid-cols-1">
-          <div className="relative">
-            <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[14px] text-[#aaa]" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search ticket, person or subject..."
-              className={`${inputCls} pl-9`}
-            />
-          </div>
-          <select
+        <SearchFilterBar
+          hasActiveFilters={Boolean(search.trim() || status !== "All" || priority !== "All")}
+          onReset={() => {
+            setSearch("");
+            setStatus("All");
+            setPriority("All");
+            setPage(1);
+          }}
+        >
+          <SearchInput
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search ticket, person or subject..."
+            ariaLabel="Search complaints"
+          />
+          <FilterSelect
             value={status}
+            active={status !== "All"}
+            icon="filter"
+            className="w-[170px]"
             onChange={(e) => {
               setStatus(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by status"
+            ariaLabel="Filter by status"
           >
             {["All", "Open", "In Progress", "Resolved"].map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>
+                {s === "All" ? "All Statuses" : s}
+              </option>
             ))}
-          </select>
-          <select
+          </FilterSelect>
+          <FilterSelect
             value={priority}
+            active={priority !== "All"}
+            icon="flag"
+            className="w-[170px]"
             onChange={(e) => {
               setPriority(e.target.value);
               setPage(1);
             }}
-            className={inputCls}
-            aria-label="Filter by priority"
+            ariaLabel="Filter by priority"
           >
             {["All", "High", "Medium", "Low"].map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} value={s}>
+                {s === "All" ? "All Priorities" : s}
+              </option>
             ))}
-          </select>
-        </div>
+          </FilterSelect>
+        </SearchFilterBar>
 
         {/* Desktop & Tablet Table Layout */}
         {showCachedNotice && <CachedDataNotice updatedAt={cachedAt} />}

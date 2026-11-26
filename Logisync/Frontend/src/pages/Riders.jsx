@@ -895,10 +895,18 @@ export default function Riders() {
               </div>
               <div>
                 <label className="mb-1 block text-[13px] font-semibold" htmlFor="rf-status">Account Status</label>
-                <select id="rf-status" value={form.status} onChange={(e) => setField("status", e.target.value)} className={inputCls}>
-                  <option>Active</option>
-                  <option>Inactive</option>
-                </select>
+                <FilterSelect
+                  id="rf-status"
+                  value={form.status}
+                  onChange={(e) => setField("status", e.target.value)}
+                  icon="shield-check"
+                  fullWidth
+                  inline
+                  ariaLabel="Account Status"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </FilterSelect>
               </div>
               <div>
                 <label className="mb-1 block text-[13px] font-semibold" htmlFor="rf-name">Rider Full Name *</label>
