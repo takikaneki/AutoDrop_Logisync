@@ -107,8 +107,8 @@ function getDeliveryTimestamp(d) {
 }
 
 const card =
-  "rounded-2xl border border-[#e5e8ee] bg-white p-5 dark:border-night-line dark:bg-night-panel max-[420px]:p-4";
-const bigBtn = "!py-3.5 !text-[15px] w-full";
+  "rounded-xl border border-[#e5e8ee] bg-white p-3.5 dark:border-night-line dark:bg-night-panel max-[420px]:p-3";
+const bigBtn = "!py-2 !px-2.5 !text-[12.5px] w-full whitespace-nowrap";
 
 function hasValue(val) {
   if (val === null || val === undefined) return false;
@@ -139,19 +139,19 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
 
   return (
     <>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={expanded}
-          className="group flex min-w-0 flex-1 items-center gap-2 text-left focus:outline-none"
+          className="group flex min-w-0 flex-1 items-center gap-1.5 text-left focus:outline-none"
         >
-          <h3 className="min-w-0 break-words text-[18px] font-bold leading-snug text-[#27364f] transition-colors group-hover:text-brand dark:text-[#f1eeeb] inline-flex items-center gap-2 flex-wrap">
+          <h3 className="min-w-0 break-words text-[15px] font-bold leading-snug text-[#27364f] transition-colors group-hover:text-brand dark:text-[#f1eeeb] inline-flex items-center gap-1.5 flex-wrap">
             <span>{receiver}</span>
             {(d.is_cod || d.payment_method === "COD" || d.paymentMethod === "COD") && <CodBadge />}
           </h3>
           <span
-            className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f4f6f9] text-[11px] text-[#64748b] transition-transform duration-200 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-line dark:text-[#d1c9c2] ${
+            className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f4f6f9] text-[10px] text-[#64748b] transition-transform duration-200 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-line dark:text-[#d1c9c2] ${
               expanded ? "rotate-180 bg-brand-soft text-brand" : ""
             }`}
             aria-hidden="true"
@@ -164,44 +164,44 @@ function CardHead({ d, badge, expanded = false, onToggle, copiedId, onCopyAddres
 
       {/* Default collapsed view: display receiver's complete address directly below receiver's name */}
       {!expanded && (
-        <p className="mt-1.5 break-words text-[14px] leading-relaxed text-[#52627a] dark:text-[#d1c9c2]">
+        <p className="mt-1 break-words text-[12.5px] leading-snug text-[#52627a] dark:text-[#d1c9c2]">
           {address || "No delivery address provided"}
         </p>
       )}
 
       {/* Expanded view: show ONLY Transaction Number, Receiver Contact Number, and Complete Address with Copy Address button */}
       {expanded && (
-        <div className="mt-3.5 space-y-3.5 border-t border-[#f0f2f6] pt-3.5 dark:border-night-line">
+        <div className="mt-2.5 space-y-2.5 border-t border-[#f0f2f6] pt-2.5 dark:border-night-line">
           <div>
-            <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            <span className="block text-[12px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Transaction Number
             </span>
-            <p className="mt-0.5 break-words text-[14px] text-[#52627a] dark:text-[#d1c9c2]">
+            <p className="mt-0.5 break-words text-[13px] text-[#52627a] dark:text-[#d1c9c2]">
               {txn || "—"}
             </p>
           </div>
 
           <div>
-            <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            <span className="block text-[12px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Contact Number
             </span>
             {contact ? (
               <a
                 href={`tel:${contact}`}
-                className="mt-0.5 inline-block text-[14px] font-medium text-[#52627a] hover:text-brand hover:underline dark:text-[#d1c9c2]"
+                className="mt-0.5 inline-block text-[13px] font-medium text-[#52627a] hover:text-brand hover:underline dark:text-[#d1c9c2]"
               >
                 {contact}
               </a>
             ) : (
-              <p className="mt-0.5 text-[14px] text-[#94a3b8]">No contact number provided</p>
+              <p className="mt-0.5 text-[13px] text-[#94a3b8]">No contact number provided</p>
             )}
           </div>
 
           <div>
-            <span className="block text-[13px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
+            <span className="block text-[12px] font-bold text-[#27364f] dark:text-[#f1eeeb]">
               Address
             </span>
-            <p className="mt-0.5 break-words text-[14px] leading-relaxed text-[#52627a] dark:text-[#d1c9c2]">
+            <p className="mt-0.5 break-words text-[13px] leading-snug text-[#52627a] dark:text-[#d1c9c2]">
               {address || "No delivery address provided"}
             </p>
             {address && (
@@ -510,7 +510,7 @@ export default function RiderDeliveries() {
     const remainingDays = Math.max(0, MAX_RESCHEDULES - reschedCount);
 
     const actionButtons = (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={() => open("delivered", d)} className={`${btnPrimary} ${bigBtn}`}>
           <Icon name="circle-check" /> Delivered
         </button>
@@ -540,12 +540,12 @@ export default function RiderDeliveries() {
           onCopyAddress={copyAddress}
           badge={
             isResched ? (
-              <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand">
+              <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-[11px] font-bold text-brand">
                 <Icon name="calendar-days" className="mr-1" />
                 Attempt {reschedCount}/{MAX_RESCHEDULES} · {formatDay(d.scheduledFor)}
               </span>
             ) : (
-              <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2.5 py-1 text-[12px] font-bold text-[#29945a]">
+              <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2 py-0.5 text-[11px] font-bold text-[#29945a]">
                 Scheduled · {formatDay(d.scheduledFor || todayIso())}
               </span>
             )
@@ -553,8 +553,8 @@ export default function RiderDeliveries() {
         />
 
         {isResched && (
-          <div className="mt-3 flex flex-col gap-1 rounded-xl bg-[#fff8eb] px-3 py-2.5 text-[12.5px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
-            <div className="flex items-start gap-2">
+          <div className="mt-2.5 flex flex-col gap-0.5 rounded-lg bg-[#fff8eb] px-2.5 py-2 text-[11.5px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
+            <div className="flex items-start gap-1.5">
               <Icon name="calendar-days" className="mt-0.5 shrink-0" />
               <span>
                 Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
@@ -562,7 +562,7 @@ export default function RiderDeliveries() {
               </span>
             </div>
             {latestReschedTs && (
-              <span className="pl-5 text-[11.5px] text-[#b47b09] dark:text-[#fcd34d]/80">
+              <span className="pl-4 text-[10.5px] text-[#b47b09] dark:text-[#fcd34d]/80">
                 Rescheduled at {formatDate(latestReschedTs)}
               </span>
             )}
@@ -570,7 +570,7 @@ export default function RiderDeliveries() {
         )}
 
         {(d.delivery_hold || d.deliveryHold) && (
-          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+          <div className="mt-2.5 rounded-lg border border-[#fbbf24] bg-[#fffbeb] p-2.5 text-[11.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
             <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
@@ -578,27 +578,27 @@ export default function RiderDeliveries() {
 
         {!expanded ? (
           <>
-            <div className="mt-4">{actionButtons}</div>
-            <div className="mt-3.5 border-t border-[#f0f2f6] pt-2.5 text-center dark:border-night-line">
+            <div className="mt-3">{actionButtons}</div>
+            <div className="mt-2.5 border-t border-[#f0f2f6] pt-2 text-center dark:border-night-line">
               <button
                 type="button"
                 onClick={() => toggleCard(cardKey)}
-                className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
+                className="inline-flex items-center justify-center gap-1 text-[11.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <Icon name="chevron-down" className="text-[11px]" />
+                <Icon name="chevron-down" className="text-[10px]" />
               </button>
             </div>
           </>
         ) : (
-          <div className="mt-3">
+          <div className="mt-2.5">
             {isResched && (() => {
               const latestReason =
                 cleanText(d.lastFailure) ||
                 cleanText(d.attempts?.[d.attempts.length - 1]?.reason) ||
                 "";
               return (
-                <div className="mb-2 flex items-start gap-2 rounded-xl bg-[#fff8eb] px-3 py-2.5 text-[13px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
+                <div className="mb-2 flex items-start gap-1.5 rounded-lg bg-[#fff8eb] px-2.5 py-2 text-[11.5px] font-medium text-[#9a6700] dark:bg-[#2d2416] dark:text-[#f6c453]">
                   <Icon name="calendar-days" className="mt-0.5 shrink-0" />
                   <span>
                     Parcel will be delivered on <strong>{formatDay(d.scheduledFor)}</strong>
@@ -609,13 +609,13 @@ export default function RiderDeliveries() {
             })()}
 
             {!isResched && cleanText(d.lastFailure) && (
-              <p className="mb-2 text-[13px] font-semibold text-[#d94747]">
+              <p className="mb-2 text-[12px] font-semibold text-[#d94747]">
                 <Icon name="undo-2" className="mr-1.5" />
                 Last attempt failed: {cleanText(d.lastFailure)}
               </p>
             )}
 
-            <div className="mt-4 border-t border-[#f0f2f6] pt-4 dark:border-night-line">
+            <div className="mt-3 border-t border-[#f0f2f6] pt-3 dark:border-night-line">
               {actionButtons}
             </div>
           </div>
@@ -643,14 +643,14 @@ export default function RiderDeliveries() {
           copiedId={copiedId}
           onCopyAddress={copyAddress}
           badge={
-            <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2.5 py-1 text-[12px] font-bold text-[#29945a]">
+            <span className="shrink-0 rounded-full bg-[#eaf8ef] px-2 py-0.5 text-[11px] font-bold text-[#29945a]">
               {doneTime}
             </span>
           }
         />
 
         {(d.delivery_hold || d.deliveryHold) && (
-          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+          <div className="mt-2.5 rounded-lg border border-[#fbbf24] bg-[#fffbeb] p-2.5 text-[11.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
             <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
@@ -659,36 +659,36 @@ export default function RiderDeliveries() {
         {!expanded ? (
           <>
             {d.proof && (
-              <div className="mt-3">
+              <div className="mt-2.5">
                 <button
                   type="button"
                   onClick={() => setViewer(d)}
-                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-1.5`}
                 >
                   <Icon name="image" /> View Proof of Delivery
                 </button>
               </div>
             )}
-            <div className="mt-3.5 border-t border-[#f0f2f6] pt-2.5 text-center dark:border-night-line">
+            <div className="mt-2.5 border-t border-[#f0f2f6] pt-2 text-center dark:border-night-line">
               <button
                 type="button"
                 onClick={() => toggleCard(cardKey)}
-                className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
+                className="inline-flex items-center justify-center gap-1 text-[11.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <Icon name="chevron-down" className="text-[11px]" />
+                <Icon name="chevron-down" className="text-[10px]" />
               </button>
             </div>
           </>
         ) : (
-          <div className="mt-3 space-y-2.5">
-            <div className="rounded-xl border border-[#e5e8ee] bg-[#f8fafc] p-3 text-[13px] text-[#52627a] dark:border-night-line dark:bg-night-soft dark:text-[#d1c9c2]">
+          <div className="mt-2.5 space-y-2">
+            <div className="rounded-lg border border-[#e5e8ee] bg-[#f8fafc] p-2.5 text-[12px] text-[#52627a] dark:border-night-line dark:bg-night-soft dark:text-[#d1c9c2]">
               <div className="flex flex-wrap items-center justify-between gap-1">
                 <span className="font-semibold text-[#27364f] dark:text-[#f1eeeb]">Delivered:</span>
                 <span className="font-bold text-[#29945a]">{formatDate(deliveryTs)}</span>
               </div>
               {(d.scannedAt || d.created_at) && (
-                <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[12px]">
+                <div className="mt-1 flex flex-wrap items-center justify-between gap-1 text-[11px]">
                   <span>Initial Registration / Scan:</span>
                   <span>{formatDate(d.scannedAt || d.created_at)}</span>
                 </div>
@@ -696,17 +696,17 @@ export default function RiderDeliveries() {
             </div>
 
             {cleanText(d.note) && (
-              <p className="text-[13px] text-[#666] dark:text-[#d1c9c2]">“{cleanText(d.note)}”</p>
+              <p className="text-[12px] text-[#666] dark:text-[#d1c9c2]">“{cleanText(d.note)}”</p>
             )}
             {d.attempts?.length > 1 && (
               <AttemptHistory attempts={d.attempts} rescheduleCount={d.rescheduleCount} returnToHub={false} />
             )}
             {d.proof && (
-              <div className="mt-4 border-t border-[#f0f2f6] pt-4 dark:border-night-line">
+              <div className="mt-3 border-t border-[#f0f2f6] pt-3 dark:border-night-line">
                 <button
                   type="button"
                   onClick={() => setViewer(d)}
-                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-1.5`}
                 >
                   <Icon name="image" /> View Proof of Delivery
                 </button>
@@ -735,18 +735,18 @@ export default function RiderDeliveries() {
           onCopyAddress={copyAddress}
           badge={
             isReturnToHub ? (
-              <span className="shrink-0 text-[12px] font-bold text-[#dc2626] dark:text-[#ff7b7b]">
-                <Icon name="undo-2" className="mr-1.5" />
+              <span className="shrink-0 text-[11px] font-bold text-[#dc2626] dark:text-[#ff7b7b]">
+                <Icon name="undo-2" className="mr-1" />
                 Return to Hub
               </span>
             ) : (
-              <span className="shrink-0 text-[12.5px] text-[#aaa]">{formatDate(d.doneAt)}</span>
+              <span className="shrink-0 text-[11.5px] text-[#aaa]">{formatDate(d.doneAt)}</span>
             )
           }
         />
 
         {(d.delivery_hold || d.deliveryHold) && (
-          <div className="mt-3 rounded-xl border border-[#fbbf24] bg-[#fffbeb] p-3 text-[12.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
+          <div className="mt-2.5 rounded-lg border border-[#fbbf24] bg-[#fffbeb] p-2.5 text-[11.5px] text-[#92400e] dark:border-[#b45309] dark:bg-[#2d2416] dark:text-[#fde68a]">
             <Icon name="circle-pause" className="mr-1.5 font-bold" />
             <strong>Delivery On Hold (Incident):</strong> Rescheduling counter is paused by Coordinator.
           </div>
@@ -755,60 +755,60 @@ export default function RiderDeliveries() {
         {!expanded ? (
           <>
             {d.proof && (
-              <div className="mt-3">
+              <div className="mt-2.5">
                 <button
                   type="button"
                   onClick={() => setViewer(d)}
-                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-1.5`}
                 >
                   <Icon name="image" /> View Proof Photo
                 </button>
               </div>
             )}
             {canRetry && (
-              <button type="button" onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-4`}>
+              <button type="button" onClick={() => tryAgain(d)} className={`${btnPrimary} ${bigBtn} mt-2.5`}>
                 <Icon name="undo-2" /> Try again
               </button>
             )}
-            <div className="mt-3.5 border-t border-[#f0f2f6] pt-2.5 text-center dark:border-night-line">
+            <div className="mt-2.5 border-t border-[#f0f2f6] pt-2 text-center dark:border-night-line">
               <button
                 type="button"
                 onClick={() => toggleCard(cardKey)}
-                className="inline-flex items-center justify-center gap-1.5 text-[12.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
+                className="inline-flex items-center justify-center gap-1 text-[11.5px] font-semibold text-[#64748b] transition hover:text-brand dark:text-[#d1c9c2]"
               >
                 <span>Tap receiver name to expand</span>
-                <Icon name="chevron-down" className="text-[11px]" />
+                <Icon name="chevron-down" className="text-[10px]" />
               </button>
             </div>
           </>
         ) : (
           <div>
-            <div className="mt-3 rounded-xl border border-red-200/80 bg-[#fff5f5] px-3.5 py-2.5 dark:border-red-900/50 dark:bg-red-950/25">
+            <div className="mt-2.5 rounded-lg border border-red-200/80 bg-[#fff5f5] px-3 py-2 dark:border-red-900/50 dark:bg-red-950/25">
               <div className="flex items-center justify-between gap-2">
-                <strong className="text-[13.5px] text-[#dc2626] dark:text-[#ff7b7b]">
+                <strong className="text-[12.5px] text-[#dc2626] dark:text-[#ff7b7b]">
                   {isReturnToHub ? "Return to Hub" : "Failed Delivery"}
                 </strong>
                 {d.returnCoordinated ? (
-                  <span className="text-[11.5px] font-bold text-[#15803d] dark:text-[#4ade80]">
+                  <span className="text-[11px] font-bold text-[#15803d] dark:text-[#4ade80]">
                     <Icon name="circle-check" className="mr-1" />Confirmed at Hub
                   </span>
                 ) : isReturnToHub ? (
-                  <span className="text-[11.5px] font-bold text-[#b45309] dark:text-[#fcd34d]">
+                  <span className="text-[11px] font-bold text-[#b45309] dark:text-[#fcd34d]">
                     Return to hub
                   </span>
                 ) : null}
               </div>
-              <p className="mt-1 text-[12.5px] text-[#475569] dark:text-[#d1c9c2]">
+              <p className="mt-1 text-[12px] text-[#475569] dark:text-[#d1c9c2]">
                 {cleanText(d.lastFailure || d.reason) || "Missed delivery"}
               </p>
             </div>
 
             {d.proof && (
-              <div className="mt-3">
+              <div className="mt-2.5">
                 <button
                   type="button"
                   onClick={() => setViewer(d)}
-                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-2`}
+                  className={`${btnGhost} ${bigBtn} flex items-center justify-center gap-1.5`}
                 >
                   <Icon name="image" /> View Proof Photo
                 </button>
