@@ -27,10 +27,11 @@ const cardBorders = {
 // Summary card na may bilog na icon. Pare-pareho ang taas ng lahat ng card sa isang hanay (h-full + grid stretch).
 export function StatCard({ label, value, icon, tone = "orange", to, active = false, interactive = false, loading = false }) {
   const isPlaceholderValue = loading || value === "…" || value === "—";
+  const isClickable = Boolean(to || interactive || active);
   const body = (
     <div
-      className={`${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-        to || interactive || active ? "active:scale-[0.99]" : ""
+      className={`group ${panel} ${cardBorders[tone] || cardBorders.orange} flex h-full min-h-[120px] max-[820px]:min-h-[96px] max-[480px]:min-h-[82px] items-center gap-4 max-[820px]:gap-3 max-[480px]:gap-2.5 !px-6 !py-5 max-[1280px]:!px-4 max-[1280px]:!py-4 max-[480px]:!px-3 max-[480px]:!py-3 shadow-xs transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
+        isClickable ? "cursor-pointer active:scale-[0.99]" : ""
       } ${active ? "ring-2 ring-brand/50 !border-brand shadow-sm" : ""}`}
     >
       <div
@@ -52,6 +53,18 @@ export function StatCard({ label, value, icon, tone = "orange", to, active = fal
           </h2>
         )}
       </div>
+      {isClickable && (
+        <span
+          aria-hidden="true"
+          className={`flex h-8 w-8 max-[480px]:h-7 max-[480px]:w-7 shrink-0 items-center justify-center rounded-full transition-all group-hover:translate-x-0.5 ${
+            active
+              ? "bg-brand text-white shadow-xs"
+              : "bg-slate-100 text-slate-400 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-head dark:text-[#9c948c] dark:group-hover:bg-brand/20 dark:group-hover:text-brand"
+          }`}
+        >
+          <Icon name={to ? "external-link" : "chevron-right"} className="h-4 w-4 max-[480px]:h-3.5 max-[480px]:w-3.5" />
+        </span>
+      )}
     </div>
   );
   return to ? (

@@ -355,43 +355,43 @@ export default function Verification() {
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "VIDEO_SUBMITTED" ? "ALL" : "VIDEO_SUBMITTED"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "VIDEO_SUBMITTED" ? "ring-2 ring-brand/50 shadow-sm" : ""
-          }`}
+          className="text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl"
         >
           <StatCard
             label="Under verification"
             value={loading ? "…" : count("VIDEO_SUBMITTED")}
             icon="clock"
             tone="yellow"
+            interactive
+            active={filter === "VIDEO_SUBMITTED"}
           />
         </button>
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "IN_TRANSIT" ? "ALL" : "IN_TRANSIT"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "IN_TRANSIT" ? "ring-2 ring-brand/50 shadow-sm" : ""
-          }`}
+          className="text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl"
         >
           <StatCard
             label="Verified"
             value={loading ? "…" : count("VERIFIED")}
             icon="check"
             tone="green"
+            interactive
+            active={filter === "IN_TRANSIT"}
           />
         </button>
         <button
           type="button"
           onClick={() => setFilter((prev) => (prev === "RETURN_TO_HUB" ? "ALL" : "RETURN_TO_HUB"))}
-          className={`text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl transition hover:ring-2 hover:ring-brand/30 hover:shadow-md ${
-            filter === "RETURN_TO_HUB" ? "ring-2 ring-brand/50 shadow-sm" : ""
-          }`}
+          className="text-left w-full h-full cursor-pointer focus:outline-none rounded-2xl"
         >
           <StatCard
             label="Return to Hub"
             value={loading ? "…" : returnToHubCount}
             icon="undo-2"
             tone="red"
+            interactive
+            active={filter === "RETURN_TO_HUB"}
           />
         </button>
       </StatGrid>

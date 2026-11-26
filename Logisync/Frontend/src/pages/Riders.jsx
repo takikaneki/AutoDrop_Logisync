@@ -424,24 +424,57 @@ export default function Riders() {
 
       <div className="hidden min-[821px]:block">
         <StatGrid cols={3}>
-          <StatCard
-            label="Total riders"
-            value={loading ? "…" : riders.length}
-            icon="bike"
-            tone="gray"
-          />
-          <StatCard
-            label="Active"
-            value={loading ? "…" : riders.filter((r) => r.status === "Active").length}
-            icon="circle-check"
-            tone="green"
-          />
-          <StatCard
-            label="On Delivery"
-            value={loading ? "…" : riders.filter((r) => r.status === "On Delivery").length}
-            icon="truck"
-            tone="orange"
-          />
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("All");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="Total riders"
+              value={loading ? "…" : riders.length}
+              icon="bike"
+              tone="gray"
+              interactive
+              active={status === "All"}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(status === "Active" ? "All" : "Active");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="Active"
+              value={loading ? "…" : riders.filter((r) => r.status === "Active").length}
+              icon="circle-check"
+              tone="green"
+              interactive
+              active={status === "Active"}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(status === "On Delivery" ? "All" : "On Delivery");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="On Delivery"
+              value={loading ? "…" : riders.filter((r) => r.status === "On Delivery").length}
+              icon="truck"
+              tone="orange"
+              interactive
+              active={status === "On Delivery"}
+            />
+          </button>
         </StatGrid>
       </div>
 

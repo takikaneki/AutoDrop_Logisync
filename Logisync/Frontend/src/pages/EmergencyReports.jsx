@@ -361,15 +361,27 @@ export default function EmergencyReports() {
               key={card.key}
               type="button"
               onClick={() => setFilterKey(active ? "ALL" : card.key)}
-              className={`${panel} ${card.borderCls} flex min-w-0 flex-col items-start justify-between p-6 text-left transition hover:shadow-md active:scale-[0.99] ${
+              className={`group ${panel} ${card.borderCls} flex min-w-0 flex-col items-stretch justify-between p-6 text-left transition hover:shadow-md active:scale-[0.99] ${
                 active ? "!border-brand ring-2 ring-brand/40 shadow-sm" : ""
               }`}
             >
-              <span
-                className={`inline-flex max-w-full items-center truncate whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold leading-none ${card.badgeCls}`}
-              >
-                {card.label}
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={`inline-flex max-w-full items-center truncate whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-bold leading-none ${card.badgeCls}`}
+                >
+                  {card.label}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all group-hover:translate-x-0.5 ${
+                    active
+                      ? "bg-brand text-white"
+                      : "bg-slate-100 text-slate-400 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-head dark:text-[#9c948c]"
+                  }`}
+                >
+                  <Icon name="chevron-right" className="h-3.5 w-3.5" />
+                </span>
+              </div>
               <strong className="mt-4 block text-[32px] font-extrabold leading-none tracking-tight text-[#0f172a] dark:text-white">
                 {card.count}
               </strong>

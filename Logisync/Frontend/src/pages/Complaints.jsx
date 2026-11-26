@@ -307,13 +307,25 @@ export default function Complaints() {
                 setStatus(status === s ? "All" : s);
                 setPage(1);
               }}
-              className={`${panel} ${topBorder} p-6 text-left transition hover:ring-2 hover:ring-brand/30 hover:shadow-md active:scale-[0.99] ${
+              className={`group ${panel} ${topBorder} p-6 text-left transition hover:ring-2 hover:ring-brand/30 hover:shadow-md active:scale-[0.99] ${
                 status === s ? "!border-brand ring-2 ring-brand/50 shadow-sm" : ""
               }`}
             >
-              <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold ${statusTone[s]}`}>
-                {s}
-              </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className={`inline-block px-3 py-1 rounded-full text-[12px] font-semibold ${statusTone[s]}`}>
+                  {s}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-all group-hover:translate-x-0.5 ${
+                    status === s
+                      ? "bg-brand text-white"
+                      : "bg-slate-100 text-slate-400 group-hover:bg-brand-soft group-hover:text-brand dark:bg-night-head dark:text-[#9c948c]"
+                  }`}
+                >
+                  <Icon name="chevron-right" className="h-3.5 w-3.5" />
+                </span>
+              </div>
               <strong className="block text-[32px] mt-3 leading-none">{n}</strong>
             </button>
           );

@@ -437,24 +437,57 @@ export default function Sellers() {
 
       <div className="hidden min-[821px]:block">
         <StatGrid cols={3}>
-          <StatCard
-            label="Total sellers"
-            value={loading ? "…" : sellers.length}
-            icon="store"
-            tone="gray"
-          />
-          <StatCard
-            label="Active"
-            value={loading ? "…" : sellers.filter((x) => x.status === "Active").length}
-            icon="circle-check"
-            tone="green"
-          />
-          <StatCard
-            label="Inactive"
-            value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
-            icon="circle-x"
-            tone="red"
-          />
+          <button
+            type="button"
+            onClick={() => {
+              setStatus("All");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="Total sellers"
+              value={loading ? "…" : sellers.length}
+              icon="store"
+              tone="gray"
+              interactive
+              active={status === "All"}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(status === "Active" ? "All" : "Active");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="Active"
+              value={loading ? "…" : sellers.filter((x) => x.status === "Active").length}
+              icon="circle-check"
+              tone="green"
+              interactive
+              active={status === "Active"}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(status === "Inactive" ? "All" : "Inactive");
+              setPage(1);
+            }}
+            className="text-left w-full h-full cursor-pointer rounded-2xl focus:outline-none"
+          >
+            <StatCard
+              label="Inactive"
+              value={loading ? "…" : sellers.filter((x) => x.status === "Inactive").length}
+              icon="circle-x"
+              tone="red"
+              interactive
+              active={status === "Inactive"}
+            />
+          </button>
         </StatGrid>
       </div>
 
